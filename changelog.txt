@@ -1,6 +1,7 @@
 V RF.01.37p.TDMod (2017-06-27)
 - homing is now split into 3 axes
 - homing Z only with Tipdown/Positive Matrix activated now might home Y first to avoid crash. This is experimental. This is not protecting the nozzle/bed very good.
+- Small Z-Compensation Fix for TipDown-Support
 - Tipdown for T1 is now adjustable within Menus Configuration -> Z-Configuration -> Extruder T1 TipDown -> +-
 - activating Z-Compensation with only one axis homed is impossible now.
 - whenever some axis is homed it is now shown with a * within menu.
