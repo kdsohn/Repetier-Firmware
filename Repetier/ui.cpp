@@ -769,6 +769,11 @@ UI_STRING(ui_text_unknown,UI_TEXT_UNKNOWN)
 UI_STRING(ui_text_na,UI_TEXT_NA)
 UI_STRING(ui_yes,UI_TEXT_YES)
 UI_STRING(ui_no,UI_TEXT_NO)
+UI_STRING(ui_ok,UI_TEXT_OK)
+UI_STRING(ui_fail,UI_TEXT_FAIL)
+UI_STRING(ui_neetfix,UI_TEXT_NEEDFIX)
+UI_STRING(ui_up,UI_TEXT_UP)
+UI_STRING(ui_down,UI_TEXT_DOWN)
 UI_STRING(ui_selected,UI_TEXT_SEL)
 UI_STRING(ui_unselected,UI_TEXT_NOSEL)
 UI_STRING(ui_text_print_mode,UI_TEXT_PRINT_MODE)
@@ -1075,22 +1080,34 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 else if(c2=='1')                                                                        // %m1 : message line 1
                 {
-                    if(messageLine1!=0) addStringP((char PROGMEM *)messageLine1);
+                    if(messageLine1!=0){
+                        col = 0; //Nibbels: kill first space because this is menutab
+                        parse((char PROGMEM *)messageLine1,false); //addStringP((char PROGMEM *)messageLine1);
+                    }   
                     break;
                 }
                 else if(c2=='2')                                                                        // %m2 : message line 2
                 {
-                    if(messageLine2!=0) addStringP((char PROGMEM *)messageLine2);
+                    if(messageLine2!=0){
+                        col = 0; //Nibbels: kill first space because this is menutab
+                        parse((char PROGMEM *)messageLine2,false); //addStringP((char PROGMEM *)messageLine2);
+                    }
                     break;
                 }
                 else if(c2=='3')                                                                        // %m3 : message line 3
                 {
-                    if(messageLine3!=0) addStringP((char PROGMEM *)messageLine3);
+                    if(messageLine3!=0){
+                        col = 0; //Nibbels: kill first space because this is menutab
+                        parse((char PROGMEM *)messageLine3,false); //addStringP((char PROGMEM *)messageLine3);
+                    }   
                     break;
                 }
                 else if(c2=='4')                                                                        // %m4 : message line 4
                 {
-                    if(messageLine4!=0) addStringP((char PROGMEM *)messageLine4);
+                    if(messageLine4!=0){
+                        col = 0; //Nibbels: kill first space because this is menutab
+                        parse((char PROGMEM *)messageLine4,false); //addStringP((char PROGMEM *)messageLine4);
+                    } 
                     break;
                 }
                 break;
@@ -1323,6 +1340,25 @@ void UIDisplay::parse(char *txt,bool ram)
                     {
                         addStringP(Printer::ZMode==Z_VALUE_MODE_Z_MIN ? ui_text_z_mode_min : (Printer::ZMode==Z_VALUE_MODE_SURFACE ? ui_text_z_mode_surface : ui_text_z_mode_gcode) );
                     }
+                }
+                else if(c2=='s')                                                                        // %zs : Z-Schraube korrektur mm
+                {
+                    addFloat(g_ZSchraubenSollKorrekturWarm_mm,1,3);                    
+                }
+                else if(c2=='S')                                                                        // %zS : Z-Schraube korrektur Umdrehungen
+                {
+                    addFloat(g_ZSchraubenSollDrehungenWarm_U,1,1);
+                }
+                else if(c2=='F')                                                                        // %zF : Z-Schraube falsch
+                {
+                    if(g_ZSchraubeOk < 0) addStringP( ui_ok ); //ok
+                    else if(g_ZSchraubeOk > 0) addStringP( ui_neetfix ); //zu hohes bett
+                    else addStringP( ui_fail ); //fail
+                }
+                else if(c2=='D')                                                                        // %zD : Z-Schraube richtung
+                {
+                    if(g_ZSchraubenSollKorrekturWarm_mm > 0) addStringP( ui_up );
+                    else addStringP( ui_down );
                 }
                 break;
             }
@@ -1669,7 +1705,7 @@ void UIDisplay::parse(char *txt,bool ram)
                     }
                     else if ( mode == OPERATING_MODE_MILL )
                     {
-                        addStringP( PSTR( "                  " ));
+                        addStringP( PSTR( "                  " )); //18 leerzeichen?? 
                         break;
                     }
                 }
@@ -1747,7 +1783,7 @@ void UIDisplay::parse(char *txt,bool ram)
                     }
                     else if ( mode == OPERATING_MODE_MILL )
                     {
-                        addStringP( PSTR( "" ));
+                        addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
                     }
 #endif // FEATURE_SERVICE_INTERVAL
                 }
@@ -1771,7 +1807,7 @@ void UIDisplay::parse(char *txt,bool ram)
                     }
                     else if ( mode == OPERATING_MODE_MILL )
                     {
-                        addStringP( PSTR( "" ));
+                        addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
                     }
 #endif // FEATURE_SERVICE_INTERVAL
                 }
@@ -1854,7 +1890,7 @@ void UIDisplay::parse(char *txt,bool ram)
                     }
                     else if ( mode == OPERATING_MODE_MILL )
                     {
-                        addStringP( PSTR( "" ));
+                        addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
                     }
                 }
                 else if(c2=='8')                                                                        // Shows printed filament
@@ -1876,7 +1912,7 @@ void UIDisplay::parse(char *txt,bool ram)
                     }
                     else if ( mode == OPERATING_MODE_MILL )
                     {
-                        addStringP( PSTR( "" ));
+                        addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
                     }
                 }
                 break;
@@ -3045,8 +3081,6 @@ void UIDisplay::nextPreviousAction(int8_t next)
         {
             //Das hier ist nur dazu gedacht, um eine Tip-Down-Nozzle auf per ToolChange auf die Korrekte Höhe zu justieren.
             float   fTemp = extruder[1].zOffset * Printer::invAxisStepsPerMM[Z_AXIS];
-
-            //Das hier ist nur dazu gedacht, um eine Tip-Down-Nozzle auf per ToolChange auf die Korrekte Höhe zu justieren.
             INCREMENT_MIN_MAX(fTemp,0.025,-2,0);
             extruder[1].zOffset = int32_t(fTemp * Printer::axisStepsPerMM[Z_AXIS]);
             if(extruder[1].id == Extruder::current->id){

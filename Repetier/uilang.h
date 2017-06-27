@@ -107,6 +107,11 @@
 #define UI_TEXT_NA                      "N/A"                       // Output for not available
 #define UI_TEXT_YES                     "Yes"
 #define UI_TEXT_NO                      "No"
+#define UI_TEXT_OK                      "Ok"
+#define UI_TEXT_FAIL                    "Fail"
+#define UI_TEXT_NEEDFIX                 "too high"
+#define UI_TEXT_UP                      "Up"
+#define UI_TEXT_DOWN                    "Down"
 #define UI_TEXT_SEL                     "\003"
 #define UI_TEXT_NOSEL                   "\004"
 #define UI_TEXT_PRINT_POS               "Printing..."
@@ -330,9 +335,10 @@
 #define UI_TEXT_TIMEOUT                 "Timeout"
 #define UI_TEXT_AUTODETECT_PID_DONE     "PID determined"
 #define UI_TEXT_SENSOR_ERROR            "Sensor Error"
-#define UI_TEXT_HEAT_BED_ZOFFSET_SEARCH_ABORTED "Scan aborted"
-#define UI_TEXT_HEAT_BED_ZOFFSET_FIX_Z1  "Clean the Nozzle"
-#define UI_TEXT_HEAT_BED_ZOFFSET_FIX_Z2  "Fix the Z-Screw"
+#define UI_TEXT_HEAT_BED_ZOFFSET_SEARCH_STATUS "Scan %zF"
+#define UI_TEXT_HEAT_BED_ZOFFSET_FIX_Z1 "Screw: %zsmm"
+#define UI_TEXT_HEAT_BED_ZOFFSET_FIX_Z2 "%zS[U] (%zD)"
+#define UI_TEXT_STATUSMSG               "%os"
 
 // Printtime output gets aggregated like <Days_5gisgits>UI_TEXT_PRINTTIME_DAYS<Hours>UI_TEXT_PRINTTIME_HOURS<Minutes>UI_TEXT_PRINTTIME_MINUTES
 // ___88 days 12:45
@@ -442,6 +448,11 @@
 #define UI_TEXT_NA                      "nv"
 #define UI_TEXT_YES                     "Ja"
 #define UI_TEXT_NO                      "Nein"
+#define UI_TEXT_OK                      "Ok"
+#define UI_TEXT_NEEDFIX                 "zu hoch"
+#define UI_TEXT_FAIL                    "Fail"
+#define UI_TEXT_UP                      "Hoch"
+#define UI_TEXT_DOWN                    "Runter"
 #define UI_TEXT_SEL                     "\003"
 #define UI_TEXT_NOSEL                   "\004"
 #define UI_TEXT_PRINT_POS               "Drucke..."
@@ -644,9 +655,10 @@
 #define UI_TEXT_TIMEOUT                 "Timeout"
 #define UI_TEXT_AUTODETECT_PID_DONE     "PID ermittelt"
 #define UI_TEXT_SENSOR_ERROR            "Sensorfehler"
-#define UI_TEXT_HEAT_BED_ZOFFSET_SEARCH_ABORTED "Scan abgebrochen"
-#define UI_TEXT_HEAT_BED_ZOFFSET_FIX_Z1  "Reinige Duese"
-#define UI_TEXT_HEAT_BED_ZOFFSET_FIX_Z2  "Korr. Z-Schraube"
+#define UI_TEXT_HEAT_BED_ZOFFSET_SEARCH_STATUS "Scan %zF"
+#define UI_TEXT_HEAT_BED_ZOFFSET_FIX_Z1  "Screw: %zsmm"
+#define UI_TEXT_HEAT_BED_ZOFFSET_FIX_Z2  "%zS[U] (%zD)"
+#define UI_TEXT_STATUSMSG               "%os"
 
 // Printtime output gets aggregated like <Days_5gisgits>UI_TEXT_PRINTTIME_DAYS<Hours>UI_TEXT_PRINTTIME_HOURS<Minutes>UI_TEXT_PRINTTIME_MINUTES
 // ___88 days 12:45

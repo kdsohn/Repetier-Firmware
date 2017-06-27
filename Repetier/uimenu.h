@@ -125,6 +125,10 @@ List of placeholder:
 %OZ : z endstop type
 %z0 : Z Offset
 %zm : Z Scale
+%zs : Z-Schraube korrektur mm
+%zS : Z-Schraube korrektur Umdrehungen
+%zF : Z-Schraube falsch
+%zD : Z-Schraube richtung
 %ht : hotend type
 %mt : miller type
 %mY : menu yes

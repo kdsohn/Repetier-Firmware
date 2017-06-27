@@ -732,7 +732,13 @@ extern void scanHeatBed( void );
 // searchZOScan()
 extern void startZOScan( void );
 extern void searchZOScan( void );
-extern bool calculateZScrewTempLenght( void );
+
+//Z-Schrauben Helper
+extern float g_ZSchraubenSollDrehungenWarm_U;
+extern float g_ZSchraubenSollKorrekturWarm_mm;
+extern char g_ZSchraubeOk;
+
+extern bool calculateZScrewCorrection( void );
 
 //Menüumschalter für Z-Step-Höhe
 extern void configureMANUAL_STEPS_Z( int8_t increment );
