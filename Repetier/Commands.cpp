@@ -1015,9 +1015,6 @@ void Commands::executeGCode(GCode *com)
             {
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
-#if FEATURE_UNLOCK_MOVEMENT
-                         Printer::g_unlock_movement = 1;
-#endif //FEATURE_UNLOCK_MOVEMENT
 #if NUM_EXTRUDER>0
                     if(reportTempsensorError()) break;
                     previousMillisCmd = HAL::timeInMilliseconds();
@@ -1058,9 +1055,6 @@ void Commands::executeGCode(GCode *com)
             {
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
-#if FEATURE_UNLOCK_MOVEMENT
-                         Printer::g_unlock_movement = 1;
-#endif //FEATURE_UNLOCK_MOVEMENT
                     if(reportTempsensorError()) break;
                     previousMillisCmd = HAL::timeInMilliseconds();
                     if(Printer::debugDryrun()) break;
@@ -1080,9 +1074,6 @@ void Commands::executeGCode(GCode *com)
             {
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
-#if FEATURE_UNLOCK_MOVEMENT
-                    Printer::g_unlock_movement = 1;
-#endif //FEATURE_UNLOCK_MOVEMENT
 #if NUM_EXTRUDER>0
                     if(reportTempsensorError()) break;
                     previousMillisCmd = HAL::timeInMilliseconds();
@@ -1173,9 +1164,6 @@ void Commands::executeGCode(GCode *com)
             {
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
-#if FEATURE_UNLOCK_MOVEMENT
-                    Printer::g_unlock_movement = 1;
-#endif //FEATURE_UNLOCK_MOVEMENT
 #if HAVE_HEATED_BED
                     if(Printer::debugDryrun()) break;
                     if (com->hasS())
