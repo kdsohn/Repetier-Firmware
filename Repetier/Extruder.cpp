@@ -402,17 +402,15 @@ void Extruder::selectExtruderById(uint8_t extruderId)
 #endif // defined(USE_ADVANCE)
 
     Extruder::current->tempControl.updateTempControlVars();
-    float cx,cy,cz;
-    Printer::lastCalculatedPosition(cx,cy,cz);
-    float oldfeedrate = Printer::feedrate;
     Printer::extruderOffset[X_AXIS] = -Extruder::current->xOffset*Printer::invAxisStepsPerMM[X_AXIS];
     Printer::extruderOffset[Y_AXIS] = -Extruder::current->yOffset*Printer::invAxisStepsPerMM[Y_AXIS];
     Printer::extruderOffset[Z_AXIS] = -Extruder::current->zOffset*Printer::invAxisStepsPerMM[Z_AXIS];
-    if(Printer::isHomed())
+    if(Printer::areAxisHomed())
     {
-        Printer::moveToReal(cx,cy,cz,IGNORE_COORDINATE,Printer::homingFeedrate[X_AXIS]);
+        float oldfeedrate = Printer::feedrate;
+        Printer::moveToReal(IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,Printer::homingFeedrate[X_AXIS]);
+        Printer::feedrate = oldfeedrate;
     }
-    Printer::feedrate = oldfeedrate;
     Printer::updateCurrentPosition();
 
 #if NUM_EXTRUDER>1

@@ -38,6 +38,10 @@
 #define PRINTER_FLAG1_NO_DESTINATION_CHECK      32
 #define PRINTER_FLAG1_Z_ORIGIN_SET              64
 
+#define PRINTER_FLAG2_HOMED_X                   1
+#define PRINTER_FLAG2_HOMED_Y                   2
+#define PRINTER_FLAG2_HOMED_Z                   4
+
 
 class Printer
 {
@@ -68,6 +72,7 @@ public:
     static uint8_t          debugLevel;
     static uint8_t          flag0;
     static uint8_t          flag1;
+    static uint8_t          flag2;
     static uint8_t          stepsPerTimerCall;
     static unsigned long    interval;                           // Last step duration in ticks.
     static unsigned long    timer;                              // used for acceleration/deceleration timing
@@ -267,7 +272,7 @@ public:
 #endif // STEPPER_ON_DELAY
 
         // when the stepper is disabled we loose our home position because somebody else can move our mechanical parts
-        setHomed(false);
+        setHomed( false , false , -1 , -1 );
         cleanupXPositions();
 
     } // disableXStepper
@@ -288,7 +293,7 @@ public:
 #endif // STEPPER_ON_DELAY
 
         // when the stepper is disabled we loose our home position because somebody else can move our mechanical parts
-        setHomed(false);
+        setHomed( false, -1, false , -1 );
         cleanupYPositions();
 
     } // disableYStepper
@@ -313,7 +318,7 @@ public:
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
 
         // when the stepper is disabled we loose our home position because somebody else can move our mechanical parts
-        setHomed(false);
+        setHomed(false , -1 , -1 , false );
         setZOriginSet(false);
         cleanupZPositions();
 
@@ -547,9 +552,46 @@ public:
         return flag1 & PRINTER_FLAG1_HOMED;
     } // isHomed
 
-    static inline void setHomed(uint8_t b)
+    static inline uint8_t isAxisHomed(int8_t b) //X_AXIS 0, Y_AXIS 1, Z_AXIS 2
+    {
+        switch(b){
+            case X_AXIS: {
+                return (flag2 & PRINTER_FLAG2_HOMED_X);
+                }
+            case Y_AXIS: {
+                return (flag2 & PRINTER_FLAG2_HOMED_Y);
+                }
+            case Z_AXIS: {
+                return (flag2 & PRINTER_FLAG2_HOMED_Z);
+                }
+        } 
+        return 0;
+    } // isAxisHomed
+
+    static inline uint8_t isZHomeSafe() //experimentelle funktion, die nicht viel abdeckt, das ist ein test. ...
+    {
+        bool problematisch = false;
+        if( Extruder::current->zOffset ) problematisch = true; //wenn rechtes gefedertes Hotend tiefer, dann evtl. kollision
+        if( g_offsetZCompensationSteps > 0 ) problematisch = true; //wenn matrix positiv, dann evtl. problem
+        if( isAxisHomed(Y_AXIS) && Printer::queuePositionCurrentSteps[Y_AXIS] + Printer::directPositionCurrentSteps[Y_AXIS] <= 5*YAXIS_STEPS_PER_MM ) problematisch = false; //vorherige Probleme egal, wenn bett nach hinten gefahren
+
+        if(problematisch) return 0; //während Z-Scan gibts einen homeZ, der ist aber nicht relevant, den case gibts nicht!
+        else return 1;
+    } // isZHomeSafe
+
+    static inline bool areAxisHomed() //X_AXIS && Y_AXIS && Z_AXIS
+    {
+        return (bool)(Printer::isAxisHomed(Z_AXIS) && Printer::isAxisHomed(Y_AXIS) && Printer::isAxisHomed(X_AXIS));
+    } // areAxisHomed
+
+    static inline void setHomed(uint8_t b, int8_t x = -1, int8_t y = -1, int8_t z = -1)
     {
         flag1 = (b ? flag1 | PRINTER_FLAG1_HOMED : flag1 & ~PRINTER_FLAG1_HOMED);
+        if(x != -1) flag2 = (x ? flag2 | PRINTER_FLAG2_HOMED_X : flag2 & ~PRINTER_FLAG2_HOMED_X);
+        if(y != -1) flag2 = (y ? flag2 | PRINTER_FLAG2_HOMED_Y : flag2 & ~PRINTER_FLAG2_HOMED_Y);
+        if(z != -1) flag2 = (z ? flag2 | PRINTER_FLAG2_HOMED_Z : flag2 & ~PRINTER_FLAG2_HOMED_Z);  
+        if((flag2 & PRINTER_FLAG2_HOMED_X) && (flag2 & PRINTER_FLAG2_HOMED_Y) && (flag2 & PRINTER_FLAG2_HOMED_Z)) flag1 |= PRINTER_FLAG1_HOMED;
+        if(!(flag2 & PRINTER_FLAG2_HOMED_X) && !(flag2 & PRINTER_FLAG2_HOMED_Y) && !(flag2 & PRINTER_FLAG2_HOMED_Z)) flag1 &= ~PRINTER_FLAG1_HOMED;
     } // setHomed
 
     static inline uint8_t isZOriginSet()
@@ -791,7 +833,7 @@ public:
                 return false;
             }
 
-            if( isHomed() )
+            if( Printer::isAxisHomed(Z_AXIS) )
             {
 #if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
                 if( currentZSteps < Z_MIN_DISTANCE )
@@ -849,7 +891,7 @@ public:
         flag0 |= PRINTER_FLAG0_STEPPER_DISABLED;
 
         // when the stepper is disabled we loose our home position because somebody else can move our mechanical parts
-        setHomed(false);
+        setHomed( false, false, false, false );
         setZOriginSet(false);
     } // setAllSteppersDisabled
 
@@ -1054,7 +1096,7 @@ public:
     static inline long currentZPositionSteps()
     {
         // return all values in [steps]
-        long    value = queuePositionCurrentSteps[Z_AXIS] + Extruder::current->zOffset; //offset negativ, das ist hier uninteressant. also rausrechnen.
+        long    value = queuePositionCurrentSteps[Z_AXIS] + Extruder::current->zOffset; //offset negativ, das ist normalerweise zu kompensieren/für den Betrachter uninteressant. also rausrechnen.
 
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
@@ -1090,6 +1132,9 @@ public:
         if (Printer::ZMode <= Z_VALUE_MODE_Z_MIN)
         {
             // show the z-distance to z-min (print) or to the z-origin (mill)
+
+            // When we see Z-Min the Extruder::current->zOffset (negative number) is not what we want to see. We want to see the diff with sensor-zeroing.
+            fvalue -= (float)Extruder::current->zOffset; //adds z-Offset for T1 again to really show the axis-scale towards z-min hardware switch.
             
         }
 

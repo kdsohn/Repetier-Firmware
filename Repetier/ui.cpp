@@ -632,6 +632,7 @@ void UIDisplay::printRowP(uint8_t r,PGM_P txt)
 
 void UIDisplay::addInt(int value,uint8_t digits,char fillChar)
 {
+    if(col>=MAX_COLS) return;
     uint8_t dig=0,neg=0;
     if(value<0)
     {
@@ -670,6 +671,7 @@ void UIDisplay::addInt(int value,uint8_t digits,char fillChar)
 
 void UIDisplay::addLong(long value,char digits)
 {
+    if(col>=MAX_COLS) return;
     uint8_t dig = 0,neg=0;
     if(value<0)
     {
@@ -709,6 +711,7 @@ void UIDisplay::addLong(long value,char digits)
 const float roundingTable[] PROGMEM = {0.5,0.05,0.005,0.0005};
 void UIDisplay::addFloat(float number, char fixdigits,uint8_t digits)
 {
+    if(col>=MAX_COLS) return;
     // Handle negative numbers
     if (number < 0.0)
     {
@@ -781,9 +784,6 @@ UI_STRING(ui_text_hotend_v2,UI_TEXT_HOTEND_V2)
 UI_STRING(ui_text_miller_one_track,UI_TEXT_MILLER_ONE_TRACK)
 UI_STRING(ui_text_miller_two_tracks,UI_TEXT_MILLER_TWO_TRACKS)
 UI_STRING(ui_text_z_compensation_active,UI_TEXT_Z_COMPENSATION_ACTIVE)
-UI_STRING(ui_text_extruder_offset_z_msg,UI_TEXT_EXTRUDER_OFFSET_Z_MSG)
-
-
 
 void UIDisplay::parse(char *txt,bool ram)
 {
@@ -1006,6 +1006,22 @@ void UIDisplay::parse(char *txt,bool ram)
                     }               
 #endif // FEATURE_CONFIGURABLE_HOTEND_TYPE
                 }
+                else if(c2=='x' && col<MAX_COLS)                                                                             // %hx : x homed      
+                {
+                    if(Printer::flag2 & PRINTER_FLAG2_HOMED_X) printCols[col++]='*';
+                }
+                else if(c2=='y' && col<MAX_COLS)                                                                             // %hy : y homed      
+                {
+                    if(Printer::flag2 & PRINTER_FLAG2_HOMED_Y) printCols[col++]='*';
+                }
+                else if(c2=='z' && col<MAX_COLS)                                                                             // %hz : z homed      
+                {
+                    if(Printer::flag2 & PRINTER_FLAG2_HOMED_Z) printCols[col++]='*';
+                }
+                else if(c2=='a' && col<MAX_COLS)                                                                             // %ha : all homed      
+                {
+                    if(Printer::flag2 & PRINTER_FLAG2_HOMED_X && Printer::flag2 & PRINTER_FLAG2_HOMED_Y && Printer::flag2 & PRINTER_FLAG2_HOMED_Z && Printer::flag1 & PRINTER_FLAG1_HOMED) printCols[col++]='*';
+                }
                 break;
             }
             case 'l':
@@ -1041,12 +1057,12 @@ void UIDisplay::parse(char *txt,bool ram)
 
             case 'm':
             {
-                if(c2=='Y')                                                                             // %mY : menu yes
+                if(c2=='Y' && col<MAX_COLS)                                                                             // %mY : menu yes
                 {
                     if(g_nYesNo)    printCols[col++]=CHAR_SELECTED;
                     else            printCols[col++]=' ';
                 }
-                else if(c2=='N')                                                                        // %mN : menu no
+                else if(c2=='N' && col<MAX_COLS)                                                                        // %mN : menu no
                 {
                     if(g_nYesNo)    printCols[col++]=' ';
                     else            printCols[col++]=CHAR_SELECTED;
@@ -3028,9 +3044,17 @@ void UIDisplay::nextPreviousAction(int8_t next)
         case UI_ACTION_EXTRUDER_OFFSET_Z:
         {
             //Das hier ist nur dazu gedacht, um eine Tip-Down-Nozzle auf per ToolChange auf die Korrekte Höhe zu justieren.
-            
-                    showInformation( (void*)ui_text_extruder_offset_z_msg );
+            float   fTemp = extruder[1].zOffset * Printer::invAxisStepsPerMM[Z_AXIS];
+
+            //Das hier ist nur dazu gedacht, um eine Tip-Down-Nozzle auf per ToolChange auf die Korrekte Höhe zu justieren.
+            INCREMENT_MIN_MAX(fTemp,0.025,-2,0);
+            extruder[1].zOffset = int32_t(fTemp * Printer::axisStepsPerMM[Z_AXIS]);
+            if(extruder[1].id == Extruder::current->id){
+                Printer::extruderOffset[Z_AXIS] = -Extruder::current->zOffset*Printer::invAxisStepsPerMM[Z_AXIS];
+                if(Printer::areAxisHomed()) Printer::moveToReal(IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE);
+            }
             break;
+            //break;
         }
 #endif // NUM_EXTRUDER>1
 
@@ -3784,7 +3808,7 @@ void UIDisplay::executeAction(int action)
 
                     showError( (void*)ui_text_home, (void*)ui_text_operation_denied );
                     break;
-                }
+                }                
                 if( !isHomingAllowed( NULL, 1 ) )
                 {
                     break;
@@ -3920,7 +3944,6 @@ void UIDisplay::executeAction(int action)
                 configureMANUAL_STEPS_Z( 1 );
                 break;
             }
-
 #endif // FEATURE_EXTENDED_BUTTONS
 
 #if FEATURE_MILLING_MODE

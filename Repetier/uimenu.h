@@ -48,6 +48,10 @@ List of placeholder:
 %x0 : X position
 %x1 : Y position
 %x2 : Z position
+%hx : X homed
+%hy : Y homed
+%hz : Z homed
+%ha : all homed
 %x3 : Current extruder position
 %sx : State of x min endstop
 %sX : State of x max endstop
@@ -205,15 +209,15 @@ for 2 row displays. You can add additional pages or change the default pages lik
 #elif UI_ROWS>=4
     #if HAVE_HEATED_BED==true
         #if UI_COLS<=16
-            UI_PAGE4(ui_page1,"%U1%ec/%EcB%eB/%Eb","Z:%x2 mm %sC",UI_TEXT_STRAIN_GAUGE,"%os")
+            UI_PAGE4(ui_page1,"%U1%ec/%EcB%eB/%Eb","Z:%x2 mm %sC%hz",UI_TEXT_STRAIN_GAUGE,"%os")
         #else
-            UI_PAGE4(ui_page1,"%U1%ec/%Ec\002 B%eB/%Eb\002","Z:%x2 mm %sC",UI_TEXT_STRAIN_GAUGE,"%os")
+            UI_PAGE4(ui_page1,"%U1%ec/%Ec\002 B%eB/%Eb\002","Z:%x2 mm %sC%hz",UI_TEXT_STRAIN_GAUGE,"%os")
         #endif // UI_COLS<=16
     #else
-        UI_PAGE4(ui_page1,UI_TEXT_PAGE_EXTRUDER,"Z:%x2 mm %sC",UI_TEXT_STRAIN_GAUGE,"%os")
+        UI_PAGE4(ui_page1,UI_TEXT_PAGE_EXTRUDER,"Z:%x2 mm %sC%hz",UI_TEXT_STRAIN_GAUGE,"%os")
     #endif // HAVE_HEATED_BED==true
 
-    UI_PAGE4(ui_page2,"X:%x0 mm","Y:%x1 mm","Z:%x2 mm %sC","%os")
+    UI_PAGE4(ui_page2,"X:%x0 mm %hx","Y:%x1 mm %hy","Z:%x2 mm %sC%hz","%os")
 
     #if NUM_EXTRUDER>1
         UI_PAGE4(ui_page3,UI_TEXT_PAGE_EXTRUDER1,UI_TEXT_PAGE_EXTRUDER2,UI_TEXT_PAGE_BED,"%os")
@@ -243,12 +247,12 @@ for 2 row displays. You can add additional pages or change the default pages lik
     UI_PAGE4(ui_page_mod,UI_TEXT_STRAIN_GAUGE_SPEED,
                         "zO: %z0um zM: %HB",
                         "sO: %sSum%sM",
-                        "Z: %x2mm %sC")
+                        "Z: %x2mm %sC%hz")
     #else   
     UI_PAGE4(ui_page_mod,UI_TEXT_STRAIN_GAUGE_SPEED,
                         "zO: %z0 um zMat: %HB",
                         "sO: %sS um %sM",
-                        "Z: %x2 mm %sC")
+                        "Z: %x2 mm %sC%hz")
     #endif // EEPROM_MODE && FEATURE_SERVICE_INTERVAL
     #define UI_MOD_PAGES &ui_page_mod
     #define UI_MOD_COUNT 1
@@ -262,7 +266,7 @@ for 2 row displays. You can add additional pages or change the default pages lik
 #else
     UI_PAGE2(ui_page1,UI_TEXT_PAGE_EXTRUDER,UI_TEXT_PAGE_BED)
     UI_PAGE2(ui_page2,"X:%x0 Y:%x1","%os")
-    UI_PAGE2(ui_page3,"Z:%x2 mm %sC","%os")
+    UI_PAGE2(ui_page3,"Z:%x2 mm %sC%hz","%os")
 
     /* Merge pages together. Use the following pattern:
     #define UI_PAGES {&name1,&name2,&name3} */

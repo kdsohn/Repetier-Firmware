@@ -797,10 +797,10 @@ can set it on for safety. */
 
 /** \brief Set order of axis homing. Use HOME_ORDER_XYZ and replace XYZ with your order. */
 #if FEATURE_MILLING_MODE
-    #define HOMING_ORDER_PRINT              HOME_ORDER_XYZ
+    #define HOMING_ORDER_PRINT              HOME_ORDER_XYZ           //if you work with springloaded hotend or positive Z-Matrix home Z last! You might otherwise hit the surface.
     #define HOMING_ORDER_MILL               HOME_ORDER_ZXY
 #else
-    #define HOMING_ORDER                    HOME_ORDER_XYZ
+    #define HOMING_ORDER                    HOME_ORDER_XYZ           //if you work with springloaded hotend or positive Z-Matrix home Z last!! You might otherwise hit the surface.
 #endif // FEATURE_MILLING_MODE
 
 /** \brief If you have a backlash in both z-directions, you can use this. For most printer, the bed will be pushed down by it's

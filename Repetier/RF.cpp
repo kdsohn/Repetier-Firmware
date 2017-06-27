@@ -865,7 +865,7 @@ void scanHeatBed( void )
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
             }
-            case 45:
+            case 45: //case kommt beim HBS nicht vor??? doch, als retryStatus von 49 aus.
             {
                 while( Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit() )
                 {
@@ -874,8 +874,8 @@ void scanHeatBed( void )
                 }
 
                 // home the z-axis in order to find the starting point again
-                Printer::homeAxis( false, false, true );
-
+                Printer::homeAxis( false, false, true ); //Nibbels: wäre schädlich für zu hohe druckbetten.
+                //TODO: Home Y+Z, goto Z=HEAT_BED_SCAN_Z_START_STEPS, goto Y, continue. für Case 45 105 139 + 132
                 g_scanRetries        --;
                 g_nZScanZPosition    = 0;
                 nZ                   = 0;
@@ -1302,7 +1302,7 @@ void scanHeatBed( void )
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
             }
-            case 105:
+            case 105:  //retryStatus von 100 aus.
             {
                 while( Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit() )
                 {
@@ -1311,8 +1311,8 @@ void scanHeatBed( void )
                 }
 
                 // home the z-axis in order to find the starting point again
-                Printer::homeAxis( false, false, true );
-
+                Printer::homeAxis( false, false, true );  //Nibbels: wäre schädlich für zu hohe druckbetten.
+                //TODO: Home Y+Z, goto Z=HEAT_BED_SCAN_Z_START_STEPS, goto Y, continue. für Case 45 105 139 + 132
                 g_scanRetries        --;
                 g_nZScanZPosition    = 0;
                 nZ                   = 0;
@@ -1484,7 +1484,7 @@ void scanHeatBed( void )
             case 132:
             {
                 // determine the z-home position
-                Printer::homeAxis( false, false, true);
+                Printer::homeAxis( false, false, true); //Nibbels: wäre schädlich für zu hohe druckbetten.
                 g_nZScanZPosition =
                 nZ                = 0;
 
@@ -1594,7 +1594,7 @@ void scanHeatBed( void )
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
             }
-            case 139:
+            case 139:   //retryStatus von 137 aus.
             {
                 while( Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit() )
                 {
@@ -1603,8 +1603,8 @@ void scanHeatBed( void )
                 }
 
                 // home the z-axis in order to find the starting point again
-                Printer::homeAxis( false, false, true );
-
+                Printer::homeAxis( false, false, true ); //Nibbels: wäre schädlich für zu hohe druckbetten.
+                //TODO: Home Y+Z, goto Z=HEAT_BED_SCAN_Z_START_STEPS, goto Y, continue. für Case 45 105 139 + 132
                 g_scanRetries        --;
                 g_nZScanZPosition    = 0;
                 nZ                   = 0;
@@ -2474,15 +2474,15 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
     Com::printFLN( PSTR( "Config: Test FeedrateIncrement = " ) , incrementfeedrate , 2 );
     
     previousMillisCmd = HAL::timeInMilliseconds();
-    
-    if(!Printer::doHeatBedZCompensation)
+           
+    if( !Printer::areAxisHomed() )
     {
-        Com::printFLN( PSTR( "ERROR::doHeatBedZCompensation():OFF" ) );
+        Com::printFLN( PSTR( "ERROR::need Home" ) );
         return;
-    }       
-    if( !Printer::isHomed() )
+    }
+    if( !Printer::doHeatBedZCompensation )
     {
-        Com::printFLN( PSTR( "ERROR::isHomed():OFF" ) );
+        Com::printFLN( PSTR( "ERROR::need Z-Comp" ) );
         return;
     }   
     
@@ -2826,10 +2826,12 @@ void doHeatBedZCompensation( void )
     g_nLastZCompensationPositionSteps[Z_AXIS] = nCurrentPositionSteps[Z_AXIS];
 #endif // DEBUG_HEAT_BED_Z_COMPENSATION
     
-    if( nCurrentPositionSteps[Z_AXIS] > 0 )
+    // Der Z-Kompensation wird das extruderspezifische Z-Offset des jeweiligen Extruders verschwiegen, sodass dieses die Höhen / Limits nicht beeinflusst. Die X- und Y-Offsets werden behalten, denn das korrigiert Düsen- zu Welligkeitsposition nach Extruderwechsel. Das extruderspezifische Z-Offset Extruder::current->zOffset wird beim Toolchange in nCurrentPositionSteps[Z_AXIS] eingerechnet und verfahren.
+    // Extruder::current->zOffset ist negativ, wenn das hotend weiter heruntergedrückt werden kann als 0. -> Bettfahrt nach unten, um auszuweichen.
+    if( nCurrentPositionSteps[Z_AXIS] + Extruder::current->zOffset > 0 )
     {
         // check whether we have to perform a compensation in z-direction
-        if( nCurrentPositionSteps[Z_AXIS] < g_maxZCompensationSteps - Extruder::current->zOffset )
+        if( nCurrentPositionSteps[Z_AXIS] + Extruder::current->zOffset < g_maxZCompensationSteps )
         {
             // find the rectangle which covers the current position of the extruder
             nXLeftIndex = 1;
@@ -2897,7 +2899,7 @@ void doHeatBedZCompensation( void )
             g_nMatrix[3]        = g_ZCompensationMatrix[nXRightIndex][nYBackIndex];
 #endif // DEBUG_HEAT_BED_Z_COMPENSATION
 
-            if( nCurrentPositionSteps[Z_AXIS] <= g_minZCompensationSteps - Extruder::current->zOffset )
+            if( nCurrentPositionSteps[Z_AXIS] + Extruder::current->zOffset <= g_minZCompensationSteps )
             {
                 // the printer is very close to the surface - we shall print a layer of exactly the desired thickness
                 nNeededZCompensation += g_staticZSteps;
@@ -2905,8 +2907,7 @@ void doHeatBedZCompensation( void )
             else
             {
                 // the printer is already a bit away from the surface - do the actual compensation
-                //Kommentar Nibbels zu "- Extruder::current->zOffset" -> Das ist hier nur die Änderung der Compensations-Limits, keine Höhenänderung! Das Bett wurde bereits bei T0->T1 verfahren.
-                nDeltaZ = g_maxZCompensationSteps - Extruder::current->zOffset - nCurrentPositionSteps[Z_AXIS];
+                nDeltaZ = g_maxZCompensationSteps - (nCurrentPositionSteps[Z_AXIS] + Extruder::current->zOffset);
                 nNeededZCompensation = g_offsetZCompensationSteps + 
                                        (nNeededZCompensation - g_offsetZCompensationSteps) * nDeltaZ / (g_maxZCompensationSteps - g_minZCompensationSteps);
                 nNeededZCompensation += g_staticZSteps;
@@ -3063,7 +3064,13 @@ long getHeatBedOffset( void )
                   (g_ZCompensationMatrix[nXRightIndex][nYBackIndex] - g_ZCompensationMatrix[nXLeftIndex][nYBackIndex]) * nDeltaX / nStepSizeX;
     nOffset     = nTempXFront +
                   (nTempXBack - nTempXFront) * nDeltaY / nStepSizeY;
-    
+
+#if FEATURE_DIGIT_Z_COMPENSATION //For Comments see doHeatBedZCompensation(){}
+    long nNeededDigitZCompensationSteps = abs((long)(g_nDigitZCompensationDigits * (float)Printer::axisStepsPerMM[Z_AXIS])); 
+    nNeededDigitZCompensationSteps >>= 17;
+    nOffset += constrain(nNeededDigitZCompensationSteps, 0, 600);
+#endif // FEATURE_DIGIT_Z_COMPENSATION
+
     return nOffset;
 
 } // getHeatBedOffset
@@ -6020,10 +6027,10 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
         if(g_nSensiblePressureDigits && Printer::doHeatBedZCompensation){ //activate feature with G-Code.
             /* 
             Still testing: Gesucht ist ein Limit des der Abstands zum Druckbett, also die jeweils richtige Layerbegrenzung::
-			
+
             #das Extruder::current->zOffset ist negativ und in Steps. Ist ein Extruder weiter unten, per T1-Offset, muss das bedacht werden.
-			#Die Höhe über Grund, kompensiert sollte unterhalb g_maxZCompensationSteps sein.
-			#queuePositionCurrentSteps = Achsenziel + Achsenoffset, aber g_minZCompensationSteps/g_maxZCompensationSteps kennen das Achsenoffset nicht ohne Hilfe: Das gehört hier her, wenn man die Layerhöhe abgleichen will.
+            #Die Höhe über Grund, kompensiert sollte unterhalb g_maxZCompensationSteps sein.
+            #queuePositionCurrentSteps = Achsenziel + Achsenoffset, aber g_minZCompensationSteps/g_maxZCompensationSteps kennen das Achsenoffset nicht ohne Hilfe: Das gehört hier her, wenn man die Layerhöhe abgleichen will.
             */
             if( Printer::queuePositionCurrentSteps[Z_AXIS] <= g_minZCompensationSteps - Extruder::current->zOffset ) 
             {
@@ -6430,7 +6437,7 @@ void outputObject( void )
         return;
     }
 
-    if( !Printer::isHomed() )
+    if( !Printer::areAxisHomed() )
     {
         // the printer does not know its home position, thus we can not output the object
         if( Printer::debugErrors() )
@@ -6566,7 +6573,7 @@ void pausePrint( void )
         // the printing is not paused at the moment
         if( PrintLine::linesCount )
         {
-            if( !Printer::isHomed() )
+            if( !Printer::areAxisHomed() )
             {
                 // this should never happen
                 if( Printer::debugErrors() )
@@ -7181,7 +7188,7 @@ void processCommand( GCode* pCommand )
                         break;
                     }
 
-                    if( Printer::isHomed() )
+                    if( Printer::areAxisHomed() )
                     {
                         if( g_ZCompensationMatrix[0][0] != EEPROM_FORMAT )
                         {
@@ -8677,7 +8684,7 @@ void processCommand( GCode* pCommand )
                         break;
                     }
 
-                    if( Printer::isHomed() )
+                    if( Printer::areAxisHomed() )
                     {
                         if( g_ZCompensationMatrix[0][0] != EEPROM_FORMAT )
                         {
@@ -10353,7 +10360,6 @@ void processCommand( GCode* pCommand )
             {
                 if( isSupportedMCommand( pCommand->M, OPERATING_MODE_PRINT ) )
                 {
-                    Commands::waitUntilEndOfAllMoves();
                     //Statusänderung per M3909 P10000 (for 10000 [digits])
                     Commands::waitUntilEndOfAllMoves();
                     if (pCommand->hasP() ){                     
@@ -10426,18 +10432,20 @@ void processCommand( GCode* pCommand )
             
             case 3919: // 3919 [S]mikrometer - Testfunction for Dip-Down-Hotend beim T1: Einstellen des extruderspezifischen Z-Offsets
             {
+                /* Eigentlich kann man das mit jedem Extruder machen, aber ich lasse das nur für T1 zu, weil ich nur das testen kann. Der Rechte Extruder kann damit absinken, wenn das Filament ihn runterdrückt. Der Linke bleibt in jedem Fall gleich hoch auf der Höhe des Homings! */
                 if ( pCommand->hasZ() && (pCommand->Z <= 0 && pCommand->Z >= -2.0f) ){
                     if(Printer::debugDryrun()) break;
                     Commands::waitUntilEndOfAllMoves();
                     
                     Extruder *actExtruder = Extruder::current;
-                    if(pCommand->hasT() && pCommand->T < NUM_EXTRUDER) actExtruder = &extruder[pCommand->T];
+                    if(pCommand->hasT() && pCommand->T < NUM_EXTRUDER) actExtruder = &extruder[pCommand->T]; //unter umständen ist actExtruder was anderes wie Extruder::current!
                     if(extruder[1].id == actExtruder->id){ //wenn zielextruder aktuell oder Tn = Extrudernummer 1
                         if(pCommand->Z <= 0 && pCommand->Z >= -2.0f) actExtruder->zOffset = int32_t((float)pCommand->Z * Printer::axisStepsPerMM[Z_AXIS]);
                         //Nur wenn aktuell der extruder mit ID1 aktiv ist, dann sofort nachstellen, ohne T0/T1/... :
                         if(Extruder::current->id == extruder[1].id){
-                            Printer::extruderOffset[Z_AXIS] = -Extruder::current->zOffset*Printer::invAxisStepsPerMM[Z_AXIS];    
-                            Printer::updateCurrentPosition();                            
+                            //Printer::extruderOffset[Z_AXIS] = -Extruder::current->zOffset*Printer::invAxisStepsPerMM[Z_AXIS];    
+                            //Printer::updateCurrentPosition();        ... besser ist es, den zweiten extruder neu auszuwählen:                
+                            Extruder::selectExtruderById(Extruder::current->id);     
                         }
                         Com::printFLN( PSTR( "M3919 T1 Spring displace: " ), actExtruder->zOffset * Printer::invAxisStepsPerMM[Z_AXIS] );
                     }else{
@@ -10930,7 +10938,7 @@ void nextPreviousXAction( int8_t increment )
     }
 
 #if !FEATURE_ALLOW_UNKNOWN_POSITIONS
-    if(!Printer::isHomed())
+    if(!Printer::isAxisHomed(X_AXIS))
     {
         // we do not allow unknown positions and the printer is not homed, thus we do not move
 #if DEBUG_SHOW_DEVELOPMENT_LOGS
@@ -11086,7 +11094,7 @@ void nextPreviousYAction( int8_t increment )
     }
 
 #if !FEATURE_ALLOW_UNKNOWN_POSITIONS
-    if(!Printer::isHomed())
+    if(!Printer::isAxisHomed(Y_AXIS))
     {
         // we do not allow unknown positions and the printer is not homed, thus we do not move
         if( Printer::debugErrors() )
@@ -11232,7 +11240,7 @@ void nextPreviousZAction( int8_t increment )
     }
 
 #if !FEATURE_ALLOW_UNKNOWN_POSITIONS
-    if(!Printer::isHomed())
+    if(!Printer::isAxisHomed(Z_AXIS))
     {
         // we do not allow unknown positions and the printer is not homed, thus we do not move
         if( Printer::debugErrors() )
@@ -11340,7 +11348,7 @@ void nextPreviousZAction( int8_t increment )
             if( increment < 0 && Temp < -Z_OVERRIDE_MAX && Printer::isZMinEndstopHit() )
             {
                 // do not allow to drive the bed into the extruder
-                showError( (void*)ui_text_z_axis, (Printer::isHomed()) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed );
+                showError( (void*)ui_text_z_axis, (Printer::isAxisHomed(Z_AXIS) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed) );
                 break;
             }
             else
@@ -11405,7 +11413,7 @@ void nextPreviousZAction( int8_t increment )
                     Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (min reached)" ) );
                 }
 
-                showError( (void*)ui_text_z_axis, (Printer::isHomed()) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed );
+                showError( (void*)ui_text_z_axis, (Printer::isAxisHomed(Z_AXIS) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed) );
                 return;
             }
 
@@ -11432,14 +11440,14 @@ void nextPreviousZAction( int8_t increment )
                     Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (min reached)" ) );
                 }
 
-                showError( (void*)ui_text_z_axis, (Printer::isHomed()) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed );
+                showError( (void*)ui_text_z_axis, (Printer::isAxisHomed(Z_AXIS) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed) );
                 return;
             }        
-            float currentZmm = Printer::currentZPosition();
+            float currentZmm = (float)Printer::currentZPositionSteps() * Printer::invAxisStepsPerMM[Z_AXIS] ; //z achse bezogen auf Z-Schalter. Scale Z-Min
             Com::printFLN( PSTR( "1mm: " ) , currentZmm , 3 );
             Com::printFLN( PSTR( "increment: " ) , (1.0f-currentZmm) * increment , 3 );
             
-            if(Printer::isHomed() && increment < 0 && currentZmm < 1.0f){
+            if(Printer::isAxisHomed(Z_AXIS) && increment < 0 && currentZmm < 1.0f){
                 if( Printer::operatingMode == OPERATING_MODE_PRINT )
                 {
                     //Nur so weit runterfahren, wie man über 0 ist. Denn da ist beim Printermode homed der Endschalter.
@@ -11467,11 +11475,11 @@ void nextPreviousZAction( int8_t increment )
                     Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (min reached)" ) );
                 }
 
-                showError( (void*)ui_text_z_axis, (Printer::isHomed()) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed );
+                showError( (void*)ui_text_z_axis, (Printer::isAxisHomed(Z_AXIS) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed) );
                 return;
             }
-            float currentZmm = Printer::currentZPosition();
-            if(Printer::isHomed() && increment < 0 && currentZmm < 10.0f){
+            float currentZmm = (float)Printer::currentZPositionSteps() * Printer::invAxisStepsPerMM[Z_AXIS] ; //z achse bezogen auf Z-Schalter. Scale Z-Min
+            if(Printer::isAxisHomed(Z_AXIS) && increment < 0 && currentZmm < 10.0f){
                 if( Printer::operatingMode == OPERATING_MODE_PRINT )
                 {
                     //Nur so weit runterfahren, wie man über 0 ist. Denn da ist beim Printermode homed der Endschalter.
@@ -11498,11 +11506,11 @@ void nextPreviousZAction( int8_t increment )
                     Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (min reached)" ) );
                 }
 
-                showError( (void*)ui_text_z_axis, (Printer::isHomed()) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed );
+                showError( (void*)ui_text_z_axis, (Printer::isAxisHomed(Z_AXIS) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed) );
                 return;
             }
-            float currentZmm = Printer::currentZPosition();
-            if(Printer::isHomed() && increment < 0 && currentZmm < 50.0f){
+            float currentZmm = (float)Printer::currentZPositionSteps() * Printer::invAxisStepsPerMM[Z_AXIS] ; //z achse bezogen auf Z-Schalter. Scale Z-Min
+            if(Printer::isAxisHomed(Z_AXIS) && increment < 0 && currentZmm < 50.0f){
                 if( Printer::operatingMode == OPERATING_MODE_PRINT )
                 {
                     //Nur so weit runterfahren, wie man über 0 ist. Denn da ist beim Printermode homed der Endschalter.

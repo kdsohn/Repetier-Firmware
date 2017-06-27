@@ -53,6 +53,7 @@ volatile long   Printer::queuePositionTargetSteps[4];
 float           Printer::originOffsetMM[3] = {0,0,0};
 uint8_t         Printer::flag0 = 0;
 uint8_t         Printer::flag1 = 0;
+uint8_t         Printer::flag2 = 0;
 
 #if ALLOW_EXTENDED_COMMUNICATION < 2
 uint8_t         Printer::debugLevel = 0; ///< Bitfield defining debug output. 1 = echo, 2 = info, 4 = error, 8 = dry run., 16 = Only communication, 32 = No moves
@@ -413,27 +414,20 @@ void Printer::moveTo(float x,float y,float z,float e,float f)
 */
 void Printer::moveToReal(float x,float y,float z,float e,float f)
 {
-    if(x == IGNORE_COORDINATE)
-        x = queuePositionLastMM[X_AXIS];
-    if(y == IGNORE_COORDINATE)
-        y = queuePositionLastMM[Y_AXIS];
-    if(z == IGNORE_COORDINATE)
-        z = queuePositionLastMM[Z_AXIS];
-
-    queuePositionLastMM[X_AXIS] = x;
-    queuePositionLastMM[Y_AXIS] = y;
-    queuePositionLastMM[Z_AXIS] = z;
+    if(x == IGNORE_COORDINATE)        x = queuePositionLastMM[X_AXIS];
+    else queuePositionLastMM[X_AXIS] = x;
+    if(y == IGNORE_COORDINATE)        y = queuePositionLastMM[Y_AXIS];
+    else queuePositionLastMM[Y_AXIS] = y;
+    if(z == IGNORE_COORDINATE)        z = queuePositionLastMM[Z_AXIS];
+    else queuePositionLastMM[Z_AXIS] = z;
 
     x += Printer::extruderOffset[X_AXIS];
     y += Printer::extruderOffset[Y_AXIS];
     z += Printer::extruderOffset[Z_AXIS];
 
-    if(x != IGNORE_COORDINATE)
-        queuePositionTargetSteps[X_AXIS] = floor(x * axisStepsPerMM[X_AXIS] + 0.5);
-    if(y != IGNORE_COORDINATE)
-        queuePositionTargetSteps[Y_AXIS] = floor(y * axisStepsPerMM[Y_AXIS] + 0.5);
-    if(z != IGNORE_COORDINATE)
-        queuePositionTargetSteps[Z_AXIS] = floor(z * axisStepsPerMM[Z_AXIS] + 0.5);
+    queuePositionTargetSteps[X_AXIS] = static_cast<int32_t>(floor(x * axisStepsPerMM[X_AXIS] + 0.5));
+    queuePositionTargetSteps[Y_AXIS] = static_cast<int32_t>(floor(y * axisStepsPerMM[Y_AXIS] + 0.5));
+    queuePositionTargetSteps[Z_AXIS] = static_cast<int32_t>(floor(z * axisStepsPerMM[Z_AXIS] + 0.5));
     if(e != IGNORE_COORDINATE)
         queuePositionTargetSteps[E_AXIS] = e * axisStepsPerMM[E_AXIS];
     if(f != IGNORE_COORDINATE)
@@ -1486,7 +1480,7 @@ void Printer::homeZAxis()
         directPositionLastSteps[Z_AXIS]    = 0;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
-        setHomed( false );
+        setHomed( false , -1 , -1 , false);
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         g_nZScanZPosition = 0;
@@ -1552,6 +1546,17 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
 #else
     homingOrder = HOMING_ORDER;
 #endif // FEATURE_MILLING_MODE
+    if(operatingMode == OPERATING_MODE_PRINT){
+      if( (!yaxis && zaxis) || ( homingOrder == HOME_ORDER_XZY && homingOrder == HOME_ORDER_ZXY && homingOrder == HOME_ORDER_ZYX ) )
+      {
+       // do not allow homing Z-Only within menu, when the Extruder is configured < 0 and over bed.
+       if( !Printer::isZHomeSafe() && !g_nHeatBedScanStatus ) //beim HBS wird z gehomed wenn was schief geht: g_nHeatBedScanStatus => (45,105,139,105) das düfte nicht passieren, wenn man n glas höher endschalter auf der Heizplatte hat. Hier Y homen wäre saublöd, drum mach ichs nicht. -> Zukunft: Man sollte das Homing aus dem HBS streichen!
+       {
+          homeYAxis(); //bevor die düse gegen das bett knallen könnte, weil positive z-matix oder tipdown-extruder sollte erst y genullt werden: kann das im printermode schädlich sein?
+          //wenn Z genullt wird, sollte auch Y genullt werden dürfen.
+       }
+      }
+    }
 
     switch( homingOrder )
     {
@@ -1638,7 +1643,7 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
     
     moveToReal(startX,startY,startZ,IGNORE_COORDINATE,homingFeedrate[X_AXIS]);
 
-    setHomed(true);
+    setHomed(true, (xaxis?true:-1), (yaxis?true:-1), (zaxis?true:-1) );
     
     if( unlock )
     {
