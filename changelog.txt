@@ -1,6 +1,7 @@
 V RF.01.37p3.TDMod (2017-06-30)
 - Tracing some ZOS-Bug with Filament
 - Cleanup
+- Fixed Bug in SchraubenJustierHelper: Da wurden bei der Abgrenzung mm mit Mikrometer verwechselt.
 
 V RF.01.37p2.TDMod (2017-06-27)
 - Fixed some details within ZOS-Scan
