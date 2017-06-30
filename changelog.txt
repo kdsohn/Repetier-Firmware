@@ -1,3 +1,7 @@
+V RF.01.37p3.TDMod (2017-06-30)
+- Tracing some ZOS-Bug with Filament
+- Cleanup
+
 V RF.01.37p2.TDMod (2017-06-27)
 - Fixed some details within ZOS-Scan
 - Screw-Offset-Helper is now displaying its suggestions to the Printers display

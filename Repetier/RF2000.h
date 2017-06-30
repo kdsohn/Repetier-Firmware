@@ -883,7 +883,7 @@ Overridden if EEPROM activated. */
 /** \brief Number of moves we can cache in advance.
 This number of moves can be cached in advance. If you wan't to cache more, increase this. Especially on
 many very short moves the cache may go empty. The minimum value is 5. */
-#define MOVE_CACHE_SIZE                     16
+#define MOVE_CACHE_SIZE                     15
 
 /** \brief Low filled cache size.
 If the cache contains less then MOVE_CACHE_LOW segments, the time per segment is limited to LOW_TICKS_PER_MOVE clock cycles.
@@ -1032,13 +1032,14 @@ Above this value the z compensation will distribute the roughness of the surface
 #endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
 // configuration for the head bet offset search (M3900 command)
-#define SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA   40                                                                      // [digits]
-#define SEARCH_HEAT_BED_OFFSET_RETRY_PRESSURE_DELTA 30                                                                      // [digits]
-#define SEARCH_HEAT_BED_OFFSET_IDLE_PRESSURE_DELTA  0                                                                       // [digits]
-#define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_INDEX_X    5       // scan position defined by the index of the heat bed matrix, counting from 1
+#define SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA   40                                                                  // [digits]
+#define SEARCH_HEAT_BED_OFFSET_RETRY_PRESSURE_DELTA     30                                                                  // [digits]
+#define SEARCH_HEAT_BED_OFFSET_IDLE_PRESSURE_DELTA      0                                                                   // [digits]
+// scan position defined by the index of the heat bed matrix, counting from 1
+#define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_INDEX_X    5
 #define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_INDEX_Y    5
-#define SEARCH_HEAT_BED_OFFSET_RETRACT_BEFORE_SCAN      EXT0_STEPS_PER_MM/5      // [steps] amount of retract before each slow scanning iteration
-#define SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS          5       // number of scanning iterations
+// number of scanning iterations
+#define SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS          5
     
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
