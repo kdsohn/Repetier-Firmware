@@ -1015,10 +1015,10 @@ Above this value the z compensation will distribute the roughness of the surface
 
 #define HEAT_BED_SCAN_Z_START_STEPS             long(ZAXIS_STEPS_PER_MM * HEAT_BED_SCAN_Z_START_uM / 1000)              // [steps]
 
-#define HEAT_BED_SCAN_UP_FAST_STEPS             long(-ZAXIS_STEPS_PER_MM / 40)                                          // [steps]
-#define HEAT_BED_SCAN_UP_SLOW_STEPS             long(-ZAXIS_STEPS_PER_MM / 250)                                         // [steps]
-#define HEAT_BED_SCAN_DOWN_SLOW_STEPS           long(ZAXIS_STEPS_PER_MM / 80)                                           // [steps]
-#define HEAT_BED_SCAN_DOWN_FAST_STEPS           long(ZAXIS_STEPS_PER_MM / 2)                                            // [steps]
+#define HEAT_BED_SCAN_UP_FAST_STEPS             long(-ZAXIS_STEPS_PER_MM / 40)                                          // [steps] das sind 64
+#define HEAT_BED_SCAN_UP_SLOW_STEPS             long(-RF_MICRO_STEPS*10)                                                // [steps] das sind ca. 4um aber eine gerade Zahl. statt 12,8 oder 10,24 steps
+#define HEAT_BED_SCAN_DOWN_SLOW_STEPS           long(ZAXIS_STEPS_PER_MM / 80)                                           // [steps] das sind 32
+#define HEAT_BED_SCAN_DOWN_FAST_STEPS           long(ZAXIS_STEPS_PER_MM / 2)                                            // [steps] das sind 1280
 #define HEAT_BED_SCAN_FAST_STEP_DELAY_MS        5                                                                       // [ms]
 #define HEAT_BED_SCAN_SLOW_STEP_DELAY_MS        100                                                                     // [ms]
 #define HEAT_BED_SCAN_IDLE_DELAY_MS             250                                                                     // [ms]
