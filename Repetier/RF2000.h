@@ -214,7 +214,7 @@ Overridden if EEPROM activated.*/
 
 /** \brief What type of sensor is used?
 3 is mendel-parts thermistor (EPCOS G550) */
-#define EXT0_TEMPSENSOR_TYPE                14
+#define EXT0_TEMPSENSOR_TYPE                3
 
 /** \brief Analog input pin for reading temperatures or pin enabling SS for MAX6675 */
 #define EXT0_TEMPSENSOR_PIN                 TEMP_0_PIN
@@ -361,7 +361,7 @@ The codes are only executed for multiple extruder when changing the extruder. */
 
 /** \brief What type of sensor is used?
 3 is mendel-parts thermistor (EPCOS G550) */
-#define EXT1_TEMPSENSOR_TYPE                14
+#define EXT1_TEMPSENSOR_TYPE                3
 
 /** \brief Analog input pin for reading temperatures or pin enabling SS for MAX6675 */
 #define EXT1_TEMPSENSOR_PIN                 TEMP_1_PIN
