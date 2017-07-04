@@ -1,3 +1,6 @@
+V RF.01.37p5.TDMod (2017-07-04)
+- Fixed theoretical ZOS error with g_abortZScan, because when it is set by function of ZOS the function of HBS will abort without being active.
+
 V RF.01.37p4.TDMod (2017-06-30)
 - Improved repeating messurements within ZOS when the digits get disturbed somehow (Filament, Vibrations,...). ZOS is now much more robust against moving idle pressures.
 - Test: Round Z-Slow-Steps to even Microsteps.

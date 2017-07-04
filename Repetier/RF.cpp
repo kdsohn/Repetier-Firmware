@@ -1941,7 +1941,7 @@ void searchZOScan( void )
 
                 PrintLine::moveRelativeDistanceInSteps( xScanPosition, yScanPosition, 0, 0, RMath::min(MAX_FEEDRATE_X,MAX_FEEDRATE_Y), true, true );
 
-                // safety check on the current matrix :: Hier gabs mal irgendeinen komischen Fehler... da stand 8 oder 9 in g_ZCompensationMatrix[0][0]
+                // safety check on the current matrix :: Hier gabs mal irgendeinen komischen Fehler... da stand 8 oder 9 in g_ZCompensationMatrix[0][0] -> vermutlich wegen abortscan und dem HBS.
                 if(g_ZCompensationMatrix[0][0] != EEPROM_FORMAT) {
                   Com::printFLN( PSTR( "ZOS(): ERROR::E-FMT changed!" ) );
                   Com::printFLN( PSTR( "ZOS(): AHB:" ), g_nActiveHeatBed );
@@ -1966,7 +1966,6 @@ void searchZOScan( void )
             {
                 HAL::delayMilliseconds( HEAT_BED_SCAN_DELAY );
                 GCode::keepAlive( Processing );
-                g_abortZScan = 0; //reset, it might have been set within readAveragePressure() when jumping back.
                 g_ZOSScanStatus = 9;    
                 break;
             }
@@ -1985,7 +1984,8 @@ void searchZOScan( void )
                     abortSearchHeatBedZOffset(false);
                   }
                   break;
-                }
+                } //egal was readIdlePressure zurückgibt, g_abortZScan könnte 1 sein und muss genullt werden.
+                g_abortZScan = 0;  // will be set in case of error inside moveZUpFast/Slow -> != 0 AFTER RETURN would temper with normal HBS-Scan function @ABORT
 
                 g_nMinPressureContact = g_nCurrentIdlePressure - SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA;
                 g_nMaxPressureContact = g_nCurrentIdlePressure + SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA;
@@ -2019,7 +2019,7 @@ void searchZOScan( void )
                 //Wenn Filament langsam nachgibt, wandert evtl. die Kraft langsam. Hier prüfen, ob idle digits gültig.
                 short   nTempPressure;
                 if( readAveragePressure( &nTempPressure ) ){
-                    if(g_scanRetries > 0) g_abortZScan = 0; //der soll wenn retrys übrig sind nie abbrechen, das g_abortZScan kommt aus readAveragePressure()
+                    if(g_scanRetries > 0) g_abortZScan = 0; //funktion soll wenn retrys übrig sind nie abbrechen, das g_abortZScan kommt aus readAveragePressure() -> hat einfluss auf HBS-Abort!!
                     g_retryZScan = 1;
                 } 
 
@@ -2028,11 +2028,14 @@ void searchZOScan( void )
 
                 short   nTempPressureUp;
                 if( readAveragePressure( &nTempPressureUp ) ){
-                    if(g_scanRetries > 0) g_abortZScan = 0; //der soll wenn retrys übrig sind nie abbrechen, das g_abortZScan kommt aus readAveragePressure()
+                    if(g_scanRetries > 0) g_abortZScan = 0; //funktion soll wenn retrys übrig sind nie abbrechen, das g_abortZScan kommt aus readAveragePressure() -> hat einfluss auf HBS-Abort!!
                     g_retryZScan = 1;
                 } 
 
-                if(abs(nTempPressureUp - nTempPressure) < SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA) g_retryZScan = 1;
+                if(abs(nTempPressureUp - nTempPressure) < SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA){
+                    if(g_scanRetries > 0) g_abortZScan = 0; //funktion soll wenn retrys übrig sind nie abbrechen, das g_abortZScan kommt aus readAveragePressure() -> hat einfluss auf HBS-Abort!!
+                    g_retryZScan = 1;
+                }
 
                 if(g_scanRetries > 0 && g_retryZScan){
                     g_retryZScan = 0;
@@ -2045,6 +2048,7 @@ void searchZOScan( void )
                
                 // check for error
                 if(g_abortZScan) {
+                  g_abortZScan = 0;  // will be set in case of error inside moveZUpFast/Slow -> != 0 AFTER RETURN would temper with normal HBS-Scan function @ABORT
                   Com::printFLN( PSTR( "ZOS(): ERROR::cannot find surface in fast scan" ) );
                   abortSearchHeatBedZOffset(false);
                   break;
@@ -2083,6 +2087,7 @@ void searchZOScan( void )
                       }
                       // check for error
                       if(g_abortZScan) {
+                        g_abortZScan = 0;  // will be set in case of error inside moveZUpFast/Slow -> != 0 AFTER RETURN would temper with normal HBS-Scan function @ABORT
                         Com::printFLN( PSTR( "ZOS(): ERROR::cannot find surface in slow scan" ) );
                         abortSearchHeatBedZOffset(false);
                         prebreak = true; break;
