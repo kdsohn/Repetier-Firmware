@@ -1,3 +1,9 @@
+V RF.01.37p6.TDMod (2017-07-13)
+- Fixed Emergency-Stop to not make watchdog-reset
+- Added Auto-Reset when the printer shows Emergency-Stop (Z-Block) and you press OK or PLAY.
+- You cannot drive X- and Y-Axis out of bounds anymore using Menu "POSITION -> X/Y-Position -> ". This will now show an additional Warning if you aim out of bounds and the printer blocks it.
+- Closing down ZOS-Debugging: ZOS now starts at 1mm Height. (Formerly 0.5mm, but 1mm spacing seems rather ok. 5mm was too high and slow. Spacing <= +12mm technically works god as of 01.37p5)
+
 V RF.01.37p5.TDMod (2017-07-04)
 - Fixed theoretical ZOS error with g_abortZScan, because when it is set by function of ZOS the function of HBS will abort without being active.
 

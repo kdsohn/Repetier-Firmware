@@ -3648,7 +3648,13 @@ void UIDisplay::executeAction(int action)
 {
     if( Printer::blockAll )
     {
-        // do not allow any user inputs when we have been blocked
+        if( action == UI_ACTION_OK || action == UI_ACTION_RF_CONTINUE ){
+			Com::printFLN( PSTR( "Restart after Emergency-Stop" ) );
+            HAL::delayMilliseconds( 100 );
+            Commands::emergencyStop();
+		}
+		 
+		 // do not allow any user inputs when we have been blocked
         return;
     }
 

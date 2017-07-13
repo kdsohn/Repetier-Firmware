@@ -883,7 +883,7 @@ Overridden if EEPROM activated. */
 /** \brief Number of moves we can cache in advance.
 This number of moves can be cached in advance. If you wan't to cache more, increase this. Especially on
 many very short moves the cache may go empty. The minimum value is 5. */
-#define MOVE_CACHE_SIZE                     15
+#define MOVE_CACHE_SIZE                     16
 
 /** \brief Low filled cache size.
 If the cache contains less then MOVE_CACHE_LOW segments, the time per segment is limited to LOW_TICKS_PER_MOVE clock cycles.
@@ -962,8 +962,8 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_Y_CALIBRATION_POINT_MM    100                                                                     // [mm] from the front border of the heat bed
 #define HEAT_BED_SCAN_Y_CALIBRATION_POINT_STEPS long(YAXIS_STEPS_PER_MM * HEAT_BED_SCAN_Y_CALIBRATION_POINT_MM)         // [steps]
 
-//Nibbels: increased from 500 to 5000 in order to avoid problems with Dip-Down-Hotends
-#define HEAT_BED_SCAN_Z_START_uM                5000                                                                    // [um]
+//Nibbels: increased from 500 to 1000 in order to avoid problems with Dip-Down-Hotends
+#define HEAT_BED_SCAN_Z_START_uM                1000                                                                    // [um]
 
 #define HEAT_BED_SCAN_CONTACT_PRESSURE_DELTA    10                                                                      // [digits]
 #define HEAT_BED_SCAN_RETRY_PRESSURE_DELTA      5                                                                       // [digits]

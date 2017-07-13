@@ -11099,17 +11099,29 @@ void nextPreviousXAction( int8_t increment )
         }
         case MOVE_MODE_1_MM:
         {
-            Printer::setDestinationStepsFromMenu( 1 * increment, 0, 0 );
+            long Temp = Printer::directPositionTargetSteps[X_AXIS];
+            Temp += Printer::queuePositionCurrentSteps[X_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
+			Temp += (long)(increment * 1 * Printer::axisStepsPerMM[X_AXIS]);
+			if(Temp <= long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS])) Printer::setDestinationStepsFromMenu( 1 * increment, 0, 0 );
+			else showError( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
             break;
         }
         case MOVE_MODE_10_MM:
         {
-            Printer::setDestinationStepsFromMenu( 10 * increment, 0, 0 );
+            long Temp = Printer::directPositionTargetSteps[X_AXIS];
+            Temp += Printer::queuePositionCurrentSteps[X_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
+			Temp += (long)(increment * 10 * Printer::axisStepsPerMM[X_AXIS]);
+			if(Temp <= long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS])) Printer::setDestinationStepsFromMenu( 10 * increment, 0, 0 );
+			else showError( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
             break;
         }
         case MOVE_MODE_50_MM:
         {
-            Printer::setDestinationStepsFromMenu( 50 * increment, 0, 0 );
+            long Temp = Printer::directPositionTargetSteps[X_AXIS];
+            Temp += Printer::queuePositionCurrentSteps[X_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
+			Temp += (long)(increment * 50 * Printer::axisStepsPerMM[X_AXIS]);
+			if(Temp <= long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS])) Printer::setDestinationStepsFromMenu( 50 * increment, 0, 0 );
+			else showError( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
             break;
         }
     }
@@ -11254,19 +11266,31 @@ void nextPreviousYAction( int8_t increment )
             noInts.unprotect(); //HAL::allowInterrupts();
             break;
         }
-        case MOVE_MODE_1_MM:
+		case MOVE_MODE_1_MM:
         {
-            Printer::setDestinationStepsFromMenu( 0, 1 * increment, 0 );
+            long Temp = Printer::directPositionTargetSteps[Y_AXIS];
+            Temp += Printer::queuePositionCurrentSteps[Y_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
+			Temp += (long)(increment * 1 * Printer::axisStepsPerMM[Y_AXIS]);
+			if(Temp <= long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS])) Printer::setDestinationStepsFromMenu( 0, 1 * increment, 0 );
+			else showError( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
             break;
         }
         case MOVE_MODE_10_MM:
         {
-            Printer::setDestinationStepsFromMenu( 0, 10 * increment, 0 );
+            long Temp = Printer::directPositionTargetSteps[Y_AXIS];
+            Temp += Printer::queuePositionCurrentSteps[Y_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
+			Temp += (long)(increment * 10 * Printer::axisStepsPerMM[Y_AXIS]);
+			if(Temp <= long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS])) Printer::setDestinationStepsFromMenu( 0, 10 * increment, 0 );
+			else showError( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
             break;
         }
         case MOVE_MODE_50_MM:
         {
-            Printer::setDestinationStepsFromMenu( 0, 50 * increment, 0 );
+            long Temp = Printer::directPositionTargetSteps[Y_AXIS];
+            Temp += Printer::queuePositionCurrentSteps[Y_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
+			Temp += (long)(increment * 50 * Printer::axisStepsPerMM[Y_AXIS]);
+			if(Temp <= long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS])) Printer::setDestinationStepsFromMenu( 0, 50 * increment, 0 );
+			else showError( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
             break;
         }
     }
@@ -13987,18 +14011,16 @@ void doEmergencyStop( char reason )
     {
         Com::printFLN( PSTR( " (Z-Block)" ) );
     }
-
-    InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
-    moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
-
+		
     // block any further movement
-    Printer::blockAll                 = 1;
     Printer::stepperDirection[X_AXIS] = 0;
     Printer::stepperDirection[Y_AXIS] = 0;
     Printer::stepperDirection[Z_AXIS] = 0;
-    //Printer::stepperDirection[E_AXIS] = 0; //No: this was out of bounds :) Nibbels
-    noInts.unprotect(); //HAL::allowInterrupts();
-
+    Printer::blockAll                 = 1;
+	
+	moveZ( int(Printer::axisStepsPerMM[Z_AXIS] * 5) );
+    Printer::stepperDirection[Z_AXIS] = 0;	
+   
     // we are not going to perform any further operations until the restart of the firmware
     if( sd.sdmode )
     {

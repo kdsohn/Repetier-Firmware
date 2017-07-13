@@ -386,8 +386,8 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 #if FEATURE_EMERGENCY_STOP_ALL
 
 /** \brief Specifies the pressure at which the emergency z-stop shall be performed, in [digits] */
-#define EMERGENCY_STOP_DIGITS_MIN           -8000
-#define EMERGENCY_STOP_DIGITS_MAX           8000
+#define EMERGENCY_STOP_DIGITS_MIN           -14000
+#define EMERGENCY_STOP_DIGITS_MAX           14000
 
 /** \brief Specifies the interval at which the pressure check shall be performed, in [ms] */
 #define EMERGENCY_STOP_INTERVAL             10
@@ -653,7 +653,7 @@ info pages with next/previous button/click-encoder */
 #define UI_DISABLE_AUTO_PAGESWITCH          true
 
 /** \brief Time to return to info menu if x millisconds no key was pressed. Set to 0 to disable it. */
-#define UI_PRINT_AUTORETURN_TO_MENU_AFTER   30000
+#define UI_PRINT_AUTORETURN_TO_MENU_AFTER   60000
 #define UI_MILL_AUTORETURN_TO_MENU_AFTER    0
 
 /** \brief Normally cou want a next/previous actions with every click of your encoder.
