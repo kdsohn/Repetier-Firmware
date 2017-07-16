@@ -213,6 +213,10 @@ public:
     static unsigned char    g_unlock_movement;
 #endif //FEATURE_UNLOCK_MOVEMENT
 
+#if FEATURE_ZERO_DIGITS
+    static short            g_pressure_offset;
+#endif // FEATURE_ZERO_DIGITS
+
     static inline void setMenuMode(uint8_t mode,bool on)
     {
         if(on)

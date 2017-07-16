@@ -85,6 +85,9 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 /** \brief Specifies if you want to see the pressure digits within the repetier-server/repetier-host temperature message */
 #define FEATURE_PRINT_PRESSURE              1                                                   // 1 = on, 0 = off
 
+/** \brief Specifies if you want to adjust your average pressure to zero digits after homing. This pushes the weight-scale to zero by adding the idle pressure as an offset. */
+#define FEATURE_ZERO_DIGITS                 1
+
 /** \brief Enables/diables the emergency pause in case of too high pressure ... the emergency pause can be turned on only in case the general pause functionality is available */
 #if FEATURE_PAUSE_PRINTING
 
@@ -254,7 +257,7 @@ with a dry run, you can test the speed of path computations, which are still per
 /** \brief Writes the free RAM to output, if it is less then at the last test. Should always return
 values >500 for safety, since it doesn't catch every function call. Nice to tweak cache
 usage or for seraching for memory induced errors. Switch it off for production, it costs execution time. */
-#define DEBUG_FREE_MEMORY
+//#define DEBUG_FREE_MEMORY
 
 #ifdef DEBUG_FREE_MEMORY
 #define DEBUG_MEMORY                        Commands::checkFreeMemory();

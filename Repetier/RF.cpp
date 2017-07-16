@@ -343,7 +343,14 @@ short readStrainGauge( unsigned char uAddress ) //readStrainGauge dauert etwas u
     Register = Wire.read();
     (void)Register; //Nibbels: Tut so als würde die variable benutzt werden. Macht aber nix.
     Wire.endTransmission();
+	
+#if FEATURE_ZERO_DIGITS
+	if(-27768 < Result && Result < 27767){
+		Result -= Printer::g_pressure_offset; //no overflow possible: pressure_offset ist 5000 max.
+	}
+#endif // FEATURE_ZERO_DIGITS
 
+	
 /* brief: This is for correcting sinking hotends at high digit values because of DMS-Sensor by Nibbels  */
 #if FEATURE_DIGIT_Z_COMPENSATION
     static long nSensibleCompensationSum    = 0;
