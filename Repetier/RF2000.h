@@ -883,7 +883,7 @@ Overridden if EEPROM activated. */
 /** \brief Number of moves we can cache in advance.
 This number of moves can be cached in advance. If you wan't to cache more, increase this. Especially on
 many very short moves the cache may go empty. The minimum value is 5. */
-#define MOVE_CACHE_SIZE                     16
+#define MOVE_CACHE_SIZE                     15
 
 /** \brief Low filled cache size.
 If the cache contains less then MOVE_CACHE_LOW segments, the time per segment is limited to LOW_TICKS_PER_MOVE clock cycles.
