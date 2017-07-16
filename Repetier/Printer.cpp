@@ -212,6 +212,10 @@ unsigned char   Printer::wrongType;
 unsigned char   Printer::g_unlock_movement = 0;
 #endif //FEATURE_UNLOCK_MOVEMENT
 
+#if FEATURE_ZERO_DIGITS
+short   Printer::g_pressure_offset = 0;
+#endif // FEATURE_ZERO_DIGITS
+
 void Printer::constrainQueueDestinationCoords()
 {
     if(isNoDestinationCheck()) return;
@@ -1251,16 +1255,16 @@ void Printer::defaultLoopActions()
     UI_MEDIUM; // do check encoder
     millis_t curtime = HAL::timeInMilliseconds();
 
-    if(PrintLine::hasLines())
+    if( PrintLine::hasLines() )
     {
         previousMillisCmd = curtime;
     }
     else
     {
         curtime -= previousMillisCmd;
-        if(maxInactiveTime!=0 && curtime > maxInactiveTime ) Printer::kill(false);
+        if( maxInactiveTime!=0 && curtime > maxInactiveTime ) Printer::kill(false);
         else Printer::setAllKilled(false); // prevent repeated kills
-        if(stepperInactiveTime!=0 && curtime >  stepperInactiveTime )
+        if( stepperInactiveTime!=0 && curtime > stepperInactiveTime )
         {
             Printer::kill(true);
         }
@@ -1645,6 +1649,24 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
 
     setHomed(true, (xaxis?true:-1), (yaxis?true:-1), (zaxis?true:-1) );
     
+#if FEATURE_ZERO_DIGITS
+	short   nTempPressure = 0;
+	if(xaxis && yaxis && zaxis){ //only adjust pressure if you do a full homing.
+		Printer::g_pressure_offset = 0; //prevent to messure already adjusted offset -> without = 0 this would only iterate some bad values.
+		if( !readAveragePressure( &nTempPressure ) ){
+			if(-5000 < nTempPressure && nTempPressure < 5000){
+				Com::printFLN( PSTR( "ZERO_DIGITS: New Offset " ), nTempPressure );
+				Printer::g_pressure_offset = nTempPressure;
+			}else{
+				//those high values shouldnt happen! fix your machine... DONT ZEROSCALE DIGITS
+				Com::printFLN( PSTR( "ZERO_DIGITS: FAILED with " ), nTempPressure );
+			}
+		} else{
+			Com::printFLN( PSTR( "ZERO_DIGITS: FAILED Reading " ) );
+		}
+	}
+#endif // FEATURE_ZERO_DIGITS
+
     if( unlock )
     {
         uid.unlock();
