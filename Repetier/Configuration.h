@@ -615,9 +615,9 @@ instead of driving both with a single stepper. The same works for the other axis
 #if FEATURE_EXTENDED_BUTTONS
 
 /** \brief Configuration of the manual steps */
-#define DEFAULT_MANUAL_STEPS_X              (RF_MICRO_STEPS *2)
+#define DEFAULT_MANUAL_STEPS_X              (XAXIS_STEPS_PER_MM /20)
 #define MAXIMAL_MANUAL_STEPS_X              (XAXIS_STEPS_PER_MM *10)
-#define DEFAULT_MANUAL_STEPS_Y              (RF_MICRO_STEPS *2)
+#define DEFAULT_MANUAL_STEPS_Y              (XAXIS_STEPS_PER_MM /20)
 #define MAXIMAL_MANUAL_STEPS_Y              (YAXIS_STEPS_PER_MM *10)
 #define DEFAULT_MANUAL_STEPS_Z              (RF_MICRO_STEPS *2)
 #define MAXIMAL_MANUAL_STEPS_Z              (ZAXIS_STEPS_PER_MM *10)
