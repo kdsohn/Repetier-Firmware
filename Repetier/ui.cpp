@@ -4813,35 +4813,35 @@ void UIDisplay::mediumAction()
 
 void UIDisplay::slowAction()
 {
-    unsigned long   time    = HAL::timeInMilliseconds();
-    uint8_t         refresh = 0;
+    millis_t  time    = HAL::timeInMilliseconds();
+    uint8_t   refresh = 0;
 
 
 #if UI_HAS_KEYS==1
     // Update key buffer
     InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
-    if((flags & 9)==0)
+    if( (flags & (UI_FLAG_FAST_KEY_ACTION + UI_FLAG_KEY_TEST_RUNNING)) == 0 )
     {
         flags|=UI_FLAG_KEY_TEST_RUNNING;
-        noInts.unprotect(); //HAL::allowInterrupts();
 
-        int nextAction = 0;
-        ui_check_slow_keys(nextAction);  //Nibbels: Das macht garnix.
-        if(lastButtonAction!=nextAction)
-        {
-            lastButtonStart = time;
-            lastButtonAction = nextAction;
-            noInts.protect(); //HAL::forbidInterrupts();
-            flags|=UI_FLAG_SLOW_KEY_ACTION;
-        }else{
-            noInts.protect(); //HAL::forbidInterrupts();
-        }
-        flags-=UI_FLAG_KEY_TEST_RUNNING;
-    }else{
-      noInts.protect(); //HAL::forbidInterrupts();
+            noInts.unprotect(); //HAL::allowInterrupts();
+
+            int16_t nextAction = 0;
+            ui_check_slow_keys(nextAction);  //Nibbels: Das macht garnix.
+            if(lastButtonAction!=nextAction)
+            {
+                lastButtonStart = time;
+                lastButtonAction = nextAction;
+                noInts.protect(); //HAL::forbidInterrupts();
+                flags|=UI_FLAG_SLOW_KEY_ACTION;
+            }else{
+                noInts.protect(); //HAL::forbidInterrupts();
+            }
+
+        flags &= ~UI_FLAG_KEY_TEST_RUNNING;
     }
 
-    if((flags & UI_FLAG_SLOW_ACTION_RUNNING)==0)
+    if( (flags & UI_FLAG_SLOW_ACTION_RUNNING) == 0 )
     {
         flags |= UI_FLAG_SLOW_ACTION_RUNNING;
         
@@ -4887,7 +4887,7 @@ void UIDisplay::slowAction()
             }
         }
         noInts.protect(); //HAL::forbidInterrupts();
-        flags -= UI_FLAG_SLOW_ACTION_RUNNING;
+        flags &= ~UI_FLAG_SLOW_ACTION_RUNNING;
     }
     noInts.unprotect(); //HAL::allowInterrupts();
 #endif // UI_HAS_KEYS==1
@@ -4954,37 +4954,35 @@ void UIDisplay::fastAction()
     // Check keys
     InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
 
-    if((flags & 10)==0)
+    if( (flags & (UI_FLAG_KEY_TEST_RUNNING + UI_FLAG_SLOW_KEY_ACTION)) == 0 )
     {
         flags |= UI_FLAG_KEY_TEST_RUNNING;
-        noInts.unprotect(); //HAL::allowInterrupts();
-        int nextAction = 0;
-        ui_check_keys(nextAction);
 
-        if(lastButtonAction!=nextAction)
-        {
-            lastButtonStart = HAL::timeInMilliseconds();
-            lastButtonAction = nextAction;
-            noInts.protect(); //HAL::forbidInterrupts();
-            flags|=UI_FLAG_FAST_KEY_ACTION;
-            if( nextAction == UI_ACTION_RF_CONTINUE )
-            {
-                g_nContinueButtonPressed = 1;
-            }
-        }
+            int16_t nextAction = 0;
+            ui_check_keys(nextAction);
 
-        if(!nextAction)
-        {
-            // no key is pressed at the moment
-            if(PrintLine::direct.task == TASK_MOVE_FROM_BUTTON)
+            if(lastButtonAction!=nextAction)
             {
-                // the current direct movement has been started via a hardware or menu button - these movements shall be stopped as soon as the button is released
-                PrintLine::stopDirectMove();
+                lastButtonStart = HAL::timeInMilliseconds();
+                lastButtonAction = nextAction;
+                flags |= UI_FLAG_FAST_KEY_ACTION;
+                if( nextAction == UI_ACTION_RF_CONTINUE )
+                {
+                    g_nContinueButtonPressed = 1;
+                }
             }
-        }
-  
-        noInts.protect(); //HAL::forbidInterrupts();
-        flags-=UI_FLAG_KEY_TEST_RUNNING;
+
+            if(!nextAction)
+            {
+                // no key is pressed at the moment
+                if(PrintLine::direct.task == TASK_MOVE_FROM_BUTTON)
+                {
+                    // the current direct movement has been started via a hardware or menu button - these movements shall be stopped as soon as the button is released
+                    PrintLine::stopDirectMove();
+                }
+            }  
+
+        flags &= ~UI_FLAG_KEY_TEST_RUNNING;
     }
     noInts.unprotect(); //HAL::allowInterrupts();
 #endif //  UI_HAS_KEYS==1

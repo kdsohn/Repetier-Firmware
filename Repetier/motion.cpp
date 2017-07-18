@@ -314,9 +314,8 @@ void PrintLine::prepareDirectMove(void)
 } // prepareDirectMove
 
 
-void PrintLine::stopDirectMove( void )
+void PrintLine::stopDirectMove( void ) //Funktion ist bereits zur ausführzeit von InterruptProtectedBlock eingeschlossen!
 {
-    InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
     if( PrintLine::direct.isXYZMove() )
     {
         // decelerate and stop
@@ -325,7 +324,6 @@ void PrintLine::stopDirectMove( void )
             PrintLine::direct.stepsRemaining = RF_MICRO_STEPS;
         }
     }
-    //HAL::allowInterrupts();
     return;
 } // stopDirectMove
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING

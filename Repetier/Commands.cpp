@@ -68,6 +68,8 @@ void Commands::commandLoop()
 
 void Commands::checkForPeriodicalActions()
 {
+    bool buttonactive = ((HAL::timeInMilliseconds() - uid.lastButtonStart < 5000) ? true : false);
+
     if(execute10msPeriodical){ //set by PWM-Timer
       execute10msPeriodical=0;
 
@@ -77,8 +79,8 @@ void Commands::checkForPeriodicalActions()
     }
 
     if(execute16msPeriodical){ //set by internal Watchdog-Timer
-      execute16msPeriodical = 0;
-
+       execute16msPeriodical = 0;
+       if(buttonactive) UI_SLOW;
 
     }
 
@@ -87,8 +89,8 @@ void Commands::checkForPeriodicalActions()
 
       loopRF();
 
-      UI_SLOW;
-	  
+      if(!buttonactive) UI_SLOW;
+
       Extruder::manageTemperatures();
       Commands::printTemperatures(); //selfcontrolling timediff
 
