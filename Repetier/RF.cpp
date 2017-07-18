@@ -10629,7 +10629,7 @@ void processCommand( GCode* pCommand )
                 break;
             }
 #endif // RESERVE_ANALOG_INPUTS
-        }       
+        }
     }
 
     return;

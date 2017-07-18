@@ -68,8 +68,6 @@ void Commands::commandLoop()
 
 void Commands::checkForPeriodicalActions()
 {
-    bool didchecktemps = false;
-
     if(execute10msPeriodical){ //set by PWM-Timer
       execute10msPeriodical=0;
 
@@ -81,17 +79,18 @@ void Commands::checkForPeriodicalActions()
     if(execute16msPeriodical){ //set by internal Watchdog-Timer
       execute16msPeriodical = 0;
 
-      Extruder::manageTemperatures(); didchecktemps = true;
 
     }
 
     if(execute100msPeriodical){ //set by PWM-Timer
       execute100msPeriodical=0;
 
-      if(!didchecktemps) Extruder::manageTemperatures(); //fallback? bin übervorsichtig..
-      Commands::printTemperatures(); //selfcontrolling timediff
-      UI_SLOW;
       loopRF();
+
+      UI_SLOW;
+	  
+      Extruder::manageTemperatures();
+      Commands::printTemperatures(); //selfcontrolling timediff
 
     }
 } // checkForPeriodicalActions
@@ -315,7 +314,7 @@ void Commands::printTemperatures(bool showRaw)
         Com::printF(Com::tColon,(int)g_nLastDigits);
     #endif //FEATURE_PRINT_PRESSURE
 
-        Com::printF(Com::tSpaceAtColon,maCoLo);
+        //Com::printF(Com::tSpaceAtColon,maCoLo);
 
         Com::println();
     }
@@ -1271,14 +1270,17 @@ void Commands::executeGCode(GCode *com)
             {
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
-#if defined(TEMP_PID) && NUM_TEMPERATURE_LOOPS>0
-                    int temp = 150;
-                    int cont = 0;
-                    if(com->hasS()) temp = com->S;
-                    if(com->hasP()) cont = com->P;
-                    if(cont>=NUM_TEMPERATURE_LOOPS) cont = NUM_TEMPERATURE_LOOPS;
-                    tempController[cont]->autotunePID(temp,cont,com->hasX());
-#endif // defined(TEMP_PID) && NUM_TEMPERATURE_LOOPS>0
+#if defined(TEMP_PID) && NUM_TEMPERATURE_LOOPS > 0
+                int temp = 150;
+                int cont = 0;
+                int cycles = 8;
+                if(com->hasS()) temp = com->S;
+                if(com->hasP()) cont = com->P;
+                if(com->hasR()) cycles = static_cast<int>(com->R);
+                if(cont >= NUM_TEMPERATURE_LOOPS) cont = NUM_TEMPERATURE_LOOPS;
+                if(cont < 0) cont = 0;
+                tempController[cont]->autotunePID(temp,cont,cycles,com->hasX());
+#endif // defined(TEMP_PID) && NUM_TEMPERATURE_LOOPS > 0
                 }
                 break;
             }

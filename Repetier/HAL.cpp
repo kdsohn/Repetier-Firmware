@@ -23,10 +23,12 @@
 #if FEATURE_WATCHDOG
 unsigned long g_uLastCommandLoop = 0;
 unsigned char g_bPingWatchdog    = 0;
+/*
 unsigned long maT = 0;
 unsigned long miT = 2147483864;
 unsigned long laT = 0;
 unsigned long maCoLo = 0;
+*/
 #endif // FEATURE_WATCHDOG
 
 
@@ -737,6 +739,7 @@ ISR(WDT_vect)
     
     execute16msPeriodical = 1; //Tell commandloop that 16ms have passed 
 
+	/*
 	unsigned long T = HAL::timeInMilliseconds();
 	if(laT > 0) {
 		unsigned long diff = T - laT;
@@ -745,7 +748,7 @@ ISR(WDT_vect)
 		diff = T - g_uLastCommandLoop;
 		if(diff > maCoLo) maCoLo = diff;
 	}
-	laT = T;
+	laT = T;*/
 }
 
 // ================== Interrupt handling ======================

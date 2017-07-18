@@ -1,3 +1,11 @@
+TODO: Pause-Back-Drive-Bug in original RF1.37
+TODO: Possible Z-Lift Bug in original RF1.37
+TODO: Store some settings within Flash.
+
+V RF.01.37q2.TDMod (2017-07-13)
+- Upgrading PID Code to original repetier/Repetier :: added max-cycles
+- Removed debug-watchdog-time-counter
+
 V RF.01.37q.TDMod (2017-07-13)
 - Implemented "Feature Zero Digits". When you home all Axes, the digits are messured and written to the digits offset. Then we see very little digits while printing. That should make them more comparable.
 - Disabled FREE-RAM debugging (to not waste calculate power anymore on this)

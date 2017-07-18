@@ -74,7 +74,7 @@ public:
     inline void setAlarm(bool on) {if(on) flags |= TEMPERATURE_CONTROLLER_FLAG_ALARM; else flags &= ~TEMPERATURE_CONTROLLER_FLAG_ALARM;}
 
 #ifdef TEMP_PID
-    void autotunePID(float temp,uint8_t controllerId,bool storeResult);
+    void autotunePID(float temp,uint8_t controllerId,int maxCycles,bool storeResult);
 #endif // TEMP_PID
 
 }; // TemperatureController

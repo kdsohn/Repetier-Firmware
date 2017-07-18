@@ -66,6 +66,7 @@ void Extruder::manageTemperatures()
 #endif // FEATURE_MILLING_MODE
 
     uint8_t errorDetected = 0;
+
     for(uint8_t controller=0; controller<NUM_TEMPERATURE_LOOPS; controller++)
     {
         TemperatureController *act = tempController[controller];
@@ -122,17 +123,24 @@ void Extruder::manageTemperatures()
             uint8_t output;
             float error = act->targetTemperatureC - act->currentTemperatureC;
 
-            if(act->targetTemperatureC<20.0f) output = 0; // off is off, even if damping term wants a heat peak!
-            else if(error>PID_CONTROL_RANGE)
+            if( act->targetTemperatureC < 20.0f )
+            {
+                output = 0; // off is off, even if damping term wants a heat peak!
+            } 
+            else if( error > PID_CONTROL_RANGE )
+            {
                 output = act->pidMax;
-            else if(error<-PID_CONTROL_RANGE)
+            }
+            else if( error < -PID_CONTROL_RANGE )
+            {
                 output = 0;
+            }
             else
             {
                 float pidTerm = act->pidPGain * error;
-                act->tempIState = constrain(act->tempIState+error,act->tempIStateLimitMin,act->tempIStateLimitMax);
-                pidTerm += act->pidIGain * act->tempIState*0.1;
-                float dgain = act->pidDGain * (act->tempArray[act->tempPointer]-act->currentTemperatureC)*3.333f;
+                act->tempIState = constrain(act->tempIState + error, act->tempIStateLimitMin, act->tempIStateLimitMax);
+                pidTerm += act->pidIGain * act->tempIState * 0.1;  // 0.1 = 10Hz
+                float dgain = act->pidDGain * (act->tempArray[act->tempPointer]-act->currentTemperatureC)*3.333f; // raising dT/dt, 3.33 = reciproke of time interval (300 ms) -> Nibbels ??? das sind aber doch 100ms...
                 pidTerm += dgain;
 
 #if SCALE_PID_TO_MAX==1
@@ -149,12 +157,18 @@ void Extruder::manageTemperatures()
             float error  = act->targetTemperatureC - act->currentTemperatureC;
             float target = act->targetTemperatureC;
 
-            if(act->targetTemperatureC<20.0f)
+            if( act->targetTemperatureC < 20.0f )
+			{
                 output = 0; // off is off, even if damping term wants a heat peak!
-            else if(error>PID_CONTROL_RANGE)
+			}
+            else if( error > PID_CONTROL_RANGE )
+			{
                 output = act->pidMax;
-            else if(error < -PID_CONTROL_RANGE)
+			}
+            else if( error < -PID_CONTROL_RANGE )
+			{
                 output = 0;
+			}
             else
             {
                 float raising = 3.333 * (act->currentTemperatureC - act->tempArray[act->tempPointer]); // raising dT/dt, 3.33 = reciproke of time interval (300 ms)
@@ -1263,7 +1277,7 @@ void Extruder::disableAllHeater()
 
 
 #ifdef TEMP_PID
-void TemperatureController::autotunePID(float temp,uint8_t controllerId,bool storeValues)
+void TemperatureController::autotunePID(float temp,uint8_t controllerId,int maxCycles,bool storeValues)
 {
     float currentTemp;
     int cycles=0;
@@ -1278,20 +1292,13 @@ void TemperatureController::autotunePID(float temp,uint8_t controllerId,bool sto
     int32_t bias=pidMax>>1;
     int32_t d = pidMax>>1;
     float Ku, Tu;
-    float Kp, Ki, Kd;
-    /*warning wegen uninitialised KP KI KD*/
-    //to remove the warning, I fill those with at least somehow plausible data (V2 Standard Values)
-    Kp = HT2_PID_P;
-    Ki = HT2_PID_I;
-    Kd = HT2_PID_D;
-
-    
-    float maxTemp=20, minTemp=20;
-
-    if( Printer::debugInfo() )
-    {
-        Com::printInfoFLN(Com::tPIDAutotuneStart);
-    }
+    float Kp = 0, Ki = 0, Kd = 0;
+    float maxTemp=20, minTemp=20; 
+	if(maxCycles < 5)
+        maxCycles = 5;
+    if(maxCycles > 20)
+        maxCycles = 20;
+    Com::printInfoFLN(Com::tPIDAutotuneStart);
 
     //Extruder::disableAllHeater(); // switch off all heaters. https://github.com/repetier/Repetier-Firmware/commit/241c550ac004023842d6886c6e0db15a1f6b56d7
     autotuneIndex = controllerId;
@@ -1309,17 +1316,17 @@ void TemperatureController::autotunePID(float temp,uint8_t controllerId,bool sto
         updateCurrentTemperature();
         currentTemp = currentTemperatureC;
 
-        unsigned long time = HAL::timeInMilliseconds();
+        millis_t time = HAL::timeInMilliseconds();
         maxTemp=RMath::max(maxTemp,currentTemp);
         minTemp=RMath::min(minTemp,currentTemp);
         if(heating == true && currentTemp > temp)   // switch heating -> off
         {
             if(time - t2 > (controllerId<NUM_EXTRUDER ? 2500 : 1500))
             {
-                heating=false;
+                heating = false;
                 pwm_pos[pwmIndex] = (bias - d);
-                t1=time;
-                t_high=t1 - t2;
+                t1 = time;
+                t_high = t1 - t2;
                 maxTemp=temp;
             }
         }
@@ -1327,47 +1334,34 @@ void TemperatureController::autotunePID(float temp,uint8_t controllerId,bool sto
         {
             if(time - t1 > (controllerId<NUM_EXTRUDER ? 5000 : 3000))
             {
-                heating=true;
-                t2=time;
-                t_low=t2 - t1; // half wave length
+                heating = true;
+                t2 = time;
+                t_low = t2 - t1; // half wave length
                 if(cycles > 0)
                 {
                     bias += (d*(t_high - t_low))/(t_low + t_high);
-                    bias = constrain(bias, 20 ,pidMax-20);
+                    bias = constrain(bias, 20 ,pidMax - 20);
                     if(bias > pidMax/2) d = pidMax - 1 - bias;
                     else d = bias;
 
-                    if( Printer::debugInfo() )
-                    {
-                        Com::printF(Com::tAPIDBias,bias);
-                        Com::printF(Com::tAPIDD,d);
-                        Com::printF(Com::tAPIDMin,minTemp);
-                        Com::printFLN(Com::tAPIDMax,maxTemp);
-                    }
-
+                    Com::printF(Com::tAPIDBias,bias);
+                    Com::printF(Com::tAPIDD,d);
+                    Com::printF(Com::tAPIDMin,minTemp);
+                    Com::printFLN(Com::tAPIDMax,maxTemp);
                     if(cycles > 2)
                     {
                         // Parameter according Ziegler¡§CNichols method: http://en.wikipedia.org/wiki/Ziegler%E2%80%93Nichols_method
-                        Ku = (4.0*d)/(3.14159*(maxTemp-minTemp));
+                        Ku = (4.0 * d)/(3.14159*(maxTemp-minTemp));
                         Tu = ((float)(t_low + t_high)/1000.0);
-
-                        if( Printer::debugInfo() )
-                        {
-                            Com::printF(Com::tAPIDKu,Ku);
-                            Com::printFLN(Com::tAPIDTu,Tu);
-                        }
-
+                        Com::printF(Com::tAPIDKu,Ku);
+                        Com::printFLN(Com::tAPIDTu,Tu);
                         Kp = 0.6*Ku;
                         Ki = 2*Kp/Tu;
                         Kd = Kp*Tu*0.125;
-
-                        if( Printer::debugInfo() )
-                        {
-                            Com::printFLN(Com::tAPIDClassic);
-                            Com::printFLN(Com::tAPIDKp,Kp);
-                            Com::printFLN(Com::tAPIDKi,Ki);
-                            Com::printFLN(Com::tAPIDKd,Kd);
-                        }
+                        Com::printFLN(Com::tAPIDClassic);
+                        Com::printFLN(Com::tAPIDKp,Kp);
+                        Com::printFLN(Com::tAPIDKi,Ki);
+                        Com::printFLN(Com::tAPIDKd,Kd);
                     }
                 }
                 pwm_pos[pwmIndex] = (bias + d);
@@ -1377,11 +1371,7 @@ void TemperatureController::autotunePID(float temp,uint8_t controllerId,bool sto
         }
         if(currentTemp > (temp + 40))
         {
-            if( Printer::debugErrors() )
-            {
-                Com::printErrorFLN(Com::tAPIDFailedHigh);
-            }
-
+            Com::printErrorFLN(Com::tAPIDFailedHigh);
             showError( (void*)ui_text_autodetect_pid, (void*)ui_text_temperature_wrong );
             //Extruder::disableAllHeater();
             autotuneIndex = 255;
@@ -1392,24 +1382,16 @@ void TemperatureController::autotunePID(float temp,uint8_t controllerId,bool sto
         
         if(((time - t1) + (time - t2)) > (10L*60L*1000L*2L))   // 20 Minutes
         {
-            if( Printer::debugErrors() )
-            {
-                Com::printErrorFLN(Com::tAPIDFailedTimeout);
-            }
+            Com::printErrorFLN(Com::tAPIDFailedTimeout);
             //Extruder::disableAllHeater();
             autotuneIndex = 255;
             showError( (void*)ui_text_autodetect_pid, (void*)ui_text_timeout );
             return;
         }
-        if(cycles > 5)
+        if(cycles > maxCycles)
         {
-            if( Printer::debugInfo() )
-            {
-                Com::printInfoFLN(Com::tAPIDFinished);
-            }
-
+            Com::printInfoFLN(Com::tAPIDFinished);
             UI_STATUS_UPD( UI_TEXT_AUTODETECT_PID_DONE );
-
             //Extruder::disableAllHeater();
             autotuneIndex = 255;
             if(storeValues)
@@ -1417,7 +1399,7 @@ void TemperatureController::autotunePID(float temp,uint8_t controllerId,bool sto
                 pidPGain = Kp;
                 pidIGain = Ki;
                 pidDGain = Kd;
-                heatManager = 1;
+                heatManager = 1; //HTR_PID / activate PID MANAGER
                 EEPROM::storeDataIntoEEPROM();
             }
             return;

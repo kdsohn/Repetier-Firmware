@@ -60,11 +60,12 @@ All known arduino boards use 64. This value is needed for the extruder timing. *
 #if FEATURE_WATCHDOG
 extern  unsigned char g_bPingWatchdog;
 extern  unsigned long g_uLastCommandLoop;
-
+/*
 extern unsigned long maT;
 extern unsigned long miT;
 extern unsigned long laT;
 extern unsigned long maCoLo;
+*/
 #endif // FEATURE_WATCHDOG
 
 // #define BEGIN_INTERRUPT_PROTECTED {uint8_t sreg=SREG;__asm volatile( "cli" ::: "memory" );
