@@ -2,6 +2,10 @@ TODO: Pause-Back-Drive-Bug in original RF1.37
 TODO: Possible Z-Lift Bug in original RF1.37
 TODO: Store some settings within Flash.
 
+V RF.01.37q3.TDMod (2017-07-13)
+- Upgrading PID Code support AutoTune with two additional presents: 2="No Overshoot" and 1="Some Overshoot". Use M303 with J[0..2]. Default is 0 and this means ClassicPID which was standard in all previous firmware versions.
+- I switched the calculation of PID drive min to Minus. This should finally enable the real PID control - fix it!
+
 V RF.01.37q2.TDMod (2017-07-13)
 - Upgrading PID Code to original repetier/Repetier :: added max-cycles
 - Removed debug-watchdog-time-counter

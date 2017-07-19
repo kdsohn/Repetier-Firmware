@@ -68,7 +68,7 @@ void Commands::commandLoop()
 
 void Commands::checkForPeriodicalActions()
 {
-    bool buttonactive = ((HAL::timeInMilliseconds() - uid.lastButtonStart < 5000) ? true : false);
+    bool buttonactive = ((HAL::timeInMilliseconds() - uid.lastButtonStart < 15000) ? true : false);
 
     if(execute10msPeriodical){ //set by PWM-Timer
       execute10msPeriodical=0;
@@ -1276,12 +1276,19 @@ void Commands::executeGCode(GCode *com)
                 int temp = 150;
                 int cont = 0;
                 int cycles = 8;
-                if(com->hasS()) temp = com->S;
+                int overshoot_present = 0; //0 = Classic PID
+                if(com->hasS()) temp = com->S; //Verwechsle ich immer, weil T wie Temperatur, aber T ist 0..255
                 if(com->hasP()) cont = com->P;
+                if(com->hasJ()){
+                    switch((char)com->J){
+                       case 2: overshoot_present = 2; break; //2 = No Overshoot.
+                       case 1: overshoot_present = 1; break; //1 = Some Overshoot
+                    }                                        //0 = Classic PID
+                }
                 if(com->hasR()) cycles = static_cast<int>(com->R);
                 if(cont >= NUM_TEMPERATURE_LOOPS) cont = NUM_TEMPERATURE_LOOPS;
                 if(cont < 0) cont = 0;
-                tempController[cont]->autotunePID(temp,cont,cycles,com->hasX());
+                tempController[cont]->autotunePID(temp,cont,cycles,com->hasX(),overshoot_present);
 #endif // defined(TEMP_PID) && NUM_TEMPERATURE_LOOPS > 0
                 }
                 break;

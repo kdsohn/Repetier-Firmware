@@ -117,7 +117,7 @@ void Extruder::manageTemperatures()
 
 #ifdef TEMP_PID
         act->tempArray[act->tempPointer++] = act->currentTemperatureC;
-        act->tempPointer &= 3;
+        act->tempPointer &= 3; //springe von 4 = 100 auf 0 zurück, wenn 4.
         if(act->heatManager == 1)
         {
             uint8_t output;
@@ -137,10 +137,14 @@ void Extruder::manageTemperatures()
             }
             else
             {
-                float pidTerm = act->pidPGain * error;
+                float pidTerm = 0;
+
+                float pgain = act->pidPGain * error;
+                pidTerm += pgain;
                 act->tempIState = constrain(act->tempIState + error, act->tempIStateLimitMin, act->tempIStateLimitMax);
-                pidTerm += act->pidIGain * act->tempIState * 0.1;  // 0.1 = 10Hz
-                float dgain = act->pidDGain * (act->tempArray[act->tempPointer]-act->currentTemperatureC)*3.333f; // raising dT/dt, 3.33 = reciproke of time interval (300 ms) -> Nibbels ??? das sind aber doch 100ms...
+                float igain = act->pidIGain * act->tempIState * 0.1;  // 0.1 = 10Hz
+                pidTerm += igain;
+                float dgain = act->pidDGain * (act->tempArray[act->tempPointer] - act->currentTemperatureC)*3.333f; // raising dT/dt, 3.33 = reciproke of time interval (300 ms) -> temparray greift weiter zurück als letzte messung.
                 pidTerm += dgain;
 
 #if SCALE_PID_TO_MAX==1
@@ -148,6 +152,20 @@ void Extruder::manageTemperatures()
 #endif // SCALE_PID_TO_MAX==1
 
                 output = constrain((int)pidTerm, 0, act->pidMax);
+/*
+                Com::printF( PSTR( " err:" ), error,5  );
+                Com::printF( PSTR( " IMin:" ), act->tempIStateLimitMin,5 );
+                Com::printF( PSTR( " IMax:" ), act->tempIStateLimitMax,5  );
+                Com::printF( PSTR( " I:" ), act->tempIState,5  );
+                Com::printF( PSTR( " KP:" ), act->pidPGain,5  );
+                Com::printF( PSTR( " KI:" ), act->pidIGain,5  );
+                Com::printF( PSTR( " KD:" ), act->pidDGain,5  );
+                Com::printF( PSTR( " pG:" ), pgain,5  );
+                Com::printF( PSTR( " iG:" ), igain,5  );
+                Com::printF( PSTR( " dG:" ), dgain,5  );
+                Com::printF( PSTR( " Term:" ), pidTerm ,5 );
+                Com::printFLN( PSTR( " = " ), output );
+*/
             }
             pwm_pos[act->pwmIndex] = output;
         }
@@ -328,6 +346,7 @@ void Extruder::initExtruder()
             if(!act->enableOn) HAL::digitalWrite(act->enablePin,HIGH);
         }
         act->tempControl.lastTemperatureUpdate = HAL::timeInMilliseconds();
+        act->tempControl.updateTempControlVars();
     }
 
 #if HEATED_BED_HEATER_PIN>-1
@@ -347,7 +366,14 @@ void TemperatureController::updateTempControlVars()
     if(heatManager==1 && pidIGain!=0)   // prevent division by zero
     {
         tempIStateLimitMax = (float)pidDriveMax*10.0f/pidIGain;
-        tempIStateLimitMin = (float)pidDriveMin*10.0f/pidIGain;
+        tempIStateLimitMin = (float)pidDriveMin*-10.0f/pidIGain; //Bisher hatte der PID-Regler keinen negativen I-Anteil, weil die Limits nicht ins Negative dürfen. Jetzt schon. Es ist das Minus.
+/*
+        Com::printF( PSTR( " pidDriveMax:" ), pidDriveMax );
+        Com::printF( PSTR( " pidDriveMin:" ), pidDriveMin );
+        Com::printF( PSTR( " pidIGain:" ), pidIGain );
+        Com::printF( PSTR( " tempIStateLimitMax:" ), tempIStateLimitMax );
+        Com::printFLN( PSTR( " tempIStateLimitMin:" ), tempIStateLimitMin );
+*/
     }
 #endif // TEMP_PID
 
@@ -455,6 +481,7 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
     if(temperatureInCelsius<0) temperatureInCelsius=0;
     TemperatureController *tc = tempController[extr];
     tc->setTargetTemperature(temperatureInCelsius,0);
+    tc->updateTempControlVars();
     if(beep && temperatureInCelsius>30)
         tc->setAlarm(true);
     if(temperatureInCelsius>=EXTRUDER_FAN_COOL_TEMP) extruder[extr].coolerPWM = extruder[extr].coolerSpeed;
@@ -503,6 +530,7 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
     {
         TemperatureController *tc2 = tempController[1];
         tc2->setTargetTemperature(temperatureInCelsius,0);
+        tc2->updateTempControlVars();
         if(temperatureInCelsius>=EXTRUDER_FAN_COOL_TEMP) extruder[1].coolerPWM = extruder[1].coolerSpeed;
     }
 #endif // FEATURE_DITTO_PRINTING
@@ -1277,7 +1305,7 @@ void Extruder::disableAllHeater()
 
 
 #ifdef TEMP_PID
-void TemperatureController::autotunePID(float temp,uint8_t controllerId,int maxCycles,bool storeValues)
+void TemperatureController::autotunePID(float temp, uint8_t controllerId, int maxCycles, bool storeValues, char overshootdamper) //overshootdamper = 0 classic, 1 some, 2 no
 {
     float currentTemp;
     int cycles=0;
@@ -1355,10 +1383,25 @@ void TemperatureController::autotunePID(float temp,uint8_t controllerId,int maxC
                         Tu = ((float)(t_low + t_high)/1000.0);
                         Com::printF(Com::tAPIDKu,Ku);
                         Com::printFLN(Com::tAPIDTu,Tu);
-                        Kp = 0.6*Ku;
-                        Ki = 2*Kp/Tu;
-                        Kd = Kp*Tu*0.125;
-                        Com::printFLN(Com::tAPIDClassic);
+                        switch(overshootdamper){
+                            case 2:
+                               Kp = 0.2*Ku;
+                               Ki = 2*Kp/Tu;
+                               Kd = Kp*Tu/3;
+                               Com::printFLN(Com::tAPIDNoOvershoot);
+                            break;
+                            case 1:
+                               Kp = 0.33*Ku;
+                               Ki = Kp/Tu;
+                               Kd = Kp*Tu/3;
+                               Com::printFLN(Com::tAPIDSomeOvershoot);
+                            break;
+                            default:
+                               Kp = 0.6*Ku;
+                               Ki = 2*Kp/Tu;
+                               Kd = Kp*Tu*0.125;
+                               Com::printFLN(Com::tAPIDClassic);
+                        }
                         Com::printFLN(Com::tAPIDKp,Kp);
                         Com::printFLN(Com::tAPIDKi,Ki);
                         Com::printFLN(Com::tAPIDKd,Kd);
