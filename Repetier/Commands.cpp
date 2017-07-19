@@ -1281,10 +1281,13 @@ void Commands::executeGCode(GCode *com)
                 if(com->hasP()) cont = com->P;
                 if(com->hasJ()){
                     switch((char)com->J){
-                       case 3: overshoot_present = 3; break; //3 = No Overshoot
-                       case 2: overshoot_present = 2; break; //2 = Some Overshoot
-                       case 1: overshoot_present = 1; break; //1 = Pessen Integral Rule
-                    }                                        //0 = Classic PID
+                       case 6: overshoot_present = 6; break; //6 = P (for testing!)
+                       case 5: overshoot_present = 5; break; //5 = PI (for testing!)
+                       case 4: overshoot_present = 4; break; //4 = PD (for testing!)
+                       case 3: overshoot_present = 3; break; //3 = PID No Overshoot
+                       case 2: overshoot_present = 2; break; //2 = PID Some Overshoot
+                       case 1: overshoot_present = 1; break; //1 = PID Pessen Integral Rule
+                    }                                        //0 = PID Classic Ziegler-Nichols
                 }
                 if(com->hasR()) cycles = static_cast<int>(com->R);
                 if(cont >= NUM_TEMPERATURE_LOOPS) cont = NUM_TEMPERATURE_LOOPS;

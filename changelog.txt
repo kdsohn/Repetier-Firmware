@@ -2,6 +2,9 @@ TODO: Pause-Back-Drive-Bug in original RF1.37
 TODO: Possible Z-Lift Bug in original RF1.37
 TODO: Store some settings within Flash.
 
+V RF.01.37q5.TDMod (2017-07-17)
+- Added J6=P-control, J5=PI-control, J4=PD-control or testing purposes to the PID autotune settings.
+
 V RF.01.37q4.TDMod (2017-07-17)
 - Fixing PID autotune for "some overshoot" by factor 2.0 like https://en.wikipedia.org/wiki/Ziegler%E2%80%93Nichols_method says.
 - Added PID autotune ruleset called "Pessen Integral Rule" position J1 (See http://www.mstarlabs.com/control/znrule.html for tuning rulesets and description)

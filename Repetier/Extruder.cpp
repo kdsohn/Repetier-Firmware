@@ -366,7 +366,7 @@ void TemperatureController::updateTempControlVars()
     if(heatManager==1 && pidIGain!=0)   // prevent division by zero
     {
         tempIStateLimitMax = (float)pidDriveMax*10.0f/pidIGain;
-        tempIStateLimitMin = (float)pidDriveMin*-10.0f/pidIGain; //Bisher hatte der PID-Regler keinen negativen I-Anteil, weil die Limits nicht ins Negative dürfen. Jetzt schon. Es ist das Minus.
+        tempIStateLimitMin = (float)pidDriveMin*-1.0f/pidIGain; //Bisher hatte der PID-Regler keinen negativen I-Anteil, weil die Limits nicht ins Negative dürfen. Jetzt schon. Es ist das Minus.
 /*
         Com::printF( PSTR( " pidDriveMax:" ), pidDriveMax );
         Com::printF( PSTR( " pidDriveMin:" ), pidDriveMin );
@@ -1329,16 +1329,25 @@ void TemperatureController::autotunePID(float temp, uint8_t controllerId, int ma
     Com::printInfoFLN(Com::tPIDAutotuneStart);
     Com::printF( PSTR("Using autotune ruleset: "), (int)overshootdamper );
     switch(overshootdamper){
-        case 3: //no overshoot
+        case 6: //P
+            Com::printFLN(Com::tAPIDsimpleP);
+        break;
+        case 5: //PI
+            Com::printFLN(Com::tAPIDsimplePI);
+        break;
+        case 4: //PD
+            Com::printFLN(Com::tAPIDsimplePD);
+        break;
+        case 3: //PID no overshoot
             Com::printFLN(Com::tAPIDNoOvershoot);
         break;
-        case 2: //some overshoot
+        case 2: //PID some overshoot
             Com::printFLN(Com::tAPIDSomeOvershoot);
         break;
-        case 1: //Pessen Integral Rule
+        case 1: //PID Pessen Integral Rule
             Com::printFLN(Com::tAPIDPessenIntegralRule);
         break;
-        default: //classic Ziegler-Nichols
+        default: //PID classic Ziegler-Nichols
             Com::printFLN(Com::tAPIDClassic);
     }
     //Extruder::disableAllHeater(); // switch off all heaters. https://github.com/repetier/Repetier-Firmware/commit/241c550ac004023842d6886c6e0db15a1f6b56d7
@@ -1410,25 +1419,43 @@ KP = Ku * Maßzahl lt. Tabelle
 see also: http://www.mstarlabs.com/control/znrule.html
 */
                         switch(overshootdamper){
-                            case 3: //no overshoot
-                               Kp = 0.2f*Ku;          //0.4 KRkrit
+                            case 6: //P
+                               Kp = 0.5f*Ku;          //0.5 KRkrit
+                               Ki = 0;
+                               Kd = 0;
+                               Com::printFLN(Com::tAPIDsimpleP);
+                            break;
+                            case 5: //PI
+                               Kp = 0.45f*Ku;          //0.45 KRkrit
+                               Ki = 1.2f*Kp/Tu;       //0.833 Tkrit
+                               Kd = 0;
+                               Com::printFLN(Com::tAPIDsimplePI);
+                            break;
+                            case 4: //PD
+                               Kp = 0.8f*Ku;          //0.8 KRkrit
+                               Ki = 0;
+                               Kd = Kp*Tu/8.0f;       //0.125 Tkrit
+                               Com::printFLN(Com::tAPIDsimplePD);
+                            break;
+                            case 3: //PID no overshoot
+                               Kp = 0.2f*Ku;          //0.2 KRkrit
                                Ki = 2.0f*Kp/Tu;       //0.5 Tkrit
                                Kd = Kp*Tu/3.0f;       //0.333 Tkrit
                                Com::printFLN(Com::tAPIDNoOvershoot);
                             break;
-                            case 2: //some overshoot
-                               Kp = 0.33f*Ku;         //0.4 KRkrit
+                            case 2: //PID some overshoot
+                               Kp = 0.33f*Ku;         //0.33 KRkrit
                                Ki = 2.0f*Kp/Tu;       //0.5 Tkrit
                                Kd = Kp*Tu/3.0f;       //0.333 Tkrit
                                Com::printFLN(Com::tAPIDSomeOvershoot);
                             break;
-                            case 1: //Pessen Integral Rule
+                            case 1: //PID Pessen Integral Rule
                                Kp = 0.7f*Ku;          //0.7 KRkrit
                                Ki = 2.5f*Kp/Tu;       //0.4 Tkrit
                                Kd = Kp*Tu*3.0f/20.0f; //0.15 Tkrit
                                Com::printFLN(Com::tAPIDPessenIntegralRule);
                             break;
-                            default: //classic Ziegler-Nichols
+                            default: //PID classic Ziegler-Nichols
                                Kp = 0.6f*Ku;          //0.6 KRkrit
                                Ki = 2.0f*Kp/Tu;       //0.5 Tkrit
                                Kd = Kp*Tu/8.0f;       //0.125 Tkrit
