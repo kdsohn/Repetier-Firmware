@@ -2,16 +2,20 @@ TODO: Pause-Back-Drive-Bug in original RF1.37
 TODO: Possible Z-Lift Bug in original RF1.37
 TODO: Store some settings within Flash.
 
-V RF.01.37q3.TDMod (2017-07-13)
-- Upgrading PID Code support AutoTune with two additional presents: 2="No Overshoot" and 1="Some Overshoot". Use M303 with J[0..2]. Default is 0 and this means ClassicPID which was standard in all previous firmware versions.
+V RF.01.37q4.TDMod (2017-07-17)
+- Fixing PID autotune for "some overshoot" by factor 2.0 like https://en.wikipedia.org/wiki/Ziegler%E2%80%93Nichols_method says.
+- Added PID autotune ruleset called "Pessen Integral Rule" position J1 (See http://www.mstarlabs.com/control/znrule.html for tuning rulesets and description)
+
+V RF.01.37q3.TDMod (2017-07-17)
+- Upgrading PID Code support AutoTune with two additional presents: 3="No Overshoot" and 2="Some Overshoot". Use M303 with J[0..3]. Default is 0 and this means ClassicPID which was standard in all previous firmware versions.
 - I switched the calculation of PID drive min to Minus. This should finally enable the real PID control - fix it!
 - Speed-Mode for Menu-Klicking: Whenever you press some Button on the printer the Routine to answer is at 10ms clock instead of 100ms clock for 15 seconds. This enables us to navigate very fast now.
 
-V RF.01.37q2.TDMod (2017-07-13)
+V RF.01.37q2.TDMod (2017-07-16)
 - Upgrading PID Code to original repetier/Repetier :: added max-cycles
 - Removed debug-watchdog-time-counter
 
-V RF.01.37q.TDMod (2017-07-13)
+V RF.01.37q.TDMod (2017-07-15)
 - Implemented "Feature Zero Digits". When you home all Axes, the digits are messured and written to the digits offset. Then we see very little digits while printing. That should make them more comparable.
 - Disabled FREE-RAM debugging (to not waste calculate power anymore on this)
 

@@ -137,6 +137,7 @@ public:
     FSTRINGVAR(tAPIDClassic)
     FSTRINGVAR(tAPIDSomeOvershoot)
     FSTRINGVAR(tAPIDNoOvershoot)
+    FSTRINGVAR(tAPIDPessenIntegralRule)
     FSTRINGVAR(tAPIDKp)
     FSTRINGVAR(tAPIDKi)
     FSTRINGVAR(tAPIDKd)

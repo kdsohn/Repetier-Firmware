@@ -1281,8 +1281,9 @@ void Commands::executeGCode(GCode *com)
                 if(com->hasP()) cont = com->P;
                 if(com->hasJ()){
                     switch((char)com->J){
-                       case 2: overshoot_present = 2; break; //2 = No Overshoot.
-                       case 1: overshoot_present = 1; break; //1 = Some Overshoot
+                       case 3: overshoot_present = 3; break; //3 = No Overshoot
+                       case 2: overshoot_present = 2; break; //2 = Some Overshoot
+                       case 1: overshoot_present = 1; break; //1 = Pessen Integral Rule
                     }                                        //0 = Classic PID
                 }
                 if(com->hasR()) cycles = static_cast<int>(com->R);

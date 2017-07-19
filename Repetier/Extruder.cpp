@@ -1327,7 +1327,20 @@ void TemperatureController::autotunePID(float temp, uint8_t controllerId, int ma
     if(maxCycles > 20)
         maxCycles = 20;
     Com::printInfoFLN(Com::tPIDAutotuneStart);
-
+    Com::printF( PSTR("Using autotune ruleset: "), (int)overshootdamper );
+    switch(overshootdamper){
+        case 3: //no overshoot
+            Com::printFLN(Com::tAPIDNoOvershoot);
+        break;
+        case 2: //some overshoot
+            Com::printFLN(Com::tAPIDSomeOvershoot);
+        break;
+        case 1: //Pessen Integral Rule
+            Com::printFLN(Com::tAPIDPessenIntegralRule);
+        break;
+        default: //classic Ziegler-Nichols
+            Com::printFLN(Com::tAPIDClassic);
+    }
     //Extruder::disableAllHeater(); // switch off all heaters. https://github.com/repetier/Repetier-Firmware/commit/241c550ac004023842d6886c6e0db15a1f6b56d7
     autotuneIndex = controllerId;
     pwm_pos[pwmIndex] = pidMax;
@@ -1383,23 +1396,42 @@ void TemperatureController::autotunePID(float temp, uint8_t controllerId, int ma
                         Tu = ((float)(t_low + t_high)/1000.0);
                         Com::printF(Com::tAPIDKu,Ku);
                         Com::printFLN(Com::tAPIDTu,Tu);
+/**
+https://en.wikipedia.org/wiki/Ziegler%E2%80%93Nichols_method
+KP = KP
+KI = KP / Ti
+KD = KP * Td
+wegen Formel u(t) = KP*( rest )
+
+Ti = Tu / Maßzahl lt. Tabelle
+Td = Tu / Maßzahl lt. Tabelle
+KP = Ku * Maßzahl lt. Tabelle
+
+see also: http://www.mstarlabs.com/control/znrule.html
+*/
                         switch(overshootdamper){
-                            case 2:
-                               Kp = 0.2*Ku;
-                               Ki = 2*Kp/Tu;
-                               Kd = Kp*Tu/3;
+                            case 3: //no overshoot
+                               Kp = 0.2f*Ku;          //0.4 KRkrit
+                               Ki = 2.0f*Kp/Tu;       //0.5 Tkrit
+                               Kd = Kp*Tu/3.0f;       //0.333 Tkrit
                                Com::printFLN(Com::tAPIDNoOvershoot);
                             break;
-                            case 1:
-                               Kp = 0.33*Ku;
-                               Ki = Kp/Tu;
-                               Kd = Kp*Tu/3;
+                            case 2: //some overshoot
+                               Kp = 0.33f*Ku;         //0.4 KRkrit
+                               Ki = 2.0f*Kp/Tu;       //0.5 Tkrit
+                               Kd = Kp*Tu/3.0f;       //0.333 Tkrit
                                Com::printFLN(Com::tAPIDSomeOvershoot);
                             break;
-                            default:
-                               Kp = 0.6*Ku;
-                               Ki = 2*Kp/Tu;
-                               Kd = Kp*Tu*0.125;
+                            case 1: //Pessen Integral Rule
+                               Kp = 0.7f*Ku;          //0.7 KRkrit
+                               Ki = 2.5f*Kp/Tu;       //0.4 Tkrit
+                               Kd = Kp*Tu*3.0f/20.0f; //0.15 Tkrit
+                               Com::printFLN(Com::tAPIDPessenIntegralRule);
+                            break;
+                            default: //classic Ziegler-Nichols
+                               Kp = 0.6f*Ku;          //0.6 KRkrit
+                               Ki = 2.0f*Kp/Tu;       //0.5 Tkrit
+                               Kd = Kp*Tu/8.0f;       //0.125 Tkrit
                                Com::printFLN(Com::tAPIDClassic);
                         }
                         Com::printFLN(Com::tAPIDKp,Kp);
