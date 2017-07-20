@@ -317,9 +317,7 @@ void GCode::executeFString(FSTRINGPARAM(cmd))
     char    buf[80];
     uint8_t buflen;
     char    c = 0;
-    DEBUG_MEMORY
     GCode   code;
-    DEBUG_MEMORY
     do
     {
         // Wait for a free place in command buffer
@@ -333,7 +331,6 @@ void GCode::executeFString(FSTRINGPARAM(cmd))
             if(c == ';') comment = 1;
             if(comment) continue;
             buf[buflen++] = c;
-
         }
         while(buflen<79);
         if(buflen==0)   // empty line ignore
@@ -384,6 +381,7 @@ void GCode::executeString(char *cmd)
 
         if(buflen==0)   // empty line ignore
         {
+            if(!c) return; // Special case \n0
             continue;
         }
 

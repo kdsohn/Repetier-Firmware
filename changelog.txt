@@ -2,6 +2,10 @@ TODO: Pause-Back-Drive-Bug in original RF1.37
 TODO: Possible Z-Lift Bug in original RF1.37
 TODO: Store some settings within Flash.
 
+V RF.01.37q6.TDMod (2017-07-21)
+- Testcase for possible endZCompensationStep-Bug in Z-Compensation.
+- Testcase for possible PrintLine::direct.isZMove()-NoReturn-Bug in Z-Compensation.
+
 V RF.01.37q5.TDMod (2017-07-17)
 - Added J6=P-control, J5=PI-control, J4=PD-control or testing purposes to the PID autotune settings.
 

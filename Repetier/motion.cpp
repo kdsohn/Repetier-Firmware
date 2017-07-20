@@ -1602,7 +1602,7 @@ long PrintLine::performQueueMove()
             return(wait); // waste some time for path optimization to fill up
         }
 
-        cur->enableSteppers();
+        cur->enableSteppers(); //set Z direction etc.
         cur->fixStartAndEndSpeed();
 
         HAL::allowInterrupts();
@@ -1659,7 +1659,7 @@ long PrintLine::performDirectMove()
         }
         HAL::allowInterrupts();
 
-        direct.enableSteppers();
+        direct.enableSteppers(); //set Z direction etc.
         direct.fixStartAndEndSpeed();
 
         HAL::allowInterrupts(); //Nibbels todo: prüfen ob das unsinnig ist. unterfunktionen checken. vgl oben 3 zeilen
@@ -2025,6 +2025,12 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
             }
             if(move->isZMove())
             {
+                /**
+                Hier sehe ich einen guten Platz für die Z-Kompensation (???) Könnte man hier Z-Steps verrechnen, wenn sie gegenläufig mit der Z-Kompensation sind?
+				Allerdings wird hier keine Z-Direction mehr ausgesucht, das passiert in performXXXXXXMove
+				
+				hier ist eine definierte stepperDirection[Z_AXIS]
+                */
                 if( Printer::blockAll 
                 || ( Printer::stepperDirection[Z_AXIS] < 0 && move->task == TASK_MOVE_FROM_BUTTON && Printer::isZMinEndstopHit() ) 
                 || ( Printer::stepperDirection[Z_AXIS] > 0 && move->task == TASK_MOVE_FROM_BUTTON && Printer::isZMaxEndstopHit() ) )
@@ -2054,6 +2060,13 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
                         // Note: There is no need to check whether we are past the z-min endstop here because G-Codes typically are not able to go past the z-min endstop anyways.
                     }
                 }
+            }else{
+                /**
+                Hier sehe ich einen guten Platz für die Z-Kompensation (???)
+				Allerdings wird hier keine Z-Direction mehr ausgesucht, das passiert in performXXXXXXMove
+				
+				hier müsste stepperDirection[Z_AXIS] 0 sein
+                */
             }
             Printer::insertStepperHighDelay();
 
