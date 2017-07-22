@@ -2,6 +2,13 @@ TODO: Pause-Back-Drive-Bug in original RF1.37
 TODO: Possible Z-Lift Bug in original RF1.37
 TODO: Store some settings within Flash.
 
+V RF.01.37r.TDMod (2017-07-22)
+- Grouped my good old Auto-Matrix-Leveling to one Command: M3900 R1. This is available in Menu also. Configuration -> Z-Configuration -> "Auto-Matrix-Leveling"
+- Z-Step-Size which can be set in Positon-Menu is now saved within flash automatically.
+- Previous used maximal SenseOffset-Offsetlimit is now saved within flash automatically.
+- Previous Z-Offset-Scan testpoints (X/Y) are now saved within flash automatically.
+- Little Homing-Bug is gone (g_abortZScan might have been set to 1 if average digits read failed, which is problematic when using ZOffsetScan)
+
 V RF.01.37q6.TDMod (2017-07-21)
 - Testcase for possible endZCompensationStep-Bug in Z-Compensation.
 - Testcase for possible PrintLine::direct.isZMove()-NoReturn-Bug in Z-Compensation.

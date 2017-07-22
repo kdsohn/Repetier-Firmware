@@ -329,7 +329,6 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 
 #endif // FEATURE_OUTPUT_FINISHED_OBJECT
 
-
 // ##########################################################################################
 // ##   configuration of the pause functionality
 // ##########################################################################################

@@ -111,7 +111,18 @@ have problems with other modules using the eeprom */
 #define EPR_RF_MOVE_MODE_X              1042
 #define EPR_RF_MOVE_MODE_Y              1043
 #define EPR_RF_MOVE_MODE_Z              1044
-#define EPR_RF_Z_MODE                   1045
+#define EPR_RF_Z_MODE                   1045 //das ist byte, 1046 wäre frei.
+
+//vorsicht bei mehrbytigen Variablen, dann freilassen.
+
+#define EPR_RF_MOD_Z_STEP_SIZE          1900 //+1901+1902+1903 g_nManualSteps[Z_AXIS] [4byte unsigned long]
+
+#define EPR_RF_MOD_ZOS_SCAN_POINT_X     1904 //g_ZOSTestPoint[0] [1byte unsigned char]
+#define EPR_RF_MOD_ZOS_SCAN_POINT_Y     1905 //g_ZOSTestPoint[1] [1byte unsigned char]
+
+#define EPR_RF_MOD_SENSEOFFSET_OFFSET_MAX 1906 //+1907 g_nSensiblePressureOffsetMax [2byte short]
+
+//Nibbels: Computechecksum geht bis 2047
 
 #define EEPROM_EXTRUDER_OFFSET          200
 

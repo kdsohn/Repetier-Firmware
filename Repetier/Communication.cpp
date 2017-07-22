@@ -248,7 +248,6 @@ FSTRINGVALUE(Com::tEPRAdvanceK,"advance K [0=off]")
 FSTRINGVALUE(Com::tEPRAdvanceL,"advance L [0=off]")
 FSTRINGVALUE(Com::tEPRBeeperMode,"beeper mode [0=off]")
 FSTRINGVALUE(Com::tEPRCaseLightsMode,"case lights mode [0=off, 1=on]")
-FSTRINGVALUE(Com::tEPR230VOutputMode,"230V output mode [0=off, 1=on]")
 FSTRINGVALUE(Com::tEPROperatingMode,"operating mode [1=print, 2=mill]")
 FSTRINGVALUE(Com::tEPRZEndstopType,"Z endstop type [1=single, 2=circuit]")
 FSTRINGVALUE(Com::tEPRHotendType,"Hotend type [2=V1,3=V2,4=V2 dual]")
@@ -257,6 +256,14 @@ FSTRINGVALUE(Com::tEPRRGBLightMode,"RGB Light mode [0=off, 1=white, 2=color, 3=m
 FSTRINGVALUE(Com::tEPRFET1Mode,"FET1 mode [0=off, 1=on]")
 FSTRINGVALUE(Com::tEPRFET2Mode,"FET2 mode [0=off, 1=on]")
 FSTRINGVALUE(Com::tEPRFET3Mode,"FET3 mode [0=off, 1=on]")
+
+FSTRINGVALUE(Com::tEPRPrinterZ_STEP_SIZE,"Height of Z-Button SingleSteps [steps]")
+FSTRINGVALUE(Com::tEPRPrinterMOD_ZOS_SCAN_POINT_X,"Z-Offset-Scan Position X [HBS-col]")
+FSTRINGVALUE(Com::tEPRPrinterMOD_ZOS_SCAN_POINT_Y,"Z-Offset-Scan Position Y [HBS-row]")
+#if FEATURE_SENSIBLE_PRESSURE
+FSTRINGVALUE(Com::tEPRPrinterMOD_SENSEOFFSET_OFFSET_MAX,"SenseOffset max. Correction [um]")
+#endif //FEATURE_SENSIBLE_PRESSURE
+
 #endif // EEPROM_MODE
 
 #if SDSUPPORT

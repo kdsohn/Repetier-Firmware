@@ -577,10 +577,11 @@ extern  volatile unsigned char  g_nHeatBedScanStatus;
 extern  char            g_nActiveHeatBed;
 //ZOS:
 extern  volatile unsigned char  g_ZOSScanStatus;
-extern  long            g_ZOSTestPoint[2];
+extern  unsigned char            g_ZOSTestPoint[2];
 extern  float           g_ZOSlearningRate;
 extern  float           g_ZOSlearningGradient;
 extern  long            g_min_nZScanZPosition;
+extern  unsigned char   g_ZOS_Auto_Matrix_Leveling_State;
 //Matrix speichern über Menü: Sinnmarker
 extern  volatile unsigned char  g_ZMatrixChangedInRam;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
@@ -730,7 +731,7 @@ extern void startHeatBedScan( void );
 extern void scanHeatBed( void );
 
 // searchZOScan()
-extern void startZOScan( void );
+extern void startZOScan( bool automatrixleveling = false );
 extern void searchZOScan( void );
 
 //Z-Schrauben Helper

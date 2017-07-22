@@ -508,25 +508,29 @@ public:
 
     static inline void eprSetByte(unsigned int pos,uint8_t value)
     {
-        eeprom_write_byte((unsigned char *)(EEPROM_OFFSET+pos), value);
+        uint8_t oldval = eprGetByte(pos);
+        if(oldval != value) eeprom_write_byte((unsigned char *)(EEPROM_OFFSET+pos), value);
 
     } // eprSetByte
 
     static inline void eprSetInt16(unsigned int pos,int16_t value)
     {
-        eeprom_write_word((unsigned int*)(EEPROM_OFFSET+pos),value);
+        int16_t oldval = eprGetInt16(pos);
+        if(oldval != value) eeprom_write_word((unsigned int*)(EEPROM_OFFSET+pos),value);
 
     } // eprSetInt16
 
     static inline void eprSetInt32(unsigned int pos,int32_t value)
     {
-        eeprom_write_dword((uint32_t*)(EEPROM_OFFSET+pos),value);
+        int32_t oldval = eprGetInt32(pos);
+        if(oldval != value) eeprom_write_dword((uint32_t*)(EEPROM_OFFSET+pos),value);
 
     } // eprSetInt32
 
     static inline void eprSetFloat(unsigned int pos,float value)
     {
-        eeprom_write_block(&value,(void*)(EEPROM_OFFSET+pos), 4);
+        float oldval = eprGetFloat(pos);
+        if(oldval != value) eeprom_write_block(&value,(void*)(EEPROM_OFFSET+pos), 4);
 
     } // eprSetFloat
 

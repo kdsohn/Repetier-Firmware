@@ -1642,21 +1642,22 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
     setHomed(true, (xaxis?true:-1), (yaxis?true:-1), (zaxis?true:-1) );
     
 #if FEATURE_ZERO_DIGITS
-	short   nTempPressure = 0;
-	if(xaxis && yaxis && zaxis){ //only adjust pressure if you do a full homing.
-		Printer::g_pressure_offset = 0; //prevent to messure already adjusted offset -> without = 0 this would only iterate some bad values.
-		if( !readAveragePressure( &nTempPressure ) ){
-			if(-5000 < nTempPressure && nTempPressure < 5000){
-				Com::printFLN( PSTR( "ZERO_DIGITS: New Offset " ), nTempPressure );
-				Printer::g_pressure_offset = nTempPressure;
-			}else{
-				//those high values shouldnt happen! fix your machine... DONT ZEROSCALE DIGITS
-				Com::printFLN( PSTR( "ZERO_DIGITS: FAILED with " ), nTempPressure );
-			}
-		} else{
-			Com::printFLN( PSTR( "ZERO_DIGITS: FAILED Reading " ) );
-		}
-	}
+    short   nTempPressure = 0;
+    if(xaxis && yaxis && zaxis){ //only adjust pressure if you do a full homing.
+        Printer::g_pressure_offset = 0; //prevent to messure already adjusted offset -> without = 0 this would only iterate some bad values.
+        if( !readAveragePressure( &nTempPressure ) ){
+            if(-5000 < nTempPressure && nTempPressure < 5000){
+                Com::printFLN( PSTR( "DigitOffset = " ), nTempPressure );
+                Printer::g_pressure_offset = nTempPressure;
+            }else{
+                //those high values shouldnt happen! fix your machine... DONT ZEROSCALE DIGITS
+                Com::printFLN( PSTR( "DigitOffset failed " ), nTempPressure );
+            }
+        } else{
+            Com::printFLN( PSTR( "DigitOffset failed reading " ) );
+            g_abortZScan = 0;
+        }
+    }
 #endif // FEATURE_ZERO_DIGITS
 
     if( unlock )

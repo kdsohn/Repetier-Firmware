@@ -1581,9 +1581,11 @@ void UIDisplay::parse(char *txt,bool ram)
             }
             case 'S':
             {
-                if(c2=='e') addFloat(Extruder::current->stepsPerMM,3,1);                                // %Se : Steps per mm current extruder
-                if(c2=='z') addFloat(g_nManualSteps[Z_AXIS] * Printer::invAxisStepsPerMM[Z_AXIS] * 1000,4,0); // %Sz : Mikrometer per Z-Single_Step (Z_Axis)
-                break;                
+                if(c2=='e') addFloat(Extruder::current->stepsPerMM,3,1);                                              // %Se : Steps per mm current extruder
+                else if(c2=='z') addFloat(g_nManualSteps[Z_AXIS] * Printer::invAxisStepsPerMM[Z_AXIS] * 1000,4,0);    // %Sz : Mikrometer per Z-Single_Step (Z_Axis)
+                else if(c2=='M' && col<MAX_COLS) if(g_ZMatrixChangedInRam) printCols[col++]='*';                      // %SM : Matrix has changed in Ram and is ready to Save. -> *)
+
+                break;
             }
             case 'p':
             {
@@ -4748,6 +4750,17 @@ void UIDisplay::executeAction(int action)
             {           
                 //macht an, wenn an, macht aus:         
                 startZOScan();
+                //gehe zurück und zeige dem User was passiert.
+                uid.menuLevel = 0; 
+                uid.menuPos[0] = 0;
+                //wartet nur wenn an:
+                //Commands::waitUntilEndOfZOS(); -> Nein, weil der Nutzer das aktiv steuern und abbrechen können soll. Ist ja hier kein M-code in Reihe.
+                break;
+            }
+            case UI_ACTION_RF_DO_MHIER_AUTO_MATRIX_LEVELING:
+            {           
+                //macht an, wenn an, macht aus:         
+                startZOScan(true); //Scan aber an vielen Punkten und Gewichtet.
                 //gehe zurück und zeige dem User was passiert.
                 uid.menuLevel = 0; 
                 uid.menuPos[0] = 0;

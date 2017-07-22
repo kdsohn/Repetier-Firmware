@@ -4,18 +4,23 @@ M104 S230 ;Bettemperatur des Tests (Offset ~ -0.001 mm/°C)
 
 M116 ;Warte auf Heizung/Kühlung +-2°C
 
-;Heizbett in Mitte auf korrekte Höhe leveln:
-M3013 P1
-M3900 X5 Y7 S100 P0 ;messen Mitte
-M3900 X6 Y6 S50 P0 ;korrektiv nachmessen Mitte
-M3900 X7 Y5 S50 P0 ;korrektiv nachmessen Mitte
-M3013 P1
+;;;; Alt: Wurde durch M3900 R1, das Auto-Matrix-Leveling ersetzt.
+;;;;    ;Heizbett in Mitte auf korrekte Höhe leveln:
+;;;;    M3013 P1
+;;;;    M3900 X5 Y7 S100 P0 ;messen Mitte
+;;;;    M3900 X6 Y6 S50 P0 ;korrektiv nachmessen Mitte
+;;;;    M3900 X7 Y5 S50 P0 ;korrektiv nachmessen Mitte
+;;;;    M3013 P1
 
-;Heizbett Ecken Autoleveling/Lagekorrektur:
-M3900 X2 Y2 S90 P100 ;Ecke verbiegen vorne links
-M3900 X9 Y2 ;Ecke verbiegen vorne rechts
-M3900 X2 Y12 ;Ecke verbiegen hinten links
-M3900 X9 Y12 ;Ecke verbiegen hinten rechts
+;;;;    ;Heizbett Ecken Autoleveling/Lagekorrektur:
+;;;;    M3900 X2 Y2 S90 P100 ;Ecke verbiegen vorne links
+;;;;    M3900 X9 Y2 ;Ecke verbiegen vorne rechts
+;;;;    M3900 X2 Y12 ;Ecke verbiegen hinten links
+;;;;    M3900 X9 Y12 ;Ecke verbiegen hinten rechts
+
+;Neu: [R1 = Auto-Matrix-Leveling] ersetzt das hier drüber.
+; Kann im Druckermenü oder per G-Code gestartet werden. Sollte mit Temperatur gemacht werden.
+M3900 R1 
 M3013 P1
 
 M104 T0 S0 ;Heizungen alle aus

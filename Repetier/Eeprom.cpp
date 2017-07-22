@@ -625,6 +625,15 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
     HAL::eprSetByte( EPR_RF_MILLER_TYPE, Printer::MillerType );
 #endif // FEATURE_CONFIGURABLE_MILLER_TYPE
 
+    HAL::eprSetInt32( EPR_RF_MOD_Z_STEP_SIZE, g_nManualSteps[Z_AXIS] );
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+    HAL::eprSetByte( EPR_RF_MOD_ZOS_SCAN_POINT_X, g_ZOSTestPoint[0] );
+    HAL::eprSetByte( EPR_RF_MOD_ZOS_SCAN_POINT_Y, g_ZOSTestPoint[1] );
+#endif //FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_SENSIBLE_PRESSURE
+    HAL::eprSetInt16( EPR_RF_MOD_SENSEOFFSET_OFFSET_MAX, g_nSensiblePressureOffsetMax);
+#endif //FEATURE_SENSIBLE_PRESSURE
+
     // Save version and build checksum
     HAL::eprSetByte(EPR_VERSION,EEPROM_PROTOCOL_VERSION);
     HAL::eprSetByte(EPR_INTEGRITY_BYTE,computeChecksum());
@@ -835,6 +844,28 @@ void EEPROM::readDataFromEEPROM()
 #if FEATURE_CONFIGURABLE_MILLER_TYPE
     Printer::MillerType = HAL::eprGetByte( EPR_RF_MILLER_TYPE ) == MILLER_TYPE_ONE_TRACK ? MILLER_TYPE_ONE_TRACK : MILLER_TYPE_TWO_TRACKS;
 #endif // FEATURE_CONFIGURABLE_MILLER_TYPE
+
+    const unsigned long stepsize_table[NUM_ACCEPTABLE_STEP_SIZE_TABLE] PROGMEM = ACCEPTABLE_STEP_SIZE_TABLE;
+    g_nManualSteps[Z_AXIS] = (unsigned long)constrain( (unsigned long)HAL::eprGetInt32( EPR_RF_MOD_Z_STEP_SIZE ) , 1 , stepsize_table[NUM_ACCEPTABLE_STEP_SIZE_TABLE-1] ); //limit stepsize to value in config.
+
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+    g_ZOSTestPoint[X_AXIS] = HAL::eprGetByte( EPR_RF_MOD_ZOS_SCAN_POINT_X );
+    if(g_ZOSTestPoint[X_AXIS] != 0){ //constrain if not 0 = random.
+       //wenn die Startposition nicht 0 ist, wird eine Dummy-Matrix-Linie ergänzt. Mit der sollten wir nicht arbeiten.
+       if( g_ZOSTestPoint[X_AXIS] < 1 + ((HEAT_BED_SCAN_X_START_MM == 0) ? 0 : 1) ) g_ZOSTestPoint[X_AXIS] = 1 + ((HEAT_BED_SCAN_X_START_MM == 0) ? 0 : 1);
+       if( g_ZOSTestPoint[X_AXIS] > COMPENSATION_MATRIX_MAX_X - 1 ) g_ZOSTestPoint[X_AXIS] = COMPENSATION_MATRIX_MAX_X - 1; //2..n-1 //COMPENSATION_MATRIX_MAX_X -> g_uZMatrixMax[X_AXIS] erst voll wenn matrix initialisiert, aber die normale ultra-max-grenze reicht hier! constrain nachher.
+    }
+    g_ZOSTestPoint[Y_AXIS] = HAL::eprGetByte( EPR_RF_MOD_ZOS_SCAN_POINT_Y );
+    if(g_ZOSTestPoint[Y_AXIS] != 0){ //constrain if not 0 = random.
+       //wenn die Startposition nicht 0 ist, wird eine Dummy-Matrix-Linie ergänzt. Mit der sollten wir nicht arbeiten.
+       if( g_ZOSTestPoint[Y_AXIS] < 1 + ((HEAT_BED_SCAN_Y_START_MM == 0) ? 0 : 1) ) g_ZOSTestPoint[Y_AXIS] = 1 + ((HEAT_BED_SCAN_Y_START_MM == 0) ? 0 : 1);
+       if( g_ZOSTestPoint[Y_AXIS] > COMPENSATION_MATRIX_MAX_Y - 1 ) g_ZOSTestPoint[Y_AXIS] = COMPENSATION_MATRIX_MAX_Y - 1; //2..n-1 //COMPENSATION_MATRIX_MAX_Y -> g_uZMatrixMax[Y_AXIS] erst voll wenn matrix initialisiert, aber die normale ultra-max-grenze reicht hier! constrain nachher.
+    }
+#endif //FEATURE_HEAT_BED_Z_COMPENSATION
+
+#if FEATURE_SENSIBLE_PRESSURE
+    g_nSensiblePressureOffsetMax = (HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_OFFSET_MAX) == 0) ? (short)SENSIBLE_PRESSURE_MAX_OFFSET : (short)constrain( HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_OFFSET_MAX) , 1 , 300);
+#endif //FEATURE_SENSIBLE_PRESSURE
 
     if(version!=EEPROM_PROTOCOL_VERSION)
     {
@@ -1148,11 +1179,6 @@ void EEPROM::writeSettings()
     writeByte(EPR_RF_FET3_MODE,Com::tEPRFET3Mode);
 #endif // FEATURE_24V_FET_OUTPUTS
 
-#if FEATURE_230V_OUTPUT
-    // after a power-on, the 230 V plug always shall be turned off - thus, we do not store this setting to the EEPROM
-    // writeByte(EPR_RF_230V_OUTPUT_MODE,Com::tEPR230VOutputMode);
-#endif // FEATURE_230V_OUTPUT
-
 #if FEATURE_CONFIGURABLE_HOTEND_TYPE
     writeByte(EPR_RF_HOTEND_TYPE,Com::tEPRHotendType);
 #endif // FEATURE_CONFIGURABLE_HOTEND_TYPE
@@ -1161,6 +1187,14 @@ void EEPROM::writeSettings()
     writeByte(EPR_RF_MILLER_TYPE,Com::tEPRMillerType);
 #endif // FEATURE_CONFIGURABLE_MILLER_TYPE
 
+    writeLong(EPR_RF_MOD_Z_STEP_SIZE,Com::tEPRPrinterZ_STEP_SIZE);
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+    writeByte(EPR_RF_MOD_ZOS_SCAN_POINT_X,Com::tEPRPrinterMOD_ZOS_SCAN_POINT_X);
+    writeByte(EPR_RF_MOD_ZOS_SCAN_POINT_Y,Com::tEPRPrinterMOD_ZOS_SCAN_POINT_Y);
+#endif //FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_SENSIBLE_PRESSURE
+    writeInt(EPR_RF_MOD_SENSEOFFSET_OFFSET_MAX,Com::tEPRPrinterMOD_SENSEOFFSET_OFFSET_MAX);
+#endif //FEATURE_SENSIBLE_PRESSURE
 #else
     if( Printer::debugErrors() )
     {

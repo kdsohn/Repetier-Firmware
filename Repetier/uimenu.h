@@ -93,6 +93,7 @@ List of placeholder:
 %PN : Printer name
 %Se : Steps per mm current extruder
 %Sz : Mikrometer per Z-Single_Step (Z_Axis)
+%SM : Matrix has changed in Ram and is ready to Save. -> *)
 %is : Stepper inactive time in seconds
 %ip : Max. inactive time in seconds
 %X0..9 : Extruder selected marker
@@ -383,8 +384,9 @@ UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_heat_bed_scan_abs,UI_TEXT_HEAT_BED_SCAN_ABS
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_mhier_z_scan,UI_TEXT_DO_MHIER_BED_SCAN,UI_ACTION_RF_DO_MHIER_BED_SCAN,MENU_MODE_PRINTER,0)
-#define UI_MENU_HEAT_MHIER_COND  , &ui_menu_mhier_z_scan 
-#define UI_MENU_HEAT_MHIER_COUNT 1
+UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_mhier_auto_matrix_leveling,UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING,UI_ACTION_RF_DO_MHIER_AUTO_MATRIX_LEVELING,MENU_MODE_PRINTER,0) 
+#define UI_MENU_HEAT_MHIER_COND  , &ui_menu_mhier_z_scan , &ui_menu_mhier_auto_matrix_leveling 
+#define UI_MENU_HEAT_MHIER_COUNT 2
 #else
 #define UI_MENU_HEAT_MHIER_COND  
 #define UI_MENU_HEAT_MHIER_COUNT 0
