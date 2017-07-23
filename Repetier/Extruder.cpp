@@ -116,7 +116,9 @@ void Extruder::manageTemperatures()
         }
 
         act->tempArray[act->tempPointer++] = act->currentTemperatureC;
-        act->tempPointer &= 3; //springe von 4 = 100 auf 0 zurück, wenn 4.
+        //act->tempPointer &= 3; // 3 = springe von 4 = 100b auf 0 zurück,    wenn 3. -> 1/300ms  -> 3.33 = reciproke     !!tempArray needs [4] ...
+        //act->tempPointer &= 7; // 7 = springe von 8 = 1000b auf 0 zurück,   wenn 7. -> 1/700ms  -> 1.42 = reciproke     !!tempArray needs [8] ...
+        act->tempPointer &= 15; // 15 = springe von 16 = 10000b zurück auf 0, wenn 15 -> 1/1500ms -> 0.666 = reciproke    !!tempArray needs [16] ...
         if(act->heatManager == 1)
         {
             uint8_t output;
@@ -143,7 +145,7 @@ void Extruder::manageTemperatures()
                 act->tempIState = constrain(act->tempIState + error, act->tempIStateLimitMin, act->tempIStateLimitMax);
                 float igain = act->pidIGain * act->tempIState * 0.1;  // 0.1 = 10Hz
                 pidTerm += igain;
-                float dgain = act->pidDGain * (act->tempArray[act->tempPointer] - act->currentTemperatureC)*3.333f; // raising dT/dt, 3.33 = reciproke of time interval (300 ms) -> temparray greift weiter zurück als letzte messung.
+                float dgain = act->pidDGain * (act->tempArray[act->tempPointer] - act->currentTemperatureC)*0.666f; // raising dT/dt, 3.33 = reciproke of time interval (300 ms) -> temparray greift weiter zurück als letzte messung.
                 pidTerm += dgain;
 
 #if SCALE_PID_TO_MAX==1
@@ -1319,7 +1321,7 @@ void TemperatureController::autotunePID(float temp, uint8_t controllerId, int ma
     if(maxCycles > 20)
         maxCycles = 20;
     Com::printInfoFLN(Com::tPIDAutotuneStart);
-    Com::printF( PSTR("Using autotune ruleset: "), (int)method );
+    Com::printF( PSTR("Ruleset: "), (int)method );
     switch(method){
         case 6: //P
             Com::printFLN(Com::tAPIDsimpleP);
