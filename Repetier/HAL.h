@@ -60,11 +60,12 @@ All known arduino boards use 64. This value is needed for the extruder timing. *
 #if FEATURE_WATCHDOG
 extern  unsigned char g_bPingWatchdog;
 extern  unsigned long g_uLastCommandLoop;
-
+/*
 extern unsigned long maT;
 extern unsigned long miT;
 extern unsigned long laT;
 extern unsigned long maCoLo;
+*/
 #endif // FEATURE_WATCHDOG
 
 // #define BEGIN_INTERRUPT_PROTECTED {uint8_t sreg=SREG;__asm volatile( "cli" ::: "memory" );
@@ -507,25 +508,29 @@ public:
 
     static inline void eprSetByte(unsigned int pos,uint8_t value)
     {
-        eeprom_write_byte((unsigned char *)(EEPROM_OFFSET+pos), value);
+        uint8_t oldval = eprGetByte(pos);
+        if(oldval != value) eeprom_write_byte((unsigned char *)(EEPROM_OFFSET+pos), value);
 
     } // eprSetByte
 
     static inline void eprSetInt16(unsigned int pos,int16_t value)
     {
-        eeprom_write_word((unsigned int*)(EEPROM_OFFSET+pos),value);
+        int16_t oldval = eprGetInt16(pos);
+        if(oldval != value) eeprom_write_word((unsigned int*)(EEPROM_OFFSET+pos),value);
 
     } // eprSetInt16
 
     static inline void eprSetInt32(unsigned int pos,int32_t value)
     {
-        eeprom_write_dword((uint32_t*)(EEPROM_OFFSET+pos),value);
+        int32_t oldval = eprGetInt32(pos);
+        if(oldval != value) eeprom_write_dword((uint32_t*)(EEPROM_OFFSET+pos),value);
 
     } // eprSetInt32
 
     static inline void eprSetFloat(unsigned int pos,float value)
     {
-        eeprom_write_block(&value,(void*)(EEPROM_OFFSET+pos), 4);
+        float oldval = eprGetFloat(pos);
+        if(oldval != value) eeprom_write_block(&value,(void*)(EEPROM_OFFSET+pos), 4);
 
     } // eprSetFloat
 

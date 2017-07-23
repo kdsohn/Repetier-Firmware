@@ -51,7 +51,6 @@ public:
     uint32_t    lastTemperatureUpdate;  ///< Time in millis of the last temperature update.
     int8_t      heatManager;            ///< How is temperature controled. 0 = on/off, 1 = PID-Control, 3 = dead time control
 
-#ifdef TEMP_PID
     float       tempIState;             ///< Temp. var. for PID computation.
     uint8_t     pidDriveMax;            ///< Used for windup in PID calculation.
     uint8_t     pidDriveMin;            ///< Used for windup in PID calculation.
@@ -63,7 +62,6 @@ public:
     float       tempIStateLimitMin;
     uint8_t     tempPointer;
     float       tempArray[4];
-#endif // TEMP_PID
 
     uint8_t     flags;
 
@@ -73,10 +71,7 @@ public:
     inline bool isAlarm() {return flags & TEMPERATURE_CONTROLLER_FLAG_ALARM;}
     inline void setAlarm(bool on) {if(on) flags |= TEMPERATURE_CONTROLLER_FLAG_ALARM; else flags &= ~TEMPERATURE_CONTROLLER_FLAG_ALARM;}
 
-#ifdef TEMP_PID
-    void autotunePID(float temp,uint8_t controllerId,bool storeResult);
-#endif // TEMP_PID
-
+    void autotunePID(float temp, uint8_t controllerId, int maxCycles, bool storeResult, int method);
 }; // TemperatureController
 
 

@@ -1370,7 +1370,6 @@ void UIDisplay::parse(char *txt,bool ram)
                     addStringP(Extruder::current->id==c2-'0'?ui_selected:ui_unselected);
                 }
 
-#ifdef TEMP_PID
                 else if(c2=='i')                                                                        // %Xi : PID I gain
                 {
                     addFloat(Extruder::current->tempControl.pidIGain,4,2);
@@ -1395,7 +1394,6 @@ void UIDisplay::parse(char *txt,bool ram)
                 {
                     addInt(Extruder::current->tempControl.pidMax,3);
                 }
-#endif // TEMP_PID
 
                 else if(c2=='w')                                                                        // %Xw : Extruder watch period in seconds
                 {
@@ -1581,9 +1579,11 @@ void UIDisplay::parse(char *txt,bool ram)
             }
             case 'S':
             {
-                if(c2=='e') addFloat(Extruder::current->stepsPerMM,3,1);                                // %Se : Steps per mm current extruder
-                if(c2=='z') addFloat(g_nManualSteps[Z_AXIS] * Printer::invAxisStepsPerMM[Z_AXIS] * 1000,4,0); // %Sz : Mikrometer per Z-Single_Step (Z_Axis)
-                break;                
+                if(c2=='e') addFloat(Extruder::current->stepsPerMM,3,1);                                              // %Se : Steps per mm current extruder
+                else if(c2=='z') addFloat(g_nManualSteps[Z_AXIS] * Printer::invAxisStepsPerMM[Z_AXIS] * 1000,4,0);    // %Sz : Mikrometer per Z-Single_Step (Z_Axis)
+                else if(c2=='M' && col<MAX_COLS) if(g_ZMatrixChangedInRam) printCols[col++]='*';                      // %SM : Matrix has changed in Ram and is ready to Save. -> *)
+
+                break;
             }
             case 'p':
             {
@@ -1680,6 +1680,18 @@ void UIDisplay::parse(char *txt,bool ram)
                         }
                     }
                 }
+#if FEATURE_EMERGENCY_PAUSE
+                if(c2=='l')                                                                             // %pl : g_nEmergencyPauseDigitsMin [1700/kg]
+                {
+                    addLong(g_nEmergencyPauseDigitsMin,6);
+                    break;
+                }
+                if(c2=='h')                                                                             // %ph : g_nEmergencyPauseDigitsMax [1700/kg]
+                {
+                    addLong(g_nEmergencyPauseDigitsMax,6);
+                    break;
+                }
+#endif //FEATURE_EMERGENCY_PAUSE
                 break;
             }
             case 'P':
@@ -2618,6 +2630,14 @@ void UIDisplay::rightAction()
             //TPE braucht mini werte, wenn es sinnvoll sein soll. Darum der Ternary, sodass man per Knopf auch kleinste Zahlen justieren kann.
             g_nSensiblePressureDigits += (g_nSensiblePressureDigits >= 2000) ? 250 : (g_nSensiblePressureDigits >= 500) ? 100 : 50 ; //decrement pro Knopfklick. Man kann ja auf der Taste bleiben.
             //g_nSensiblePressureDigits += 250; //decrement pro Knopfklick. Man kann ja auf der Taste bleiben.
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            //Wir speichern nur Werte automatisch per Knopf, die im Alltag sinn machen können. Ab 500:
+            short oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_DIGITS);
+            if(g_nSensiblePressureDigits >= 500 && oldval != g_nSensiblePressureDigits){
+                HAL::eprSetInt16( EPR_RF_MOD_SENSEOFFSET_DIGITS, g_nSensiblePressureDigits );
+                EEPROM::updateChecksum(); //deshalb die prüfung
+            }
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
         }
         beep(1,4);
     }else{
@@ -3578,6 +3598,27 @@ void UIDisplay::nextPreviousAction(int8_t next)
             INCREMENT_MIN_MAX(g_nYesNo,1,0,1);
             break;
         }
+
+#if FEATURE_EMERGENCY_PAUSE
+        case UI_ACTION_EMERGENCY_PAUSE_MIN:
+        {
+            INCREMENT_MIN_MAX(g_nEmergencyPauseDigitsMin,200,EMERGENCY_PAUSE_DIGITS_MIN,g_nEmergencyPauseDigitsMax);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetInt32( EPR_RF_EMERGENCYPAUSEDIGITSMIN, g_nEmergencyPauseDigitsMin );
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+        case UI_ACTION_EMERGENCY_PAUSE_MAX:
+        {
+            INCREMENT_MIN_MAX(g_nEmergencyPauseDigitsMax,200,g_nEmergencyPauseDigitsMin,EMERGENCY_PAUSE_DIGITS_MAX);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetInt32( EPR_RF_EMERGENCYPAUSEDIGITSMAX, g_nEmergencyPauseDigitsMin );
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+#endif //FEATURE_EMERGENCY_PAUSE
     }
 
 #if FEATURE_MILLING_MODE
@@ -3700,6 +3741,14 @@ void UIDisplay::executeAction(int action)
                         //TPE braucht mini werte, wenn es sinnvoll sein soll. Darum der Ternary, sodass man per Knopf auch kleinste Zahlen justieren kann.
                         //g_nSensiblePressureDigits -= 250; //decrement pro Knopfklick. Man kann ja auf der Taste bleiben.
                         g_nSensiblePressureDigits -= (g_nSensiblePressureDigits >= 2000) ? 250 : (g_nSensiblePressureDigits >= 500) ? 100 : 50 ; //decrement pro Knopfklick. Man kann ja auf der Taste bleiben.
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                        //Wir speichern nur Werte automatisch per Knopf, die im Alltag sinn machen können. Ab 500:
+                        short oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_DIGITS);
+                        if(g_nSensiblePressureDigits >= 500 && oldval != g_nSensiblePressureDigits){
+                            HAL::eprSetInt16( EPR_RF_MOD_SENSEOFFSET_DIGITS, g_nSensiblePressureDigits );
+                            EEPROM::updateChecksum(); //deshalb die prüfung
+                        }
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
                     }
                     beep(1,4);
                     //skipBeep=true;
@@ -4130,7 +4179,6 @@ void UIDisplay::executeAction(int action)
                     Printer::HotendType = HOTEND_TYPE_V2_DUAL;
 #endif // #if MOTHERBOARD == DEVICE_TYPE_RF2000
 
-#ifdef TEMP_PID
 #if NUM_EXTRUDER>0
                     e = &extruder[0];
 
@@ -4152,13 +4200,11 @@ void UIDisplay::executeAction(int action)
                     e->tempControl.pidDGain    = HT3_PID_D;
                     e->tempControl.pidMax      = EXT0_PID_MAX;
 #endif // #if NUM_EXTRUDER>1
-#endif // TEMP_PID
                 }
                 else
                 {
                     Printer::HotendType = HOTEND_TYPE_V1;
 
-#ifdef TEMP_PID
 #if NUM_EXTRUDER>0
                     e = &extruder[0];
 
@@ -4180,13 +4226,11 @@ void UIDisplay::executeAction(int action)
                     e->tempControl.pidDGain    = HT2_PID_D;
                     e->tempControl.pidMax      = EXT0_PID_MAX;
 #endif // NUM_EXTRUDER>1
-#endif // TEMP_PID
                 }
 
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
                 HAL::eprSetByte( EPR_RF_HOTEND_TYPE, Printer::HotendType );
 
-#ifdef TEMP_PID
                 for(uint8_t i=0; i<NUM_EXTRUDER; i++)
                 {
                     int o=i*EEPROM_EXTRUDER_LENGTH+EEPROM_EXTRUDER_OFFSET;
@@ -4200,7 +4244,6 @@ void UIDisplay::executeAction(int action)
                     HAL::eprSetFloat( o+EPR_EXTRUDER_PID_DGAIN, e->tempControl.pidDGain );
                     HAL::eprSetByte(  o+EPR_EXTRUDER_PID_MAX,   e->tempControl.pidMax );
                 }
-#endif // TEMP_PID
 
                 EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
@@ -4755,6 +4798,17 @@ void UIDisplay::executeAction(int action)
                 //Commands::waitUntilEndOfZOS(); -> Nein, weil der Nutzer das aktiv steuern und abbrechen können soll. Ist ja hier kein M-code in Reihe.
                 break;
             }
+            case UI_ACTION_RF_DO_MHIER_AUTO_MATRIX_LEVELING:
+            {           
+                //macht an, wenn an, macht aus:         
+                startZOScan(true); //Scan aber an vielen Punkten und Gewichtet.
+                //gehe zurück und zeige dem User was passiert.
+                uid.menuLevel = 0; 
+                uid.menuPos[0] = 0;
+                //wartet nur wenn an:
+                //Commands::waitUntilEndOfZOS(); -> Nein, weil der Nutzer das aktiv steuern und abbrechen können soll. Ist ja hier kein M-code in Reihe.
+                break;
+            }
             case UI_ACTION_RF_DO_SAVE_ACTIVE_ZMATRIX:
             {
                 // save the determined values to the EEPROM        
@@ -4813,35 +4867,35 @@ void UIDisplay::mediumAction()
 
 void UIDisplay::slowAction()
 {
-    unsigned long   time    = HAL::timeInMilliseconds();
-    uint8_t         refresh = 0;
+    millis_t  time    = HAL::timeInMilliseconds();
+    uint8_t   refresh = 0;
 
 
 #if UI_HAS_KEYS==1
     // Update key buffer
     InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
-    if((flags & 9)==0)
+    if( (flags & (UI_FLAG_FAST_KEY_ACTION + UI_FLAG_KEY_TEST_RUNNING)) == 0 )
     {
         flags|=UI_FLAG_KEY_TEST_RUNNING;
-        noInts.unprotect(); //HAL::allowInterrupts();
 
-        int nextAction = 0;
-        ui_check_slow_keys(nextAction);  //Nibbels: Das macht garnix.
-        if(lastButtonAction!=nextAction)
-        {
-            lastButtonStart = time;
-            lastButtonAction = nextAction;
-            noInts.protect(); //HAL::forbidInterrupts();
-            flags|=UI_FLAG_SLOW_KEY_ACTION;
-        }else{
-            noInts.protect(); //HAL::forbidInterrupts();
-        }
-        flags-=UI_FLAG_KEY_TEST_RUNNING;
-    }else{
-      noInts.protect(); //HAL::forbidInterrupts();
+            noInts.unprotect(); //HAL::allowInterrupts();
+
+            int16_t nextAction = 0;
+            ui_check_slow_keys(nextAction);  //Nibbels: Das macht garnix.
+            if(lastButtonAction!=nextAction)
+            {
+                lastButtonStart = time;
+                lastButtonAction = nextAction;
+                noInts.protect(); //HAL::forbidInterrupts();
+                flags|=UI_FLAG_SLOW_KEY_ACTION;
+            }else{
+                noInts.protect(); //HAL::forbidInterrupts();
+            }
+
+        flags &= ~UI_FLAG_KEY_TEST_RUNNING;
     }
 
-    if((flags & UI_FLAG_SLOW_ACTION_RUNNING)==0)
+    if( (flags & UI_FLAG_SLOW_ACTION_RUNNING) == 0 )
     {
         flags |= UI_FLAG_SLOW_ACTION_RUNNING;
         
@@ -4887,7 +4941,7 @@ void UIDisplay::slowAction()
             }
         }
         noInts.protect(); //HAL::forbidInterrupts();
-        flags -= UI_FLAG_SLOW_ACTION_RUNNING;
+        flags &= ~UI_FLAG_SLOW_ACTION_RUNNING;
     }
     noInts.unprotect(); //HAL::allowInterrupts();
 #endif // UI_HAS_KEYS==1
@@ -4954,37 +5008,35 @@ void UIDisplay::fastAction()
     // Check keys
     InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
 
-    if((flags & 10)==0)
+    if( (flags & (UI_FLAG_KEY_TEST_RUNNING + UI_FLAG_SLOW_KEY_ACTION)) == 0 )
     {
         flags |= UI_FLAG_KEY_TEST_RUNNING;
-        noInts.unprotect(); //HAL::allowInterrupts();
-        int nextAction = 0;
-        ui_check_keys(nextAction);
 
-        if(lastButtonAction!=nextAction)
-        {
-            lastButtonStart = HAL::timeInMilliseconds();
-            lastButtonAction = nextAction;
-            noInts.protect(); //HAL::forbidInterrupts();
-            flags|=UI_FLAG_FAST_KEY_ACTION;
-            if( nextAction == UI_ACTION_RF_CONTINUE )
-            {
-                g_nContinueButtonPressed = 1;
-            }
-        }
+            int16_t nextAction = 0;
+            ui_check_keys(nextAction);
 
-        if(!nextAction)
-        {
-            // no key is pressed at the moment
-            if(PrintLine::direct.task == TASK_MOVE_FROM_BUTTON)
+            if(lastButtonAction!=nextAction)
             {
-                // the current direct movement has been started via a hardware or menu button - these movements shall be stopped as soon as the button is released
-                PrintLine::stopDirectMove();
+                lastButtonStart = HAL::timeInMilliseconds();
+                lastButtonAction = nextAction;
+                flags |= UI_FLAG_FAST_KEY_ACTION;
+                if( nextAction == UI_ACTION_RF_CONTINUE )
+                {
+                    g_nContinueButtonPressed = 1;
+                }
             }
-        }
-  
-        noInts.protect(); //HAL::forbidInterrupts();
-        flags-=UI_FLAG_KEY_TEST_RUNNING;
+
+            if(!nextAction)
+            {
+                // no key is pressed at the moment
+                if(PrintLine::direct.task == TASK_MOVE_FROM_BUTTON)
+                {
+                    // the current direct movement has been started via a hardware or menu button - these movements shall be stopped as soon as the button is released
+                    PrintLine::stopDirectMove();
+                }
+            }  
+
+        flags &= ~UI_FLAG_KEY_TEST_RUNNING;
     }
     noInts.unprotect(); //HAL::allowInterrupts();
 #endif //  UI_HAS_KEYS==1
