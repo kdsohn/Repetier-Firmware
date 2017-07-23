@@ -61,7 +61,7 @@ public:
     float       tempIStateLimitMax;
     float       tempIStateLimitMin;
     uint8_t     tempPointer;
-    float       tempArray[4];
+    float       tempArray[16];
 
     uint8_t     flags;
 
