@@ -301,6 +301,7 @@ void Extruder::initExtruder()
             if(!act->enableOn) HAL::digitalWrite(act->enablePin,HIGH);
         }
         act->tempControl.lastTemperatureUpdate = HAL::timeInMilliseconds();
+        act->tempControl.updateTempControlVars();
     }
 
 #if HEATED_BED_HEATER_PIN>-1
@@ -429,6 +430,7 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
     if(temperatureInCelsius<0) temperatureInCelsius=0;
     TemperatureController *tc = tempController[extr];
     tc->setTargetTemperature(temperatureInCelsius,0);
+    tc->updateTempControlVars();
     if(beep && temperatureInCelsius>30)
         tc->setAlarm(true);
     if(temperatureInCelsius>=EXTRUDER_FAN_COOL_TEMP) extruder[extr].coolerPWM = extruder[extr].coolerSpeed;
@@ -477,6 +479,7 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
     {
         TemperatureController *tc2 = tempController[1];
         tc2->setTargetTemperature(temperatureInCelsius,0);
+        tc2->updateTempControlVars();
         if(temperatureInCelsius>=EXTRUDER_FAN_COOL_TEMP) extruder[1].coolerPWM = extruder[1].coolerSpeed;
     }
 #endif // FEATURE_DITTO_PRINTING
