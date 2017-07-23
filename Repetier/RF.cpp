@@ -14227,7 +14227,7 @@ void doEmergencyStop( char reason )
     {
         Com::printFLN( PSTR( " (Z-Block)" ) );
     }
-
+ 
     // block any further movement
     Printer::stepperDirection[X_AXIS] = 0;
     Printer::stepperDirection[Y_AXIS] = 0;
