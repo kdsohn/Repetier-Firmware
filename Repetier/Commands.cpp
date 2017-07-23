@@ -280,9 +280,9 @@ void Commands::printTemperatures(bool showRaw)
     #endif // HAVE_HEATED_BED
     #endif // HEATED_BED_SENSOR_TYPE==0
 
-    #ifdef TEMP_PID
-        Com::printF(Com::tSpaceAtColon,(autotuneIndex==255?pwm_pos[Extruder::current->id]:pwm_pos[autotuneIndex])); // Show output of autotune when tuning!
-    #endif // TEMP_PID
+
+    Com::printF(Com::tSpaceAtColon,(autotuneIndex==255?pwm_pos[Extruder::current->id]:pwm_pos[autotuneIndex])); // Show output of autotune when tuning!
+
 
     #if NUM_EXTRUDER>1
         for(uint8_t i=0; i<NUM_EXTRUDER; i++)
@@ -291,10 +291,8 @@ void Commands::printTemperatures(bool showRaw)
             Com::printF(Com::tColon,extruder[i].tempControl.currentTemperatureC);
             Com::printF(Com::tSpaceSlash,extruder[i].tempControl.targetTemperatureC,0);
 
-    #ifdef TEMP_PID
             Com::printF(Com::tSpaceAt,(int)i);
             Com::printF(Com::tColon,(pwm_pos[extruder[i].tempControl.pwmIndex])); // Show output of autotune when tuning!
-    #endif // TEMP_PID
 
             if(showRaw)
             {
@@ -1272,28 +1270,19 @@ void Commands::executeGCode(GCode *com)
             {
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
-#if defined(TEMP_PID) && NUM_TEMPERATURE_LOOPS > 0
+#if NUM_TEMPERATURE_LOOPS > 0
                 int temp = 150;
                 int cont = 0;
                 int cycles = 8;
-                int overshoot_present = 0; //0 = Classic PID
+                int method = 0; //0 = Classic PID
                 if(com->hasS()) temp = com->S; //Verwechsle ich immer, weil T wie Temperatur, aber T ist 0..255
                 if(com->hasP()) cont = com->P;
-                if(com->hasJ()){
-                    switch((char)com->J){
-                       case 6: overshoot_present = 6; break; //6 = P (for testing!)
-                       case 5: overshoot_present = 5; break; //5 = PI (for testing!)
-                       case 4: overshoot_present = 4; break; //4 = PD (for testing!)
-                       case 3: overshoot_present = 3; break; //3 = PID No Overshoot
-                       case 2: overshoot_present = 2; break; //2 = PID Some Overshoot
-                       case 1: overshoot_present = 1; break; //1 = PID Pessen Integral Rule
-                    }                                        //0 = PID Classic Ziegler-Nichols
-                }
                 if(com->hasR()) cycles = static_cast<int>(com->R);
+                if(com->hasJ()) method = static_cast<int>(com->J); //original Repetier used hasC, we dont have that in this version of repetier.
                 if(cont >= NUM_TEMPERATURE_LOOPS) cont = NUM_TEMPERATURE_LOOPS;
                 if(cont < 0) cont = 0;
-                tempController[cont]->autotunePID(temp,cont,cycles,com->hasX(),overshoot_present);
-#endif // defined(TEMP_PID) && NUM_TEMPERATURE_LOOPS > 0
+                tempController[cont]->autotunePID(temp,cont,cycles,com->hasX(), method);
+#endif // NUM_TEMPERATURE_LOOPS > 0
                 }
                 break;
             }

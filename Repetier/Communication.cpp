@@ -132,9 +132,9 @@ FSTRINGVALUE(Com::tAPIDMax," max: ")
 FSTRINGVALUE(Com::tAPIDKu," Ku: ")
 FSTRINGVALUE(Com::tAPIDTu," Tu: ")
 FSTRINGVALUE(Com::tAPIDClassic," Classic Ziegler-Nichols PID")
-FSTRINGVALUE(Com::tAPIDPessenIntegralRule," Pessen Integral Rule PID")
-FSTRINGVALUE(Com::tAPIDSomeOvershoot," Some-Overshoot PID")
-FSTRINGVALUE(Com::tAPIDNoOvershoot," No-Overshoot PID")
+FSTRINGVALUE(Com::tAPIDPessen," Pessen Integral Rule PID")
+FSTRINGVALUE(Com::tAPIDSome," Some-Overshoot PID")
+FSTRINGVALUE(Com::tAPIDNone," No-Overshoot PID")
 FSTRINGVALUE(Com::tAPIDsimplePD," PD")
 FSTRINGVALUE(Com::tAPIDsimplePI," PI")
 FSTRINGVALUE(Com::tAPIDsimpleP," P")
@@ -262,7 +262,13 @@ FSTRINGVALUE(Com::tEPRPrinterMOD_ZOS_SCAN_POINT_X,"Z-Offset-Scan Position X [HBS
 FSTRINGVALUE(Com::tEPRPrinterMOD_ZOS_SCAN_POINT_Y,"Z-Offset-Scan Position Y [HBS-row]")
 #if FEATURE_SENSIBLE_PRESSURE
 FSTRINGVALUE(Com::tEPRPrinterMOD_SENSEOFFSET_OFFSET_MAX,"SenseOffset max. Correction [um]")
+FSTRINGVALUE(Com::tEPRPrinterEPR_RF_MOD_SENSEOFFSET_DIGITS,"SenseOffset Digits Limit [1700/kg]")
 #endif //FEATURE_SENSIBLE_PRESSURE
+
+#if FEATURE_EMERGENCY_PAUSE
+FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyPauseDigitsMin,"EmergencyPauseDigitsMin 0=off [1700/kg]")
+FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyPauseDigitsMax,"EmergencyPauseDigitsMax 0=off [1700/kg]")
+#endif //FEATURE_EMERGENCY_PAUSE
 
 #endif // EEPROM_MODE
 

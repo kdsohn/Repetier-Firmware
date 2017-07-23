@@ -1,6 +1,11 @@
 TODO: Pause-Back-Drive-Bug in original RF1.37
 TODO: Possible Z-Lift Bug in original RF1.37
-TODO: Store some settings within Flash.
+
+V RF.01.37r2.TDMod (2017-07-22)
+- Last SenseOffset Digits Limit is now stored in EEPROM. If you use a plain M3909 instead of M3909 Pxxxxx the last value is used from EEPROM automatically.
+- The Emergency-Pause limit values are now editable and stored in EEPROM. EEPROM values are loaded at the printers start and can be updated via M3075.
+- Emergency-Pause is now editable within Menu at Configuration->General (See at V 0.91.15 (2014-03-26) vor Details.)
+- Updated small things according to repetier/Repetier @output EEPROM and some cleanup.
 
 V RF.01.37r.TDMod (2017-07-22)
 - Grouped my good old Auto-Matrix-Leveling to one Command: M3900 R1. This is available in Menu also. Configuration -> Z-Configuration -> "Auto-Matrix-Leveling"

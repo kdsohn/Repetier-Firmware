@@ -115,7 +115,6 @@ void Extruder::manageTemperatures()
             act->setAlarm(false);  //reset alarm
         }
 
-#ifdef TEMP_PID
         act->tempArray[act->tempPointer++] = act->currentTemperatureC;
         act->tempPointer &= 3; //springe von 4 = 100 auf 0 zurück, wenn 4.
         if(act->heatManager == 1)
@@ -196,7 +195,6 @@ void Extruder::manageTemperatures()
             pwm_pos[act->pwmIndex] = output;
         }
         else
-#endif // TEMP_PID
 
             if(act->heatManager == 2)    // Bang-bang with reduced change frequency to save relais life
             {
@@ -241,9 +239,7 @@ void Extruder::manageTemperatures()
 void Extruder::initHeatedBed()
 {
 #if HAVE_HEATED_BED
-#ifdef TEMP_PID
     heatedBedController.updateTempControlVars();
-#endif // TEMP_PID
 #endif // HAVE_HEATED_BED
 
 } // initHeatedBed
@@ -362,11 +358,10 @@ void Extruder::initExtruder()
 
 void TemperatureController::updateTempControlVars()
 {
-#ifdef TEMP_PID
     if(heatManager==1 && pidIGain!=0)   // prevent division by zero
     {
-        tempIStateLimitMax = (float)pidDriveMax*10.0f/pidIGain;
-        tempIStateLimitMin = (float)pidDriveMin*-1.0f/pidIGain; //Bisher hatte der PID-Regler keinen negativen I-Anteil, weil die Limits nicht ins Negative dürfen. Jetzt schon. Es ist das Minus.
+        tempIStateLimitMax = (float)pidDriveMax * PID_CONTROL_DRIVE_MAX_LIMIT_FACTOR / pidIGain;
+        tempIStateLimitMin = (float)pidDriveMin * PID_CONTROL_DRIVE_MIN_LIMIT_FACTOR / pidIGain; //Bisher hatte der PID-Regler keinen negativen I-Anteil, weil die Limits nicht ins Negative dürfen. Jetzt schon. Es ist das Minus in der Config, das die Stabilität bringt.
 /*
         Com::printF( PSTR( " pidDriveMax:" ), pidDriveMax );
         Com::printF( PSTR( " pidDriveMin:" ), pidDriveMin );
@@ -375,7 +370,6 @@ void TemperatureController::updateTempControlVars()
         Com::printFLN( PSTR( " tempIStateLimitMin:" ), tempIStateLimitMin );
 */
     }
-#endif // TEMP_PID
 
 } // updateTempControlVars
 
@@ -1303,9 +1297,7 @@ void Extruder::disableAllHeater()
 
 } // disableAllHeater
 
-
-#ifdef TEMP_PID
-void TemperatureController::autotunePID(float temp, uint8_t controllerId, int maxCycles, bool storeValues, char overshootdamper) //overshootdamper = 0 classic, 1 some, 2 no
+void TemperatureController::autotunePID(float temp, uint8_t controllerId, int maxCycles, bool storeValues, int method)
 {
     float currentTemp;
     int cycles=0;
@@ -1327,8 +1319,8 @@ void TemperatureController::autotunePID(float temp, uint8_t controllerId, int ma
     if(maxCycles > 20)
         maxCycles = 20;
     Com::printInfoFLN(Com::tPIDAutotuneStart);
-    Com::printF( PSTR("Using autotune ruleset: "), (int)overshootdamper );
-    switch(overshootdamper){
+    Com::printF( PSTR("Using autotune ruleset: "), (int)method );
+    switch(method){
         case 6: //P
             Com::printFLN(Com::tAPIDsimpleP);
         break;
@@ -1339,16 +1331,17 @@ void TemperatureController::autotunePID(float temp, uint8_t controllerId, int ma
             Com::printFLN(Com::tAPIDsimplePD);
         break;
         case 3: //PID no overshoot
-            Com::printFLN(Com::tAPIDNoOvershoot);
+            Com::printFLN(Com::tAPIDNone);
         break;
         case 2: //PID some overshoot
-            Com::printFLN(Com::tAPIDSomeOvershoot);
+            Com::printFLN(Com::tAPIDSome);
         break;
         case 1: //PID Pessen Integral Rule
-            Com::printFLN(Com::tAPIDPessenIntegralRule);
+            Com::printFLN(Com::tAPIDPessen);
         break;
         default: //PID classic Ziegler-Nichols
             Com::printFLN(Com::tAPIDClassic);
+            method = 0; //filter not available methods.
     }
     //Extruder::disableAllHeater(); // switch off all heaters. https://github.com/repetier/Repetier-Firmware/commit/241c550ac004023842d6886c6e0db15a1f6b56d7
     autotuneIndex = controllerId;
@@ -1401,8 +1394,8 @@ void TemperatureController::autotunePID(float temp, uint8_t controllerId, int ma
                     if(cycles > 2)
                     {
                         // Parameter according Ziegler¡§CNichols method: http://en.wikipedia.org/wiki/Ziegler%E2%80%93Nichols_method
-                        Ku = (4.0 * d)/(3.14159*(maxTemp-minTemp));
-                        Tu = ((float)(t_low + t_high)/1000.0);
+                        Ku = (4.0 * d)/(3.14159 * (maxTemp - minTemp));
+                        Tu = static_cast<float>(t_low + t_high) / 1000.0;
                         Com::printF(Com::tAPIDKu,Ku);
                         Com::printFLN(Com::tAPIDTu,Tu);
 /**
@@ -1418,7 +1411,7 @@ KP = Ku * Maßzahl lt. Tabelle
 
 see also: http://www.mstarlabs.com/control/znrule.html
 */
-                        switch(overshootdamper){
+                        switch(method){
                             case 6: //P
                                Kp = 0.5f*Ku;          //0.5 KRkrit
                                Ki = 0;
@@ -1441,19 +1434,19 @@ see also: http://www.mstarlabs.com/control/znrule.html
                                Kp = 0.2f*Ku;          //0.2 KRkrit
                                Ki = 2.0f*Kp/Tu;       //0.5 Tkrit
                                Kd = Kp*Tu/3.0f;       //0.333 Tkrit
-                               Com::printFLN(Com::tAPIDNoOvershoot);
+                               Com::printFLN(Com::tAPIDNone);
                             break;
                             case 2: //PID some overshoot
                                Kp = 0.33f*Ku;         //0.33 KRkrit
                                Ki = 2.0f*Kp/Tu;       //0.5 Tkrit
                                Kd = Kp*Tu/3.0f;       //0.333 Tkrit
-                               Com::printFLN(Com::tAPIDSomeOvershoot);
+                               Com::printFLN(Com::tAPIDSome);
                             break;
                             case 1: //PID Pessen Integral Rule
                                Kp = 0.7f*Ku;          //0.7 KRkrit
                                Ki = 2.5f*Kp/Tu;       //0.4 Tkrit
                                Kd = Kp*Tu*3.0f/20.0f; //0.15 Tkrit
-                               Com::printFLN(Com::tAPIDPessenIntegralRule);
+                               Com::printFLN(Com::tAPIDPessen);
                             break;
                             default: //PID classic Ziegler-Nichols
                                Kp = 0.6f*Ku;          //0.6 KRkrit
@@ -1511,7 +1504,6 @@ see also: http://www.mstarlabs.com/control/znrule.html
     }
 
 } // autotunePID
-#endif // TEMP_PID
 
 bool reportTempsensorError()
 {
@@ -1616,10 +1608,7 @@ Extruder extruder[NUM_EXTRUDER] =
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
 
             0,EXT0_HEAT_MANAGER
-
-#ifdef TEMP_PID
             ,0,EXT0_PID_INTEGRAL_DRIVE_MAX,EXT0_PID_INTEGRAL_DRIVE_MIN,EXT0_PID_P,EXT0_PID_I,EXT0_PID_D,EXT0_PID_MAX,0,0,0,{0,0,0,0}
-#endif // TEMP_PID
         ,0}
         ,ext0_select_cmd,ext0_deselect_cmd,EXT0_EXTRUDER_COOLER_SPEED,0
         #if STEPPER_ON_DELAY
@@ -1649,10 +1638,7 @@ Extruder extruder[NUM_EXTRUDER] =
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
 
             0,EXT1_HEAT_MANAGER
-
-#ifdef TEMP_PID
             ,0,EXT1_PID_INTEGRAL_DRIVE_MAX,EXT1_PID_INTEGRAL_DRIVE_MIN,EXT1_PID_P,EXT1_PID_I,EXT1_PID_D,EXT1_PID_MAX,0,0,0,{0,0,0,0}
-#endif // TEMP_PID
         ,0}
         ,ext1_select_cmd,ext1_deselect_cmd,EXT1_EXTRUDER_COOLER_SPEED,0
         #if STEPPER_ON_DELAY
@@ -1676,11 +1662,7 @@ Extruder extruder[NUM_EXTRUDER] =
 
         ,{
             2,EXT2_TEMPSENSOR_TYPE,EXT2_SENSOR_INDEX,0,0,0,0,0,EXT2_HEAT_MANAGER
-
-#ifdef TEMP_PID
             ,0,EXT2_PID_INTEGRAL_DRIVE_MAX,EXT2_PID_INTEGRAL_DRIVE_MIN,EXT2_PID_P,EXT2_PID_I,EXT2_PID_D,EXT2_PID_MAX,0,0,0,{0,0,0,0}
-#endif // TEMP_PID
-
         ,0}
         ,ext2_select_cmd,ext2_deselect_cmd,EXT2_EXTRUDER_COOLER_SPEED,0     
         #if STEPPER_ON_DELAY
@@ -1704,10 +1686,7 @@ Extruder extruder[NUM_EXTRUDER] =
 
         ,{
             3,EXT3_TEMPSENSOR_TYPE,EXT3_SENSOR_INDEX,0,0,0,0,0,EXT3_HEAT_MANAGER
-
-#ifdef TEMP_PID
             ,0,EXT3_PID_INTEGRAL_DRIVE_MAX,EXT3_PID_INTEGRAL_DRIVE_MIN,EXT3_PID_P,EXT3_PID_I,EXT3_PID_D,EXT3_PID_MAX,0,0,0,{0,0,0,0}
-#endif // TEMP_PID
 
         ,0}
         ,ext3_select_cmd,ext3_deselect_cmd,EXT3_EXTRUDER_COOLER_SPEED,0
@@ -1733,11 +1712,7 @@ Extruder extruder[NUM_EXTRUDER] =
 
         ,{
             4,EXT4_TEMPSENSOR_TYPE,EXT4_SENSOR_INDEX,0,0,0,0,0,EXT4_HEAT_MANAGER
-
-#ifdef TEMP_PID
             ,0,EXT4_PID_INTEGRAL_DRIVE_MAX,EXT4_PID_INTEGRAL_DRIVE_MIN,EXT4_PID_P,EXT4_PID_I,EXT4_PID_D,EXT4_PID_MAX,0,0,0,{0,0,0,0}
-#endif // TEMP_PID
-
         ,0}
         ,ext4_select_cmd,ext4_deselect_cmd,EXT4_EXTRUDER_COOLER_SPEED,0
         
@@ -1762,11 +1737,7 @@ Extruder extruder[NUM_EXTRUDER] =
 
         ,{
             5,EXT5_TEMPSENSOR_TYPE,EXT5_SENSOR_INDEX,0,0,0,0,0,EXT5_HEAT_MANAGER
-
-#ifdef TEMP_PID
             ,0,EXT5_PID_INTEGRAL_DRIVE_MAX,EXT5_PID_INTEGRAL_DRIVE_MIN,EXT5_PID_P,EXT5_PID_I,EXT5_PID_D,EXT5_PID_MAX,0,0,0,{0,0,0,0}
-#endif // TEMP_PID
-
         ,0}
         ,ext5_select_cmd,ext5_deselect_cmd,EXT5_EXTRUDER_COOLER_SPEED,0
         
@@ -1780,17 +1751,12 @@ Extruder extruder[NUM_EXTRUDER] =
 #if HAVE_HEATED_BED
 #define NUM_TEMPERATURE_LOOPS NUM_EXTRUDER+1
 TemperatureController heatedBedController = {NUM_EXTRUDER,HEATED_BED_SENSOR_TYPE,BED_SENSOR_INDEX,0,0,0,0,
-    
-#if FEATURE_HEAT_BED_TEMP_COMPENSATION
+    #if FEATURE_HEAT_BED_TEMP_COMPENSATION
         0,
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
-
         0,HEATED_BED_HEAT_MANAGER
-
-#ifdef TEMP_PID
         ,0,HEATED_BED_PID_INTEGRAL_DRIVE_MAX,HEATED_BED_PID_INTEGRAL_DRIVE_MIN,HEATED_BED_PID_PGAIN,HEATED_BED_PID_IGAIN,HEATED_BED_PID_DGAIN,HEATED_BED_PID_MAX,0,0,0,{0,0,0,0}
-#endif // TEMP_PID
-                                            ,0};
+        ,0};
 #else
 #define NUM_TEMPERATURE_LOOPS NUM_EXTRUDER
 #endif // HAVE_HEATED_BED
@@ -1808,11 +1774,8 @@ TemperatureController optTempController = {0,RESERVE_ANALOG_SENSOR_TYPE,RESERVE_
         0,
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
         0, 0
-#ifdef TEMP_PID
         ,0,0,0,0,0,0,0,0,0,0,{0,0,0,0}
-#endif // TEMP_PID
-         ,0};
-         
+        ,0};
 #endif // RESERVE_ANALOG_INPUTS
 
 

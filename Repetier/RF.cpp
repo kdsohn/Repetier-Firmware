@@ -184,8 +184,8 @@ long            g_nParkPosition[3]          = { PARK_POSITION_X, PARK_POSITION_Y
 #endif // FEATURE_PARK
 
 #if FEATURE_EMERGENCY_PAUSE
-long            g_nEmergencyPauseDigitsMin  = 0;
-long            g_nEmergencyPauseDigitsMax  = 0;
+long            g_nEmergencyPauseDigitsMin  = EMERGENCY_PAUSE_DIGITS_MIN;
+long            g_nEmergencyPauseDigitsMax  = EMERGENCY_PAUSE_DIGITS_MAX;
 #endif // FEATURE_EMERGENCY_PAUSE
 
 #if FEATURE_SILENT_MODE
@@ -194,7 +194,7 @@ char            g_nSilentMode               = 0;
 
 #if FEATURE_SENSIBLE_PRESSURE
 /* brief: This is for correcting too close Z at first layer, see FEATURE_SENSIBLE_PRESSURE // Idee Wessix, coded by Nibbels  */
-short           g_nSensiblePressureDigits   = 0;
+short           g_nSensiblePressureDigits   = 0; //init auf zahl bringt stand 1.37r2 nur was wenn zcompensation an. darum lesen aus eeprom oder setzen auf wert nur durch Mcode
 short           g_nSensiblePressureOffsetMax = SENSIBLE_PRESSURE_MAX_OFFSET;
 short           g_nSensiblePressureOffset   = 0;
 char            g_nSensiblePressure1stMarke = 0; //sagt, ob regelung aktiv oder inaktiv, wegen Z-Limits
@@ -291,11 +291,6 @@ void initRF( void )
         }
     }
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
-#if FEATURE_EMERGENCY_PAUSE
-    g_nEmergencyPauseDigitsMin = EMERGENCY_PAUSE_DIGITS_MIN;
-    g_nEmergencyPauseDigitsMax = EMERGENCY_PAUSE_DIGITS_MAX;
-#endif // FEATURE_EMERGENCY_PAUSE
 
 #if FEATURE_SERVICE_INTERVAL
     float   fDistanceService     = Printer::filamentPrinted*0.001+HAL::eprGetFloat(EPR_PRINTING_DISTANCE_SERVICE);
@@ -3397,7 +3392,7 @@ void scanWorkPart( void )
         BEEP_ABORT_WORK_PART_SCAN
 
         // restore the compensation values from the EEPROM
-        if( loadCompensationMatrix( 0 ) ) //Nibbels: Ist das hier nicht vieleicht Falsch? Eher das: (EEPROM_SECTOR_SIZE *9) + (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveWorkPart)? Ob eine Matrix existiert ist eh nicht klar.
+        if( loadCompensationMatrix( 0 ) ) //Nibbels: Ist das hier nicht vieleicht Falsch? Eher das: (EEPROM_SECTOR_SIZE *9) + (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveWorkPart)? --> Bei Adresse 0 wird in der Funktion ermittelt welche passt.
         {
             // there is no valid compensation matrix available
             initCompensationMatrix();
@@ -8420,11 +8415,18 @@ void processCommand( GCode* pCommand )
                     nMax = pCommand->P;
                 }
 
+                if(nMin < EMERGENCY_PAUSE_DIGITS_MIN) nMin = EMERGENCY_PAUSE_DIGITS_MIN;
+                if(nMax > EMERGENCY_PAUSE_DIGITS_MAX) nMax = EMERGENCY_PAUSE_DIGITS_MAX;
+
                 if( nMin == 0 && nMax == 0 )
                 {
                     g_nEmergencyPauseDigitsMin = 0;
                     g_nEmergencyPauseDigitsMax = 0;
-
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                    HAL::eprSetInt32( EPR_RF_EMERGENCYPAUSEDIGITSMIN, g_nEmergencyPauseDigitsMin );
+                    HAL::eprSetInt32( EPR_RF_EMERGENCYPAUSEDIGITSMAX, g_nEmergencyPauseDigitsMax );
+                    EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
                     if( Printer::debugInfo() )
                     {
                         Com::printFLN( PSTR( "M3075: the emergency pause has been disabled" ) );
@@ -8434,7 +8436,11 @@ void processCommand( GCode* pCommand )
                 {
                     g_nEmergencyPauseDigitsMin = nMin;
                     g_nEmergencyPauseDigitsMax = nMax;
-
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                    HAL::eprSetInt32( EPR_RF_EMERGENCYPAUSEDIGITSMIN, g_nEmergencyPauseDigitsMin );
+                    HAL::eprSetInt32( EPR_RF_EMERGENCYPAUSEDIGITSMAX, g_nEmergencyPauseDigitsMax );
+                    EEPROM::updateChecksum(); //deshalb die prüfung
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
                     if( Printer::debugInfo() )
                     {
                         Com::printF( PSTR( "M3075: new min: " ), (int)g_nEmergencyPauseDigitsMin );
@@ -10594,8 +10600,8 @@ void processCommand( GCode* pCommand )
                 Com::printFLN( PSTR( "M3902 is disabled : inactive Feature FEATURE_HEAT_BED_Z_COMPENSATION" ) );
                 break;
             }
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION       
-                            
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION
+
 #if FEATURE_SENSIBLE_PRESSURE
             case 3909: // M3909 [P]PressureDigits - configure the sensible pressure value threshold || by Wessix and Nibbels
             {
@@ -10603,23 +10609,37 @@ void processCommand( GCode* pCommand )
                 {
                     //Statusänderung per M3909 P10000 (for 10000 [digits])
                     Commands::waitUntilEndOfAllMoves();
-                    if (pCommand->hasP() ){                     
+                    if (pCommand->hasP() ){
                         if ( pCommand->P >= 0 && pCommand->P < EMERGENCY_PAUSE_DIGITS_MAX )
                         {
                             if(pCommand->P > 32767) pCommand->P = 32767;
                             g_nSensiblePressureDigits = pCommand->P;
                             if(g_nSensiblePressureDigits){
-                                Com::printFLN( PSTR( "M3909: SensiblePressure is now active") );
+                                Com::printFLN( PSTR( "M3909: SensiblePressure Pmax="),g_nSensiblePressureDigits );
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                                short oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_DIGITS);
+                                if(oldval != g_nSensiblePressureDigits){
+                                   HAL::eprSetInt16( EPR_RF_MOD_SENSEOFFSET_DIGITS, g_nSensiblePressureDigits );
+                                   EEPROM::updateChecksum(); //deshalb die prüfung
+                                }
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
                             }
                             else{
-                                Com::printFLN( PSTR( "M3909: SensiblePressure has been disabled") );
-                            } 
+                                Com::printFLN( PSTR( "M3909: SensiblePressure disabled") );
+                            }
                         }else{
-                            Com::printFLN( PSTR( "M3909: ERROR Cannot set threshold -> Wrong Parameters for [P]") );
+                            Com::printFLN( PSTR( "M3909: ERROR Parameter [P]") );
+                        }
+                    }else{
+                        //if possible read from EEPROM
+                        short oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_DIGITS);
+                        if ( oldval > 0 && oldval < EMERGENCY_PAUSE_DIGITS_MAX ){
+                            Com::printFLN( PSTR( "M3909: SensiblePressure EEPROM: Pmax="), oldval);
+                            g_nSensiblePressureDigits = oldval;
                         }
                     }
-                    
-                    if (pCommand->hasS() ){                     
+
+                    if (pCommand->hasS() ){
                         if ( pCommand->S > 0 && pCommand->S <= 300 )
                         {
                             //max darf nie 0 werden!! div/0 bei zeile ~5600
@@ -10633,11 +10653,11 @@ void processCommand( GCode* pCommand )
                             }
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
                         }else{
-                            Com::printFLN( PSTR( "M3909: ERROR::Dd never set automatic offset bigger than 0.3mm=S300. This function is ment only to compensate minimal amounts of too close distance.") );
+                            Com::printFLN( PSTR( "M3909: ERROR::never set offset bigger than 0.3mm=S300. This function is ment only to compensate minimal amounts of too close distance.") );
                             Com::printFLN( PSTR( "M3909: ERROR::Versuche nicht das automatische Offset größer als 0.3mm=S300 einzustellen. Diese Funktion soll nur minimal justieren.") );
                             Com::printFLN( PSTR( "M3909: INFO::If you have to auto-compensate your offset to high, the extruder-distance cannot be your real problem. Clean your nozzle, rise your temp, lower your speed.") );
                             Com::printFLN( PSTR( "M3909: INFO::This function should lower the chance of an accidential emergency block on the first layer. It cannot help you to avoid calibration!") );
-                        }                       
+                        }
                     }
                     
                     //Statusausgabe per M3909
@@ -10653,7 +10673,7 @@ void processCommand( GCode* pCommand )
                     }
                     if (!pCommand->hasS() && !pCommand->hasP()) Com::printFLN( PSTR( "M3909: INFO Example: M3909 P8000 S180 for activation at 8000digits and additional offset limited to 0,18mm.") );
                 }
-                break;      
+                break;
             }
 #else
             case 3909: // 3909 [P]PressureDigits - configure the sensible pressure value threshold || by Wessix and Nibbels
@@ -10666,7 +10686,7 @@ void processCommand( GCode* pCommand )
             case 3910: // 3910 [S]Inc/Dec - Testfunction for decreasing or increasing the Step-Size-Micrometer for `single` Z-Steps
             //See ACCEPTABLE_STEP_SIZE_TABLE and NUM_ACCEPTABLE_STEP_SIZE_TABLE for predefined "good and wanted" stepsizes.
             {
-                if (pCommand->hasS() ){     
+                if (pCommand->hasS() ){
                     if(pCommand->S >= 0){
                         configureMANUAL_STEPS_Z( 1 );
                     }else{
@@ -10691,8 +10711,8 @@ void processCommand( GCode* pCommand )
                         if(pCommand->Z <= 0 && pCommand->Z >= -2.0f) actExtruder->zOffset = int32_t((float)pCommand->Z * Printer::axisStepsPerMM[Z_AXIS]);
                         //Nur wenn aktuell der extruder mit ID1 aktiv ist, dann sofort nachstellen, ohne T0/T1/... :
                         if(Extruder::current->id == extruder[1].id){
-                            //Printer::extruderOffset[Z_AXIS] = -Extruder::current->zOffset*Printer::invAxisStepsPerMM[Z_AXIS];    
-                            //Printer::updateCurrentPosition();        ... besser ist es, den zweiten extruder neu auszuwählen:                
+                            //Printer::extruderOffset[Z_AXIS] = -Extruder::current->zOffset*Printer::invAxisStepsPerMM[Z_AXIS];
+                            //Printer::updateCurrentPosition();        ... besser ist es, den zweiten extruder neu auszuwählen:
                             Extruder::selectExtruderById(Extruder::current->id);     
                         }
                         Com::printFLN( PSTR( "M3919 T1 Spring displace: " ), actExtruder->zOffset * Printer::invAxisStepsPerMM[Z_AXIS] );
@@ -14207,15 +14227,15 @@ void doEmergencyStop( char reason )
     {
         Com::printFLN( PSTR( " (Z-Block)" ) );
     }
-		
+
     // block any further movement
     Printer::stepperDirection[X_AXIS] = 0;
     Printer::stepperDirection[Y_AXIS] = 0;
     Printer::stepperDirection[Z_AXIS] = 0;
     Printer::blockAll                 = 1;
-	
-	moveZ( int(Printer::axisStepsPerMM[Z_AXIS] * 5) );
-    Printer::stepperDirection[Z_AXIS] = 0;	
+
+    moveZ( int(Printer::axisStepsPerMM[Z_AXIS] * 5) );
+    Printer::stepperDirection[Z_AXIS] = 0;
    
     // we are not going to perform any further operations until the restart of the firmware
     if( sd.sdmode )

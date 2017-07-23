@@ -368,7 +368,10 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 
 #if FEATURE_EMERGENCY_PAUSE
 
-/** \brief Specifies the pressure at which the emergency pause shall be performed, in [digits] */
+/** \brief Specifies the pressure at which the emergency pause shall be performed, in [digits] 
+@ ca. +- 15000 the sensors tend to start bending
+With RF1.37r2.Mod the Emergency-Pause-Features limits can be changed in EEPROM but here are the absolute maximum limits:
+*/
 #define EMERGENCY_PAUSE_DIGITS_MIN          -15000
 #define EMERGENCY_PAUSE_DIGITS_MAX          15000
 
@@ -876,13 +879,13 @@ t_d in datasheet is delay time: how long reset is triggered after timeout: 15...
 /** \brief If enabled you can select the distance your filament gets retracted during a M140 command, after a given temperature is reached. */
 #define RETRACT_DURING_HEATUP               true
 
-/** \brief add pid control */
-#define TEMP_PID                            true
-
 /** \brief PID control only works target temperature +/- PID_CONTROL_RANGE.
 If you get much overshoot at the first temperature set, because the heater is going full power too long, you
 need to increase this value. For one 6.8 Ohm heater 10 is ok. With two 6.8 Ohm heater use 15. */
 #define PID_CONTROL_RANGE                   30
+/** If you change those you might have to do fresh autotunePIDs on your heaters. */
+#define PID_CONTROL_DRIVE_MAX_LIMIT_FACTOR  10.0f //this was 10
+#define PID_CONTROL_DRIVE_MIN_LIMIT_FACTOR  -1.0f //this was 10 but -1.0 works well with drive max 100 and drive min 5. If this number is negative you get a real PID control, no PD+posI-control anymore.
 
 /** \brief Prevent extrusions longer then x mm for one command. This is especially important if you abort a print. Then the
 extrusion position might be at any value like 23344. If you then have an G1 E-2 it will roll back 23 meter! */

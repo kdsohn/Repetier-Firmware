@@ -115,12 +115,16 @@ have problems with other modules using the eeprom */
 
 //vorsicht bei mehrbytigen Variablen, dann freilassen.
 
-#define EPR_RF_MOD_Z_STEP_SIZE          1900 //+1901+1902+1903 g_nManualSteps[Z_AXIS] [4byte unsigned long]
+#define EPR_RF_MOD_Z_STEP_SIZE            1900 //+1901+1902+1903 g_nManualSteps[Z_AXIS] [4byte unsigned long]
 
-#define EPR_RF_MOD_ZOS_SCAN_POINT_X     1904 //g_ZOSTestPoint[0] [1byte unsigned char]
-#define EPR_RF_MOD_ZOS_SCAN_POINT_Y     1905 //g_ZOSTestPoint[1] [1byte unsigned char]
+#define EPR_RF_MOD_ZOS_SCAN_POINT_X       1904 //g_ZOSTestPoint[0] [1byte unsigned char]
+#define EPR_RF_MOD_ZOS_SCAN_POINT_Y       1905 //g_ZOSTestPoint[1] [1byte unsigned char]
 
 #define EPR_RF_MOD_SENSEOFFSET_OFFSET_MAX 1906 //+1907 g_nSensiblePressureOffsetMax [2byte short]
+#define EPR_RF_MOD_SENSEOFFSET_DIGITS     1908 //+1909 g_nSensiblePressureDigits [2byte short]
+
+#define EPR_RF_EMERGENCYPAUSEDIGITSMIN    1910 //+1911+1912+1913 g_nEmergencyPauseDigitsMin [4byte long]
+#define EPR_RF_EMERGENCYPAUSEDIGITSMAX    1914 //+1915+1916+1917 g_nEmergencyPauseDigitsMax [4byte long]
 
 //Nibbels: Computechecksum geht bis 2047
 
