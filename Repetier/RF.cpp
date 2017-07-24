@@ -2269,8 +2269,8 @@ void searchZOScan( void )
                   for(short y=1; y<=g_uZMatrixMax[Y_AXIS]; y++) {
                     x_dist = (g_ZOSTestPoint[X_AXIS]-x)*(g_ZOSTestPoint[X_AXIS]-x)/x_bed_len_quadrat; //normierter indexabstand
                     y_dist = (g_ZOSTestPoint[Y_AXIS]-y)*(g_ZOSTestPoint[Y_AXIS]-y)/y_bed_len_quadrat; //normierter indexabstand
-                    x_dist *= 1.33; //Weniger entfernung zulassen. für Auto-Matrix-Leveling
-                    y_dist *= 1.33; //Weniger entfernung zulassen. für Auto-Matrix-Leveling
+                    x_dist = sqrt(x_dist); //Linearisieren. für Auto-Matrix-Leveling
+                    y_dist = sqrt(y_dist); //Linearisieren. für Auto-Matrix-Leveling
                     //das ist nur ein kreisabstand, wenn die messpunkte quadratisch angeordnet sind, ist aber nicht so?
                       // evtl. todo: achse faktor skalieren, sodass kreis x/y=(10/13)
                     xy_weight = 1 - sqrt(x_dist*x_dist+y_dist*y_dist); //linear gewichtet
@@ -14227,7 +14227,7 @@ void doEmergencyStop( char reason )
     {
         Com::printFLN( PSTR( " (Z-Block)" ) );
     }
- 
+
     // block any further movement
     Printer::stepperDirection[X_AXIS] = 0;
     Printer::stepperDirection[Y_AXIS] = 0;
