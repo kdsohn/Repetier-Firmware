@@ -150,9 +150,13 @@
 #define UI_ACTION_EXTRUDER_OFFSET_Z         1136
 
 //Nibbels : nicht in processbutton sondern in executeaction!
-#define UI_ACTION_RF_DO_MHIER_BED_SCAN      1666 
-#define UI_ACTION_CONFIG_SINGLE_STEPS        1667 
+#define UI_ACTION_RF_DO_MHIER_BED_SCAN      1666
+#define UI_ACTION_CONFIG_SINGLE_STEPS       1667
 #define UI_ACTION_RF_DO_SAVE_ACTIVE_ZMATRIX 1668
+#define UI_ACTION_RF_DO_MHIER_AUTO_MATRIX_LEVELING 1669
+
+#define UI_ACTION_EMERGENCY_PAUSE_MIN       1670
+#define UI_ACTION_EMERGENCY_PAUSE_MAX       1671
 
 #define UI_ACTION_FET1_OUTPUT               2001
 #define UI_ACTION_FET2_OUTPUT               2002
@@ -330,7 +334,7 @@ extern  char    g_nPrinterReady;
 #define UI_MENU_FILESELECT(name,items,itemsCnt)                         const UIMenuEntry * const name ## _entries[] PROGMEM = items;const UIMenu name PROGMEM = {1,0,itemsCnt,name ## _entries};
 
 // Maximum size of a row - if row is larger, text gets scrolled
-#define MAX_COLS                        20         // check UI_COLS when changed this was 28 in Conrad Firmware.
+#define MAX_COLS                        28 //Anzahl Speicherplätze für Bytes in Display-Zeile, wenn mehr als Display, dann Scrolling. Kann gleich oder größer Displayzeilenlänge sein.
 
 #define UI_FLAG_FAST_KEY_ACTION         1
 #define UI_FLAG_SLOW_KEY_ACTION         2

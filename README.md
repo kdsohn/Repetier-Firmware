@@ -29,6 +29,13 @@ Board: `Arduino Mega 2560 or Mega ADK`,
 Processor: `ATMega 2560 (Mega 2560)`,  
 Port: Your printers Port like `COM3`, if successfully connected.
 - **Check** and **Upload** the Firmware to your Printer.
+## If you upgrade to this Version from 1.37r or earlier please do a fresh M303 PID-Autotune on all heaters!  
+- RF2000/RF1000 extruder 1: `M303 P0 X0 S230 R10 J1`
+- RF2000 extruder 2: `M303 P1 X0 S230 R10 J1`
+- RF2000 heated bed: `M303 P2 X0 S70 R15 J3`
+- RF1000 heated bed: `M303 P1 X0 S70 R15 J3`  
+And start with EEPROM-values `PID drive min = 5` and `PID drive max = 100`  
+Or set #define PID_CONTROL_DRIVE_MIN_LIMIT_FACTOR to 10.0f in configuration.h to use the old version PID-control.
 
 ## Version RF.01.37mod 
 

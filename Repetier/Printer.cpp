@@ -508,15 +508,7 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
     {
         if(com->hasX()) queuePositionCommandMM[X_AXIS] = queuePositionLastMM[X_AXIS] = convertToMM(com->X) - originOffsetMM[X_AXIS];
         if(com->hasY()) queuePositionCommandMM[Y_AXIS] = queuePositionLastMM[Y_AXIS] = convertToMM(com->Y) - originOffsetMM[Y_AXIS];
-        if(com->hasZ())
-        {
-            queuePositionCommandMM[Z_AXIS] = queuePositionLastMM[Z_AXIS] = convertToMM(com->Z) - originOffsetMM[Z_AXIS];
-
-/*          Com::printF( PSTR( "New z from G-Code: " ), queuePositionCommandMM[Z_AXIS] );
-            Com::printF( PSTR( "; " ), queuePositionLastMM[Z_AXIS] );
-            Com::printF( PSTR( "; " ), convertToMM(com->Z) );
-            Com::printF( PSTR( "; " ), originOffsetMM[Z_AXIS] );
-*/      }
+        if(com->hasZ()) queuePositionCommandMM[Z_AXIS] = queuePositionLastMM[Z_AXIS] = convertToMM(com->Z) - originOffsetMM[Z_AXIS];
     }
     else
     {
@@ -529,9 +521,9 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
     y = queuePositionCommandMM[Y_AXIS] + Printer::extruderOffset[Y_AXIS];
     z = queuePositionCommandMM[Z_AXIS] + Printer::extruderOffset[Z_AXIS];
 
-    long xSteps = static_cast<long>(floor(x * axisStepsPerMM[X_AXIS] + 0.5));
-    long ySteps = static_cast<long>(floor(y * axisStepsPerMM[Y_AXIS] + 0.5));
-    long zSteps = static_cast<long>(floor(z * axisStepsPerMM[Z_AXIS] + 0.5));
+    long xSteps = static_cast<long>(floor(x * axisStepsPerMM[X_AXIS] + 0.5f));
+    long ySteps = static_cast<long>(floor(y * axisStepsPerMM[Y_AXIS] + 0.5f));
+    long zSteps = static_cast<long>(floor(z * axisStepsPerMM[Z_AXIS] + 0.5f));
     
     if(com->hasX())
     {
@@ -1650,21 +1642,22 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
     setHomed(true, (xaxis?true:-1), (yaxis?true:-1), (zaxis?true:-1) );
     
 #if FEATURE_ZERO_DIGITS
-	short   nTempPressure = 0;
-	if(xaxis && yaxis && zaxis){ //only adjust pressure if you do a full homing.
-		Printer::g_pressure_offset = 0; //prevent to messure already adjusted offset -> without = 0 this would only iterate some bad values.
-		if( !readAveragePressure( &nTempPressure ) ){
-			if(-5000 < nTempPressure && nTempPressure < 5000){
-				Com::printFLN( PSTR( "ZERO_DIGITS: New Offset " ), nTempPressure );
-				Printer::g_pressure_offset = nTempPressure;
-			}else{
-				//those high values shouldnt happen! fix your machine... DONT ZEROSCALE DIGITS
-				Com::printFLN( PSTR( "ZERO_DIGITS: FAILED with " ), nTempPressure );
-			}
-		} else{
-			Com::printFLN( PSTR( "ZERO_DIGITS: FAILED Reading " ) );
-		}
-	}
+    short   nTempPressure = 0;
+    if(xaxis && yaxis && zaxis){ //only adjust pressure if you do a full homing.
+        Printer::g_pressure_offset = 0; //prevent to messure already adjusted offset -> without = 0 this would only iterate some bad values.
+        if( !readAveragePressure( &nTempPressure ) ){
+            if(-5000 < nTempPressure && nTempPressure < 5000){
+                Com::printFLN( PSTR( "DigitOffset = " ), nTempPressure );
+                Printer::g_pressure_offset = nTempPressure;
+            }else{
+                //those high values shouldnt happen! fix your machine... DONT ZEROSCALE DIGITS
+                Com::printFLN( PSTR( "DigitOffset failed " ), nTempPressure );
+            }
+        } else{
+            Com::printFLN( PSTR( "DigitOffset failed reading " ) );
+            g_abortZScan = 0;
+        }
+    }
 #endif // FEATURE_ZERO_DIGITS
 
     if( unlock )
@@ -1800,26 +1793,20 @@ void Printer::performZCompensation( void )
         return;
     }
 
-    if( PrintLine::cur )
-    {
-        if( PrintLine::cur->isZMove() )
-        {
-            // do not peform any compensation while there is a "real" move into z-direction
-            return;
-        }
-    }
+/** 20.07.2017 Nibbels
+Hier wird eine Stepper-Direction gesetzt. Dann macht der Drucker irgendwas anderes und bei endZCompensationStep wird angenommen, die Richtung wäre noch so wie bisher. Kann das stimmen?
 
-/* 17_06_12 könnte das folgende hier fehlen? siehe bug mit dem verzählen. ... test irgendwann später mal.
-    if( PrintLine::direct )
-    {
-        if( PrintLine::direct->isZMove() )
-        {
-            // do not peform any compensation while there is a direct-move into z-direction
-            return;
-        }
-    }*/
+warum ist endZCompensationStep benötigt: weil man vermutlich davon ausgeht, dass Z meist nicht verwendet wird und man das durch ->isZMove() ausgeschlossen hat. So muss der Step nicht warten.
+Aber eigentlich dauert der Stepp quasi keine Zeit!
+Das wurde in der 1.10 noch anders gemacht.
 
-    if( endZCompensationStep )
+Kann man nicht diese Steps beim laufenden Prozess dazurechnen, wenn der gerade kein Z bewegt??
+so nach: IF !moveZ then moveZ = 1 && compensatedPositionCurrentStepsZ += (-)1 ??
+Bzw man könnte auch direkt ausgleichen, wenn der eine ins plus will, der andere ins minus, dann verrechnen 1 gegen 1.
+--> da ist die stepper-direction schon fest.
+*/
+
+    if( endZCompensationStep ) //zuerst beenden, bevor irgendwas neues an Z manipuliert werden darf. 20.07.2017 Nibbels
     {
 #if STEPPER_HIGH_DELAY>0
         HAL::delayMicroseconds( STEPPER_HIGH_DELAY );
@@ -1841,8 +1828,38 @@ void Printer::performZCompensation( void )
         }
 
         endZCompensationStep = 0;
+
+#if STEPPER_HIGH_DELAY+DOUBLE_STEP_DELAY>0
+        //Insert little wait if next Z step might follow now.
+        if( PrintLine::cur ) if( PrintLine::cur->isZMove() )
+            {
+                HAL::delayMicroseconds(STEPPER_HIGH_DELAY+DOUBLE_STEP_DELAY);
+                return;
+            }
+        if( PrintLine::direct.isZMove() )
+            {
+                HAL::delayMicroseconds(STEPPER_HIGH_DELAY+DOUBLE_STEP_DELAY);
+                return;
+            }
+#endif // STEPPER_HIGH_DELAY+DOUBLE_STEP_DELAY>0
         return;
     }
+
+    if( PrintLine::cur )
+    {
+        if( PrintLine::cur->isZMove() )
+        {
+            // do not peform any compensation while there is a "real" move into z-direction
+            return;
+        }
+    }
+/* 17_06_12 könnte das folgende hier fehlen? siehe bug mit dem verzählen. ... test irgendwann später mal.*/
+    if( PrintLine::direct.isZMove() )
+    {
+        // do not peform any compensation while there is a direct-move into z-direction
+        return;
+    }
+
 
     if( compensatedPositionCurrentStepsZ < compensatedPositionTargetStepsZ )
     {
@@ -1857,8 +1874,8 @@ void Printer::performZCompensation( void )
                 stepperDirection[Z_AXIS] = 1;
                 //return;
             }
-            startZStep( 1 );
-            endZCompensationStep = 1;
+            startZStep( stepperDirection[Z_AXIS] );
+            endZCompensationStep = stepperDirection[Z_AXIS];
         }
 
         return;
@@ -1877,8 +1894,8 @@ void Printer::performZCompensation( void )
                 stepperDirection[Z_AXIS] = -1;
                 //return;
             }
-            startZStep( -1 );
-            endZCompensationStep = -1;
+            startZStep( stepperDirection[Z_AXIS] );
+            endZCompensationStep = stepperDirection[Z_AXIS];
         }
 
         return;

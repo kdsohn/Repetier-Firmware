@@ -68,7 +68,7 @@ void Commands::commandLoop()
 
 void Commands::checkForPeriodicalActions()
 {
-    bool didchecktemps = false;
+    bool buttonactive = ((HAL::timeInMilliseconds() - uid.lastButtonStart < 15000) ? true : false);
 
     if(execute10msPeriodical){ //set by PWM-Timer
       execute10msPeriodical=0;
@@ -79,19 +79,20 @@ void Commands::checkForPeriodicalActions()
     }
 
     if(execute16msPeriodical){ //set by internal Watchdog-Timer
-      execute16msPeriodical = 0;
-
-      Extruder::manageTemperatures(); didchecktemps = true;
+       execute16msPeriodical = 0;
+       if(buttonactive) UI_SLOW;
 
     }
 
     if(execute100msPeriodical){ //set by PWM-Timer
       execute100msPeriodical=0;
 
-      if(!didchecktemps) Extruder::manageTemperatures(); //fallback? bin übervorsichtig..
-      Commands::printTemperatures(); //selfcontrolling timediff
-      UI_SLOW;
       loopRF();
+
+      if(!buttonactive) UI_SLOW;
+
+      Extruder::manageTemperatures();
+      Commands::printTemperatures(); //selfcontrolling timediff
 
     }
 } // checkForPeriodicalActions
@@ -279,9 +280,9 @@ void Commands::printTemperatures(bool showRaw)
     #endif // HAVE_HEATED_BED
     #endif // HEATED_BED_SENSOR_TYPE==0
 
-    #ifdef TEMP_PID
-        Com::printF(Com::tSpaceAtColon,(autotuneIndex==255?pwm_pos[Extruder::current->id]:pwm_pos[autotuneIndex])); // Show output of autotune when tuning!
-    #endif // TEMP_PID
+
+    Com::printF(Com::tSpaceAtColon,(autotuneIndex==255?pwm_pos[Extruder::current->id]:pwm_pos[autotuneIndex])); // Show output of autotune when tuning!
+
 
     #if NUM_EXTRUDER>1
         for(uint8_t i=0; i<NUM_EXTRUDER; i++)
@@ -290,10 +291,8 @@ void Commands::printTemperatures(bool showRaw)
             Com::printF(Com::tColon,extruder[i].tempControl.currentTemperatureC);
             Com::printF(Com::tSpaceSlash,extruder[i].tempControl.targetTemperatureC,0);
 
-    #ifdef TEMP_PID
             Com::printF(Com::tSpaceAt,(int)i);
             Com::printF(Com::tColon,(pwm_pos[extruder[i].tempControl.pwmIndex])); // Show output of autotune when tuning!
-    #endif // TEMP_PID
 
             if(showRaw)
             {
@@ -315,7 +314,7 @@ void Commands::printTemperatures(bool showRaw)
         Com::printF(Com::tColon,(int)g_nLastDigits);
     #endif //FEATURE_PRINT_PRESSURE
 
-        Com::printF(Com::tSpaceAtColon,maCoLo);
+        //Com::printF(Com::tSpaceAtColon,maCoLo);
 
         Com::println();
     }
@@ -1271,14 +1270,19 @@ void Commands::executeGCode(GCode *com)
             {
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
-#if defined(TEMP_PID) && NUM_TEMPERATURE_LOOPS>0
-                    int temp = 150;
-                    int cont = 0;
-                    if(com->hasS()) temp = com->S;
-                    if(com->hasP()) cont = com->P;
-                    if(cont>=NUM_TEMPERATURE_LOOPS) cont = NUM_TEMPERATURE_LOOPS;
-                    tempController[cont]->autotunePID(temp,cont,com->hasX());
-#endif // defined(TEMP_PID) && NUM_TEMPERATURE_LOOPS>0
+#if NUM_TEMPERATURE_LOOPS > 0
+                int temp = 150;
+                int cont = 0;
+                int cycles = 8;
+                int method = 0; //0 = Classic PID
+                if(com->hasS()) temp = com->S; //Verwechsle ich immer, weil T wie Temperatur, aber T ist 0..255
+                if(com->hasP()) cont = com->P;
+                if(com->hasR()) cycles = static_cast<int>(com->R);
+                if(com->hasJ()) method = static_cast<int>(com->J); //original Repetier used hasC, we dont have that in this version of repetier.
+                if(cont >= NUM_TEMPERATURE_LOOPS) cont = NUM_TEMPERATURE_LOOPS;
+                if(cont < 0) cont = 0;
+                tempController[cont]->autotunePID(temp,cont,cycles,com->hasX(), method);
+#endif // NUM_TEMPERATURE_LOOPS > 0
                 }
                 break;
             }

@@ -93,6 +93,7 @@ List of placeholder:
 %PN : Printer name
 %Se : Steps per mm current extruder
 %Sz : Mikrometer per Z-Single_Step (Z_Axis)
+%SM : Matrix has changed in Ram and is ready to Save. -> *)
 %is : Stepper inactive time in seconds
 %ip : Max. inactive time in seconds
 %X0..9 : Extruder selected marker
@@ -144,6 +145,8 @@ List of placeholder:
 %px : mode of the Position X menu
 %py : mode of the Position Y menu
 %pz : mode of the Position Z menu
+%pl : g_nEmergencyPauseDigitsMin [1700/kg]
+%ph : g_nEmergencyPauseDigitsMax [1700/kg]
 %HB : active heat bed z matrix
 %HO : active heat bed min z offset in um
 %WP : active work part z matrix
@@ -383,8 +386,9 @@ UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_heat_bed_scan_abs,UI_TEXT_HEAT_BED_SCAN_ABS
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_mhier_z_scan,UI_TEXT_DO_MHIER_BED_SCAN,UI_ACTION_RF_DO_MHIER_BED_SCAN,MENU_MODE_PRINTER,0)
-#define UI_MENU_HEAT_MHIER_COND  , &ui_menu_mhier_z_scan 
-#define UI_MENU_HEAT_MHIER_COUNT 1
+UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_mhier_auto_matrix_leveling,UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING,UI_ACTION_RF_DO_MHIER_AUTO_MATRIX_LEVELING,MENU_MODE_PRINTER,0) 
+#define UI_MENU_HEAT_MHIER_COND  , &ui_menu_mhier_z_scan , &ui_menu_mhier_auto_matrix_leveling 
+#define UI_MENU_HEAT_MHIER_COUNT 2
 #else
 #define UI_MENU_HEAT_MHIER_COND  
 #define UI_MENU_HEAT_MHIER_COUNT 0
@@ -785,8 +789,20 @@ UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_extruder_offset_y,UI_TEXT_EXTRUDER_OFFSET_
 #define EXTRUDER_OFFSET_TYPE_COUNT_XY 0
 #endif // NUM_EXTRUDER>1
 
-#define UI_MENU_GENERAL {UI_MENU_ADDCONDBACK &ui_menu_general_baud,&ui_menu_general_stepper_inactive,&ui_menu_general_max_inactive BEEPER_MODE_ENTRY RGB_LIGHT_ENTRY OPERATING_MODE_ENTRY Z_ENDSTOP_TYPE_ENTRY HOTEND_TYPE_ENTRY MILLER_TYPE_ENTRY EXTRUDER_OFFSET_TYPE_ENTRY_XY}
-UI_MENU(ui_menu_general,UI_MENU_GENERAL,UI_MENU_BACKCNT+1+1+1+BEEPER_MODE_COUNT+RGB_LIGHT_COUNT+OPERATING_MODE_COUNT+Z_ENDSTOP_TYPE_COUNT+HOTEND_TYPE_COUNT+MILLER_TYPE_COUNT+EXTRUDER_OFFSET_TYPE_COUNT_XY +1)
+#if FEATURE_EMERGENCY_PAUSE
+UI_MENU_ACTION4C(ui_menu_emergency_pause_min2,UI_ACTION_EMERGENCY_PAUSE_MIN,UI_TEXT_EMERGENCY_PAUSE_MIN2)
+UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_emergency_pause_min,UI_TEXT_EMERGENCY_PAUSE_MIN,ui_menu_emergency_pause_min2, MENU_MODE_PRINTER, 0)
+UI_MENU_ACTION4C(ui_menu_emergency_pause_max2,UI_ACTION_EMERGENCY_PAUSE_MAX,UI_TEXT_EMERGENCY_PAUSE_MAX2)
+UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_emergency_pause_max,UI_TEXT_EMERGENCY_PAUSE_MAX,ui_menu_emergency_pause_max2, MENU_MODE_PRINTER, 0)
+#define EMERGENCY_PAUSE_MINMAX_ENTRY ,&ui_menu_emergency_pause_min ,&ui_menu_emergency_pause_max 
+#define EMERGENCY_PAUSE_MINMAX_COUNT 2
+#else
+#define EMERGENCY_PAUSE_MINMAX_ENTRY
+#define EMERGENCY_PAUSE_MINMAX_COUNT 0
+#endif // FEATURE_EMERGENCY_PAUSE
+
+#define UI_MENU_GENERAL {UI_MENU_ADDCONDBACK &ui_menu_general_baud,&ui_menu_general_stepper_inactive,&ui_menu_general_max_inactive BEEPER_MODE_ENTRY RGB_LIGHT_ENTRY OPERATING_MODE_ENTRY Z_ENDSTOP_TYPE_ENTRY HOTEND_TYPE_ENTRY MILLER_TYPE_ENTRY EXTRUDER_OFFSET_TYPE_ENTRY_XY EMERGENCY_PAUSE_MINMAX_ENTRY}
+UI_MENU(ui_menu_general,UI_MENU_GENERAL,UI_MENU_BACKCNT+1+1+1+BEEPER_MODE_COUNT+RGB_LIGHT_COUNT+OPERATING_MODE_COUNT+Z_ENDSTOP_TYPE_COUNT+HOTEND_TYPE_COUNT+MILLER_TYPE_COUNT+EXTRUDER_OFFSET_TYPE_COUNT_XY+EMERGENCY_PAUSE_MINMAX_COUNT +1)
 
 /** \brief Configuration menu */
 UI_MENU_SUBMENU(ui_menu_conf_general, UI_TEXT_GENERAL,      ui_menu_general)
