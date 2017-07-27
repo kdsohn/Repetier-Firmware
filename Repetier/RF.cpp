@@ -10551,6 +10551,13 @@ void processCommand( GCode* pCommand )
                                 }else{
                                     if(hochrunter == 0.00f){
                                         Printer::ZOffset = 0; //offset um nullen
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                                        if( HAL::eprGetInt32( EPR_RF_Z_OFFSET ) != Printer::ZOffset )
+                                        {
+                                            HAL::eprSetInt32( EPR_RF_Z_OFFSET, Printer::ZOffset );
+                                            EEPROM::updateChecksum();
+                                        }
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
                                         g_staticZSteps = ((Printer::ZOffset+g_nSensiblePressureOffset) * Printer::axisStepsPerMM[Z_AXIS]) / 1000; //offset-stepps neu berechnen
                                     }   
                                     g_ZMatrixChangedInRam = 1;
