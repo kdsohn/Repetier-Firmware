@@ -3,6 +3,7 @@ TODO: Possible Z-Lift Bug in original RF1.37
 
 V RF.01.37r3.TDMod (2017-07-24)
 - Fix M3902 Z0 to update Z-Offset in Flash too.
+- Fix min-max-bug in Emergency-Pause Menu
 
 V RF.01.37r2.TDMod (2017-07-24)
 - Last SenseOffset Digits Limit is now stored in EEPROM. If you use a plain M3909 instead of M3909 Pxxxxx the last value is used from EEPROM automatically.
