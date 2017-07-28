@@ -11484,8 +11484,8 @@ void processCommand( GCode* pCommand )
                 act->updateCurrentTemperature();                
                 Com::printFLN( PSTR( "Opt Temp: " ) , act->currentTemperatureC , 2 );           
                 //Com::printFLN( PSTR( "M3941 Ended!" ) );
+                break;
             }
-            break;
 #endif // RESERVE_ANALOG_INPUTS
 
         }       
