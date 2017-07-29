@@ -156,8 +156,8 @@ have problems with other modules using the eeprom */
 #define EPR_EXTRUDER_ADVANCE_L          46
 #define EPR_EXTRUDER_WAIT_RETRACT_TEMP  50
 #define EPR_EXTRUDER_WAIT_RETRACT_UNITS 52
-#define EPR_EXTRUDER_COOLER_SPEED       54
-
+#define EPR_EXTRUDER_COOLER_SPEED       54 //byte
+#define EPR_EXTRUDER_Z_OFFSET           95 //int32_t -> +96+97+98
 
 class EEPROM
 {
