@@ -127,7 +127,7 @@ public:
 
     static volatile long    queuePositionCurrentSteps[3];
     static volatile char    stepperDirection[3];                // this is the current x/y/z-direction from the processing of G-Codes
-    static volatile char    blockAll;
+    static  char    blockAll;
 
 #if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
     static volatile long    currentZSteps;
@@ -141,7 +141,7 @@ public:
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     static volatile long    directPositionTargetSteps[4];
-    static volatile long    directPositionCurrentSteps[4];
+    static  long    directPositionCurrentSteps[4];
     static long             directPositionLastSteps[4];
     static char             waitMove;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING

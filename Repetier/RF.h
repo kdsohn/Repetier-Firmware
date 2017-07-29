@@ -568,6 +568,8 @@ extern const char   ui_text_saving_success[]        PROGMEM;
 
 extern  unsigned long   g_uStartOfIdle;
 
+extern volatile unsigned int   debugcounted[5];
+
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 extern  long            g_offsetZCompensationSteps; // this is the minimal distance between the heat bed and the extruder at the moment when the z-min endstop is hit
 extern  long            g_minZCompensationSteps;

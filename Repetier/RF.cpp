@@ -66,6 +66,8 @@ FSTRINGVALUE( ui_text_saving_success, UI_TEXT_SAVING_SUCCESS )
 
 unsigned long   g_uStartOfIdle             = 0;
 
+volatile unsigned int   debugcounted[5]     = { 0, 0, 0, 0, 0 };
+
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 long            g_offsetZCompensationSteps = 0;
 long            g_minZCompensationSteps    = HEAT_BED_Z_COMPENSATION_MIN_STEPS;
@@ -2476,7 +2478,7 @@ bool calculateZScrewCorrection( void )
         /* TIPP: -> Schraube bis maxNachdehnungInMikrons ~ 150um weiter runter(=Bett weiter hoch =Drehsinn Minus) empfehlen, wenn der Drucker aktuell "mehr druchgewärmt" wäre. */    
                 
         Com::printFLN( PSTR( " " ) );
-        Com::printFLN( PSTR( "#############" ) );
+        Com::printFLN( PSTR( "#####" ) );
         Com::printF( PSTR( "Sollkorrektur: " ) , SollkorrekturWarm , 0 ); 
         Com::printF( PSTR( " [um] = " ), SollkorrekturWarm*0.001f,3  ); 
         Com::printFLN( PSTR( " [mm]" ) );
@@ -2517,7 +2519,7 @@ bool calculateZScrewCorrection( void )
             g_ZSchraubeOk = 1; //pos
         } 
 #endif    
-        Com::printFLN( PSTR( "#############" ) );
+        Com::printFLN( PSTR( "#####" ) );
         returnwert = true;
     }else{
         Com::printFLN( Com::tError, g_ZCompensationMatrix[0][0] );
@@ -10845,6 +10847,87 @@ void processCommand( GCode* pCommand )
                 break;
             }
 #endif // RESERVE_ANALOG_INPUTS
+
+
+            case 4443: // 4444 - MOVE-OVERFLOW-Testfunction || by Nibbels
+			{
+				Com::printFLN( PSTR( "osAnalogInputChannels " ),(uint32_t)&osAnalogInputChannels );
+				Com::printFLN( PSTR( "osAnalogInputCounter " ),(uint32_t)&osAnalogInputCounter );
+				Com::printFLN( PSTR( "osAnalogInputBuildup " ),(uint32_t)&osAnalogInputBuildup );
+				Com::printFLN( PSTR( "osAnalogInputPos " ),(uint32_t)&osAnalogInputPos );
+				Com::printFLN( PSTR( "osAnalogInputValues " ),(uint32_t)&osAnalogInputValues );
+				Com::printFLN( PSTR( "ANALOG_INPUTS " ),(uint32_t)ANALOG_INPUTS );
+				Com::printFLN( PSTR( "g_ZCompensationMatrix " ),(uint32_t)&g_ZCompensationMatrix );
+				Com::printFLN( PSTR( "EXT0_SENSOR_INDEX " ),(uint32_t)EXT0_SENSOR_INDEX );
+				Com::printFLN( PSTR( "EXT1_SENSOR_INDEX " ),(uint32_t)EXT1_SENSOR_INDEX );
+				Com::printFLN( PSTR( "BED_SENSOR_INDEX " ),(uint32_t) BED_SENSOR_INDEX);
+				Com::printFLN( PSTR( "RESERVE_SENSOR_INDEX " ),(uint32_t)RESERVE_SENSOR_INDEX );
+				Com::printFLN( PSTR( "EXT0_SENSOR_INDEX" ),(uint32_t)EXT0_TEMPSENSOR_PIN );
+				Com::printFLN( PSTR( "EXT1_ANALOG_CHANNEL " ),(uint32_t)EXT1_TEMPSENSOR_PIN );
+				Com::printFLN( PSTR( "BED_ANALOG_CHANNEL " ),(uint32_t)HEATED_BED_SENSOR_PIN );
+				Com::printFLN( PSTR( "RESERVE_ANALOG_CHANNEL " ),(uint32_t)RESERVE_ANALOG_TEMP_PIN );
+				
+				Com::printFLN( PSTR( "osAnalogInputPos " ),(uint32_t)osAnalogInputPos );
+				for(int n = 0; n < ANALOG_INPUTS + 1 ; n++){
+					Com::printFLN( PSTR( "n " ),(uint32_t)n );
+					Com::printFLN( PSTR( "osAnalogInputChannelsX4 " ),(uint32_t)osAnalogInputChannels[n] );
+					Com::printFLN( PSTR( "osAnalogInputCounter " ),(uint32_t)osAnalogInputCounter[n] );
+					Com::printFLN( PSTR( "osAnalogInputBuildup " ),(uint32_t)osAnalogInputBuildup[n] );
+					Com::printFLN( PSTR( "osAnalogInputValues " ),(uint32_t)osAnalogInputValues[n] );
+				}
+				break;
+			}
+
+            case 4444: // 4444 - MOVE-OVERFLOW-Testfunction || by Nibbels
+            {
+				Com::printFLN( PSTR( "ZOS(): Loading zMatrix from EEPROM" ) );
+				loadCompensationMatrix( (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveHeatBed) );
+				outputCompensationMatrix( 0 );
+
+				Printer::homeAxis( true, true, true );
+				long x = (long)((float)g_ZCompensationMatrix[4][0] * Printer::axisStepsPerMM[X_AXIS]);
+				long y = (long)((float)g_ZCompensationMatrix[0][4] * Printer::axisStepsPerMM[Y_AXIS]);
+				PrintLine::moveRelativeDistanceInSteps( x, y, 20*Printer::axisStepsPerMM[Z_AXIS], 0, MAX_FEEDRATE_Z, true, true );
+
+				bool error = false;
+				short eepromformat = EEPROM_FORMAT;
+				
+				for(int i=0;i<=500;i++){
+
+					Com::printFLN( PSTR( "Iteration: " ), i );
+/*
+	GCode::readFromSerial();
+	Commands::checkForPeriodicalActions();
+	GCode::keepAlive( Processing );
+	UI_MEDIUM;
+	--> Diese wichtigen Funktionen werden in "waitbool" bei moveRelativeDistanceInSteps aufgerufen.
+*/
+					PrintLine::moveRelativeDistanceInSteps( x--, y--, 0, 0, RMath::min(MAX_FEEDRATE_X,MAX_FEEDRATE_Y), true, true );
+					GCode::keepAlive( Processing );
+					error = (g_ZCompensationMatrix[0][0] != eepromformat) ? 1 : 0;
+					PrintLine::moveRelativeDistanceInSteps( -x, -y, 0, 0, RMath::min(MAX_FEEDRATE_X,MAX_FEEDRATE_Y), true, true );
+					GCode::keepAlive( Processing );
+					error += (g_ZCompensationMatrix[0][0] != eepromformat) ? 1 : 0;
+
+					if(error) {
+						Com::printFLN( PSTR( "E-FMT:" ), error );
+						Com::printFLN( PSTR( "::" ), g_ZCompensationMatrix[0][0] );
+						outputCompensationMatrix( 0 );
+						eepromformat = g_ZCompensationMatrix[0][0]; //neues übernehmen um zu schauen wann nächste änderung.
+						error = false;
+					}
+					
+
+					Com::printFLN( PSTR( "anzahl+ " ),(uint32_t)debugcounted[0] );
+					Com::printFLN( PSTR( "highest " ),(uint32_t)debugcounted[1] );
+					Com::printFLN( PSTR( "IN " ),(uint32_t)debugcounted[2] );
+					Com::printFLN( PSTR( "OUT " ),(uint32_t)debugcounted[3] );
+					Com::printFLN( PSTR( "INSIDEs " ),(uint32_t)debugcounted[4] );
+
+				}
+                break;
+            }
+
         }
     }
 

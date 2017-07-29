@@ -44,7 +44,7 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
 
 /** \brief Define the type of your device */
 //#define MOTHERBOARD                         DEVICE_TYPE_RF1000
-//#define MOTHERBOARD                         DEVICE_TYPE_RF2000
+#define MOTHERBOARD                         DEVICE_TYPE_RF2000
 #define PROTOTYPE_PCB                       0                                                   // 1 = first PCB's / 0 = Final
 
 #ifndef MOTHERBOARD
@@ -120,7 +120,7 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 #define Z_OFFSET_BUTTON_STEPS               5
 
 /** \brief Allows to change the Stepper Current to Silent Profile by G-Code (to a second Profile see MOTOR_CURRENT) */
-#define FEATURE_SILENT_MODE                 1                                                   // 1 = on, 0 = off 
+#define FEATURE_SILENT_MODE                     1                                                   // 1 = on, 0 = off 
 
 /** \brief The Firmwares disalowes movement before you at least: pressed a printers button, set a temperature, homed once 
 If you did not do this, a previous watchdog reset is assumed and fail-drive against some border without homing is blocked thatway. 
@@ -131,7 +131,7 @@ This is a fix for repetier-server not knowing that the printer reset and still s
 XYZ_POSITION_BUTTON_DIRECTION = -1 : This fits to you if you want more intuitivity when choosing the Up-Down-Buttons within "Menu:Position->X-/Y-/Z-Position".
 XYZ_POSITION_BUTTON_DIRECTION = 1 : This fits more if you want to stick to standard coordinates direction.
 */
-#define XYZ_POSITION_BUTTON_DIRECTION       1
+#define XYZ_POSITION_BUTTON_DIRECTION        1
 
 /** \brief Allows to cause an emergency stop via a 3-times push of the pause button */
 #define FEATURE_EMERGENCY_STOP_VIA_PAUSE    0                                                   // 1 = on, 0 = off
