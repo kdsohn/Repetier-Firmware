@@ -514,6 +514,8 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
 
         HAL::eprSetFloat(o+EPR_EXTRUDER_X_OFFSET,e->xOffset/XAXIS_STEPS_PER_MM);
         HAL::eprSetFloat(o+EPR_EXTRUDER_Y_OFFSET,e->yOffset/YAXIS_STEPS_PER_MM);
+        HAL::eprSetFloat(o+EPR_EXTRUDER_Z_OFFSET,e->zOffset/ZAXIS_STEPS_PER_MM);   //e->zOffset  Nibbels
+
         HAL::eprSetInt16(o+EPR_EXTRUDER_WATCH_PERIOD,e->watchPeriod);
 
 #if RETRACT_DURING_HEATUP
@@ -736,7 +738,14 @@ void EEPROM::readDataFromEEPROM()
 
         e->xOffset = int32_t(HAL::eprGetFloat(o+EPR_EXTRUDER_X_OFFSET)*Printer::axisStepsPerMM[X_AXIS]);
         e->yOffset = int32_t(HAL::eprGetFloat(o+EPR_EXTRUDER_Y_OFFSET)*Printer::axisStepsPerMM[Y_AXIS]);
-        //e->zOffset lasse ich hier raus! Nibbels
+        e->zOffset = int32_t(HAL::eprGetFloat(o+EPR_EXTRUDER_Z_OFFSET)*Printer::axisStepsPerMM[Z_AXIS]);  //e->zOffset  Nibbels
+        if(e->zOffset > 0){
+            e->zOffset = 0; //this offset is negative only! to tune a (right) hotend down.
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetFloat(o+EPR_EXTRUDER_Z_OFFSET,0.00f); //do not allow positive values
+            EEPROM::updateChecksum();
+#endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
+        }
         e->watchPeriod = HAL::eprGetInt16(o+EPR_EXTRUDER_WATCH_PERIOD);
 
 #if RETRACT_DURING_HEATUP
@@ -1121,6 +1130,8 @@ void EEPROM::writeSettings()
 
         writeFloat(o+EPR_EXTRUDER_X_OFFSET,Com::tEPRXOffset);
         writeFloat(o+EPR_EXTRUDER_Y_OFFSET,Com::tEPRYOffset);
+        writeFloat(o+EPR_EXTRUDER_Z_OFFSET,Com::tEPRZOffsetmm);
+
         writeInt(o+EPR_EXTRUDER_WATCH_PERIOD,Com::tEPRStabilizeTime);
 
 #if RETRACT_DURING_HEATUP

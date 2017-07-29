@@ -214,7 +214,7 @@ Overridden if EEPROM activated.*/
 
 /** \brief What type of sensor is used?
 3 is mendel-parts thermistor (EPCOS G550) */
-#define EXT0_TEMPSENSOR_TYPE                8
+#define EXT0_TEMPSENSOR_TYPE                14
 
 /** \brief Analog input pin for reading temperatures or pin enabling SS for MAX6675 */
 #define EXT0_TEMPSENSOR_PIN                 TEMP_0_PIN
@@ -361,7 +361,7 @@ The codes are only executed for multiple extruder when changing the extruder. */
 
 /** \brief What type of sensor is used?
 3 is mendel-parts thermistor (EPCOS G550) */
-#define EXT1_TEMPSENSOR_TYPE                8
+#define EXT1_TEMPSENSOR_TYPE                14
 
 /** \brief Analog input pin for reading temperatures or pin enabling SS for MAX6675 */
 #define EXT1_TEMPSENSOR_PIN                 TEMP_1_PIN
@@ -600,7 +600,7 @@ A good start is 30 lower then the optimal value. You need to leave room for cool
 
 #define RESERVE_ANALOG_INPUTS               1
 #define RESERVE_SENSOR_INDEX                EXT0_ANALOG_INPUTS+EXT1_ANALOG_INPUTS+BED_ANALOG_INPUTS
-#define RESERVE_ANALOG_CHANNEL              ACCOMMA1 RESERVE_ANALOG_TEMP_PIN     
+#define RESERVE_ANALOG_CHANNEL              ACCOMMA1 TEMP_3_PIN     
 
 
 // ##########################################################################################

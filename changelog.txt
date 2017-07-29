@@ -1,7 +1,12 @@
 TODO: Pause-Back-Drive-Bug in original RF1.37
 TODO: Possible Z-Lift Bug in original RF1.37
 
-V RF.01.37r3.TDMod (2017-07-24)
+V RF.01.37r4.Mod (2017-07-29)
+- Bugfix for Z-Matrix-Invalidation
+- Extruder 2 Z-Offset got eeprom support
+- Cleanup
+
+V RF.01.37r3.Mod (2017-07-24)
 - Fix M3902 Z0 to update Z-Offset in Flash too.
 - Fix min-max-bug in Emergency-Pause Menu
 

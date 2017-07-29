@@ -66,8 +66,6 @@ FSTRINGVALUE( ui_text_saving_success, UI_TEXT_SAVING_SUCCESS )
 
 unsigned long   g_uStartOfIdle             = 0;
 
-volatile unsigned int   debugcounted[5]     = { 0, 0, 0, 0, 0 };
-
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 long            g_offsetZCompensationSteps = 0;
 long            g_minZCompensationSteps    = HEAT_BED_Z_COMPENSATION_MIN_STEPS;
@@ -2061,18 +2059,7 @@ void searchZOScan( void )
                 Com::printF( PSTR( ", " ), yScanPosition );
                 Com::printFLN( PSTR( ") [(x,y) Steps]" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
-                short save = g_ZCompensationMatrix[0][0];
                 PrintLine::moveRelativeDistanceInSteps( xScanPosition, yScanPosition, 0, 0, RMath::min(MAX_FEEDRATE_X,MAX_FEEDRATE_Y), true, true );
-                g_ZCompensationMatrix[0][0] = save;
-                // safety check on the current matrix :: Hier gabs mal irgendeinen komischen Fehler... da stand 8 oder 9 in g_ZCompensationMatrix[0][0] -> vermutlich wegen abortscan und dem HBS.
-                if(g_ZCompensationMatrix[0][0] != EEPROM_FORMAT) {
-                  Com::printFLN( PSTR( "ZOS(): ERROR::E-FMT changed! AML:" ), g_ZOS_Auto_Matrix_Leveling_State );
-                  Com::printFLN( PSTR( "ZOS(): AHB:" ), g_nActiveHeatBed );
-                  Com::printFLN( PSTR( "ZOS(): E-FMT:" ), g_ZCompensationMatrix[0][0] );
-                  outputCompensationMatrix( 0 );
-                  abortSearchHeatBedZOffset(false);
-                  break;
-                }
                 GCode::keepAlive( Processing );
                 g_ZOSScanStatus = 6;    
                 break;
@@ -2343,9 +2330,7 @@ void searchZOScan( void )
                         g_nZScanZPosition += moveZ( Printer::axisStepsPerMM[Z_AXIS] );
                         long xScanPosition = (long)(g_ZCompensationMatrix[g_ZOSTestPoint[X_AXIS]][0] * Printer::axisStepsPerMM[X_AXIS]);
                         long yScanPosition = (long)(g_ZCompensationMatrix[0][g_ZOSTestPoint[Y_AXIS]] * Printer::axisStepsPerMM[Y_AXIS]); // + g_nScanYStartSteps; <-- NEIN!
-                        short save = g_ZCompensationMatrix[0][0];
                         PrintLine::moveRelativeDistanceInSteps( -xScanPosition, -yScanPosition, 0, 0, MAX_FEEDRATE_Y, true, true );
-                        g_ZCompensationMatrix[0][0] = save;
                         g_nZScanZPosition += moveZ( -g_nZScanZPosition );    // g_nZScanZPosition counts z-steps. we need to move the heatbed down to be at z=0 again
                         outputCompensationMatrix( 1 );
                         }
@@ -2478,7 +2463,7 @@ bool calculateZScrewCorrection( void )
         /* TIPP: -> Schraube bis maxNachdehnungInMikrons ~ 150um weiter runter(=Bett weiter hoch =Drehsinn Minus) empfehlen, wenn der Drucker aktuell "mehr druchgewärmt" wäre. */    
                 
         Com::printFLN( PSTR( " " ) );
-        Com::printFLN( PSTR( "#####" ) );
+        Com::printFLN( PSTR( "#############" ) );
         Com::printF( PSTR( "Sollkorrektur: " ) , SollkorrekturWarm , 0 ); 
         Com::printF( PSTR( " [um] = " ), SollkorrekturWarm*0.001f,3  ); 
         Com::printFLN( PSTR( " [mm]" ) );
@@ -2519,7 +2504,7 @@ bool calculateZScrewCorrection( void )
             g_ZSchraubeOk = 1; //pos
         } 
 #endif    
-        Com::printFLN( PSTR( "#####" ) );
+        Com::printFLN( PSTR( "#############" ) );
         returnwert = true;
     }else{
         Com::printFLN( Com::tError, g_ZCompensationMatrix[0][0] );
@@ -9737,7 +9722,6 @@ void processCommand( GCode* pCommand )
                 {
                     showInvalidSyntax( pCommand->M );
                 }
-
                 break;
             }
 #endif // FEATURE_230V_OUTPUT
@@ -9918,9 +9902,9 @@ void processCommand( GCode* pCommand )
                         }
                     }
                 }
-
                 break;
             }
+
             case 3305: // M3305 [P] [S] - configure the RGB light effects for cooling
             {
                 if( pCommand->hasP() )
@@ -10007,9 +9991,9 @@ void processCommand( GCode* pCommand )
                         }
                     }
                 }
-
                 break;
             }
+
             case 3306: // M3306 [P] [S] - configure the RGB light effects for idle
             {
                 if( pCommand->hasP() )
@@ -10254,9 +10238,8 @@ void processCommand( GCode* pCommand )
                 break;
             }
 #endif // FEATURE_RGB_LIGHT_EFFECTS
-        
+
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-            
             case 3901: // 3901 [X] [Y] - configure the Matrix-Position to Scan, [S] confugure learningrate, [P] configure dist weight || by Nibbels
             case 3900: // 3900 direct preconfig, no break; -> next is M3900.
             {
@@ -10269,7 +10252,7 @@ void processCommand( GCode* pCommand )
                         Com::printFLN( PSTR( "M3900/M3901: INFO Die Z-Matrix wurde aus dem EEPROM gelesen." ) );
                         prepareZCompensation();
                     }
-                    
+
                     if( g_ZCompensationMatrix[0][0] == EEPROM_FORMAT )
                     {
                         if( !pCommand->hasR() ){ //Normaler ZOS, kein Auto-Matrix-Leveling.
@@ -10438,7 +10421,7 @@ void processCommand( GCode* pCommand )
                         Com::printFLN( PSTR( "M3900/M3901: INFO Die Z-Matrix konnte nicht aus dem EEPROM gelesen werden." ) );
                         Com::printFLN( PSTR( "M3900/M3901: INFO Sieht man diesen Fehler, hat der Drucker vermutlich noch nie einen Heat-Bed-Scan gemacht." ) );
                         Com::printFLN( PSTR( "M3900/M3901: INFO Man sieht diesen Fehler nach dem Löschen des EEPROMS mit Code M3091 -> neuer HBS erforderlich!" ) );
-                    }   
+                    }
                 }
                 break;
             }
@@ -10450,8 +10433,8 @@ void processCommand( GCode* pCommand )
                 break;
             }
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION   
-                
-            
+
+
 #if FEATURE_HEAT_BED_Z_COMPENSATION
             case 3902: // M3902 Nibbels Matrix Manipulations "NMM"
             {
@@ -10463,7 +10446,7 @@ void processCommand( GCode* pCommand )
                         //search for a hole within the heat beds z-Matrix
                         fixKeramikLochInMatrix();
                     }
-                    
+
                     if ( pCommand->hasE() ) 
                     {
                         //completly wipe the matrix-data to zero -> flatten the matrix to nothing.
@@ -10479,12 +10462,12 @@ void processCommand( GCode* pCommand )
                             prepareZCompensation();
                         }
                         if( g_ZCompensationMatrix[0][0] == EEPROM_FORMAT )
-                        {   
+                        {
                             //search for a hole within the heat beds z-Matrix
                             float hochrunter = (float)pCommand->Z;
                             if(hochrunter > 0.2f) hochrunter = 0.2f;
                             if(hochrunter < -0.2f) hochrunter = -0.2f;
-                            
+
                             Com::printFLN( PSTR( "#############################################################################") );
                             if(hochrunter < 0.0f){
                                 Com::printFLN( PSTR( "M3902: Duese-Bett-Abstand wird kleiner gemacht. "), hochrunter );
@@ -10496,23 +10479,23 @@ void processCommand( GCode* pCommand )
                             Com::printFLN( PSTR( "M3902: -Z heisst Bett hoch/weniger Abstand, +Z heisst Bett runter/mehr Abstand. ") );
                             Com::printFLN( PSTR( "M3902: Bei Z=0 ändert sich nichts, doch es wird das aktuelle Offset in die Matrix verrechnet. ") );
                             Com::printFLN( PSTR( "#############################################################################") );
-                            
+
                             // determine the minimal distance between extruder and heat bed
                             determineCompensationOffsetZ(); //-> schreibt kleinsten abstand in g_offsetZCompensationSteps, sollte schon drin sein, aber man weiß nie.
                             Com::printFLN( PSTR( "M3902: Alt::Min. Bett-Hotend Abstand [Steps] = " ), -1*(int)g_offsetZCompensationSteps );
-                            
+
                             long hochrunterSteps = long(hochrunter * Printer::axisStepsPerMM[Z_AXIS]); //axissteps ist auch float
-                                                        
+
                             Com::printFLN( PSTR( "M3902: Veraenderung Z [mm] = "), hochrunter );
                             Com::printFLN( PSTR( "M3902: Veraenderung Z [Steps] = " ), hochrunterSteps );
-                            
+
                             if(hochrunter == 0.00f){
                                 //wenn Z=0.0 soll alles so bleibenk aber das Offset ins Matrix-Offset reingerechnet und genullt werden.
                                 //das Offset muss negativ eingehen, denn wenn die Matrix "weniger tief" ist, bleibt die Düse weiter weg vom Bett.
                                 hochrunterSteps = long((Printer::ZOffset * Printer::axisStepsPerMM[Z_AXIS]) / 1000); //offset-stepps neu berechnen!                         
                                 Com::printFLN( PSTR( "M3902: Veraenderung = zOffset --> zMatrix; Offset = 0;" ) );
-                            }   
-                            
+                            }
+
                             //das ist ein negativer wert! Je mehr Abstand, desto negativer. Positiv verboten.
                             if(g_offsetZCompensationSteps + hochrunterSteps > (HEAT_BED_SCAN_Z_START_STEPS - -1*g_nScanHeatBedUpFastSteps)){
                                 Com::printF( PSTR( "M3902: Fehler::Z-Matrix wuerde positiv werden. Das waere eine Kollision um " ), (int)(g_offsetZCompensationSteps + hochrunterSteps) );
@@ -10520,14 +10503,14 @@ void processCommand( GCode* pCommand )
                                 Com::printFLN( PSTR( " [mm]" ) );
                             }else{
                                 Com::printFLN( PSTR( "M3902: Neu::Min. Bett-Extruder Restabstand = " ), -1*(int)(g_offsetZCompensationSteps) );
-                                
+
                                 short   x;
                                 short   y;
                                 short   deltaZ  = (short)hochrunterSteps;
                                 bool overflow = false;
                                 bool overnull = false;
                                 bool overH = false;
-                                
+
                                 for( x=1; x<=g_uZMatrixMax[X_AXIS]; x++ )
                                 {
                                     for( y=1; y<=g_uZMatrixMax[Y_AXIS]; y++ )
@@ -10565,7 +10548,7 @@ void processCommand( GCode* pCommand )
                                     g_ZMatrixChangedInRam = 1;
                                 }
                             }
-                            
+
                             // determine the minimal distance between extruder and heat bed
                             determineCompensationOffsetZ();
                             Com::printFLN( PSTR( "M3902: Neu::Min. Bett-Extruder Restabstand [Steps] = " ), -1*(int)g_offsetZCompensationSteps );
@@ -10668,7 +10651,7 @@ void processCommand( GCode* pCommand )
                             Com::printFLN( PSTR( "M3909: INFO::This function should lower the chance of an accidential emergency block on the first layer. It cannot help you to avoid calibration!") );
                         }
                     }
-                    
+
                     //Statusausgabe per M3909
                     if(g_nSensiblePressureDigits){
                         Com::printF( PSTR( "M3909: INFO SensiblePressure threshold is active. [P]PressureDigit = +-"), g_nSensiblePressureDigits );
@@ -10706,7 +10689,7 @@ void processCommand( GCode* pCommand )
                 }
                 break;
             }
-            
+
             case 3919: // 3919 [S]mikrometer - Testfunction for Dip-Down-Hotend beim T1: Einstellen des extruderspezifischen Z-Offsets
             {
                 /* Eigentlich kann man das mit jedem Extruder machen, aber ich lasse das nur für T1 zu, weil ich nur das testen kann. Der Rechte Extruder kann damit absinken, wenn das Filament ihn runterdrückt. Der Linke bleibt in jedem Fall gleich hoch auf der Höhe des Homings! */
@@ -10727,13 +10710,13 @@ void processCommand( GCode* pCommand )
                         Com::printFLN( PSTR( "M3919 T1 Spring displace: " ), actExtruder->zOffset * Printer::invAxisStepsPerMM[Z_AXIS] );
                     }else{
                         Com::printFLN( PSTR( "M3919 Error: !=Extr." ), extruder[1].id );
-                    }    
+                    }
                 }else{
                     Com::printFLN( PSTR( "M3919 Help: Write M3919 T1 Z-0.500 when T1 goes down 500um/0.5mm" ) );
                 }
                 break;
             }
-            
+
 #if FEATURE_SILENT_MODE // Auswahl der Motor-Current-Settings
             case 3920: // 3920 Decide if MOTOR_CURRENT_SILENT or MOTOR_CURRENT
             {
@@ -10752,11 +10735,11 @@ void processCommand( GCode* pCommand )
                                 Printer::disableZStepper();
                                 Extruder::disableAllExtruders();
                                 motorCurrentControlInit();
-                            }                       
+                            }
                         }else{
                             Com::printFLN(PSTR("M3920 SilentMode S=1||0") , pCommand->S);
                         }
-                    }else{                  
+                    }else{
                         if(g_nSilentMode){
                             g_nSilentMode = 0;
                             Com::printFLN( PSTR( "M3920 SilentMode 0" ) );
@@ -10767,19 +10750,19 @@ void processCommand( GCode* pCommand )
                             Extruder::disableAllExtruders();
                             motorCurrentControlInit();
                         }else{
-                            g_nSilentMode = 1;      
+                            g_nSilentMode = 1;
                             Com::printFLN( PSTR( "M3920 SilentMode 1" ) );  
                             Printer::setAllSteppersDisabled(); //unhome, you should only switch mode while not homed btw with z-Compensation off.
                             Printer::disableXStepper();
                             Printer::disableYStepper();
                             Printer::disableZStepper();
                             Extruder::disableAllExtruders();
-                            motorCurrentControlInit();          
+                            motorCurrentControlInit();
                         }
-                    }               
+                    }
                 }
                 break;
-            }           
+            }
 #endif // FEATURE_SILENT_MODE
 
             case 3939: // 3939 startViscosityTest - Testfunction to determine the digits over extrusion speed || by Nibbels
@@ -10791,22 +10774,22 @@ void processCommand( GCode* pCommand )
                 float Inc = 0.1f;
                 int maxRFill = 800;
                 short StartTemp = 0;    //0=aus, der user muss das dann einstellen.
-                short EndTemp = 0;  
+                short EndTemp = 0;
                 
-                if (pCommand->hasF() ){     
+                if (pCommand->hasF() ){
                     if(pCommand->F < 32767 && pCommand->F > 0 && pCommand->F < (g_nEmergencyPauseDigitsMax*0.8)){
                         maxD = (int)pCommand->F;
                     }else{
                         Com::printFLN( PSTR( "M3939 [F] Digits ERROR" ) );
                     }
                 }
-                if (pCommand->hasE() ){     
+                if (pCommand->hasE() ){
                     maxE = (float)pCommand->E;
                 }
-                if (pCommand->hasI() ){     
+                if (pCommand->hasI() ){
                     Inc = (float)pCommand->I;
                 }
-                if (pCommand->hasR() ){     
+                if (pCommand->hasR() ){
                     maxRFill = (float)pCommand->R;
                 }               
                 if (pCommand->hasS() ){
@@ -10832,101 +10815,21 @@ void processCommand( GCode* pCommand )
                 */
                 startViscosityTest( maxD, maxE, Inc, StartTemp, EndTemp, maxRFill ); //E ist float, constraint in funktion!
                 
-                Com::printFLN( PSTR( "M3939 Ended!" ) );     
-                break;           
+                Com::printFLN( PSTR( "M3939 Ended!" ) );
+                break;
             }
-            
+
 #if RESERVE_ANALOG_INPUTS
             case 3941: // 3941 reading optional temperature port X35 - Testfunction || by Nibbels
             {
-                //Com::printFLN( PSTR( "M3941 TempReader starting ..." ) );   
-                TemperatureController* act = &optTempController;            
-                act->updateCurrentTemperature();                
-                Com::printFLN( PSTR( "Opt Temp: " ) , act->currentTemperatureC , 2 );           
+                //Com::printFLN( PSTR( "M3941 TempReader starting ..." ) );
+                TemperatureController* act = &optTempController;
+                act->updateCurrentTemperature();
+                Com::printFLN( PSTR( "Opt Temp: " ) , act->currentTemperatureC , 2 );
                 //Com::printFLN( PSTR( "M3941 Ended!" ) );
                 break;
             }
 #endif // RESERVE_ANALOG_INPUTS
-
-
-            case 4443: // 4444 - MOVE-OVERFLOW-Testfunction || by Nibbels
-			{
-				Com::printFLN( PSTR( "osAnalogInputChannels " ),(uint32_t)&osAnalogInputChannels );
-				Com::printFLN( PSTR( "osAnalogInputCounter " ),(uint32_t)&osAnalogInputCounter );
-				Com::printFLN( PSTR( "osAnalogInputBuildup " ),(uint32_t)&osAnalogInputBuildup );
-				Com::printFLN( PSTR( "osAnalogInputPos " ),(uint32_t)&osAnalogInputPos );
-				Com::printFLN( PSTR( "osAnalogInputValues " ),(uint32_t)&osAnalogInputValues );
-				Com::printFLN( PSTR( "ANALOG_INPUTS " ),(uint32_t)ANALOG_INPUTS );
-				Com::printFLN( PSTR( "g_ZCompensationMatrix " ),(uint32_t)&g_ZCompensationMatrix );
-				Com::printFLN( PSTR( "EXT0_SENSOR_INDEX " ),(uint32_t)EXT0_SENSOR_INDEX );
-				Com::printFLN( PSTR( "EXT1_SENSOR_INDEX " ),(uint32_t)EXT1_SENSOR_INDEX );
-				Com::printFLN( PSTR( "BED_SENSOR_INDEX " ),(uint32_t) BED_SENSOR_INDEX);
-				Com::printFLN( PSTR( "RESERVE_SENSOR_INDEX " ),(uint32_t)RESERVE_SENSOR_INDEX );
-				Com::printFLN( PSTR( "EXT0_SENSOR_INDEX" ),(uint32_t)EXT0_TEMPSENSOR_PIN );
-				Com::printFLN( PSTR( "EXT1_ANALOG_CHANNEL " ),(uint32_t)EXT1_TEMPSENSOR_PIN );
-				Com::printFLN( PSTR( "BED_ANALOG_CHANNEL " ),(uint32_t)HEATED_BED_SENSOR_PIN );
-				Com::printFLN( PSTR( "RESERVE_ANALOG_CHANNEL " ),(uint32_t)RESERVE_ANALOG_TEMP_PIN );
-				
-				Com::printFLN( PSTR( "osAnalogInputPos " ),(uint32_t)osAnalogInputPos );
-				for(int n = 0; n < ANALOG_INPUTS + 1 ; n++){
-					Com::printFLN( PSTR( "n " ),(uint32_t)n );
-					Com::printFLN( PSTR( "osAnalogInputChannelsX4 " ),(uint32_t)osAnalogInputChannels[n] );
-					Com::printFLN( PSTR( "osAnalogInputCounter " ),(uint32_t)osAnalogInputCounter[n] );
-					Com::printFLN( PSTR( "osAnalogInputBuildup " ),(uint32_t)osAnalogInputBuildup[n] );
-					Com::printFLN( PSTR( "osAnalogInputValues " ),(uint32_t)osAnalogInputValues[n] );
-				}
-				break;
-			}
-
-            case 4444: // 4444 - MOVE-OVERFLOW-Testfunction || by Nibbels
-            {
-				Com::printFLN( PSTR( "ZOS(): Loading zMatrix from EEPROM" ) );
-				loadCompensationMatrix( (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveHeatBed) );
-				outputCompensationMatrix( 0 );
-
-				Printer::homeAxis( true, true, true );
-				long x = (long)((float)g_ZCompensationMatrix[4][0] * Printer::axisStepsPerMM[X_AXIS]);
-				long y = (long)((float)g_ZCompensationMatrix[0][4] * Printer::axisStepsPerMM[Y_AXIS]);
-				PrintLine::moveRelativeDistanceInSteps( x, y, 20*Printer::axisStepsPerMM[Z_AXIS], 0, MAX_FEEDRATE_Z, true, true );
-
-				bool error = false;
-				short eepromformat = EEPROM_FORMAT;
-				
-				for(int i=0;i<=500;i++){
-
-					Com::printFLN( PSTR( "Iteration: " ), i );
-/*
-	GCode::readFromSerial();
-	Commands::checkForPeriodicalActions();
-	GCode::keepAlive( Processing );
-	UI_MEDIUM;
-	--> Diese wichtigen Funktionen werden in "waitbool" bei moveRelativeDistanceInSteps aufgerufen.
-*/
-					PrintLine::moveRelativeDistanceInSteps( x--, y--, 0, 0, RMath::min(MAX_FEEDRATE_X,MAX_FEEDRATE_Y), true, true );
-					GCode::keepAlive( Processing );
-					error = (g_ZCompensationMatrix[0][0] != eepromformat) ? 1 : 0;
-					PrintLine::moveRelativeDistanceInSteps( -x, -y, 0, 0, RMath::min(MAX_FEEDRATE_X,MAX_FEEDRATE_Y), true, true );
-					GCode::keepAlive( Processing );
-					error += (g_ZCompensationMatrix[0][0] != eepromformat) ? 1 : 0;
-
-					if(error) {
-						Com::printFLN( PSTR( "E-FMT:" ), error );
-						Com::printFLN( PSTR( "::" ), g_ZCompensationMatrix[0][0] );
-						outputCompensationMatrix( 0 );
-						eepromformat = g_ZCompensationMatrix[0][0]; //neues übernehmen um zu schauen wann nächste änderung.
-						error = false;
-					}
-					
-
-					Com::printFLN( PSTR( "anzahl+ " ),(uint32_t)debugcounted[0] );
-					Com::printFLN( PSTR( "highest " ),(uint32_t)debugcounted[1] );
-					Com::printFLN( PSTR( "IN " ),(uint32_t)debugcounted[2] );
-					Com::printFLN( PSTR( "OUT " ),(uint32_t)debugcounted[3] );
-					Com::printFLN( PSTR( "INSIDEs " ),(uint32_t)debugcounted[4] );
-
-				}
-                break;
-            }
 
         }
     }

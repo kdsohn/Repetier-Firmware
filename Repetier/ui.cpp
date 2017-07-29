@@ -3070,8 +3070,6 @@ void UIDisplay::nextPreviousAction(int8_t next)
         case UI_ACTION_EXTRUDER_OFFSET_X:
         {
             float   fTemp = extruder[1].xOffset / Printer::axisStepsPerMM[X_AXIS];
-
-
             INCREMENT_MIN_MAX(fTemp,0.01,32,36);
             extruder[1].xOffset = int32_t(fTemp * Printer::axisStepsPerMM[X_AXIS]);
 
@@ -3085,8 +3083,6 @@ void UIDisplay::nextPreviousAction(int8_t next)
         case UI_ACTION_EXTRUDER_OFFSET_Y:
         {
             float   fTemp = extruder[1].yOffset / Printer::axisStepsPerMM[Y_AXIS];
-
-
             INCREMENT_MIN_MAX(fTemp,0.01,-2,2);
             extruder[1].yOffset = int32_t(fTemp * Printer::axisStepsPerMM[Y_AXIS]);
 
@@ -3103,6 +3099,12 @@ void UIDisplay::nextPreviousAction(int8_t next)
             float   fTemp = extruder[1].zOffset * Printer::invAxisStepsPerMM[Z_AXIS];
             INCREMENT_MIN_MAX(fTemp,0.025,-2,0);
             extruder[1].zOffset = int32_t(fTemp * Printer::axisStepsPerMM[Z_AXIS]);
+
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetFloat(EEPROM_EXTRUDER_LENGTH+EEPROM_EXTRUDER_OFFSET+EPR_EXTRUDER_Z_OFFSET,fTemp);
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+
             if(extruder[1].id == Extruder::current->id){
                 Printer::extruderOffset[Z_AXIS] = -Extruder::current->zOffset*Printer::invAxisStepsPerMM[Z_AXIS];
                 if(Printer::areAxisHomed()) Printer::moveToReal(IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE);

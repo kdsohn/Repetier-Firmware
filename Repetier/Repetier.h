@@ -115,10 +115,10 @@ public:
 };
 
 extern const uint8      osAnalogInputChannels[] PROGMEM;
-extern volatile uint8   osAnalogInputCounter[ANALOG_INPUTS+1]; //test, ob overflow aufhört
-extern volatile uint    osAnalogInputBuildup[ANALOG_INPUTS+1]; //test, ob overflow aufhört
+extern volatile uint8   osAnalogInputCounter[ANALOG_INPUTS];
+extern volatile uint    osAnalogInputBuildup[ANALOG_INPUTS];
 extern volatile uint8   osAnalogInputPos; // Current sampling position
-extern volatile uint    osAnalogInputValues[ANALOG_INPUTS+1]; //test, ob overflow aufhört
+extern volatile uint    osAnalogInputValues[ANALOG_INPUTS];
 extern uint8_t          pwm_pos[NUM_EXTRUDER+3]; // 0-NUM_EXTRUDER = Heater 0-NUM_EXTRUDER of extruder, NUM_EXTRUDER = Heated bed, NUM_EXTRUDER+1 Board fan, NUM_EXTRUDER+2 = Fan
 
 #ifdef USE_ADVANCE

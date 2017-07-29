@@ -124,7 +124,7 @@ volatile long   Printer::staticCompensationZ;
 
 volatile long   Printer::queuePositionCurrentSteps[3];
 volatile char   Printer::stepperDirection[3];
- char   Printer::blockAll;
+volatile char   Printer::blockAll;
 
 #if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 volatile long   Printer::currentZSteps;
@@ -139,7 +139,7 @@ volatile char   Printer::endZCompensationStep;
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 volatile long   Printer::directPositionTargetSteps[4];
- long   Printer::directPositionCurrentSteps[4];
+volatile long   Printer::directPositionCurrentSteps[4];
 long            Printer::directPositionLastSteps[4];
 char            Printer::waitMove;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
