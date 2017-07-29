@@ -902,6 +902,9 @@ This timer is called 3906 times per second. It is used to update pwm values for 
 */
 ISR(PWM_TIMER_VECTOR)
 {
+    static uint8_t insideTimerPWM = 0;
+    if(insideTimerPWM) return;
+    insideTimerPWM++;
     static uint8_t pwm_count_heater = 0;
     static uint8_t pwm_count_cooler = 0;
     static uint8_t pwm_heater_pos_set[NUM_EXTRUDER+3];
@@ -1078,6 +1081,7 @@ ISR(PWM_TIMER_VECTOR)
 #if ANALOG_INPUTS>0
     if((ADCSRA & _BV(ADSC))==0)   // Conversion finished?
     {
+        HAL::forbidInterrupts();
         osAnalogInputBuildup[osAnalogInputPos] += ADCW;
         if(++osAnalogInputCounter[osAnalogInputPos]>=_BV(ANALOG_INPUT_SAMPLE))
         {
@@ -1101,7 +1105,8 @@ ISR(PWM_TIMER_VECTOR)
             osAnalogInputBuildup[osAnalogInputPos] = 0;
             osAnalogInputCounter[osAnalogInputPos] = 0;
             // Start next conversion
-            if(++osAnalogInputPos>=ANALOG_INPUTS) osAnalogInputPos = 0;
+            if(osAnalogInputPos < ANALOG_INPUTS-1) osAnalogInputPos++;
+            else osAnalogInputPos = 0;
             uint8_t channel = pgm_read_byte(&osAnalogInputChannels[osAnalogInputPos]);
 
 #if defined(ADCSRB) && defined(MUX5)
@@ -1114,6 +1119,7 @@ ISR(PWM_TIMER_VECTOR)
             ADMUX = (ADMUX & ~(0x1F)) | (channel & 7);
         }
         ADCSRA |= _BV(ADSC);  // start next conversion
+        HAL::allowInterrupts();
     }
 #endif // ANALOG_INPUTS>0
 
@@ -1123,6 +1129,7 @@ ISR(PWM_TIMER_VECTOR)
     pwm_count_heater += HEATER_PWM_STEP;
 
     (void)pwm_cooler_pos_set;
+    insideTimerPWM--;
 } // ISR(PWM_TIMER_VECTOR)
 
 
