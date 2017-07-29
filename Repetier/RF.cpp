@@ -5520,7 +5520,7 @@ char saveCompensationMatrix( unsigned int uAddress )
     short           y;
 
 
-    if( g_ZCompensationMatrix[0][0] && g_uZMatrixMax[X_AXIS] && g_uZMatrixMax[Y_AXIS] )
+    if( g_ZCompensationMatrix[0][0] && g_uZMatrixMax[X_AXIS] && g_uZMatrixMax[Y_AXIS] ) //valid in RAM means writing ok
     {
         // we have valid compensation values
         if( Printer::debugInfo() )
@@ -5551,7 +5551,7 @@ char saveCompensationMatrix( unsigned int uAddress )
         writeWord24C256( I2C_ADDRESS_EXTERNAL_EEPROM, uAddress + EEPROM_OFFSET_X_END_MM, (short)(g_nScanXMaxPositionSteps / Printer::axisStepsPerMM[X_AXIS]) );
         writeWord24C256( I2C_ADDRESS_EXTERNAL_EEPROM, uAddress + EEPROM_OFFSET_Y_END_MM, (short)(g_nScanYMaxPositionSteps / Printer::axisStepsPerMM[Y_AXIS]) );
 
-        uOffset = uAddress + EEPROM_OFFSET_MAXTRIX_START;
+        uOffset = uAddress + EEPROM_OFFSET_MATRIX_START;
         for( x=0; x<=g_uZMatrixMax[X_AXIS]; x++ )
         {
             for( y=0; y<=g_uZMatrixMax[Y_AXIS]; y++ )
@@ -5603,7 +5603,7 @@ char saveCompensationMatrix( unsigned int uAddress )
         writeWord24C256( I2C_ADDRESS_EXTERNAL_EEPROM, uAddress + EEPROM_OFFSET_X_END_MM, 0 );
         writeWord24C256( I2C_ADDRESS_EXTERNAL_EEPROM, uAddress + EEPROM_OFFSET_Y_END_MM, 0 );
 
-        uOffset = uAddress + EEPROM_OFFSET_MAXTRIX_START;
+        uOffset = uAddress + EEPROM_OFFSET_MATRIX_START;
         for( x=0; x<COMPENSATION_MATRIX_MAX_X; x++ )
         {
             for( y=0; y<COMPENSATION_MATRIX_MAX_Y; y++ )
@@ -5810,7 +5810,7 @@ char loadCompensationMatrix( unsigned int uAddress )
     }
 
     // read out the actual compensation values
-    uOffset = uAddress + EEPROM_OFFSET_MAXTRIX_START;
+    uOffset = uAddress + EEPROM_OFFSET_MATRIX_START;
     for( x=0; x<=g_uZMatrixMax[X_AXIS]; x++ )
     {
         for( y=0; y<=g_uZMatrixMax[Y_AXIS]; y++ )
