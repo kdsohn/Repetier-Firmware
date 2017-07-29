@@ -44,7 +44,7 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
 
 /** \brief Define the type of your device */
 //#define MOTHERBOARD                         DEVICE_TYPE_RF1000
-#define MOTHERBOARD                         DEVICE_TYPE_RF2000
+//#define MOTHERBOARD                         DEVICE_TYPE_RF2000
 #define PROTOTYPE_PCB                       0                                                   // 1 = first PCB's / 0 = Final
 
 #ifndef MOTHERBOARD
@@ -790,7 +790,7 @@ we use blocks of 2 kByte size for the structure of our EEPROM
 #define EEPROM_OFFSET_Y_STEP_MM                     22
 #define EEPROM_OFFSET_X_END_MM                      24
 #define EEPROM_OFFSET_Y_END_MM                      26
-#define EEPROM_OFFSET_MAXTRIX_START                 28
+#define EEPROM_OFFSET_MATRIX_START                 28
 
 #define EEPROM_SECTOR_SIZE                          1536                                        // [bytes]
 #define EEPROM_MAX_WORK_PART_SECTORS                9
