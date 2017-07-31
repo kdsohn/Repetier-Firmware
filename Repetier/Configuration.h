@@ -182,9 +182,6 @@ to print an object two times at the speed of one. Works only with dual extruder 
 is always running and is not hung up for some unknown reason. */
 #define FEATURE_WATCHDOG                    1                                                   // 1 = on, 0 = off
 
-/** \brief Enables/disables the menu entry which allows to choose the currently installed hotend type */
-#define FEATURE_CONFIGURABLE_HOTEND_TYPE    1                                                   // 1 = on, 0 = off
-
 /** \brief Defines whether the complete EEPROM shall be reset and filled with the values from Configuration.h whenever the EEPROM becomes corruped or its EEPROM_MODE is different to the value from Configuration.h. */
 #define FEATURE_FULL_EEPROM_RESET           1                                                   // 1 = on, 0 = off
 

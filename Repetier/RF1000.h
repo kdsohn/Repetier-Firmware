@@ -77,10 +77,10 @@ WARNING: Do not enable the case fan feature in case you have a second extruder a
 
 /** \brief Define the type of the present extruders */
 #if NUM_EXTRUDER == 2
-#define EXT0_HOTEND_TYPE                    HOTEND_TYPE_V2_SINGLE
-#define EXT1_HOTEND_TYPE                    HOTEND_TYPE_V2_SINGLE
+ #define EXT0_HOTEND_TYPE                    HOTEND_TYPE_V2
+ #define EXT1_HOTEND_TYPE                    HOTEND_TYPE_V2
 #else
-#define EXT0_HOTEND_TYPE                    HOTEND_TYPE_V2_SINGLE
+ #define EXT0_HOTEND_TYPE                    HOTEND_TYPE_V2
 #endif // NUM_EXTRUDER == 2
 
 #define FEATURE_CONFIGURABLE_Z_ENDSTOPS     1                                                   // 1 = the z-endstop type can be switched between z-min (= single) and z-min + z-max in one circuit (= circuit), 0 = only the z-min endstop is installed
@@ -169,19 +169,14 @@ Overridden if EEPROM activated.*/
 
 /** \brief The maximum value, I-gain can contribute to the output. */
 #define HT2_PID_INTEGRAL_DRIVE_MAX          130
-
 /** \brief lower value for integral part. */
-#define HT2_PID_INTEGRAL_DRIVE_MIN          60
-
+#define HT2_PID_INTEGRAL_DRIVE_MIN          5
 /** \brief P-gain. */
 #define HT2_PID_P                           37.52
-
 /** \brief I-gain. */
 #define HT2_PID_I                           10
-
 /** \brief Dgain. */
 #define HT2_PID_D                           35.18
-
 
 // ##########################################################################################
 // ##   Hotend V2
@@ -189,16 +184,12 @@ Overridden if EEPROM activated.*/
 
 /** \brief The maximum value, I-gain can contribute to the output. */
 #define HT3_PID_INTEGRAL_DRIVE_MAX          180
-
 /** \brief lower value for integral part. */
-#define HT3_PID_INTEGRAL_DRIVE_MIN          40
-
+#define HT3_PID_INTEGRAL_DRIVE_MIN          5
 /** \brief P-gain. */
 #define HT3_PID_P                           95
-
 /** \brief I-gain. */
 #define HT3_PID_I                           120
-
 /** \brief Dgain. */
 #define HT3_PID_D                           130
 
@@ -231,7 +222,31 @@ Overridden if EEPROM activated.*/
 #define EXT0_STEPS_PER_MM                   (8.75 * RF_MICRO_STEPS)
 
 /** \brief What type of sensor is used?
-3 is mendel-parts thermistor (EPCOS G550) */
+NTC-Thermistors
+1: Epcos B57560G0107F000
+2: 200k Thermistor
+3: Hotend V2 Sensor Conrad Renkforce / mendel-parts thermistor (EPCOS G550) = NTC mit 100kOhm
+4: 10k Thermistor
+5: USER_THERMISTORTABLE0 als NTC
+6: USER_THERMISTORTABLE1 als NTC
+7: USER_THERMISTORTABLE2 als NTC
+8: E3D Thermistor ATC Semitec 104-GT2 (300°C)
+9: 100k Honeywell 135-104LAG-J01
+10: 100k 0603 SMD Vishay NTCS0603E3104FXT (4.7k pullup)
+11: 100k GE Sensing AL03006-58.2K-97-G1 (4.7k pullup)
+12: 100k RS Thermistor 198-961 (4.7k pullup)
+14: Thermistor NTC 3950 100k Ohm (Version 1)
+15: Thermistor NTC 3950 100k Ohm (Version 2)
+97: USE_GENERIC_THERMISTORTABLE_1 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
+98: USE_GENERIC_THERMISTORTABLE_2 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
+99: USE_GENERIC_THERMISTORTABLE_3 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
+PTC-Thermistors
+13: E3D PT100 (externe Platine, 500°C)
+50: USER_THERMISTORTABLE0 als PTC
+51: USER_THERMISTORTABLE1 als PTC
+52: USER_THERMISTORTABLE2 als PTC
+60: HEATER_USES_AD8495 (Delivers 5mV/degC)
+100: AD595 */
 #define EXT0_TEMPSENSOR_TYPE                3
 
 /** \brief Analog input pin for reading temperatures or pin enabling SS for MAX6675 */
@@ -278,40 +293,32 @@ Overridden if EEPROM activated. */
 
 /** \brief The maximum value, I-gain can contribute to the output. Overridden if EEPROM activated. */
 #define EXT0_PID_INTEGRAL_DRIVE_MAX         HT2_PID_INTEGRAL_DRIVE_MAX
-
 /** \brief lower value for integral part. Overridden if EEPROM activated. */
 #define EXT0_PID_INTEGRAL_DRIVE_MIN         HT2_PID_INTEGRAL_DRIVE_MIN
-
 /** \brief P-gain. Overridden if EEPROM activated. */
 #define EXT0_PID_P                          HT2_PID_P
-
 /** \brief I-gain. Overridden if EEPROM activated. */
 #define EXT0_PID_I                          HT2_PID_I
-
 /** \brief Dgain. Overridden if EEPROM activated.*/
 #define EXT0_PID_D                          HT2_PID_D
 
 #endif // EXT0_HOTEND_TYPE == HOTEND_TYPE_V1
 
 
-#if EXT0_HOTEND_TYPE == HOTEND_TYPE_V2_SINGLE
+#if EXT0_HOTEND_TYPE == HOTEND_TYPE_V2
 
 /** \brief The maximum value, I-gain can contribute to the output. Overridden if EEPROM activated. */
 #define EXT0_PID_INTEGRAL_DRIVE_MAX         HT3_PID_INTEGRAL_DRIVE_MIN
-
 /** \brief lower value for integral part. Overridden if EEPROM activated. */
 #define EXT0_PID_INTEGRAL_DRIVE_MIN         HT3_PID_INTEGRAL_DRIVE_MIN
-
 /** \brief P-gain. Overridden if EEPROM activated. */
 #define EXT0_PID_P                          HT3_PID_P
-
 /** \brief I-gain. Overridden if EEPROM activated. */
 #define EXT0_PID_I                          HT3_PID_I
-
 /** \brief Dgain. Overridden if EEPROM activated.*/
 #define EXT0_PID_D                          HT3_PID_D
 
-#endif // EXT0_HOTEND_TYPE == HOTEND_TYPE_V2_SINGLE
+#endif // EXT0_HOTEND_TYPE == HOTEND_TYPE_V2
 
 
 /** \brief maximum time the heater is can be switched on. Max = 255.  Overridden if EEPROM activated. */
@@ -378,7 +385,31 @@ The codes are only executed for multiple extruder when changing the extruder. */
 #define EXT1_STEPS_PER_MM                   (8.75 * RF_MICRO_STEPS)
 
 /** \brief What type of sensor is used?
-3 is mendel-parts thermistor (EPCOS G550) */
+NTC-Thermistors
+1: Epcos B57560G0107F000
+2: 200k Thermistor
+3: Hotend V2 Sensor Conrad Renkforce / mendel-parts thermistor (EPCOS G550) = NTC mit 100kOhm
+4: 10k Thermistor
+5: USER_THERMISTORTABLE0 als NTC
+6: USER_THERMISTORTABLE1 als NTC
+7: USER_THERMISTORTABLE2 als NTC
+8: E3D Thermistor ATC Semitec 104-GT2 (300°C)
+9: 100k Honeywell 135-104LAG-J01
+10: 100k 0603 SMD Vishay NTCS0603E3104FXT (4.7k pullup)
+11: 100k GE Sensing AL03006-58.2K-97-G1 (4.7k pullup)
+12: 100k RS Thermistor 198-961 (4.7k pullup)
+14: Thermistor NTC 3950 100k Ohm (Version 1)
+15: Thermistor NTC 3950 100k Ohm (Version 2)
+97: USE_GENERIC_THERMISTORTABLE_1 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
+98: USE_GENERIC_THERMISTORTABLE_2 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
+99: USE_GENERIC_THERMISTORTABLE_3 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
+PTC-Thermistors
+13: E3D PT100 (externe Platine, 500°C)
+50: USER_THERMISTORTABLE0 als PTC
+51: USER_THERMISTORTABLE1 als PTC
+52: USER_THERMISTORTABLE2 als PTC
+60: HEATER_USES_AD8495 (Delivers 5mV/degC)
+100: AD595 */
 #define EXT1_TEMPSENSOR_TYPE                3
 
 /** \brief Analog input pin for reading temperatures or pin enabling SS for MAX6675 */
@@ -424,40 +455,32 @@ Overridden if EEPROM activated. */
 
 /** \brief The maximum value, I-gain can contribute to the output. Overridden if EEPROM activated. */
 #define EXT1_PID_INTEGRAL_DRIVE_MAX         HT2_PID_INTEGRAL_DRIVE_MAX
-
 /** \brief lower value for integral part. Overridden if EEPROM activated. */
 #define EXT1_PID_INTEGRAL_DRIVE_MIN         HT2_PID_INTEGRAL_DRIVE_MIN
-
 /** \brief P-gain.  Overridden if EEPROM activated. */
 #define EXT1_PID_P                          HT2_PID_P
-
 /** \brief I-gain. Overridden if EEPROM activated. */
 #define EXT1_PID_I                          HT2_PID_I
-
 /** \brief Dgain.  Overridden if EEPROM activated.*/
 #define EXT1_PID_D                          HT2_PID_D
 
 #endif // EXT1_HOTEND_TYPE == HOTEND_TYPE_V1
 
 
-#if EXT1_HOTEND_TYPE == HOTEND_TYPE_V2_SINGLE
+#if EXT1_HOTEND_TYPE == HOTEND_TYPE_V2
 
 /** \brief The maximum value, I-gain can contribute to the output. Overridden if EEPROM activated. */
-#define EXT1_PID_INTEGRAL_DRIVE_MAX         HT3_PID_INTEGRAL_DRIVE_MIN
-
+#define EXT1_PID_INTEGRAL_DRIVE_MAX         HT3_PID_INTEGRAL_DRIVE_MAX
 /** \brief lower value for integral part. Overridden if EEPROM activated. */
 #define EXT1_PID_INTEGRAL_DRIVE_MIN         HT3_PID_INTEGRAL_DRIVE_MIN
-
 /** \brief P-gain.  Overridden if EEPROM activated. */
 #define EXT1_PID_P                          HT3_PID_P
-
 /** \brief I-gain. Overridden if EEPROM activated. */
 #define EXT1_PID_I                          HT3_PID_I
-
 /** \brief Dgain.  Overridden if EEPROM activated.*/
 #define EXT1_PID_D                          HT3_PID_D
 
-#endif // EXT1_HOTEND_TYPE == HOTEND_TYPE_V2_SINGLE
+#endif // EXT1_HOTEND_TYPE == HOTEND_TYPE_V2
 
 
 /** \brief maximum time the heater is can be switched on. Max = 255.  Overridden if EEPROM activated. */

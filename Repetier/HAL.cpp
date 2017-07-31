@@ -1100,29 +1100,6 @@ ISR(PWM_TIMER_VECTOR)
         execute10msPeriodical = 1;
     }
 
-    HAL::allowInterrupts();
-
-#if FEATURE_RGB_LIGHT_EFFECTS
-    if( (HAL::timeInMilliseconds() - Printer::RGBLightLastChange) > RGB_LIGHT_COLOR_CHANGE_SPEED )
-    {
-        char    change = 0;
-
-        Printer::RGBLightLastChange = HAL::timeInMilliseconds();
-            
-        if( g_uRGBTargetR > g_uRGBCurrentR )        { g_uRGBCurrentR ++; change = 1; }
-        else if( g_uRGBTargetR < g_uRGBCurrentR )   { g_uRGBCurrentR --; change = 1; }
-        if( g_uRGBTargetG > g_uRGBCurrentG )        { g_uRGBCurrentG ++; change = 1; }
-        else if( g_uRGBTargetG < g_uRGBCurrentG )   { g_uRGBCurrentG --; change = 1; }
-        if( g_uRGBTargetB > g_uRGBCurrentB )        { g_uRGBCurrentB ++; change = 1; }
-        else if( g_uRGBTargetB < g_uRGBCurrentB )   { g_uRGBCurrentB --; change = 1; }
-
-        if( change )
-        {
-            setRGBLEDs( g_uRGBCurrentR, g_uRGBCurrentG, g_uRGBCurrentB );
-        }
-    }
-#endif // FEATURE_RGB_LIGHT_EFFECTS
-
     // read analog values
 #if ANALOG_INPUTS>0
     if((ADCSRA & _BV(ADSC))==0)   // Conversion finished?
@@ -1173,6 +1150,27 @@ ISR(PWM_TIMER_VECTOR)
 
     pwm_count_cooler += COOLER_PWM_STEP;
     pwm_count_heater += HEATER_PWM_STEP;
+
+#if FEATURE_RGB_LIGHT_EFFECTS
+    if( (HAL::timeInMilliseconds() - Printer::RGBLightLastChange) > RGB_LIGHT_COLOR_CHANGE_SPEED )
+    {
+        char    change = 0;
+
+        Printer::RGBLightLastChange = HAL::timeInMilliseconds();
+            
+        if( g_uRGBTargetR > g_uRGBCurrentR )        { g_uRGBCurrentR ++; change = 1; }
+        else if( g_uRGBTargetR < g_uRGBCurrentR )   { g_uRGBCurrentR --; change = 1; }
+        if( g_uRGBTargetG > g_uRGBCurrentG )        { g_uRGBCurrentG ++; change = 1; }
+        else if( g_uRGBTargetG < g_uRGBCurrentG )   { g_uRGBCurrentG --; change = 1; }
+        if( g_uRGBTargetB > g_uRGBCurrentB )        { g_uRGBCurrentB ++; change = 1; }
+        else if( g_uRGBTargetB < g_uRGBCurrentB )   { g_uRGBCurrentB --; change = 1; }
+
+        if( change )
+        {
+            setRGBLEDs( g_uRGBCurrentR, g_uRGBCurrentG, g_uRGBCurrentB );
+        }
+    }
+#endif // FEATURE_RGB_LIGHT_EFFECTS
 
     (void)pwm_cooler_pos_set;
     insideTimerPWM--;
