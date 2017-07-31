@@ -1104,7 +1104,6 @@ ISR(PWM_TIMER_VECTOR)
 #if ANALOG_INPUTS>0
     if((ADCSRA & _BV(ADSC))==0)   // Conversion finished?
     {
-        HAL::forbidInterrupts();
         osAnalogInputBuildup[osAnalogInputPos] += ADCW;
         if(++osAnalogInputCounter[osAnalogInputPos]>=_BV(ANALOG_INPUT_SAMPLE))
         {
@@ -1142,7 +1141,6 @@ ISR(PWM_TIMER_VECTOR)
             ADMUX = (ADMUX & ~(0x1F)) | (channel & 7);
         }
         ADCSRA |= _BV(ADSC);  // start next conversion
-        HAL::allowInterrupts();
     }
 #endif // ANALOG_INPUTS>0
 
