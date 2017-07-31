@@ -1,3 +1,8 @@
+V RF.01.37j.mod.3 (2017-04-30)
+- fix break-Bug
+- fix Overflow
+- fix 40/40-Bug
+
 V RF.01.37j.mod (2017-04-24)
 - The SenseOffset will now show when it is ready to controll the nozzles height over bed. You see one character within line 3 of the Mod-Menu. Formerly there was a "@" in front of the digits limit. Now the @ will change to ^ when SenseOffset ist actively controlling within the low layers.
 - The Debugging Menu is now invisible but can be activated within conriguration.h
