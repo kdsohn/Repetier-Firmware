@@ -44,7 +44,7 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
 
 /** \brief Define the type of your device */
 //#define MOTHERBOARD                         DEVICE_TYPE_RF1000
-//#define MOTHERBOARD                         DEVICE_TYPE_RF2000
+#define MOTHERBOARD                         DEVICE_TYPE_RF2000
 #define PROTOTYPE_PCB                       0                                                   // 1 = first PCB's / 0 = Final
 
 #ifndef MOTHERBOARD
@@ -367,7 +367,7 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 
 /** \brief Specifies the pressure at which the emergency pause shall be performed, in [digits] 
 @ ca. +- 15000 the sensors tend to start bending
-With RF1.37r2.Mod the Emergency-Pause-Features limits can be changed in EEPROM but here are the absolute maximum limits:
+With RF1.37r2.Mod the Emergency-Pause-Features limits can be changed in EEPROM and Printers Menu. Here are the absolute maximum limits:
 */
 #define EMERGENCY_PAUSE_DIGITS_MIN          -15000
 #define EMERGENCY_PAUSE_DIGITS_MAX          15000
@@ -387,7 +387,10 @@ With RF1.37r2.Mod the Emergency-Pause-Features limits can be changed in EEPROM b
 
 #if FEATURE_EMERGENCY_STOP_ALL
 
-/** \brief Specifies the pressure at which the emergency z-stop shall be performed, in [digits] */
+/** \brief Specifies the pressure at which the emergency z-stop shall be performed, in [digits] 
+With RF1.37r6.Mod the Emergency-ZStop-Features limits can be changed in EEPROM and Printers Menu. Here are the absolute maximum limits:
+Do not set them to Zero.
+*/
 #define EMERGENCY_STOP_DIGITS_MIN           -14000
 #define EMERGENCY_STOP_DIGITS_MAX           14000
 

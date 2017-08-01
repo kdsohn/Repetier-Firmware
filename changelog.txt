@@ -1,6 +1,12 @@
 TODO: Pause-Back-Drive-Bug in original RF1.37
 TODO: Possible Z-Lift Bug in original RF1.37
 
+V RF.01.37r6.Mod (2017-08-01)
+- Emergency-Stop for Z-Moves is now configurable within EEPROM and Printers Menu
+- Text for RGB-Light is now "Auto" instead Color anymore. 
+- Cleaned up EEPROM text for RGB-Light to get better Compatibility with Repetier-Server (Value is not hidden anymore)
+- New Standard PID-Parameters for V2 because the old ones are quite bad in context to the improved new PID control.
+
 V RF.01.37r5.Mod (2017-07-31)
 - "PID drive max = 40"-Fix.
 - Removed FEATURE_CONFIGURABLE_HOTEND because it was bogus on Dual and not really missed at RF1000 Single setup.

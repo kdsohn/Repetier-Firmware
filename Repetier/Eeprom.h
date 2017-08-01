@@ -126,6 +126,8 @@ have problems with other modules using the eeprom */
 #define EPR_RF_EMERGENCYPAUSEDIGITSMIN    1910 //+1911+1912+1913 g_nEmergencyPauseDigitsMin [4byte long]
 #define EPR_RF_EMERGENCYPAUSEDIGITSMAX    1914 //+1915+1916+1917 g_nEmergencyPauseDigitsMax [4byte long]
 
+#define EPR_RF_EMERGENCYZSTOPDIGITSMIN    1918 //+1919 g_nZEmergencyStopAllMin [2byte long]
+#define EPR_RF_EMERGENCYZSTOPDIGITSMAX    1920 //+1921 g_nZEmergencyStopAllMax [2byte long]
 //Nibbels: Computechecksum geht bis 2047
 
 #define EEPROM_EXTRUDER_OFFSET          200

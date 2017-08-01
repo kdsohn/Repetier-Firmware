@@ -276,6 +276,11 @@ public:
     FSTRINGVAR(tEPRPrinterEPR_RF_EmergencyPauseDigitsMax)
 #endif //FEATURE_EMERGENCY_PAUSE
 
+#if FEATURE_EMERGENCY_STOP_ALL
+    FSTRINGVAR(tEPRPrinterEPR_RF_EmergencyStopAllMin)
+    FSTRINGVAR(tEPRPrinterEPR_RF_EmergencyStopAllMax)
+#endif //FEATURE_EMERGENCY_STOP_ALL
+
 #endif // EEPROM_MODE==0
 
 #if SDSUPPORT

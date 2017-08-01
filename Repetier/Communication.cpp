@@ -253,7 +253,7 @@ FSTRINGVALUE(Com::tEPRCaseLightsMode,"case lights mode [0=off, 1=on]")
 FSTRINGVALUE(Com::tEPROperatingMode,"operating mode [1=print, 2=mill]")
 FSTRINGVALUE(Com::tEPRZEndstopType,"Z endstop type [1=single, 2=circuit]")
 FSTRINGVALUE(Com::tEPRMillerType,"Miller type [tracks]")
-FSTRINGVALUE(Com::tEPRRGBLightMode,"RGB Light mode [0=off, 1=white, 2=color, 3=manual]")
+FSTRINGVALUE(Com::tEPRRGBLightMode,"RGB Light mode [0..3 off/ws/aut/man]")
 FSTRINGVALUE(Com::tEPRFET1Mode,"FET1 mode [0=off, 1=on]")
 FSTRINGVALUE(Com::tEPRFET2Mode,"FET2 mode [0=off, 1=on]")
 FSTRINGVALUE(Com::tEPRFET3Mode,"FET3 mode [0=off, 1=on]")
@@ -267,9 +267,14 @@ FSTRINGVALUE(Com::tEPRPrinterEPR_RF_MOD_SENSEOFFSET_DIGITS,"SenseOffset Digits L
 #endif //FEATURE_SENSIBLE_PRESSURE
 
 #if FEATURE_EMERGENCY_PAUSE
-FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyPauseDigitsMin,"EmergencyPauseDigitsMin 0=off [1700/kg]")
-FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyPauseDigitsMax,"EmergencyPauseDigitsMax 0=off [1700/kg]")
+FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyPauseDigitsMin,"EmergencyPauseDigitsMin (min+max 0=off) [1700/kg]")
+FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyPauseDigitsMax,"EmergencyPauseDigitsMax (min+max 0=off) [1700/kg]")
 #endif //FEATURE_EMERGENCY_PAUSE
+
+#if FEATURE_EMERGENCY_STOP_ALL
+FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyStopAllMin,"ZEmergencyStopAllMin [1700/kg]")
+FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyStopAllMax,"ZEmergencyStopAllMax [1700/kg]")
+#endif //FEATURE_EMERGENCY_STOP_ALL
 
 #endif // EEPROM_MODE
 
