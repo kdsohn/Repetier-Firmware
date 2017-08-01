@@ -643,9 +643,14 @@ extern  volatile char   g_pauseBeepDone;
 #endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_EMERGENCY_PAUSE
-extern long             g_nEmergencyPauseDigitsMin;
-extern long             g_nEmergencyPauseDigitsMax;
+extern long             g_nEmergencyPauseDigitsMin;  //short reicht eigentlich
+extern long             g_nEmergencyPauseDigitsMax;  //short reicht eigentlich
 #endif // FEATURE_EMERGENCY_PAUSE
+
+#if FEATURE_EMERGENCY_STOP_ALL
+extern short             g_nZEmergencyStopAllMin;
+extern short             g_nZEmergencyStopAllMax;
+#endif //FEATURE_EMERGENCY_STOP_ALL
 
 #if FEATURE_SENSIBLE_PRESSURE
 /* brief: This is for correcting too close Z at first layer, see FEATURE_SENSIBLE_PRESSURE // Idee Wessix, coded by Nibbels  */

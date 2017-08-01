@@ -183,9 +183,14 @@ long            g_nParkPosition[3]          = { PARK_POSITION_X, PARK_POSITION_Y
 #endif // FEATURE_PARK
 
 #if FEATURE_EMERGENCY_PAUSE
-long            g_nEmergencyPauseDigitsMin  = EMERGENCY_PAUSE_DIGITS_MIN;
-long            g_nEmergencyPauseDigitsMax  = EMERGENCY_PAUSE_DIGITS_MAX;
+long            g_nEmergencyPauseDigitsMin  = EMERGENCY_PAUSE_DIGITS_MIN; //short reicht eigentlich
+long            g_nEmergencyPauseDigitsMax  = EMERGENCY_PAUSE_DIGITS_MAX; //short reicht eigentlich
 #endif // FEATURE_EMERGENCY_PAUSE
+
+#if FEATURE_EMERGENCY_STOP_ALL
+short            g_nZEmergencyStopAllMin  = EMERGENCY_STOP_DIGITS_MIN;
+short            g_nZEmergencyStopAllMax  = EMERGENCY_STOP_DIGITS_MAX;
+#endif //FEATURE_EMERGENCY_STOP_ALL
 
 #if FEATURE_SILENT_MODE
 char            g_nSilentMode               = 0;
@@ -6383,18 +6388,19 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                 nZPressureChecks = 0;
                 
                 if(uLastZPressureTime_IgnoreUntil < uTime){
-                    if( (nPressure < EMERGENCY_STOP_DIGITS_MIN) ||
-                        (nPressure > EMERGENCY_STOP_DIGITS_MAX) )
+                    if( (nPressure < g_nZEmergencyStopAllMin) ||
+                        (nPressure > g_nZEmergencyStopAllMax) )
                     {
                         // the pressure is outside the allowed range, we must perform the emergency stop
                         doEmergencyStop( STOP_BECAUSE_OF_Z_BLOCK );
                     }
                 }else{
-                    //Manchmal ist es bescheuert, wenn man das 5000er Limit hat. OutputObject z.B. bei einem Druck der mit kleiner Nozzle und Digits ~ 5000...9000
+                    //Manchmal ist es bescheuert, wenn man das niedrige er Limit hat. OutputObject z.B. bei einem Druck der mit kleiner Nozzle und Digits ~ 5000...9000
                     //  uLastZPressureTime_IgnoreUntil = HAL::timeInMilliseconds() + 1000; setzt diese scharfe prüfung z.b. für 1s ausser kraft und lässt mehr zu.
                     //Das ist besser als Nutzer, die das Limit über die Config voll aushebeln.
-                    if( (nPressure < EMERGENCY_PAUSE_DIGITS_MIN) ||
-                        (nPressure > EMERGENCY_PAUSE_DIGITS_MAX) )
+                    //31_07_17----> wurde in der config verändert und es gibt einen gcode
+                    if( (nPressure < RMath::min(EMERGENCY_STOP_DIGITS_MIN,g_nZEmergencyStopAllMin) ) ||
+                        (nPressure > RMath::max(EMERGENCY_STOP_DIGITS_MAX,g_nZEmergencyStopAllMax) ) )
                     {
                         // the pressure is outside the allowed range, we must perform the emergency stop
                         doEmergencyStop( STOP_BECAUSE_OF_Z_BLOCK );

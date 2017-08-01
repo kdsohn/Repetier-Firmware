@@ -1681,6 +1681,18 @@ void UIDisplay::parse(char *txt,bool ram)
                     break;
                 }
 #endif //FEATURE_EMERGENCY_PAUSE
+#if FEATURE_EMERGENCY_STOP_ALL
+                if(c2=='L')                                                                             // %pL : g_nZEmergencyStopAllMin [1700/kg]
+                {
+                    addLong(g_nZEmergencyStopAllMin,6);
+                    break;
+                }
+                if(c2=='H')                                                                             // %pH : g_nZEmergencyStopAllMax [1700/kg]
+                {
+                    addLong(g_nZEmergencyStopAllMax,6);
+                    break;
+                }
+#endif // FEATURE_EMERGENCY_STOP_ALL
                 break;
             }
             case 'P':
@@ -3610,6 +3622,28 @@ void UIDisplay::nextPreviousAction(int8_t next)
             break;
         }
 #endif //FEATURE_EMERGENCY_PAUSE
+
+#if FEATURE_EMERGENCY_STOP_ALL
+        case UI_ACTION_EMERGENCY_ZSTOP_MIN:
+        {
+            INCREMENT_MIN_MAX(g_nZEmergencyStopAllMin,200,EMERGENCY_STOP_DIGITS_MIN,g_nZEmergencyStopAllMax);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetInt16( EPR_RF_EMERGENCYZSTOPDIGITSMIN, g_nZEmergencyStopAllMin );
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+        case UI_ACTION_EMERGENCY_ZSTOP_MAX:
+        {
+            INCREMENT_MIN_MAX(g_nZEmergencyStopAllMax,200,g_nZEmergencyStopAllMin,EMERGENCY_STOP_DIGITS_MAX);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetInt16( EPR_RF_EMERGENCYZSTOPDIGITSMAX, g_nZEmergencyStopAllMax );
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+#endif //FEATURE_EMERGENCY_STOP_ALL
+
     }
 
 #if FEATURE_MILLING_MODE

@@ -1316,7 +1316,7 @@ void TemperatureController::autotunePID(float temp, uint8_t controllerId, int ma
     float Ku, Tu;
     float Kp = 0, Ki = 0, Kd = 0;
     float maxTemp=20, minTemp=20; 
-	if(maxCycles < 5)
+    if(maxCycles < 5)
         maxCycles = 5;
     if(maxCycles > 20)
         maxCycles = 20;
@@ -1480,9 +1480,9 @@ see also: http://www.mstarlabs.com/control/znrule.html
         if(((time - t1) + (time - t2)) > (10L*60L*1000L*2L))   // 20 Minutes
         {
             Com::printErrorFLN(Com::tAPIDFailedTimeout);
+            showError( (void*)ui_text_autodetect_pid, (void*)ui_text_timeout );
             //Extruder::disableAllHeater();
             autotuneIndex = 255;
-            showError( (void*)ui_text_autodetect_pid, (void*)ui_text_timeout );
             return;
         }
         if(cycles > maxCycles)
@@ -1504,7 +1504,6 @@ see also: http://www.mstarlabs.com/control/znrule.html
         UI_MEDIUM;
         UI_SLOW;
     }
-
 } // autotunePID
 
 bool reportTempsensorError()
