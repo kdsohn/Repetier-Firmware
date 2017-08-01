@@ -187,11 +187,11 @@ Overridden if EEPROM activated.*/
 /** \brief lower value for integral part. */
 #define HT3_PID_INTEGRAL_DRIVE_MIN          5
 /** \brief P-gain. */
-#define HT3_PID_P                           11.58
+#define HT3_PID_P                           12.5
 /** \brief I-gain. */
-#define HT3_PID_I                           3
+#define HT3_PID_I                           3.2
 /** \brief Dgain. */
-#define HT3_PID_D                           17
+#define HT3_PID_D                           18
 
 
 // ##########################################################################################
