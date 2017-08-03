@@ -1279,7 +1279,7 @@ void Commands::executeGCode(GCode *com)
                 if(com->hasP()) cont = com->P;
                 if(com->hasR()) cycles = static_cast<int>(com->R);
                 if(com->hasJ()) method = static_cast<int>(com->J); //original Repetier used hasC, we dont have that in this version of repetier.
-                if(cont >= NUM_TEMPERATURE_LOOPS) cont = NUM_TEMPERATURE_LOOPS;
+                if(cont >= NUM_TEMPERATURE_LOOPS) cont = NUM_TEMPERATURE_LOOPS -1;
                 if(cont < 0) cont = 0;
                 tempController[cont]->autotunePID(temp,cont,cycles,com->hasX(), method);
 #endif // NUM_TEMPERATURE_LOOPS > 0

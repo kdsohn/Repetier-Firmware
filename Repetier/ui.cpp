@@ -1373,15 +1373,49 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 else if(c2=='m')                                                                        // %Xm : PID drive min
                 {
-                    addInt(Extruder::current->tempControl.pidDriveMin,3);
+                    if(uid.menuLevel == 4 && uid.menuPos[uid.menuLevel-1] < NUM_TEMPERATURE_LOOPS){
+                        addInt(-1*tempController[uid.menuPos[uid.menuLevel-1]]->pidDriveMin,3); 
+                    }else{
+                        addInt(Extruder::current->tempControl.pidDriveMin,3);
+                    }
                 }
                 else if(c2=='M')                                                                        // %XM : PID drive max
                 {
-                    addInt(Extruder::current->tempControl.pidDriveMax,3);
+                    if(uid.menuLevel == 4 && uid.menuPos[uid.menuLevel-1] < NUM_TEMPERATURE_LOOPS){
+                        addInt(tempController[uid.menuPos[uid.menuLevel-1]]->pidDriveMax,3); 
+                    }else{
+                        addInt(Extruder::current->tempControl.pidDriveMax,3);
+                    }
                 }
                 else if(c2=='D')                                                                        // %XD : PID max
                 {
-                    addInt(Extruder::current->tempControl.pidMax,3);
+                    if(uid.menuLevel == 4 && uid.menuPos[uid.menuLevel-1] < NUM_TEMPERATURE_LOOPS){
+                        addInt(tempController[uid.menuPos[uid.menuLevel-1]]->pidMax*100/255,3); 
+                    }else{
+                        addInt(Extruder::current->tempControl.pidMax*100/255,3);
+                    }
+                }
+                else if(c2=='S')                                                                        // %XS : Temperature Sensor
+                {
+                    if(uid.menuLevel == 4 && uid.menuPos[uid.menuLevel-1] < NUM_TEMPERATURE_LOOPS){
+                        addInt(tempController[uid.menuPos[uid.menuLevel-1]]->sensorType,2); //mit type 100 wärens 3 zeichen, aber das kommt in praxis nicht vor. 
+                        switch(tempController[uid.menuPos[uid.menuLevel-1]]->sensorType){
+                            case 3: {
+                                addStringP( PSTR(UI_TEXT_SENSOR_3) );
+                                break;
+                            }
+                            case 8: {
+                                addStringP( PSTR(UI_TEXT_SENSOR_8) );
+                                break;
+                            }
+                            case 14: {
+                                addStringP( PSTR(UI_TEXT_SENSOR_14) );
+                                break;
+                            }
+                        }
+                    }else{
+                        addInt(Extruder::current->tempControl.sensorType,3);
+                    }
                 }
 
                 else if(c2=='w')                                                                        // %Xw : Extruder watch period in seconds
@@ -1796,7 +1830,7 @@ void UIDisplay::parse(char *txt,bool ram)
                     }
                     else if ( mode == OPERATING_MODE_MILL )
                     {
-                        addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
+                        //addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
                     }
 #endif // FEATURE_SERVICE_INTERVAL
                 }
@@ -1820,7 +1854,7 @@ void UIDisplay::parse(char *txt,bool ram)
                     }
                     else if ( mode == OPERATING_MODE_MILL )
                     {
-                        addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
+                        //addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
                     }
 #endif // FEATURE_SERVICE_INTERVAL
                 }
@@ -1903,7 +1937,7 @@ void UIDisplay::parse(char *txt,bool ram)
                     }
                     else if ( mode == OPERATING_MODE_MILL )
                     {
-                        addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
+                        //addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
                     }
                 }
                 else if(c2=='8')                                                                        // Shows printed filament
@@ -1925,7 +1959,7 @@ void UIDisplay::parse(char *txt,bool ram)
                     }
                     else if ( mode == OPERATING_MODE_MILL )
                     {
-                        addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
+                        //addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
                     }
                 }
                 break;
@@ -3644,6 +3678,126 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
 #endif //FEATURE_EMERGENCY_STOP_ALL
 
+        case UI_ACTION_CHOOSE_CLASSICPID:
+        case UI_ACTION_CHOOSE_LESSERINTEGRAL:
+        case UI_ACTION_CHOOSE_SOME:
+        case UI_ACTION_CHOOSE_NO:
+        {
+            INCREMENT_MIN_MAX(g_nYesNo,1,0,1);
+            break;
+        }
+        case UI_ACTION_CHOOSE_DMIN:
+        {
+            if(uid.menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
+                uint8_t heater = uid.menuPos[uid.menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
+                if(heater < NUM_TEMPERATURE_LOOPS) {
+                    int drive = tempController[heater]->pidDriveMin;
+                    INCREMENT_MIN_MAX(drive,1,0,255);
+                    tempController[heater]->pidDriveMin = drive;
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                    if(UI_MENU_PID_BED_COUNT > 0 && UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT - 1 == heater){ 
+                        //Das ist das Heizbett
+                        HAL::eprSetByte( EPR_BED_DRIVE_MIN, (uint8_t)drive  );
+                        EEPROM::updateChecksum();
+                    }else{
+                        //Extruder
+                        if(heater <= NUM_EXTRUDER-1){ //paranoid doublecheck
+                          HAL::eprSetByte( heater*EEPROM_EXTRUDER_LENGTH+EEPROM_EXTRUDER_OFFSET+EPR_EXTRUDER_DRIVE_MIN, (uint8_t)drive  );
+                          EEPROM::updateChecksum();
+                        }
+                    }
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+                }
+            }
+            break;
+        }
+        case UI_ACTION_CHOOSE_DMAX:
+        {
+            if(uid.menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
+                uint8_t heater = uid.menuPos[uid.menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
+                if(heater < NUM_TEMPERATURE_LOOPS) {
+                    int drive = tempController[heater]->pidDriveMax;
+                    INCREMENT_MIN_MAX(drive,1,0,255);
+                    tempController[heater]->pidDriveMax = drive;
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                    if(UI_MENU_PID_BED_COUNT > 0 && UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT - 1 == heater){ 
+                        //Das ist das Heizbett
+                        HAL::eprSetByte( EPR_BED_DRIVE_MAX, (uint8_t)drive  );
+                        EEPROM::updateChecksum();
+                    }else{
+                        //Extruder
+                        if(heater <= NUM_EXTRUDER-1){ //paranoid doublecheck
+                          HAL::eprSetByte( heater*EEPROM_EXTRUDER_LENGTH+EEPROM_EXTRUDER_OFFSET+EPR_EXTRUDER_DRIVE_MAX, (uint8_t)drive  );
+                          EEPROM::updateChecksum();
+                        }
+                    }
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+                }
+            }
+            break;
+        }
+        case UI_ACTION_CHOOSE_PIDMAX:
+        {
+            if(uid.menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
+                uint8_t heater = uid.menuPos[uid.menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
+                if(heater < NUM_TEMPERATURE_LOOPS) {
+                    int drive = tempController[heater]->pidMax;
+                    INCREMENT_MIN_MAX(drive,1,0,255);
+                    tempController[heater]->pidMax = drive;
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                    if(UI_MENU_PID_BED_COUNT > 0 && UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT - 1 == heater){ 
+                        //Das ist das Heizbett
+                        HAL::eprSetByte( EPR_BED_PID_MAX, (uint8_t)drive  );
+                        EEPROM::updateChecksum();
+                    }else{
+                        //Extruder
+                        if(heater <= NUM_EXTRUDER-1){ //paranoid doublecheck
+                          HAL::eprSetByte( heater*EEPROM_EXTRUDER_LENGTH+EEPROM_EXTRUDER_OFFSET+EPR_EXTRUDER_PID_MAX, (uint8_t)drive  );
+                          EEPROM::updateChecksum();
+                        }
+                    }
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+                }
+            }
+            break;
+        }
+        case UI_ACTION_CHOOSE_SENSOR:
+        {
+            if(uid.menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
+                uint8_t heater = uid.menuPos[uid.menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
+                if(heater < NUM_TEMPERATURE_LOOPS) {
+                    int drive = tempController[heater]->sensorType;
+                    if(increment > 0){
+                        switch(drive){
+                          case 3: { drive = 8; break; }
+                          case 8: { drive = 14; break; } //add more sensors for menu-tweaking here, those are the most common for RFx000
+                          default: { drive = 3; break; }
+                        }
+                    }else{ //== 0 gibts nicht, soweit ich weiß
+                        switch(drive){
+                          case 3: { drive = 14; break; }
+                          case 14: { drive = 8; break; } //add more sensors for menu-tweaking here, those are the most common for RFx000
+                          default: { drive = 3; break; }
+                        }
+                    }
+                    tempController[heater]->sensorType = drive;
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                    if(UI_MENU_PID_BED_COUNT > 0 && UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT - 1 == heater){ 
+                        //Das ist das Heizbett
+                        HAL::eprSetByte( EPR_RF_HEATED_BED_SENSOR_TYPE, (uint8_t)drive  );
+                        EEPROM::updateChecksum();
+                    }else{
+                        //Extruder
+                        if(heater <= NUM_EXTRUDER-1){ //paranoid doublecheck
+                          HAL::eprSetByte( heater*EEPROM_EXTRUDER_LENGTH+EEPROM_EXTRUDER_OFFSET+EPR_EXTRUDER_SENSOR_TYPE, (uint8_t)drive  );
+                          EEPROM::updateChecksum();
+                        }
+                    }
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+                }
+            }
+            break;
+        }
     }
 
 #if FEATURE_MILLING_MODE
@@ -3703,6 +3857,44 @@ void UIDisplay::finishAction(int action)
             sd.abortPrint();
             break;
         }
+
+        case UI_ACTION_CHOOSE_CLASSICPID:
+        case UI_ACTION_CHOOSE_LESSERINTEGRAL:
+        case UI_ACTION_CHOOSE_SOME:
+        case UI_ACTION_CHOOSE_NO:
+        {
+            if( g_nYesNo != 1 )
+            {
+                // continue only in case the user has chosen "Yes"
+                break;
+            }
+            unsigned char heater = uid.menuPos[uid.menuLevel-2]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
+            int method = uid.menuPos[uid.menuLevel-1]; //0..1..2..3..4..5 passt zum J-Listing des M303
+            /*
+             Line 1059: #define PRECISE_HEAT_BED_SCAN_BED_TEMP_PLA          60                                                                  // [°C]
+             Line 1062: #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA     230                                                                 // [°C]
+            */
+#if NUM_TEMPERATURE_LOOPS > 0
+            int temperature = PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA;
+            int cycles = 10;
+            if(UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT - 1 == heater && UI_MENU_PID_BED_COUNT > 0){ 
+                //Das ist das Heizbett und kein Extruder
+                temperature = PRECISE_HEAT_BED_SCAN_BED_TEMP_PLA; //Bett nicht so hoch testen, wie Extruder.
+                cycles = 16; //Bett ist erfahrungsgemäß viel träger. Mehr Zyklen erhöhen die Genauigkeit des Ergebnis.
+            }
+            bool writeeeprom = true;
+            if(heater >= NUM_TEMPERATURE_LOOPS) heater = NUM_TEMPERATURE_LOOPS -1;
+            //show menu and message to user: He cant do anything until autotune is over.
+            uid.menuLevel = 0; 
+            uid.menuPos[0] = 3; //show temps
+            UI_STATUS_UPD(UI_TEXT_PID);
+            tempController[heater]->autotunePID(temperature,heater,cycles,writeeeprom, method);  
+#else
+            Com::printFLN( PSTR( "PID Autotune Error: Noo Temperature-Loops defined!??" ) );
+#endif // NUM_TEMPERATURE_LOOPS > 0
+            break;
+        }
+
     }
 
 } // finishAction
@@ -3715,12 +3907,11 @@ void UIDisplay::executeAction(int action)
     if( Printer::blockAll )
     {
         if( action == UI_ACTION_OK || action == UI_ACTION_RF_CONTINUE ){
-			Com::printFLN( PSTR( "Restart after Emergency-Stop" ) );
+            Com::printFLN( PSTR( "Restart after Emergency-Stop" ) );
             HAL::delayMilliseconds( 100 );
             Commands::emergencyStop();
-		}
-		 
-		 // do not allow any user inputs when we have been blocked
+        }
+        // do not allow any user inputs when we have been blocked
         return;
     }
 

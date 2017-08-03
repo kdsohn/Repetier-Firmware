@@ -1,6 +1,16 @@
 TODO: Pause-Back-Drive-Bug in original RF1.37
 TODO: Possible Z-Lift Bug in original RF1.37
 
+V RF.01.37r7.Mod (2017-08-03)
+- Added Menu for PID Autotune (possible for all Heaters) @Configuration->Temperatures->(T0 Tn Bed)->Method
+- Added Menu for changing "PID drive min" and "PID drive max" (possible for all Heaters) @Configuration->Temperatures->(T0 Tn Bed)
+- Added Menu for changing "PID max" (possible for all Heaters) @Configuration->Temperatures->(T0 Tn Bed)
+- Added Menu for changing "Sensortype" (possible for all Heaters) @Configuration->Temperatures->(T0 Tn Bed)
+- Renamed "PID drive min" max to "PID I-drive min" for better understanding
+- Renamed "PID drive max" max to "PID I-drive min" for better understanding
+- Renamed "PID max" to "Power Max" for better understanding and to prevent mixups with "PID drive max"
+- Tiny Fix for constrain at autotune by Gcode.
+
 V RF.01.37r6.Mod (2017-08-01)
 - Emergency-Stop for Z-Moves is now configurable within EEPROM and Printers Menu
 - Text for RGB-Light is now "Auto" instead Color anymore. 

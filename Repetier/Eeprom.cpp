@@ -115,6 +115,7 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
     heatedBedController.pidIGain = HEATED_BED_PID_IGAIN;
     heatedBedController.pidDGain = HEATED_BED_PID_DGAIN;
     heatedBedController.pidMax = HEATED_BED_PID_MAX;
+    heatedBedController.sensorType = HEATED_BED_SENSOR_TYPE;
 #endif // HAVE_HEATED_BED
 
 #if FEATURE_MILLING_MODE
@@ -158,6 +159,7 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
     e->tempControl.pidIGain = EXT0_PID_I;
     e->tempControl.pidDGain = EXT0_PID_D;
     e->tempControl.pidMax = EXT0_PID_MAX;
+    e->tempControl.sensorType = EXT0_TEMPSENSOR_TYPE;
 
     e->zOffset = EXT0_Z_OFFSET;
     e->yOffset = EXT0_Y_OFFSET;
@@ -193,6 +195,7 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
     e->tempControl.pidIGain = EXT1_PID_I;
     e->tempControl.pidDGain = EXT1_PID_D;
     e->tempControl.pidMax = EXT1_PID_MAX;
+    e->tempControl.sensorType = EXT1_TEMPSENSOR_TYPE;
 
     e->zOffset = EXT1_Z_OFFSET;
     e->yOffset = EXT1_Y_OFFSET;
@@ -229,6 +232,7 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
     e->tempControl.pidIGain = EXT2_PID_I;
     e->tempControl.pidDGain = EXT2_PID_D;
     e->tempControl.pidMax = EXT2_PID_MAX;
+    e->tempControl.sensorType = EXT2_TEMPSENSOR_TYPE;
 
     e->zOffset = EXT2_Z_OFFSET;
     e->yOffset = EXT2_Y_OFFSET;
@@ -264,6 +268,7 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
     e->tempControl.pidIGain = EXT3_PID_I;
     e->tempControl.pidDGain = EXT3_PID_D;
     e->tempControl.pidMax = EXT3_PID_MAX;
+    e->tempControl.sensorType = EXT3_TEMPSENSOR_TYPE;
 
     e->zOffset = EXT3_Z_OFFSET;
     e->yOffset = EXT3_Y_OFFSET;
@@ -299,6 +304,7 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
     e->tempControl.pidIGain = EXT4_PID_I;
     e->tempControl.pidDGain = EXT4_PID_D;
     e->tempControl.pidMax = EXT4_PID_MAX;
+    e->tempControl.sensorType = EXT3_TEMPSENSOR_TYPE;
 
     e->zOffset = EXT4_Z_OFFSET;
     e->yOffset = EXT4_Y_OFFSET;
@@ -334,6 +340,7 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
     e->tempControl.pidIGain = EXT5_PID_I;
     e->tempControl.pidDGain = EXT5_PID_D;
     e->tempControl.pidMax = EXT5_PID_MAX;
+    e->tempControl.sensorType = EXT5_TEMPSENSOR_TYPE;
 
     e->zOffset = EXT5_Z_OFFSET;
     e->yOffset = EXT5_Y_OFFSET;
@@ -459,6 +466,7 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
     HAL::eprSetFloat(EPR_BED_PID_IGAIN,heatedBedController.pidIGain);
     HAL::eprSetFloat(EPR_BED_PID_DGAIN,heatedBedController.pidDGain);
     HAL::eprSetByte(EPR_BED_PID_MAX,heatedBedController.pidMax);
+    HAL::eprSetByte(EPR_RF_HEATED_BED_SENSOR_TYPE,heatedBedController.sensorType);
 #else
     HAL::eprSetByte(EPR_BED_DRIVE_MAX,HEATED_BED_PID_INTEGRAL_DRIVE_MAX);
     HAL::eprSetByte(EPR_BED_DRIVE_MIN,HEATED_BED_PID_INTEGRAL_DRIVE_MIN);
@@ -466,6 +474,7 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
     HAL::eprSetFloat(EPR_BED_PID_IGAIN,HEATED_BED_PID_IGAIN);
     HAL::eprSetFloat(EPR_BED_PID_DGAIN,HEATED_BED_PID_DGAIN);
     HAL::eprSetByte(EPR_BED_PID_MAX,HEATED_BED_PID_MAX);
+    HAL::eprSetByte(EPR_RF_HEATED_BED_SENSOR_TYPE,HEATED_BED_SENSOR_TYPE);
 #endif // HAVE_HEATED_BED
 
     HAL::eprSetFloat(EPR_X_HOME_OFFSET,Printer::minMM[X_AXIS]);
@@ -696,6 +705,7 @@ void EEPROM::readDataFromEEPROM()
     heatedBedController.pidIGain = HAL::eprGetFloat(EPR_BED_PID_IGAIN);
     heatedBedController.pidDGain = HAL::eprGetFloat(EPR_BED_PID_DGAIN);
     heatedBedController.pidMax = HAL::eprGetByte(EPR_BED_PID_MAX);
+    heatedBedController.sensorType = (HAL::eprGetByte(EPR_RF_HEATED_BED_SENSOR_TYPE) != 0) ? HAL::eprGetByte(EPR_RF_HEATED_BED_SENSOR_TYPE) : HEATED_BED_SENSOR_TYPE;
 #endif // HAVE_HEATED_BED
 
     Printer::minMM[X_AXIS] = HAL::eprGetFloat(EPR_X_HOME_OFFSET);
@@ -1110,7 +1120,8 @@ void EEPROM::writeSettings()
     writeFloat(EPR_BED_PID_PGAIN,Com::tEPRBedPGain);
     writeFloat(EPR_BED_PID_IGAIN,Com::tEPRBedIGain);
     writeFloat(EPR_BED_PID_DGAIN,Com::tEPRBedDGain);
-    writeByte(EPR_BED_PID_MAX,Com::tEPRBedPISMaxValue);
+    writeByte(EPR_BED_PID_MAX,Com::tEPRBedPISMaxValue); 
+    writeByte(EPR_RF_HEATED_BED_SENSOR_TYPE,Com::tEPRBedsensorType); 
 #endif // HAVE_HEATED_BED
 
     // now the extruder

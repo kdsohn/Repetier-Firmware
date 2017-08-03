@@ -230,14 +230,16 @@
 #define UI_TEXT_EXTR_PGAIN              "DT/PID P:%Xp"
 #define UI_TEXT_EXTR_IGAIN              "PID I:%Xi"
 #define UI_TEXT_EXTR_DGAIN              "PID D:%Xd"
-#define UI_TEXT_EXTR_DMIN               "Drive min:%Xm"
-#define UI_TEXT_EXTR_DMAX               "Drive max:%XM"
-#define UI_TEXT_EXTR_PMAX               "PID max:%XD"
+#define UI_TEXT_EXTR_DMIN               "I-drive min:%Xm"
+#define UI_TEXT_EXTR_DMAX               "I-drive max:%XM"
+#define UI_TEXT_EXTR_PMAX               "Power Max:%XD%%%"
+#define UI_TEXT_EXTR_SENSOR_TYPE        "Sens.:%XS"
 #define UI_TEXT_STRING_HM_BANGBANG      "BangBang"
 #define UI_TEXT_STRING_HM_PID           "PID"
 #define UI_TEXT_STRING_ACTION           "Action:%la"
 #define UI_TEXT_HEATING_EXTRUDER        "Heating Extruder"
 #define UI_TEXT_HEATING_BED             "Heating Bed"
+#define UI_TEXT_BED                     "Heated Bed"
 #define UI_TEXT_HEATING_UP              "Heating up..."
 #define UI_TEXT_HEATING                 "Heating..."
 #define UI_TEXT_COOLING_DOWN            "Cooling down..."
@@ -257,7 +259,8 @@
 #define UI_TEXT_SET_P2                  "Set P2"
 #define UI_TEXT_SET_P3                  "Set P3"
 #define UI_TEXT_CALCULATE_LEVELING      "Calculate level."
-#define UI_TEXT_LEVEL                   "Level Delta"
+#define UI_TEXT_PID                     "PID Autotune"
+#define UI_TEXT_TEMPERATURES            "Temperatures"
 #define UI_TEXT_EXTR_WAIT_RETRACT_TEMP  "Wait Temp.: %XT\002C"
 #define UI_TEXT_EXTR_WAIT_RETRACT_UNITS "Wait Units: %XU mm"
 #define UI_TEXT_SD_REMOVED              "SD Card removed"
@@ -330,10 +333,11 @@
 #define UI_TEXT_WARNING                 "Warning:"
 #define UI_TEXT_INFORMATION             "Information:"
 #define UI_TEXT_SET_ORIGIN              "Set Origin"
+#define UI_TEXT_SAVING_SUCCESS          "Saved to EEPROM"
 #define UI_TEXT_AUTODETECT_PID          "Determine PID"
+#define UI_TEXT_PID_ACK                 UI_TEXT_AUTODETECT_PID "?","(" UI_TEXT_SAVING_SUCCESS ")","%mYYes","%mNNo"
 #define UI_TEXT_HOME_UNKNOWN            "Home unknown"
 #define UI_TEXT_SAVING_NEEDLESS         "Saving needless"
-#define UI_TEXT_SAVING_SUCCESS          "Saved to EEPROM"
 #define UI_TEXT_EMERGENCY_PAUSE         "Emergency Pause"
 #define UI_TEXT_EMERGENCY_STOP          "Emergency Block"
 #define UI_TEXT_INVALID_MATRIX          "Invalid Matrix"
@@ -346,6 +350,10 @@
 #define UI_TEXT_HEAT_BED_ZOFFSET_FIX_Z1 "Screw: %zsmm"
 #define UI_TEXT_HEAT_BED_ZOFFSET_FIX_Z2 "%zS[U] (%zD)"
 #define UI_TEXT_STATUSMSG               "%os"
+
+#define UI_TEXT_SENSOR_3            " EPCOS-G550" //3
+#define UI_TEXT_SENSOR_8            " 104-GT2" //8
+#define UI_TEXT_SENSOR_14           " 3950-100k" //14
 
 // Printtime output gets aggregated like <Days_5gisgits>UI_TEXT_PRINTTIME_DAYS<Hours>UI_TEXT_PRINTTIME_HOURS<Minutes>UI_TEXT_PRINTTIME_MINUTES
 // ___88 days 12:45
@@ -363,6 +371,10 @@
 #define UI_TEXT_STOP_MILL               "Stop Mill"
 #define UI_TEXT_STOP_MILL_ACK           "Stop Mill now?","","%mYYes","%mNNo"
 
+#define UI_ACTION_TEXT_CLASSICPID "PID ZieglerNichols"
+#define UI_ACTION_TEXT_PESSEN "PID Pessen-Rule"
+#define UI_ACTION_TEXT_SOME "PID Some-Overshoot"
+#define UI_ACTION_TEXT_NO "PID No-Overshoot"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min reached unhomed"
@@ -558,14 +570,16 @@
 #define UI_TEXT_EXTR_PGAIN              "DT/PID P:%Xp"
 #define UI_TEXT_EXTR_IGAIN              "PID I:%Xi"
 #define UI_TEXT_EXTR_DGAIN              "PID D:%Xd"
-#define UI_TEXT_EXTR_DMIN               "Drive Min:%Xm"
-#define UI_TEXT_EXTR_DMAX               "Drive Max:%XM"
-#define UI_TEXT_EXTR_PMAX               "PID Max:%XD"
+#define UI_TEXT_EXTR_DMIN               "I-Drive Min:%Xm"
+#define UI_TEXT_EXTR_DMAX               "I-Drive Max:%XM"
+#define UI_TEXT_EXTR_PMAX               "Heizung Max:%XD%%%"
+#define UI_TEXT_EXTR_SENSOR_TYPE        "Sens.:%XS"
 #define UI_TEXT_STRING_HM_BANGBANG      "BangBang"
 #define UI_TEXT_STRING_HM_PID           "PID"
 #define UI_TEXT_STRING_ACTION           "Aktion:%la"
 #define UI_TEXT_HEATING_EXTRUDER        "Heize Extruder"
 #define UI_TEXT_HEATING_BED             "Heize Druckbett"
+#define UI_TEXT_BED                     "Heizbett"
 #define UI_TEXT_HEATING_UP              "Aufheizen..."
 #define UI_TEXT_HEATING                 "Heizen..."
 #define UI_TEXT_COOLING_DOWN            "Abk" STR_uuml "hlen..."
@@ -585,7 +599,8 @@
 #define UI_TEXT_SET_P2                  "Setze P2"
 #define UI_TEXT_SET_P3                  "Setze P3"
 #define UI_TEXT_CALCULATE_LEVELING      "Berechne Level."
-#define UI_TEXT_LEVEL                   "Level delta"
+#define UI_TEXT_PID                     "PID Autotune"
+#define UI_TEXT_TEMPERATURES            "Temperatures" 
 #define UI_TEXT_EXTR_WAIT_RETRACT_TEMP  "Wait Temp.: %XT\002C"
 #define UI_TEXT_EXTR_WAIT_RETRACT_UNITS "Wait Units: %XU mm"
 #define UI_TEXT_PRINTER_READY           "Drucker bereit."
@@ -653,6 +668,7 @@
 #define UI_TEXT_INFORMATION             "Information:"
 #define UI_TEXT_SET_ORIGIN              "Setze Ursprung"
 #define UI_TEXT_AUTODETECT_PID          "PID ermitteln" 
+#define UI_TEXT_PID_ACK                 UI_TEXT_AUTODETECT_PID "?","","%mYJa","%mNNein"
 // Temp. = Temperatur
 #define UI_TEXT_HOME_UNKNOWN            "Home unbekannt"
 #define UI_TEXT_SAVING_NEEDLESS         "Sichern sinnlos"  
@@ -682,6 +698,11 @@
 #define UI_TEXT_POWER                   "ATX Netzteil an/aus"
 #define UI_TEXT_STRING_HM_DEADTIME      "Totzeit"
 #define UI_TEXT_STRING_HM_SLOWBANG      "Langs.BB"
+
+#define UI_ACTION_TEXT_CLASSICPID "PID Ziegler-Nichols"
+#define UI_ACTION_TEXT_PESSEN "PID Pessen-Rule"
+#define UI_ACTION_TEXT_SOME "PID Some-Overshoot"
+#define UI_ACTION_TEXT_NO "PID No-Overshoot"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000
 

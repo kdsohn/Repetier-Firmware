@@ -239,6 +239,7 @@ public:
     FSTRINGVAR(tEPRIGain)
     FSTRINGVAR(tEPRDGain)
     FSTRINGVAR(tEPRPIDMaxValue)
+    FSTRINGVAR(tEPRBedsensorType)
     FSTRINGVAR(tEPRsensorType)
     FSTRINGVAR(tEPRXOffset)
     FSTRINGVAR(tEPRYOffset)

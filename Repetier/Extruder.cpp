@@ -177,17 +177,17 @@ void Extruder::manageTemperatures()
             float target = act->targetTemperatureC;
 
             if( act->targetTemperatureC < 20.0f )
-			{
+            {
                 output = 0; // off is off, even if damping term wants a heat peak!
-			}
+            }
             else if( error > PID_CONTROL_RANGE )
-			{
+            {
                 output = act->pidMax;
-			}
+            }
             else if( error < -PID_CONTROL_RANGE )
-			{
+            {
                 output = 0;
-			}
+            }
             else
             {
                 float raising = 3.333 * (act->currentTemperatureC - act->tempArray[act->tempPointer]); // raising dT/dt, 3.33 = reciproke of time interval (300 ms)
