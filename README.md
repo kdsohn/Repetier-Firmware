@@ -159,12 +159,15 @@ Feature called "SensibleViscosity"
 
  Have fun finally seeing your Filaments behaviour over time, temp, nozzles ;)  
  
-## Configurable emergency zStop and emergency pause digits within menu and EEPROM
+## Configurable emergency zStop and emergency pause digits within menu and EEPROM  
+Menü -> Configuration -> General  
 
-## Configurable motorcurrent within menu and EEPROM
+## Configurable motorcurrent within menu and EEPROM  
+Menü -> Configuration -> Stepper  
 
-## Configurable temperature settings within menu and EEPROM
-PID-Autotune, other controlparameters and the sensortype is adjustable within the menu.
+## Configurable temperature settings within menu and EEPROM  
+PID-Autotune, other controlparameters and the sensortype is adjustable within the menu.  
+Menü -> Configuration -> Temperatures -> Extruder0/Extruder1/Heizbett  
 
 ## Dualhead Tip-Down Support (beta)
 * M3919 [S]mikrometer - Testfunction for Dip-Down-Hotend @ T1: T1 can now be springloaded and the bed will be adjusted "down" whenever T1 is selected. This is alike Ultimaker 3 does it with the right hotend.   

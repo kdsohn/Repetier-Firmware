@@ -163,12 +163,15 @@ Der Sinn dieses Features ist, dass man Filamente und ihre Viskosität zu gegeben
  Das ist rotes PLA:
  ![ ](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/2a3253c930794afc81e4fa4d4b2a4261.png "PLA red")  
 
-## Konfigurierbarer Z-Notaus- und Notpause-Digits in Menü und EEPROM
+## Konfigurierbarer Z-Notaus- und Notpause-Digits in Menü und EEPROM  
+Menü -> Configuration -> General  
 
-## Konfigurierbarer Motorstrom im Menü und EEPROM
+## Konfigurierbarer Motorstrom im Menü und EEPROM  
+Menü -> Configuration -> Stepper  
 
-## Konfigurierbare Temperatureinstellungen im Menü und EEPROM
-Der PID-Autotune, die weiteren Regelparameter und der Sensortyp sind im Menü einstellbar.
+## Konfigurierbare Temperatureinstellungen im Menü und EEPROM  
+Der PID-Autotune, die weiteren Regelparameter und der Sensortyp sind im Menü einstellbar.  
+Menü -> Configuration -> Temperatures -> Extruder0/Extruder1/Heizbett  
 
 ## Dual-Hotend TipDown Support (beta)
 * M3919 [S]mikrometer - Testfunktion für ein Herunterlass-Hotend beim rechten Hotend T1: Das rechte Hotend kann gefedert eingebaut werden. Wird das Hotend ausgewählt, wird das bett automatisch heruntergefahren, sodass es niedriger hängt wie das linke hotend, aber nicht mit dem Bett kollidiert. Der Ultimaker 3 macht das so beim rechten Hotend.

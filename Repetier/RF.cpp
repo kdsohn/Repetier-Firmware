@@ -9408,7 +9408,8 @@ void processCommand( GCode* pCommand )
                             Com::printF( PSTR( "nCPS X;" ),   Printer::queuePositionCurrentSteps[X_AXIS] );
                             Com::printF( PSTR( ";" ),         Printer::queuePositionCurrentSteps[X_AXIS] / Printer::axisStepsPerMM[X_AXIS] );
                             Com::printF( PSTR( "; nCPS Y;" ), Printer::queuePositionCurrentSteps[Y_AXIS] );
-                            Com::printF( PSTR( ";" ),         Printer::queuePositionCurrentSteps[Y_AXIS] / Printer::axisStepsPerMM[Y_AXIS] );
+                            Com::printFLN( PSTR( ";" ),         Printer::queuePositionCurrentSteps[Y_AXIS] / Printer::axisStepsPerMM[Y_AXIS] );
+
                             Com::printF( PSTR( "; nCPS Z;" ), Printer::queuePositionCurrentSteps[Z_AXIS] );
                             Com::printF( PSTR( ";" ),         Printer::queuePositionCurrentSteps[Z_AXIS] / Printer::axisStepsPerMM[Z_AXIS] );
 
@@ -9423,8 +9424,38 @@ void processCommand( GCode* pCommand )
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
                             Com::printF( PSTR( "; qTS;" ), Printer::queuePositionTargetSteps[Z_AXIS] );
-                            Com::printF( PSTR( "; qLS;" ), Printer::queuePositionLastSteps[Z_AXIS] );
+                            Com::printFLN( PSTR( "; qLS;" ), Printer::queuePositionLastSteps[Z_AXIS] );
 //                          Com::printFLN( PSTR( "; Int32;" ), g_debugInt32 );
+
+
+                            #if FEATURE_HEAT_BED_Z_COMPENSATION && FEATURE_WORK_PART_Z_COMPENSATION
+								if( !Printer::doHeatBedZCompensation && !Printer::doWorkPartZCompensation )
+								{
+									Com::printFLN( PSTR( "; return 1;" ) );
+								}
+                            #elif FEATURE_HEAT_BED_Z_COMPENSATION
+								if( !Printer::doHeatBedZCompensation )
+								{
+									Com::printFLN( PSTR( "; return heatbedz;" ) );
+								}
+                            #elif FEATURE_WORK_PART_Z_COMPENSATION
+								if( !Printer::doWorkPartZCompensation )
+								{
+									Com::printFLN( PSTR( "; return workpart;" ) );
+								}
+                            #endif // FEATURE_HEAT_BED_Z_COMPENSATION && FEATURE_WORK_PART_Z_COMPENSATION
+
+								if( Printer::blockAll )
+								{
+									// do not perform any compensation in case the moving is blocked
+									Com::printFLN( PSTR( "; return block;" ) );
+								}
+								if( PrintLine::direct.isZMove() )
+								{
+									// do not perform any compensation in case the moving is blocked
+									Com::printFLN( PSTR( "; return directZ;" ) );
+								}
+
                             break;
                         }
 
