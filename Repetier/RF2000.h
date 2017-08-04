@@ -229,7 +229,7 @@ PTC-Thermistors
 52: USER_THERMISTORTABLE2 als PTC
 60: HEATER_USES_AD8495 (Delivers 5mV/degC)
 100: AD595 */
-#define EXT0_TEMPSENSOR_TYPE                3
+#define EXT0_TEMPSENSOR_TYPE                14
 
 /** \brief Analog input pin for reading temperatures or pin enabling SS for MAX6675 */
 #define EXT0_TEMPSENSOR_PIN                 TEMP_0_PIN
@@ -392,7 +392,7 @@ PTC-Thermistors
 52: USER_THERMISTORTABLE2 als PTC
 60: HEATER_USES_AD8495 (Delivers 5mV/degC)
 100: AD595 */
-#define EXT1_TEMPSENSOR_TYPE                3
+#define EXT1_TEMPSENSOR_TYPE                14
 
 /** \brief Analog input pin for reading temperatures or pin enabling SS for MAX6675 */
 #define EXT1_TEMPSENSOR_PIN                 TEMP_1_PIN
@@ -717,10 +717,11 @@ can set it on for safety. */
 // ##   miscellaneous configurations
 // ##########################################################################################
 
-/** \brief Motor Current setting */
-#define MOTOR_CURRENT                       {145,140,100,90,90}                             // Values 0-255 (126 = ~2A), order: driver 1 (x), driver 2 (y), driver 3 (z), driver 4 (extruder 1), driver 5 (extruder 2)  
-#define MOTOR_CURRENT_SILENT                {110,110,90,90,90}      
-
+/** \brief Motor Current MAX setting */
+#define MOTOR_CURRENT_MAX                       {145,140,100,90,90}                             // Values 0-255 (126 = ~2A), order: driver 1 (x), driver 2 (y), driver 3 (z), driver 4 (extruder 1), driver 5 (extruder 2)  
+/** \brief Motor Current settings at start: Tweak with menu for better silence <-> stability */
+#define MOTOR_CURRENT_NORMAL                    {110,110,95,90,90}
+#define MOTOR_CURRENT_MIN                       EXTRUDER_CURRENT_PAUSED
 
 /** \brief number of analog input signals. Normally 1 for each temperature sensor */
 #define ANALOG_INPUTS (EXT0_ANALOG_INPUTS+EXT1_ANALOG_INPUTS+BED_ANALOG_INPUTS+RESERVE_ANALOG_INPUTS)

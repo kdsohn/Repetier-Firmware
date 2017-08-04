@@ -625,7 +625,15 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
 #if FEATURE_EMERGENCY_STOP_ALL
     HAL::eprSetInt16( EPR_RF_EMERGENCYZSTOPDIGITSMIN, g_nZEmergencyStopAllMin );
     HAL::eprSetInt16( EPR_RF_EMERGENCYZSTOPDIGITSMAX, g_nZEmergencyStopAllMax );
+
 #endif // FEATURE_EMERGENCY_STOP_ALL
+    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+0, Printer::motorCurrent[X_AXIS] );
+    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+1, Printer::motorCurrent[Y_AXIS] );
+    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+2, Printer::motorCurrent[Z_AXIS] );
+    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+3, Printer::motorCurrent[E_AXIS+0] );
+#if NUM_EXTRUDER > 1
+    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+4, Printer::motorCurrent[E_AXIS+1] );
+#endif //NUM_EXTRUDER > 1
 
     // Save version and build checksum
     HAL::eprSetByte(EPR_VERSION,EEPROM_PROTOCOL_VERSION);
@@ -878,6 +886,28 @@ void EEPROM::readDataFromEEPROM()
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
     }
 #endif // FEATURE_EMERGENCY_STOP_ALL
+
+    const unsigned short    uMotorCurrent[] = MOTOR_CURRENT_MAX; //oberes Amperelimit
+    const unsigned short    uMotorCurrentUse[] = MOTOR_CURRENT_NORMAL; //Standardwert
+    uint8_t temp = 0;
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+    bool change = false;
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+    for(uint8_t stp=0; stp<3+NUM_EXTRUDER; stp++){ //0..4 bei 5 steppern.
+        temp = HAL::eprGetByte(EPR_RF_MOTOR_CURRENT+stp);
+        if(MOTOR_CURRENT_MIN <= temp && temp <= uMotorCurrent[stp]){
+            Printer::motorCurrent[stp] = temp;
+            setMotorCurrent( stp+1, temp ); //driver ist 1-basiert
+        }else{
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+stp, uMotorCurrentUse[stp] ); //wenn mist im EEPROM, dann Silent-Wert reinschreiben.
+            change = true;
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+        }
+    }
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+    if( change ) EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
 
     if(version!=EEPROM_PROTOCOL_VERSION)
     {
@@ -1213,6 +1243,14 @@ void EEPROM::writeSettings()
     writeInt(EPR_RF_EMERGENCYZSTOPDIGITSMIN,Com::tEPRPrinterEPR_RF_EmergencyStopAllMin);
     writeInt(EPR_RF_EMERGENCYZSTOPDIGITSMAX,Com::tEPRPrinterEPR_RF_EmergencyStopAllMax);
 #endif //FEATURE_EMERGENCY_STOP_ALL
+
+    writeByte(EPR_RF_MOTOR_CURRENT+0,Com::tEPRPrinter_STEPPER_X);
+    writeByte(EPR_RF_MOTOR_CURRENT+1,Com::tEPRPrinter_STEPPER_Y);
+    writeByte(EPR_RF_MOTOR_CURRENT+2,Com::tEPRPrinter_STEPPER_Z);
+    writeByte(EPR_RF_MOTOR_CURRENT+3,Com::tEPRPrinter_STEPPER_E0);
+#if NUM_EXTRUDER > 1
+    writeByte(EPR_RF_MOTOR_CURRENT+4,Com::tEPRPrinter_STEPPER_E1);
+#endif //NUM_EXTRUDER > 1
 
 #else
     if( Printer::debugErrors() )

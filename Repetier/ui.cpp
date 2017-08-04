@@ -1101,6 +1101,47 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 break;
             }
+
+            case 'M':
+            {
+                if(c2=='X' && col<MAX_COLS)                                                            // %MX : Motorcurrent X
+                {
+                    addFloat(Printer::motorCurrent[X_AXIS]/63.0f,1,2);  //(126 = ~2A) *2.0f/126.0f
+                    if(col<MAX_COLS) printCols[col++]='A';
+                    if(col<MAX_COLS) printCols[col++]=' ';
+                    addInt((int)Printer::motorCurrent[X_AXIS],3);
+                }
+                else if(c2=='Y' && col<MAX_COLS)                                                       // %MY : Motorcurrent Y
+                {
+                    addFloat(Printer::motorCurrent[Y_AXIS]/63.0f,1,2);  //(126 = ~2A) *2.0f/126.0f
+                    if(col<MAX_COLS) printCols[col++]='A';
+                    if(col<MAX_COLS) printCols[col++]=' ';
+                    addInt((int)Printer::motorCurrent[Y_AXIS],3);
+                }
+                else if(c2=='Z')                                                                       // %MZ : Motorcurrent Z
+                {
+                    addFloat(Printer::motorCurrent[Z_AXIS]/63.0f,1,2);  //(126 = ~2A) *2.0f/126.0f
+                    if(col<MAX_COLS) printCols[col++]='A';
+                    if(col<MAX_COLS) printCols[col++]=' ';
+                    addInt((int)Printer::motorCurrent[Z_AXIS],3);
+                }
+                else if(c2=='0')                                                                       // %M0 : Motorcurrent T0
+                {
+                    addFloat(Printer::motorCurrent[E_AXIS]/63.0f,1,2);  //(126 = ~2A) *2.0f/126.0f
+                    if(col<MAX_COLS) printCols[col++]='A';
+                    if(col<MAX_COLS) printCols[col++]=' ';
+                    addInt((int)Printer::motorCurrent[E_AXIS],3);
+                }
+                else if(c2=='1')                                                                       // %M1 : Motorcurrent T1
+                {
+                    addFloat(Printer::motorCurrent[E_AXIS+1]/63.0f,1,2);  //(126 = ~2A) *2.0f/126.0f
+                    if(col<MAX_COLS) printCols[col++]='A';
+                    if(col<MAX_COLS) printCols[col++]=' ';
+                    addInt((int)Printer::motorCurrent[E_AXIS+1],3);
+                }
+                break;
+            }
+
             case 'o':
             {
                 if(c2=='s')                                                                             // %os : Status message
@@ -3794,6 +3835,32 @@ void UIDisplay::nextPreviousAction(int8_t next)
                         }
                     }
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+                }
+            }
+            break;
+        }
+        case UI_ACTION_CHOOSE_MOTOR_X:
+        case UI_ACTION_CHOOSE_MOTOR_Y:
+        case UI_ACTION_CHOOSE_MOTOR_Z:
+        case UI_ACTION_CHOOSE_MOTOR_E0:
+        case UI_ACTION_CHOOSE_MOTOR_E1:
+        {
+            if( PrintLine::linesCount && false ){
+                //während dem drucken nicht strom ändern?? oder doch möglich machen?
+            }else{
+                uint8_t steppernr = uid.menuPos[uid.menuLevel];
+                if(steppernr < 5) { // aktuell gibts nur 5
+                    int drive = Printer::motorCurrent[steppernr];
+                    const short uMotorCurrent[] = MOTOR_CURRENT_MAX;
+                    INCREMENT_MIN_MAX(drive,1,MOTOR_CURRENT_MIN,uMotorCurrent[steppernr]); //von 40 bis maximal das was in der config steht.
+                    Printer::motorCurrent[steppernr] = drive;
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+steppernr, (uint8_t)drive  );
+                    EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+                    setMotorCurrent( steppernr+1, drive );
+                    Com::printF( PSTR( "Stepper" ), steppernr+1 );
+                    Com::printFLN( PSTR( " = " ), drive );
                 }
             }
             break;

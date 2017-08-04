@@ -212,6 +212,7 @@
 #define UI_TEXT_FANSPEED                "Fan Speed"
 #define UI_TEXT_FAN_OFF                 "Turn Fan off"
 #define UI_TEXT_STEPPER_OFF             "Stepper off"
+#define UI_TEXT_STEPPER                 "Stepper"
 #define UI_TEXT_STEPPER_OFF2            "[s]: %is","0=never"
 #define UI_TEXT_ALL_OFF                 "All off"
 #define UI_TEXT_ALL_OFF2                "[s]: %ip","0=never"
@@ -375,6 +376,12 @@
 #define UI_ACTION_TEXT_PESSEN "PID Pessen-Rule"
 #define UI_ACTION_TEXT_SOME "PID Some-Overshoot"
 #define UI_ACTION_TEXT_NO "PID No-Overshoot"
+
+#define UI_TEXT_MOTOR_X                "I_x: %MX"
+#define UI_TEXT_MOTOR_Y                "I_y: %MY"
+#define UI_TEXT_MOTOR_Z                "I_z: %MZ"
+#define UI_TEXT_MOTOR_E0               "I_e0: %M0"
+#define UI_TEXT_MOTOR_E1               "I_e1: %M1"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min reached unhomed"
@@ -554,6 +561,7 @@
 #define UI_TEXT_ACTION_EPOSITION_FAST2  "E:%x3 mm","1 klick = 1 mm"
 #define UI_TEXT_FANSPEED                "L" STR_uuml "fter"
 #define UI_TEXT_STEPPER_OFF             "Motor aus"
+#define UI_TEXT_STEPPER                 "Stepper"
 #define UI_TEXT_STEPPER_OFF2            "[s]: %is","0=nie"
 #define UI_TEXT_ALL_OFF                 "Alles aus"
 #define UI_TEXT_ALL_OFF2                "[s]: %ip","0=nie"

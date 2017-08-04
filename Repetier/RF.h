@@ -585,10 +585,6 @@ extern  unsigned char   g_ZOS_Auto_Matrix_Leveling_State;
 extern  volatile unsigned char  g_ZMatrixChangedInRam;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
-#if FEATURE_SILENT_MODE
-extern  char            g_nSilentMode;
-#endif // FEATURE_SILENT_MODE
-
 #if FEATURE_WORK_PART_Z_COMPENSATION
 extern  char            g_nWorkPartScanStatus;
 extern  char            g_nWorkPartScanMode;        // 0 = do not home z-axis, 1 = home z-axis
@@ -903,7 +899,7 @@ extern void waitUntilContinue( void );
 #endif // FEATURE_PAUSE_PRINTING
 
 // setExtruderCurrent()
-extern void setExtruderCurrent( unsigned short level );
+extern void setExtruderCurrent( uint8_t level, uint8_t nr = 0 );
 
 // processCommand()
 extern void processCommand( GCode* pCommand );
@@ -929,7 +925,7 @@ extern void nextPreviousZAction( int8_t increment );
 
 #if STEPPER_CURRENT_CONTROL==CURRENT_CONTROL_DRV8711
 // setMotorCurrent()
-extern void setMotorCurrent( unsigned char driver, unsigned short level );
+extern void setMotorCurrent( unsigned char driver, uint8_t level );
 
 // motorCurrentControlInit()
 extern void motorCurrentControlInit( void );

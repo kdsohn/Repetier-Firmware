@@ -208,6 +208,8 @@ unsigned char   Printer::wrongType;
 unsigned char   Printer::g_unlock_movement = 0;
 #endif //FEATURE_UNLOCK_MOVEMENT
 
+uint8_t         Printer::motorCurrent[5] = {0,0,0,0,0};
+
 #if FEATURE_ZERO_DIGITS
 short   Printer::g_pressure_offset = 0;
 #endif // FEATURE_ZERO_DIGITS
@@ -1085,6 +1087,7 @@ void Printer::setup()
     endstopZMinHit        = ENDSTOP_NOT_HIT;
     endstopZMaxHit        = ENDSTOP_NOT_HIT;
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
+
 
 #if STEPPER_ON_DELAY
     enabledStepper[X_AXIS] = 0;

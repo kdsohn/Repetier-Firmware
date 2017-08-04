@@ -1736,8 +1736,17 @@ void Commands::executeGCode(GCode *com)
 
             case 908:   // M908 - Control digital trimpot directly.
             {
-                if(com->hasP() && com->hasS())
-                    setMotorCurrent((uint8_t)com->P, (unsigned int)com->S);
+                if( com->hasP() && com->hasS() ){
+                    uint8_t temp = com->S;
+                    if(com->hasP() > 3 + NUM_EXTRUDER) break;
+                    if(temp > 150){
+                       //break;
+                    }else if(temp < MOTOR_CURRENT_MIN){
+                       //break;
+                    }else{
+                       setMotorCurrent((uint8_t)com->P, temp); //ohne einschränkung?
+                    }
+                }
                 break;
             }
             case 500:   // M500
