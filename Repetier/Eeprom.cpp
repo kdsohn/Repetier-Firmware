@@ -627,12 +627,12 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
     HAL::eprSetInt16( EPR_RF_EMERGENCYZSTOPDIGITSMAX, g_nZEmergencyStopAllMax );
 
 #endif // FEATURE_EMERGENCY_STOP_ALL
-    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+0, Printer::motorCurrent[X_AXIS] );
-    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+1, Printer::motorCurrent[Y_AXIS] );
-    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+2, Printer::motorCurrent[Z_AXIS] );
-    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+3, Printer::motorCurrent[E_AXIS+0] );
+    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+X_AXIS, Printer::motorCurrent[X_AXIS] );
+    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+Y_AXIS, Printer::motorCurrent[Y_AXIS] );
+    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+Z_AXIS, Printer::motorCurrent[Z_AXIS] );
+    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+E_AXIS+0, Printer::motorCurrent[E_AXIS+0] );
 #if NUM_EXTRUDER > 1
-    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+4, Printer::motorCurrent[E_AXIS+1] );
+    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+E_AXIS+1, Printer::motorCurrent[E_AXIS+1] );
 #endif //NUM_EXTRUDER > 1
 
     // Save version and build checksum
@@ -1244,12 +1244,12 @@ void EEPROM::writeSettings()
     writeInt(EPR_RF_EMERGENCYZSTOPDIGITSMAX,Com::tEPRPrinterEPR_RF_EmergencyStopAllMax);
 #endif //FEATURE_EMERGENCY_STOP_ALL
 
-    writeByte(EPR_RF_MOTOR_CURRENT+0,Com::tEPRPrinter_STEPPER_X);
-    writeByte(EPR_RF_MOTOR_CURRENT+1,Com::tEPRPrinter_STEPPER_Y);
-    writeByte(EPR_RF_MOTOR_CURRENT+2,Com::tEPRPrinter_STEPPER_Z);
-    writeByte(EPR_RF_MOTOR_CURRENT+3,Com::tEPRPrinter_STEPPER_E0);
+    writeByte(EPR_RF_MOTOR_CURRENT+X_AXIS,Com::tEPRPrinter_STEPPER_X);
+    writeByte(EPR_RF_MOTOR_CURRENT+Y_AXIS,Com::tEPRPrinter_STEPPER_Y);
+    writeByte(EPR_RF_MOTOR_CURRENT+Z_AXIS,Com::tEPRPrinter_STEPPER_Z);
+    writeByte(EPR_RF_MOTOR_CURRENT+E_AXIS+0,Com::tEPRPrinter_STEPPER_E0);
 #if NUM_EXTRUDER > 1
-    writeByte(EPR_RF_MOTOR_CURRENT+4,Com::tEPRPrinter_STEPPER_E1);
+    writeByte(EPR_RF_MOTOR_CURRENT+E_AXIS+1,Com::tEPRPrinter_STEPPER_E1);
 #endif //NUM_EXTRUDER > 1
 
 #else
