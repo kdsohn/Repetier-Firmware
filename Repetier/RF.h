@@ -899,7 +899,7 @@ extern void waitUntilContinue( void );
 #endif // FEATURE_PAUSE_PRINTING
 
 // setExtruderCurrent()
-extern void setExtruderCurrent( uint8_t level, uint8_t nr = 0 );
+extern void setExtruderCurrent( uint8_t nr, uint8_t current );
 
 // processCommand()
 extern void processCommand( GCode* pCommand );

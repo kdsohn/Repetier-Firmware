@@ -163,6 +163,8 @@ Der Sinn dieses Features ist, dass man Filamente und ihre Viskosität zu gegeben
  Das ist rotes PLA:
  ![ ](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/2a3253c930794afc81e4fa4d4b2a4261.png "PLA red")  
 
+## Konfigurierbarer Z-Notaus- und Notpause-Digits in Menü und EEPROM
+
 ## Konfigurierbarer Motorstrom im Menü und EEPROM
 
 ## Konfigurierbare Temperatureinstellungen im Menü und EEPROM
@@ -188,4 +190,4 @@ Es könnte z.B. die Temperatur in der Nähe der Hauptplatine, die Hitzeentwicklu
 [![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)
 
 ## !! 03.02.2017: An diesem Projekt wird kontinuierlich weitergearbeitet, spontane Änderungen sind jederzeit möglich.
-## !! 28.02.2017: Dieser Mod sollte sich, abgesehen von Arduino.cc 1.6.5r5 ebenfalls mit Arduino.cc Version >=1.8.1 compilieren lassen.
+## !! 28.02.2017: Dieser Mod sollte sich, abgesehen von Arduino.cc 1.6.5r5 ebenfalls mit Arduino.cc Version >=1.8.3 compilieren lassen.

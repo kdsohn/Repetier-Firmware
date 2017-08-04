@@ -92,6 +92,8 @@ List of placeholder:
 %Fs : Fan speed
 %PN : Printer name
 %Se : Steps per mm current extruder
+%S0 : Steps per mm extruder0
+%S1 : Steps per mm extruder1
 %Sz : Mikrometer per Z-Single_Step (Z_Axis)
 %SM : Matrix has changed in Ram and is ready to Save. -> *)
 %is : Stepper inactive time in seconds
@@ -827,7 +829,7 @@ UI_MENU_CHANGEACTION(ui_menu_pid_choose_PIDmax,UI_TEXT_EXTR_PMAX,UI_ACTION_CHOOS
 UI_MENU_CHANGEACTION(ui_menu_pid_choose_sensor,UI_TEXT_EXTR_SENSOR_TYPE,UI_ACTION_CHOOSE_SENSOR)
 
 #define UI_MENU_PID_CHOOSE {UI_MENU_ADDCONDBACK &ui_menu_pid_choose_classicpid ,&ui_menu_pid_choose_lesserintegral, &ui_menu_pid_choose_some, &ui_menu_pid_choose_no, &ui_menu_pid_choose_drivemin, &ui_menu_pid_choose_drivemax, &ui_menu_pid_choose_PIDmax, &ui_menu_pid_choose_sensor}
-UI_MENU(ui_menu_pid_choose,UI_MENU_PID_CHOOSE,8) 
+UI_MENU(ui_menu_pid_choose,UI_MENU_PID_CHOOSE,8) //8 ??? mit 9 gabs probleme. ???
 
 UI_MENU_SUBMENU(ui_menu_pid_ext0_cond,  UI_TEXT_EXTRUDER " 0", ui_menu_pid_choose)
 #define UI_MENU_PID_EXT0_COND   &ui_menu_pid_ext0_cond
@@ -868,21 +870,23 @@ UI_MENU_CHANGEACTION(ui_menu_motor_y,UI_TEXT_MOTOR_Y,UI_ACTION_CHOOSE_MOTOR_Y)
 UI_MENU_CHANGEACTION(ui_menu_motor_z,UI_TEXT_MOTOR_Z,UI_ACTION_CHOOSE_MOTOR_Z)
 #define UI_MENU_MOTOR_Z_COND   ,&ui_menu_motor_z
 #define UI_MENU_MOTOR_Z_COUNT 1
-UI_MENU_CHANGEACTION_FILTER(ui_menu_motor_e0,UI_TEXT_MOTOR_E0,UI_ACTION_CHOOSE_MOTOR_E0, MENU_MODE_PRINTER,0) //extruder nur bei printermode
-#define UI_MENU_MOTOR_E0_COND   ,&ui_menu_motor_e0
-#define UI_MENU_MOTOR_E0_COUNT 1
-
+UI_MENU_CHANGEACTION_FILTER(ui_menu_motor_e0,     UI_TEXT_MOTOR_E0, UI_ACTION_CHOOSE_MOTOR_E0, MENU_MODE_PRINTER,0) //extruder nur bei printermode
+UI_MENU_CHANGEACTION_FILTER(ui_menu_motorsteps_e0,UI_TEXT_EXTR_STEPS0, UI_ACTION_EXTR_STEPS_E0,   MENU_MODE_PRINTER,0)
+#define UI_MENU_MOTOR_E0_COND   ,&ui_menu_motor_e0, &ui_menu_motorsteps_e0
+#define UI_MENU_MOTOR_E0_COUNT 2
+//UI_ACTION_EXTR_STEPS
 #if NUM_EXTRUDER>1
- UI_MENU_CHANGEACTION_FILTER(ui_menu_motor_e1,UI_TEXT_MOTOR_E1,UI_ACTION_CHOOSE_MOTOR_E1, MENU_MODE_PRINTER,0) //extruder nur bei printermode
- #define UI_MENU_MOTOR_E1_COND   ,&ui_menu_motor_e1
- #define UI_MENU_MOTOR_E1_COUNT 1
+ UI_MENU_CHANGEACTION_FILTER(ui_menu_motor_e1,UI_TEXT_MOTOR_E1,UI_ACTION_CHOOSE_MOTOR_E1,       MENU_MODE_PRINTER,0) //extruder nur bei printermode
+ UI_MENU_CHANGEACTION_FILTER(ui_menu_motorsteps_e1,UI_TEXT_EXTR_STEPS1, UI_ACTION_EXTR_STEPS_E1,   MENU_MODE_PRINTER,0)
+ #define UI_MENU_MOTOR_E1_COND   ,&ui_menu_motor_e1, &ui_menu_motorsteps_e1
+ #define UI_MENU_MOTOR_E1_COUNT 2
 #else
  #define UI_MENU_MOTOR_E1_COND 
  #define UI_MENU_MOTOR_E1_COUNT 0
 #endif //NUM_EXTRUDER>1
 
 
-#define UI_MENU_MOTOR_COND   {UI_MENU_MOTOR_X_COND UI_MENU_MOTOR_Y_COND UI_MENU_MOTOR_Z_COND UI_MENU_MOTOR_E0_COND UI_MENU_MOTOR_E1_COND}
+#define UI_MENU_MOTOR_COND   {UI_MENU_ADDCONDBACK UI_MENU_MOTOR_X_COND UI_MENU_MOTOR_Y_COND UI_MENU_MOTOR_Z_COND UI_MENU_MOTOR_E0_COND UI_MENU_MOTOR_E1_COND}
 #define UI_MENU_MOTOR_COUNT   UI_MENU_BACKCNT + UI_MENU_MOTOR_X_COUNT + UI_MENU_MOTOR_Y_COUNT + UI_MENU_MOTOR_Z_COUNT + UI_MENU_MOTOR_E0_COUNT + UI_MENU_MOTOR_E1_COUNT
 UI_MENU(ui_menu_motor,UI_MENU_MOTOR_COND,UI_MENU_MOTOR_COUNT)
 //############################################################### MOTOR MENU
@@ -902,10 +906,12 @@ UI_MENU_SUBMENU_FILTER(ui_menu_conf_pid, UI_TEXT_TEMPERATURES, ui_menu_pid, MENU
 //#endif //MENU_MODE_PRINTER
 UI_MENU_SUBMENU(ui_menu_conf_motor, UI_TEXT_STEPPER,      ui_menu_motor) 
 UI_MENU_SUBMENU(ui_menu_z_calibration, UI_TEXT_ZCALIB,         ui_menu_z)
-UI_MENU_ACTIONCOMMAND(ui_menu_restore_defaults,UI_TEXT_RESTORE_DEFAULTS,UI_ACTION_RESTORE_DEFAULTS)
+
+UI_MENU_ACTION4C(ui_menu_restore_defaults_ack,UI_ACTION_RESTORE_DEFAULTS,UI_TEXT_RESTORE_DEFAULTS4)
+UI_MENU_ACTIONSELECTOR(ui_menu_restore_defaults,UI_TEXT_RESTORE_DEFAULTS,ui_menu_restore_defaults_ack)
 
 #define UI_MENU_CONFIGURATION {UI_MENU_ADDCONDBACK &ui_menu_conf_general, &ui_menu_conf_pid, &ui_menu_conf_motor, &ui_menu_conf_accel,&ui_menu_conf_feed, &ui_menu_z_calibration, &ui_menu_restore_defaults }
-UI_MENU(ui_menu_configuration,UI_MENU_CONFIGURATION,UI_MENU_BACKCNT+1+5)
+UI_MENU(ui_menu_configuration,UI_MENU_CONFIGURATION,UI_MENU_BACKCNT+1+5+1)
 
 /** \brief Main menu */
 UI_MENU_SUBMENU(ui_menu_main1, UI_TEXT_QUICK_SETTINGS,  ui_menu_quick)

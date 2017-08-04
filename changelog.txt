@@ -1,6 +1,12 @@
 TODO: Pause-Back-Drive-Bug in original RF1.37
 TODO: Possible Z-Lift Bug in original RF1.37
 
+V RF.01.37r9.Mod (2017-08-04)
+- Added Yes/No Question to restore configuration defaults menu
+- appended missing values to restore configuration function
+- Added Steps/mm to stepper menu
+- Finally fixed second Extruder "I-Drive MAX Configuration Bug" @RF2000
+
 V RF.01.37r8.Mod (2017-08-04)
 - Added Menu for Motor-Current Configuration
 - Added EEPROM_Support for EEPROM-Support

@@ -159,6 +159,8 @@ Feature called "SensibleViscosity"
 
  Have fun finally seeing your Filaments behaviour over time, temp, nozzles ;)  
  
+## Configurable emergency zStop and emergency pause digits within menu and EEPROM
+
 ## Configurable motorcurrent within menu and EEPROM
 
 ## Configurable temperature settings within menu and EEPROM
@@ -183,4 +185,4 @@ This sensor might keep track of your boards temperature or the air-temperature w
 [![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)
 
 ## !! 03.02.2017: Project is Work in Progress and untested changes are possible.
-## !! 28.02.2017: This mod should be save to complile with Arduino 1.8.1. Former problems are gone.
+## !! 28.02.2017: This mod should be save to complile with Arduino 1.8.3. Former problems are gone.

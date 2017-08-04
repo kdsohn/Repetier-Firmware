@@ -456,7 +456,7 @@ Overridden if EEPROM activated. */
 #if EXT1_HOTEND_TYPE == HOTEND_TYPE_V2
 
 /** \brief The maximum value, I-gain can contribute to the output. Overridden if EEPROM activated. */
-#define EXT1_PID_INTEGRAL_DRIVE_MAX         HT3_PID_INTEGRAL_DRIVE_MIN
+#define EXT1_PID_INTEGRAL_DRIVE_MAX         HT3_PID_INTEGRAL_DRIVE_MAX
 
 /** \brief lower value for integral part. Overridden if EEPROM activated. */
 #define EXT1_PID_INTEGRAL_DRIVE_MIN         HT3_PID_INTEGRAL_DRIVE_MIN
@@ -566,14 +566,14 @@ Heat manager for heated bed:
 /** \brief The maximum value, I-gain can contribute to the output.
 The precise values may differ for different nozzle/resistor combination.
  Overridden if EEPROM activated. */
-#define HEATED_BED_PID_INTEGRAL_DRIVE_MAX   255
+#define HEATED_BED_PID_INTEGRAL_DRIVE_MAX   80
 
 /** \brief lower value for integral part
 The I state should converge to the exact heater output needed for the target temperature.
 To prevent a long deviation from the target zone, this value limits the lower value.
 A good start is 30 lower then the optimal value. You need to leave room for cooling.
  Overridden if EEPROM activated. */
-#define HEATED_BED_PID_INTEGRAL_DRIVE_MIN   80
+#define HEATED_BED_PID_INTEGRAL_DRIVE_MIN   5
 
 /** \brief P-gain.  Overridden if EEPROM activated. */
 #define HEATED_BED_PID_PGAIN                53.74

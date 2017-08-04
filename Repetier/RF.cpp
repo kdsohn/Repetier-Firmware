@@ -6142,9 +6142,9 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                     Com::printF( PSTR( ", Time = " ), uTime );
                     Com::printFLN( PSTR( ", Diff = " ), uTime - g_uPauseTime );
 */
-                    setExtruderCurrent( EXTRUDER_CURRENT_PAUSED , 0 );
+                    setExtruderCurrent( 0, EXTRUDER_CURRENT_PAUSED );
 #if NUM_EXTRUDER > 1
-                    setExtruderCurrent( EXTRUDER_CURRENT_PAUSED , 1 );
+                    setExtruderCurrent( 1, EXTRUDER_CURRENT_PAUSED );
 #endif //NUM_EXTRUDER > 1
                 }
                 g_uPauseTime = 0;
@@ -6949,9 +6949,9 @@ void continuePrint( void )
             if( nPrinting )
             {
                 // process the extruder only in case we are in mode "print"
-                setExtruderCurrent( Printer::motorCurrent[E_AXIS]   , 0);
+                setExtruderCurrent( 0, Printer::motorCurrent[E_AXIS] );
 #if NUM_EXTRUDER > 1
-                setExtruderCurrent( Printer::motorCurrent[E_AXIS+1] , 1);
+                setExtruderCurrent( 1, Printer::motorCurrent[E_AXIS+1] );
 #endif //NUM_EXTRUDER > 1
             }
 #endif // EXTRUDER_CURRENT_PAUSE_DELAY
@@ -7020,9 +7020,9 @@ void continuePrint( void )
                 // process the extruder only in case we are in mode "print"
 #if EXTRUDER_CURRENT_PAUSE_DELAY
 
-                setExtruderCurrent( Printer::motorCurrent[E_AXIS]   , 0);
+                setExtruderCurrent( 0, Printer::motorCurrent[E_AXIS] );
 #if NUM_EXTRUDER > 1
-                setExtruderCurrent( Printer::motorCurrent[E_AXIS+1] , 1);
+                setExtruderCurrent( 1, Printer::motorCurrent[E_AXIS+1] );
 #endif //NUM_EXTRUDER > 1
 
 #endif // EXTRUDER_CURRENT_PAUSE_DELAY
@@ -7318,7 +7318,7 @@ void waitUntilContinue( void )
 #endif // FEATURE_PAUSE_PRINTING
 
 
-void setExtruderCurrent( uint8_t level, uint8_t nr )
+void setExtruderCurrent( uint8_t nr, uint8_t current )
 {
     if(nr > NUM_EXTRUDER - 1) nr = NUM_EXTRUDER - 1; //0 ist T0, 1 ist T1
 
@@ -7332,12 +7332,12 @@ void setExtruderCurrent( uint8_t level, uint8_t nr )
 
     // set the current for the extruder motor
 
-    setMotorCurrent( 1+E_AXIS+nr , level ); //das ist Extruder-ID+1, also nicht [0,1,2] -> Extruder 4 = [3], sondern [4]. Extruder5 wäre [5]
+    setMotorCurrent( 1+E_AXIS+nr , current ); //das ist Extruder-ID+1, also nicht [0,1,2] -> Extruder 4 = [3], sondern [4]. Extruder5 wäre [5]
 
     if( Printer::debugInfo() )
     {
         Com::printF( PSTR( "Extruder" ), (short)nr );
-        Com::printFLN( PSTR( " = " ), (uint32_t)level );
+        Com::printFLN( PSTR( " = " ), (uint32_t)current );
     }
     return;
 
@@ -11980,6 +11980,12 @@ void setMotorCurrent( unsigned char driver, uint8_t level )
     // When the saturation is reached, more current causes more heating and more power loss.
     // In case of engines with lower quality, the saturation current may be reached before the nominal current.
 
+    //X = 1
+    //Y = 2
+    //Z = 3
+    //E0 = 4
+    //E1 = 5
+
     // configure the pins
     WRITE( DRV_SCLK, LOW );
     SET_OUTPUT( DRV_SCLK );
@@ -11999,12 +12005,12 @@ void setMotorCurrent( unsigned char driver, uint8_t level )
 
 void motorCurrentControlInit( void )
 {
-    const unsigned short  uMotorCurrent[] = MOTOR_CURRENT_NORMAL; //--> {x,y,z,e1,e2} siehe RFx000.h
-    Printer::motorCurrent[X_AXIS]   = uMotorCurrent[X_AXIS];
-    Printer::motorCurrent[Y_AXIS]   = uMotorCurrent[Y_AXIS];
-    Printer::motorCurrent[Z_AXIS]   = uMotorCurrent[Z_AXIS];
-    Printer::motorCurrent[E_AXIS+0] = uMotorCurrent[E_AXIS+0];
-    Printer::motorCurrent[E_AXIS+1] = uMotorCurrent[E_AXIS+1]; //egal ob NUM_EXTRUDER == 1 oder 2
+    const unsigned short  uMotorCurrentUse[] = MOTOR_CURRENT_NORMAL; //--> {x,y,z,e1,e2} siehe RFx000.h
+    Printer::motorCurrent[X_AXIS]   = uMotorCurrentUse[X_AXIS];
+    Printer::motorCurrent[Y_AXIS]   = uMotorCurrentUse[Y_AXIS];
+    Printer::motorCurrent[Z_AXIS]   = uMotorCurrentUse[Z_AXIS];
+    Printer::motorCurrent[E_AXIS+0] = uMotorCurrentUse[E_AXIS+0];
+    Printer::motorCurrent[E_AXIS+1] = uMotorCurrentUse[E_AXIS+1]; //egal ob NUM_EXTRUDER == 1 oder 2
     // configure all DRV8711
     drv8711Init();
     // set all motor currents
