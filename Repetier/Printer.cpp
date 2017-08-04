@@ -1832,11 +1832,11 @@ Bzw man könnte auch direkt ausgleichen, wenn der eine ins plus will, der andere
                 HAL::delayMicroseconds(STEPPER_HIGH_DELAY+DOUBLE_STEP_DELAY);
                 return;
             }
-        if( PrintLine::direct.isZMove() )
+/*      if( PrintLine::direct.isZMove() )
             {
                 HAL::delayMicroseconds(STEPPER_HIGH_DELAY+DOUBLE_STEP_DELAY);
                 return;
-            }
+            }*/
 #endif // STEPPER_HIGH_DELAY+DOUBLE_STEP_DELAY>0
         return;
     }
@@ -1850,12 +1850,11 @@ Bzw man könnte auch direkt ausgleichen, wenn der eine ins plus will, der andere
         }
     }
 /* 17_06_12 könnte das folgende hier fehlen? siehe bug mit dem verzählen. ... test irgendwann später mal.*/
-    if( PrintLine::direct.isZMove() )
+  /*  if( PrintLine::direct.isZMove() )
     {
         // do not peform any compensation while there is a direct-move into z-direction
         return;
-    }
-
+    }*/
 
     if( compensatedPositionCurrentStepsZ < compensatedPositionTargetStepsZ )
     {
