@@ -277,6 +277,14 @@ FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyStopAllMin,"ZEmergencyStopAllMin [1
 FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyStopAllMax,"ZEmergencyStopAllMax [1700/kg]")
 #endif //FEATURE_EMERGENCY_STOP_ALL
 
+FSTRINGVALUE(Com::tEPRPrinter_STEPPER_X,"Stepper X Current [2A/126]")
+FSTRINGVALUE(Com::tEPRPrinter_STEPPER_Y,"Stepper Y Current [2A/126]")
+FSTRINGVALUE(Com::tEPRPrinter_STEPPER_Z,"Stepper Z Current [2A/126]")
+FSTRINGVALUE(Com::tEPRPrinter_STEPPER_E0,"Stepper E0 Current [2A/126]")
+#if NUM_EXTRUDER > 1
+FSTRINGVALUE(Com::tEPRPrinter_STEPPER_E1,"Stepper E1 Current [2A/126]")
+#endif //NUM_EXTRUDER > 1
+
 #endif // EEPROM_MODE
 
 #if SDSUPPORT

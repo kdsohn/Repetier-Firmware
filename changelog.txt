@@ -1,6 +1,21 @@
 TODO: Pause-Back-Drive-Bug in original RF1.37
 TODO: Possible Z-Lift Bug in original RF1.37
 
+V RF.01.37r9.Mod (2017-08-04)
+- Added Yes/No Question to restore configuration defaults menu
+- appended missing values to restore configuration function
+- Added Steps/mm to stepper menu
+- Finally fixed second Extruder "I-Drive MAX Configuration Bug" @RF2000
+
+V RF.01.37r8.Mod (2017-08-04)
+- Added Menu for Motor-Current Configuration
+- Added EEPROM_Support for EEPROM-Support
+- Added second Extruder to "Pause-Current-Support of Pause-Feature" (which did not work on RF2000 or Dual-RF1000)
+- Renamed MOTOR_CURRENT to MOTOR_CURRENT_MAX
+- Renamed MOTOR_CURRENT_SILENT to MOTOR_CURRENT_NORMAL
+- Increased standard motorcurrent for Z to 95 instead of 90
+- Depreached/Removed Mod-Feature Silent_Mode because the new settings are better.
+
 V RF.01.37r7.Mod (2017-08-03)
 - Added Menu for PID Autotune (possible for all Heaters) @Configuration->Temperatures->(T0 Tn Bed)->Method
 - Added Menu for changing "PID drive min" and "PID drive max" (possible for all Heaters) @Configuration->Temperatures->(T0 Tn Bed)

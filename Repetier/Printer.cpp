@@ -208,6 +208,8 @@ unsigned char   Printer::wrongType;
 unsigned char   Printer::g_unlock_movement = 0;
 #endif //FEATURE_UNLOCK_MOVEMENT
 
+uint8_t         Printer::motorCurrent[5] = {0,0,0,0,0};
+
 #if FEATURE_ZERO_DIGITS
 short   Printer::g_pressure_offset = 0;
 #endif // FEATURE_ZERO_DIGITS
@@ -1086,6 +1088,7 @@ void Printer::setup()
     endstopZMaxHit        = ENDSTOP_NOT_HIT;
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
 
+
 #if STEPPER_ON_DELAY
     enabledStepper[X_AXIS] = 0;
     enabledStepper[Y_AXIS] = 0;
@@ -1850,11 +1853,11 @@ Bzw man könnte auch direkt ausgleichen, wenn der eine ins plus will, der andere
         }
     }
 /* 17_06_12 könnte das folgende hier fehlen? siehe bug mit dem verzählen. ... test irgendwann später mal.*/
-    if( PrintLine::direct.isZMove() )
+  /*  if( PrintLine::direct.isZMove() )
     {
         // do not peform any compensation while there is a direct-move into z-direction
         return;
-    }
+    }*/
 
 
     if( compensatedPositionCurrentStepsZ < compensatedPositionTargetStepsZ )

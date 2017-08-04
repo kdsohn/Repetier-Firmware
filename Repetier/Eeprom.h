@@ -131,6 +131,7 @@ have problems with other modules using the eeprom */
 
 #define EPR_RF_HEATED_BED_SENSOR_TYPE     1922 //[1byte]
 
+#define EPR_RF_MOTOR_CURRENT              1923 //1924+1925+1926+1927 [5byte für 5 Motorstrombytes]
 
 //Nibbels: Computechecksum geht bis 2047
 
