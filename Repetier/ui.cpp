@@ -3970,7 +3970,7 @@ void UIDisplay::finishAction(int action)
 
             EEPROM::initializeAllOperatingModes();
             uid.menuLevel = 0;
-            showInformation( PSTR(UI_TEXT_CONFIGURATION), PSTR(UI_TEXT_RESTORE_DEFAULTS), PSTR(UI_TEXT_OK) );
+            UI_STATUS( UI_TEXT_RESTORE_DEFAULTS );
             break;
         }
 

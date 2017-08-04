@@ -1793,6 +1793,8 @@ void Commands::executeGCode(GCode *com)
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
 
                 EEPROM::initializeAllOperatingModes();
+                UI_STATUS( UI_TEXT_RESTORE_DEFAULTS );
+                showInformation( PSTR(UI_TEXT_CONFIGURATION), PSTR(UI_TEXT_RESTORE_DEFAULTS), PSTR(UI_TEXT_OK) );
                 break;
             }
 

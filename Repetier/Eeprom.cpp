@@ -1008,6 +1008,8 @@ void EEPROM::init()
 
         storeDataIntoEEPROM(storedcheck!=check);
         initializeAllOperatingModes();
+        UI_STATUS( UI_TEXT_RESTORE_DEFAULTS );
+        showInformation( PSTR(UI_TEXT_CONFIGURATION), PSTR(UI_TEXT_FAIL), PSTR(UI_TEXT_RESTORE_DEFAULTS) );
     }
 #endif // EEPROM_MODE!=0
 
