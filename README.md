@@ -159,16 +159,10 @@ Feature called "SensibleViscosity"
 
  Have fun finally seeing your Filaments behaviour over time, temp, nozzles ;)  
  
-## SilentMode   
-* M3920 Sb  
-S = {0,1} Switch to SilentMode or back to normal stepper current and unhome your printer.  
+## Configurable motorcurrent within menu and EEPROM
 
-This Feature might be handy if you want to predefine another set of stepper current, but you dont want to have this lower values all the time. 
-
-If you make your current too low you might risk "lost steps". The Motor cannot stand the applied force and you might get shifted Layers (X,Y). If that is the case you should lower your acceleration or rise up the current again.
-
-If you can lower your current, you will have a huge improvement on stepper temperature and noise production as well. The tone of your steppers might sound deeper and will not be such a pain as the original (milling like-) configuration.
-You should not include M3920 when your z-Compensation is active. This MCode will shut down z-Compensation and unhome your Printer. You would have to re-home your axes and activate z-Compensation again. I put this code to the beginning of my startcodes.
+## Configurable temperature settings within menu and EEPROM
+PID-Autotune, other controlparameters and the sensortype is adjustable within the menu.
 
 ## Dualhead Tip-Down Support (beta)
 * M3919 [S]mikrometer - Testfunction for Dip-Down-Hotend @ T1: T1 can now be springloaded and the bed will be adjusted "down" whenever T1 is selected. This is alike Ultimaker 3 does it with the right hotend.   
