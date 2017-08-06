@@ -558,7 +558,7 @@ public:
 
     static inline void nextPlannerIndex(uint8_t& p)
     {
-        p = (p == MOVE_CACHE_SIZE - 1 ? 0 : p + 1);
+        p = (p >= MOVE_CACHE_SIZE - 1 ? 0 : p + 1);
     } // nextPlannerIndex
 
     static inline void queueTask( char task )

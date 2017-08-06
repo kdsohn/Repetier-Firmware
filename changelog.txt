@@ -3,6 +3,9 @@ TODO: Possible Z-Lift Bug in original RF1.37
 TODO: Test if ADVANCE-Feature really works. Test if it is possible to autotune due to DMS-Sensors of RFx000
 TODO: Testing, testing ..
 
+V RF.01.37s2.Mod (2017-08-06)
+- Pulling Repetiers new Guardian-Patch for Timer1 from https://github.com/repetier/Repetier-Firmware/commit/9c2d7323f84f07b33450483b131f4b65d77eb2b7
+
 V RF.01.37s.Mod (2017-08-06)
 - Factor L for lineare advance-feature is now available within menu @Configuration->Stepper->Ex-Advance L:
 See also:
