@@ -494,7 +494,7 @@ void PrintLine::calculateQueueMove(float axis_diff[],uint8_t pathOptimize)
             maxadv = (advanceFull >> 16);
             maxadvspeed = fabs(speedE);
         }
-#endif
+#endif // ENABLE_QUADRATIC_ADVANCE
         if(advlin > maxadv2) {
             maxadv2 = advlin;
             maxadvspeed = fabs(speedE);
@@ -696,7 +696,7 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
             maxadv = (advanceFull >> 16);
             maxadvspeed = fabs(speedE);
         }
-#endif
+#endif // ENABLE_QUADRATIC_ADVANCE
         if(advlin > maxadv2) {
             maxadv2 = advlin;
             maxadvspeed = fabs(speedE);
@@ -1917,7 +1917,7 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
     HAL::forbidInterrupts();
 
     if(doEven) move->checkEndstops();
-    int max_loops = (Printer::stepsPerTimerCall <= cur->stepsRemaining ? Printer::stepsPerTimerCall : cur->stepsRemaining);
+    int max_loops = (Printer::stepsPerTimerCall <= move->stepsRemaining ? Printer::stepsPerTimerCall : move->stepsRemaining);
 
     if(move->stepsRemaining>0)
     {
@@ -2096,7 +2096,7 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
             else // full speed reached
             {
                 // If we had acceleration, we need to use the latest vMaxReached and interval
-                // If we started full speed, we need to use cur->fullInterval and vMax
+                // If we started full speed, we need to use move->fullInterval and vMax
                 move->updateAdvanceSteps((!move->accelSteps ? move->vMax : Printer::vMaxReached), 0, true);
                 if(!move->accelSteps) {
                     if(move->vMax > STEP_DOUBLER_FREQUENCY) {
