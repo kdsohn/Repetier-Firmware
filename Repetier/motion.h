@@ -80,7 +80,7 @@ private:
     speed_t             vStart;                     ///< Starting speed in steps/s.
     speed_t             vEnd;                       ///< End speed in steps/s
 
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
     int32_t             advanceRate;               ///< Advance steps at full speed
     int32_t             advanceFull;               ///< Maximum advance at fullInterval [steps*65536]
@@ -368,7 +368,7 @@ public:
 
     inline void updateAdvanceSteps(speed_t v,uint8_t max_loops,bool accelerate)
     {
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
         if(!Printer::isAdvanceActivated()) return;
 #ifdef ENABLE_QUADRATIC_ADVANCE
         long advanceTarget = Printer::advanceExecuted;
@@ -409,10 +409,10 @@ public:
 
         Printer::advanceStepsSet = tred;
         HAL::allowInterrupts();
-#endif // ENABLE_QUADRATIC_ADVANCE
-#endif // USE_ADVANCE
         (void)max_loops;
         (void)accelerate;
+#endif // ENABLE_QUADRATIC_ADVANCE
+#endif // USE_ADVANCE
     } // updateAdvanceSteps
 
     inline bool moveDecelerating()
@@ -604,7 +604,10 @@ public:
         if(isEMove())
         {
             Extruder::enable();
-            Extruder::setDirection(isEPositiveMove());
+#if USE_ADVANCE
+            if(!Printer::isAdvanceActivated()) // Set direction if no advance/OPS enabled
+#endif
+                  Extruder::setDirection(isEPositiveMove());
         }
         started = 1;
 

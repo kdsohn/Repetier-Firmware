@@ -172,7 +172,7 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
 #endif // RETRACT_DURING_HEATUP
 
     e->coolerSpeed = EXT0_EXTRUDER_COOLER_SPEED;
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
     e->advanceK = EXT0_ADVANCE_K;
 #endif // ENABLE_QUADRATIC_ADVANCE
@@ -209,7 +209,7 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
 
     e->coolerSpeed = EXT1_EXTRUDER_COOLER_SPEED;
 
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
     e->advanceK = EXT1_ADVANCE_K;
 #endif // ENABLE_QUADRATIC_ADVANCE
@@ -245,7 +245,7 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
 #endif // RETRACT_DURING_HEATUP
 
     e->coolerSpeed = EXT2_EXTRUDER_COOLER_SPEED;
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
     e->advanceK = EXT2_ADVANCE_K;
 #endif // ENABLE_QUADRATIC_ADVANCE
@@ -281,7 +281,7 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
 #endif // RETRACT_DURING_HEATUP
 
     e->coolerSpeed = EXT3_EXTRUDER_COOLER_SPEED;
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
     e->advanceK = EXT3_ADVANCE_K;
 #endif // ENABLE_QUADRATIC_ADVANCE
@@ -317,7 +317,7 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
 #endif // RETRACT_DURING_HEATUP
 
     e->coolerSpeed = EXT4_EXTRUDER_COOLER_SPEED;
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
     e->advanceK = EXT4_ADVANCE_K;
 #endif // ENABLE_QUADRATIC_ADVANCE
@@ -354,7 +354,7 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
 
     e->coolerSpeed = EXT5_EXTRUDER_COOLER_SPEED;
 
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
     e->advanceK = EXT5_ADVANCE_K;
 #endif // ENABLE_QUADRATIC_ADVANCE
@@ -580,7 +580,7 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
 
         HAL::eprSetByte(o+EPR_EXTRUDER_COOLER_SPEED,e->coolerSpeed);
 
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
         HAL::eprSetFloat(o+EPR_EXTRUDER_ADVANCE_K,e->advanceK);
 #else
@@ -819,7 +819,7 @@ void EEPROM::readDataFromEEPROM()
         e->waitRetractUnits = HAL::eprGetInt16(o+EPR_EXTRUDER_WAIT_RETRACT_UNITS);
 #endif // RETRACT_DURING_HEATUP
 
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
         e->advanceK = HAL::eprGetFloat(o+EPR_EXTRUDER_ADVANCE_K);
 #endif // ENABLE_QUADRATIC_ADVANCE
@@ -1238,7 +1238,7 @@ void EEPROM::writeSettings()
 #endif // RETRACT_DURING_HEATUP
 
         writeByte(o+EPR_EXTRUDER_COOLER_SPEED,Com::tEPRExtruderCoolerSpeed);
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
         writeFloat(o+EPR_EXTRUDER_ADVANCE_K,Com::tEPRAdvanceK);
 #endif // ENABLE_QUADRATIC_ADVANCE

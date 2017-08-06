@@ -821,6 +821,9 @@ public:
 #endif // FEATURE_SERVO && MOTHERBOARD == DEVICE_TYPE_RF1000
 
     static void analogStart();
+#if USE_ADVANCE
+    static void resetExtruderDirection();
+#endif // USE_ADVANCE
 protected:
 private:
 };

@@ -1636,14 +1636,13 @@ void Commands::executeGCode(GCode *com)
                 break;
             }
 
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
             case 223:   // M223 - Extruder interrupt test
             {
                 if(com->hasS())
                 {
                     InterruptProtectedBlock noInts; //BEGIN_INTERRUPT_PROTECTED
                     Printer::extruderStepsNeeded += com->S;
-                    noInts.unprotect(); //END_INTERRUPT_PROTECTED
                 }
                 break;
             }

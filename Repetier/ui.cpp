@@ -1496,7 +1496,7 @@ void UIDisplay::parse(char *txt,bool ram)
                         addStringP(PSTR(UI_TEXT_STRING_HM_BANGBANG));
                 }
 
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
                 else if(c2=='a')
                 {
@@ -3656,7 +3656,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
 #endif // RETRACT_DURING_HEATUP
 
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
         case UI_ACTION_ADVANCE_K:
         {
