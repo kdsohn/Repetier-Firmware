@@ -175,6 +175,8 @@
 #define UI_ACTION_CHOOSE_MOTOR_E1           1686
 #define UI_ACTION_EXTR_STEPS_E0             1687
 #define UI_ACTION_EXTR_STEPS_E1             1688
+#define UI_ACTION_ADVANCE_L_E0              1689
+#define UI_ACTION_ADVANCE_L_E1              1690
 
 #define UI_ACTION_FET1_OUTPUT               2001
 #define UI_ACTION_FET2_OUTPUT               2002

@@ -491,8 +491,10 @@ public:
 
     static inline void removeCurrentLineForbidInterrupt()
     {
-        linesPos++;
-        if(linesPos>=MOVE_CACHE_SIZE) linesPos=0;
+        nextPlannerIndex(linesPos);
+        //linesPos++;
+        //if(linesPos>=MOVE_CACHE_SIZE) linesPos=0;
+        cur->task = TASK_NO_TASK;
         cur = NULL;
 
         HAL::forbidInterrupts();
@@ -503,9 +505,9 @@ public:
 
     static inline void pushLine()
     {
-        linesWritePos++;
-
-        if(linesWritePos>=MOVE_CACHE_SIZE) linesWritePos = 0;
+        nextPlannerIndex(linesWritePos);
+        //linesWritePos++;
+        //if(linesWritePos>=MOVE_CACHE_SIZE) linesWritePos = 0;
         Printer::setMenuMode(MENU_MODE_PRINTING,true);
         
         InterruptProtectedBlock noInts; //BEGIN_INTERRUPT_PROTECTED

@@ -1441,8 +1441,16 @@ void UIDisplay::parse(char *txt,bool ram)
                     if(uid.menuLevel == 4 && uid.menuPos[uid.menuLevel-1] < NUM_TEMPERATURE_LOOPS){
                         addInt(tempController[uid.menuPos[uid.menuLevel-1]]->sensorType,2); //mit type 100 wärens 3 zeichen, aber das kommt in praxis nicht vor. 
                         switch(tempController[uid.menuPos[uid.menuLevel-1]]->sensorType){
+                            case 1: {
+                                addStringP( PSTR(UI_TEXT_SENSOR_1) );
+                                break;
+                            }
                             case 3: {
                                 addStringP( PSTR(UI_TEXT_SENSOR_3) );
+                                break;
+                            }
+                            case 4: {
+                                addStringP( PSTR(UI_TEXT_SENSOR_4) );
                                 break;
                             }
                             case 8: {
@@ -1499,6 +1507,14 @@ void UIDisplay::parse(char *txt,bool ram)
                 else if(c2=='l')                                                                        // %Xl : Advance L value
                 {
                     addFloat(Extruder::current->advanceL,3,0);
+                }
+                else if(c2=='b')                                                                        // %Xb : E0 Advance L value
+                {
+                    addFloat(extruder[0].advanceL,3,0);
+                }
+                else if(c2=='c')                                                                        // %Xc : E1 Advance L value
+                {
+                    addFloat(extruder[1].advanceL,3,0);
                 }
 #endif // USE_ADVANCE
 
@@ -3173,21 +3189,20 @@ void UIDisplay::nextPreviousAction(int8_t next)
         case UI_ACTION_EXTRUDER_OFFSET_Z:
         {
             //Das hier ist nur dazu gedacht, um eine Tip-Down-Nozzle auf per ToolChange auf die Korrekte Höhe zu justieren.
-            float   fTemp = extruder[1].zOffset * Printer::invAxisStepsPerMM[Z_AXIS];
+            float   fTemp = extruder[1].zOffset * Printer::invAxisStepsPerMM[Z_AXIS]; //mm negativ
             INCREMENT_MIN_MAX(fTemp,0.025,-2,0);
-            extruder[1].zOffset = int32_t(fTemp * Printer::axisStepsPerMM[Z_AXIS]);
+            extruder[1].zOffset = int32_t(fTemp * Printer::axisStepsPerMM[Z_AXIS]); //wieder zu steps negativ
 
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
-            HAL::eprSetFloat(EEPROM::getExtruderOffset(1)+EPR_EXTRUDER_Z_OFFSET,fTemp);
+            HAL::eprSetFloat(EEPROM::getExtruderOffset(1)+EPR_EXTRUDER_Z_OFFSET,fTemp); //mm negativ
             EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
 
             if(extruder[1].id == Extruder::current->id){
-                Printer::extruderOffset[Z_AXIS] = -Extruder::current->zOffset*Printer::invAxisStepsPerMM[Z_AXIS];
+                Printer::extruderOffset[Z_AXIS] = -Extruder::current->zOffset*Printer::invAxisStepsPerMM[Z_AXIS]; //+mm positiv
                 if(Printer::areAxisHomed()) Printer::moveToReal(IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE);
             }
             break;
-            //break;
         }
 #endif // NUM_EXTRUDER>1
 
@@ -3523,6 +3538,28 @@ void UIDisplay::nextPreviousAction(int8_t next)
             break;
         }
 #endif //NUM_EXTRUDER > 1
+
+        case UI_ACTION_ADVANCE_L_E0:
+        {
+            INCREMENT_MIN_MAX(extruder[0].advanceL,1,0,60); //Nibbels TODO gute Werte zulassen? Ist Step 1 ok?
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetFloat(EEPROM::getExtruderOffset(0)+EPR_EXTRUDER_ADVANCE_L,extruder[0].advanceL);
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+#if NUM_EXTRUDER > 1
+        case UI_ACTION_ADVANCE_L_E1:
+        {
+            INCREMENT_MIN_MAX(extruder[1].advanceL,1,0,60); //Nibbels TODO gute Werte zulassen? Ist Step 1 ok?
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetFloat(EEPROM::getExtruderOffset(1)+EPR_EXTRUDER_ADVANCE_L,extruder[1].advanceL);
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+#endif //NUM_EXTRUDER > 1
+
         case UI_ACTION_EXTR_STEPS:
         {
             INCREMENT_MIN_MAX(Extruder::current->stepsPerMM,1,1,9999);
@@ -3838,27 +3875,34 @@ void UIDisplay::nextPreviousAction(int8_t next)
                 uint8_t heater = uid.menuPos[uid.menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
                 if(heater < NUM_TEMPERATURE_LOOPS) {
                     int drive = tempController[heater]->sensorType;
-                    if(increment > 0){
-                        switch(drive){
-                          case 3: { drive = 8; break; }
-                          case 8: { drive = 14; break; } //add more sensors for menu-tweaking here, those are the most common for RFx000
-                          default: { drive = 3; break; }
-                        }
-                    }else{ //== 0 gibts nicht, soweit ich weiß
-                        switch(drive){
-                          case 3: { drive = 14; break; }
-                          case 14: { drive = 8; break; } //add more sensors for menu-tweaking here, those are the most common for RFx000
-                          default: { drive = 3; break; }
-                        }
-                    }
-                    tempController[heater]->sensorType = drive;
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
                     if(UI_MENU_PID_BED_COUNT > 0 && UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT - 1 == heater){ 
                         //Das ist das Heizbett
+                        switch(drive){
+                          case 3: { drive = 4; break; } //4 ist der 10K Thermistor vom hersteller der matten (? rf1k_mhj11)
+                          default: { drive = 3; break; }
+                        }
+                        tempController[heater]->sensorType = drive;
                         HAL::eprSetByte( EPR_RF_HEATED_BED_SENSOR_TYPE, (uint8_t)drive  );
                         EEPROM::updateChecksum();
                     }else{
                         //Extruder
+                        if(increment > 0){
+                            switch(drive){
+                              case 3: { drive = 8; break; }
+                              case 8: { drive = 14; break; } //add more sensors for menu-tweaking here, those are the most common for RFx000
+                              case 14: { drive = 1; break; }
+                              default: { drive = 3; break; }
+                            }
+                        }else{ //== 0 gibts nicht, soweit ich weiß
+                            switch(drive){
+                              case 3: { drive = 1; break; }
+                              case 1: { drive = 14; break; }
+                              case 14: { drive = 8; break; } //add more sensors for menu-tweaking here, those are the most common for RFx000
+                              default: { drive = 3; break; }
+                            }
+                        }
+                        tempController[heater]->sensorType = drive;
                         if(heater <= NUM_EXTRUDER-1){ //paranoid doublecheck
                           HAL::eprSetByte( EEPROM::getExtruderOffset(heater)+EPR_EXTRUDER_SENSOR_TYPE, (uint8_t)drive  );
                           EEPROM::updateChecksum();

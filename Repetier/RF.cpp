@@ -9408,24 +9408,28 @@ void processCommand( GCode* pCommand )
                             Com::printF( PSTR( "nCPS X;" ),   Printer::queuePositionCurrentSteps[X_AXIS] );
                             Com::printF( PSTR( ";" ),         Printer::queuePositionCurrentSteps[X_AXIS] / Printer::axisStepsPerMM[X_AXIS] );
                             Com::printF( PSTR( "; nCPS Y;" ), Printer::queuePositionCurrentSteps[Y_AXIS] );
-                            Com::printFLN( PSTR( ";" ),         Printer::queuePositionCurrentSteps[Y_AXIS] / Printer::axisStepsPerMM[Y_AXIS] );
+                            Com::printFLN( PSTR( ";" ),       Printer::queuePositionCurrentSteps[Y_AXIS] / Printer::axisStepsPerMM[Y_AXIS] );
 
                             Com::printF( PSTR( "; nCPS Z;" ), Printer::queuePositionCurrentSteps[Z_AXIS] );
                             Com::printF( PSTR( ";" ),         Printer::queuePositionCurrentSteps[Z_AXIS] / Printer::axisStepsPerMM[Z_AXIS] );
-
+                            Com::printF( PSTR( "; qTS;" ),    Printer::queuePositionTargetSteps[Z_AXIS] );
+                            Com::printFLN( PSTR( "; qLS;" ),  Printer::queuePositionLastSteps[Z_AXIS] );
+							
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-                            Com::printF( PSTR( "; tCZ;" ), Printer::compensatedPositionTargetStepsZ );
-                            Com::printF( PSTR( "; cCZ;" ), Printer::compensatedPositionCurrentStepsZ );
+                            Com::printF( PSTR( "; zTZ;" ), Printer::compensatedPositionTargetStepsZ );
+                            Com::printFLN( PSTR( "; zCZ;" ), Printer::compensatedPositionCurrentStepsZ );
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-                            Com::printF( PSTR( "; tPSZ;" ), Printer::directPositionTargetSteps[Z_AXIS] );
-                            Com::printF( PSTR( "; cPSZ;" ), Printer::directPositionCurrentSteps[Z_AXIS] );
+                            Com::printF( PSTR( "; direct TZ;" ), Printer::directPositionTargetSteps[Z_AXIS] );
+                            Com::printFLN( PSTR( "; CZ;" ), Printer::directPositionCurrentSteps[Z_AXIS] );
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
-                            Com::printF( PSTR( "; qTS;" ), Printer::queuePositionTargetSteps[Z_AXIS] );
-                            Com::printFLN( PSTR( "; qLS;" ), Printer::queuePositionLastSteps[Z_AXIS] );
 //                          Com::printFLN( PSTR( "; Int32;" ), g_debugInt32 );
+
+                            Com::printF( PSTR( "; SDX;" ), Printer::stepperDirection[X_AXIS] );
+                            Com::printF( PSTR( "; SDY;" ), Printer::stepperDirection[Y_AXIS] );
+                            Com::printFLN( PSTR( "; SDZ;" ), Printer::stepperDirection[Z_AXIS] );
 
 
                             #if FEATURE_HEAT_BED_Z_COMPENSATION && FEATURE_WORK_PART_Z_COMPENSATION
@@ -9454,6 +9458,11 @@ void processCommand( GCode* pCommand )
 								{
 									// do not perform any compensation in case the moving is blocked
 									Com::printFLN( PSTR( "; return directZ;" ) );
+								}
+								if( PrintLine::cur->isZMove() )
+								{
+									// do not perform any compensation in case the moving is blocked
+									Com::printFLN( PSTR( "; return curZ;" ) );
 								}
 
                             break;
@@ -10743,7 +10752,7 @@ void processCommand( GCode* pCommand )
 
             case 3920: // 3920 Old G-Code for SilentMode
             {
-                Com::printFLN(PSTR("M3920 SilentMode DEPREACHED. Please configure Motor current within EEPROM or Printers Menu") );
+                Com::printFLN(PSTR("M3920 SilentMode DEPREACHED. Configure motor current within EEPROM or Printers Menu") );
                 break;
             }
 

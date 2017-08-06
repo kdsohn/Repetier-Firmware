@@ -1307,11 +1307,7 @@ long PrintLine::performQueueMove()
                     if( g_pauseMode >= PAUSE_MODE_PAUSED )
                     {
                         // this operation can not be performed in case we are paused already
-                        nextPlannerIndex(linesPos);
-                        cur->task = 0;
-                        cur = 0;
-                        HAL::forbidInterrupts();
-                        --linesCount;
+                        removeCurrentLineForbidInterrupt();
                         return 1000;
                     }
 
@@ -1349,11 +1345,7 @@ long PrintLine::performQueueMove()
                         Extruder::current->stepperDirection = 0;
                     }
                 
-                    nextPlannerIndex(linesPos);
-                    cur->task = 0;
-                    cur = 0;
-                    HAL::forbidInterrupts();
-                    --linesCount;
+                    removeCurrentLineForbidInterrupt();
                     return 1000;
                 }
                 
@@ -1362,11 +1354,7 @@ long PrintLine::performQueueMove()
                     if( g_pauseMode >= PAUSE_MODE_PAUSED_AND_MOVED )
                     {
                         // this operation can not be performed in case we are in pause position 2 already
-                        nextPlannerIndex(linesPos);
-                        cur->task = 0;
-                        cur = 0;
-                        HAL::forbidInterrupts();
-                        --linesCount;
+                        removeCurrentLineForbidInterrupt();
                         return 1000;
                     }
 
@@ -1410,11 +1398,7 @@ long PrintLine::performQueueMove()
                         prepareDirectMove();
                     }
                 
-                    nextPlannerIndex(linesPos);
-                    cur->task = 0;
-                    cur = 0;
-                    HAL::forbidInterrupts();
-                    --linesCount;
+                    removeCurrentLineForbidInterrupt();
                     return 1000;
                 }
 #endif // FEATURE_PAUSE_PRINTING
@@ -1450,11 +1434,7 @@ long PrintLine::performQueueMove()
                     if( Exit )
                     {
                         // do not enable the z compensation in case it is enabled already
-                        nextPlannerIndex(linesPos);
-                        cur->task = TASK_NO_TASK;
-                        cur = 0;
-                        HAL::forbidInterrupts();
-                        --linesCount;
+                        removeCurrentLineForbidInterrupt();
                         return 1000;
                     }
 
@@ -1518,11 +1498,7 @@ long PrintLine::performQueueMove()
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                     }
             
-                    nextPlannerIndex(linesPos);
-                    cur->task = TASK_NO_TASK;
-                    cur = 0;
-                    HAL::forbidInterrupts();
-                    --linesCount;
+                    removeCurrentLineForbidInterrupt();
                     return 1000;
                 }
 
@@ -1549,11 +1525,7 @@ long PrintLine::performQueueMove()
                     Printer::doHeatBedZCompensation = 0;
 #endif // FEATURE_MILLING_MODE
 
-                    nextPlannerIndex(linesPos);
-                    cur->task = TASK_NO_TASK;
-                    cur = 0;
-                    HAL::forbidInterrupts();
-                    --linesCount;
+                    removeCurrentLineForbidInterrupt();
                     return 1000;
                 }
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
@@ -1561,11 +1533,7 @@ long PrintLine::performQueueMove()
                 default:
                 {
                     // this is an unknown task - we should never end up here
-                    nextPlannerIndex(linesPos);
-                    cur->task = TASK_NO_TASK;
-                    cur = 0;
-                    HAL::forbidInterrupts();
-                    --linesCount;
+                    removeCurrentLineForbidInterrupt();
                     return 1000;
                 }
             }

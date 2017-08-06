@@ -1,5 +1,17 @@
 TODO: Pause-Back-Drive-Bug in original RF1.37
 TODO: Possible Z-Lift Bug in original RF1.37
+TODO: Test if ADVANCE-Feature really works. Test if it is possible to autotune due to DMS-Sensors of RFx000
+TODO: Testing, testing ..
+
+V RF.01.37s.Mod (2017-08-06)
+- Factor L for lineare advance-feature is now available within menu @Configuration->Stepper->Ex-Advance L:
+See also:
+https://github.com/repetier/Repetier-Firmware/wiki/Hardware-settings-and-print-quality
+http://www.dr-henschke.de/advance.html
+http://reprap.org/pipermail/reprap-dev/2011-May/003323.html
+- Sensortype 1 (Pico Hotend, Reprap style Thermistor) EPCOS NTC is now accessible through menu for all Extruders
+- Sensortype 4 is now available through menu for alternative Heated Bed Silicon-Heater. (> http://www.rf1000.de/viewtopic.php?f=29&t=1364&p=13632&hilit=Ceran+Eigenbau#p13632 )
+- Small cleanup on several locations
 
 V RF.01.37r9.Mod (2017-08-04)
 - Added Yes/No Question to restore configuration defaults menu

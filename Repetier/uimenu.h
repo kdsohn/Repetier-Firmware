@@ -112,6 +112,8 @@ List of placeholder:
 %Xh : Extruder heat manager (BangBang/PID)
 %Xa : Advance K value
 %Xl : Advance L value
+ %Xb : E0 Advance L value
+ %Xc : E1 Advance L value
 %Xf : Extruder max. start feedrate
 %XF : Extruder max. feedrate
 %XA : Extruder max. acceleration
@@ -872,14 +874,16 @@ UI_MENU_CHANGEACTION(ui_menu_motor_z,UI_TEXT_MOTOR_Z,UI_ACTION_CHOOSE_MOTOR_Z)
 #define UI_MENU_MOTOR_Z_COUNT 1
 UI_MENU_CHANGEACTION_FILTER(ui_menu_motor_e0,     UI_TEXT_MOTOR_E0, UI_ACTION_CHOOSE_MOTOR_E0, MENU_MODE_PRINTER,0) //extruder nur bei printermode
 UI_MENU_CHANGEACTION_FILTER(ui_menu_motorsteps_e0,UI_TEXT_EXTR_STEPS0, UI_ACTION_EXTR_STEPS_E0,   MENU_MODE_PRINTER,0)
-#define UI_MENU_MOTOR_E0_COND   ,&ui_menu_motor_e0, &ui_menu_motorsteps_e0
-#define UI_MENU_MOTOR_E0_COUNT 2
+UI_MENU_CHANGEACTION_FILTER(ui_menu_advanceL_e0,UI_TEXT_EXTR_ADVANCE_L_E0, UI_ACTION_ADVANCE_L_E0,   MENU_MODE_PRINTER,0)
+#define UI_MENU_MOTOR_E0_COND   ,&ui_menu_motor_e0, &ui_menu_motorsteps_e0, &ui_menu_advanceL_e0
+#define UI_MENU_MOTOR_E0_COUNT 3
 //UI_ACTION_EXTR_STEPS
 #if NUM_EXTRUDER>1
  UI_MENU_CHANGEACTION_FILTER(ui_menu_motor_e1,UI_TEXT_MOTOR_E1,UI_ACTION_CHOOSE_MOTOR_E1,       MENU_MODE_PRINTER,0) //extruder nur bei printermode
  UI_MENU_CHANGEACTION_FILTER(ui_menu_motorsteps_e1,UI_TEXT_EXTR_STEPS1, UI_ACTION_EXTR_STEPS_E1,   MENU_MODE_PRINTER,0)
- #define UI_MENU_MOTOR_E1_COND   ,&ui_menu_motor_e1, &ui_menu_motorsteps_e1
- #define UI_MENU_MOTOR_E1_COUNT 2
+ UI_MENU_CHANGEACTION_FILTER(ui_menu_advanceL_e1,UI_TEXT_EXTR_ADVANCE_L_E1, UI_ACTION_ADVANCE_L_E1,   MENU_MODE_PRINTER,0)
+ #define UI_MENU_MOTOR_E1_COND   ,&ui_menu_motor_e1, &ui_menu_motorsteps_e1, &ui_menu_advanceL_e1
+ #define UI_MENU_MOTOR_E1_COUNT 3
 #else
  #define UI_MENU_MOTOR_E1_COND 
  #define UI_MENU_MOTOR_E1_COUNT 0

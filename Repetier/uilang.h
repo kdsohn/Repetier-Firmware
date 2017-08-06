@@ -228,6 +228,8 @@
 #define UI_TEXT_EXTR_START_FEED         "Start FR:%Xf"
 #define UI_TEXT_EXTR_MAX_FEED           "Max FR:%XF"
 #define UI_TEXT_EXTR_ADVANCE_L          "Advance lin:%Xl"
+#define UI_TEXT_EXTR_ADVANCE_L_E0       "E0-Advance L:%Xb"
+#define UI_TEXT_EXTR_ADVANCE_L_E1       "E1-Advance L:%Xc"
 #define UI_TEXT_EXTR_ADVANCE_K          "Advance quad:%Xa"
 #define UI_TEXT_EXTR_MANAGER            "Control:%Xh"
 #define UI_TEXT_EXTR_PGAIN              "DT/PID P:%Xp"
@@ -354,7 +356,9 @@
 #define UI_TEXT_HEAT_BED_ZOFFSET_FIX_Z2 "%zS[U] (%zD)"
 #define UI_TEXT_STATUSMSG               "%os"
 
+#define UI_TEXT_SENSOR_1            " Pico/RepRa" //1 B57560G0107F000
 #define UI_TEXT_SENSOR_3            " EPCOS-G550" //3
+#define UI_TEXT_SENSOR_4            " 10k NTC" //4 10K für heizbett vom alternativen Hersteller ohne umbau.
 #define UI_TEXT_SENSOR_8            " 104-GT2" //8
 #define UI_TEXT_SENSOR_14           " 3950-100k" //14
 
