@@ -1856,12 +1856,12 @@ Bzw man könnte auch direkt ausgleichen, wenn der eine ins plus will, der andere
             return;
         }
     }
+/* 17_06_12 könnte das folgende hier fehlen? siehe bug mit dem verzählen. ... test irgendwann später mal.*/
     if( PrintLine::direct.isZMove() )
     {
         // do not peform any compensation while there is a direct-move into z-direction
         return;
     }
-
 
     if( compensatedPositionCurrentStepsZ < compensatedPositionTargetStepsZ )
     {

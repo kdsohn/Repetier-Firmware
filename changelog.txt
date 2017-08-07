@@ -5,6 +5,7 @@ TODO: Testing, testing ..
 
 V RF.01.37s4.Mod (2017-08-07)
 - Fixed E1 motor current menu
+- Removed Feature Emergency-Stop after 3x Pause
 
 V RF.01.37s3.Mod (2017-08-06)
 - Patched ADVANCE Feature to newest Repetier development version.
