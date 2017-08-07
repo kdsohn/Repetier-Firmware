@@ -1853,14 +1853,16 @@ Bzw man könnte auch direkt ausgleichen, wenn der eine ins plus will, der andere
         if( PrintLine::cur->isZMove() )
         {
             // do not peform any compensation while there is a "real" move into z-direction
-            return;
+            if( PrintLine::cur->stepsRemaining ) return;
+            else PrintLine::cur->setZMoveFinished();
         }
     }
 /* 17_06_12 könnte das folgende hier fehlen? siehe bug mit dem verzählen. ... test irgendwann später mal.*/
     if( PrintLine::direct.isZMove() )
     {
         // do not peform any compensation while there is a direct-move into z-direction
-        return;
+        if( PrintLine::direct.stepsRemaining ) return;
+        else PrintLine::direct.setZMoveFinished();
     }
 
     if( compensatedPositionCurrentStepsZ < compensatedPositionTargetStepsZ )
