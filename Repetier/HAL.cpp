@@ -23,24 +23,15 @@
 #if FEATURE_WATCHDOG
 unsigned long g_uLastCommandLoop = 0;
 unsigned char g_bPingWatchdog    = 0;
-/*
-unsigned long maT = 0;
-unsigned long miT = 2147483864;
-unsigned long laT = 0;
-unsigned long maCoLo = 0;
-*/
 #endif // FEATURE_WATCHDOG
-
 
 HAL::HAL()
 {
 } // HAL
 
-
 HAL::~HAL()
 {
 } // ~HAL
-
 
 uint16_t HAL::integerSqrt(int32_t a)
 {
@@ -252,16 +243,16 @@ int32_t HAL::CPUDivU2(unsigned int divisor)
 
 void HAL::setupTimer()
 {
-#if defined(USE_ADVANCE)
+#if USE_ADVANCE
     EXTRUDER_TCCR = 0;                              // need Normal not fastPWM set by arduino init
     EXTRUDER_TIMSK |= (1<<EXTRUDER_OCIE);           // Activate compa interrupt on timer 0
-#endif // defined(USE_ADVANCE)
+#endif // USE_ADVANCE
 
     PWM_TCCR = 0;                                   // Setup PWM interrupt
     PWM_OCR = 64;
     PWM_TIMSK |= (1<<PWM_OCIE);
 
-    TCCR1A = 0;                                     // Setup timer 1 interrupt to no prescale CTC mode
+    TCCR1A = 0;                                     // Stepper timer 1 interrupt to no prescale CTC mode
     TCCR1C = 0;
     TIMSK1 = 0;
     TCCR1B =  (_BV(WGM12) | _BV(CS10));             // no prescaler == 0.0625 usec tick | 001 = clk/1
@@ -816,8 +807,6 @@ volatile long __attribute__((used)) stepperWait  = 0;
 */
 ISR(TIMER1_COMPA_vect)
 {
-    static uint8_t insideTimer1 = 0;
-    if(insideTimer1) return;
     uint8_t doExit;
     __asm__ __volatile__ (
         "ldi %[ex],0 \n\t"
@@ -845,9 +834,9 @@ ISR(TIMER1_COMPA_vect)
         :[ex]"=&d"(doExit):[ocr]"i" (_SFR_MEM_ADDR(OCR1A)):"r22","r23" );
     if(doExit) return;
 
-    insideTimer1 = 1;
-    OCR1A        = 61000;
+    cbi(TIMSK1, OCIE1A); // prevent retrigger timer by disabling timer interrupt. Should be faster than guarding with insideTimer1.
 
+    OCR1A        = 61000;
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
     Printer::performZCompensation(); //no interrupttempering
@@ -864,7 +853,7 @@ ISR(TIMER1_COMPA_vect)
     {
         setTimer(PrintLine::performQueueMove()); //hier drin volatile markieren??
         DEBUG_MEMORY;
-        insideTimer1 = 0;
+        sbi(TIMSK1, OCIE1A);
         return;
     }
 
@@ -873,14 +862,14 @@ ISR(TIMER1_COMPA_vect)
     {
         setTimer(PrintLine::performDirectMove());
         DEBUG_MEMORY;
-        insideTimer1 = 0;
+        sbi(TIMSK1, OCIE1A);
         return;
     }
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
     if(waitRelax == 0)
     {
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
         if(Printer::advanceStepsSet)
         {
             Printer::extruderStepsNeeded -= Printer::advanceStepsSet;
@@ -895,17 +884,13 @@ ISR(TIMER1_COMPA_vect)
         if(DISABLE_E) Extruder::disableCurrentExtruderMotor();
 #endif // USE_ADVANCE
     }
-    else
-    {
-        waitRelax--;
-    }
+    else waitRelax--;
 
     stepperWait = 0;        // Important because of optimization in asm at begin
     OCR1A = 1000;        //65500   // Wait for next move
 
     DEBUG_MEMORY;
-    insideTimer1 = 0;
-
+    sbi(TIMSK1, OCIE1A);
 } // ISR(TIMER1_COMPA_vect)
 
 
@@ -943,16 +928,16 @@ This timer is called 3906 times per second. It is used to update pwm values for 
 */
 ISR(PWM_TIMER_VECTOR)
 {
-    static uint8_t insideTimerPWM = 0;
-    if(insideTimerPWM) return;
-    insideTimerPWM++;
+    //static uint8_t insideTimerPWM = 0;
+    //if(insideTimerPWM) return;
+    //insideTimerPWM++;
     static uint8_t pwm_count_heater = 0;
     static uint8_t pwm_count_cooler = 0;
     static uint8_t pwm_heater_pos_set[NUM_EXTRUDER+3];
     static uint8_t pwm_cooler_pos_set[NUM_EXTRUDER];
     PWM_OCR += 64;
 
-   if(pwm_count_heater == 0)
+    if(pwm_count_heater == 0)
     {
 #if EXT0_HEATER_PIN>-1
         if((pwm_heater_pos_set[0] = (pwm_pos[0] & HEATER_PWM_MASK))>0) WRITE(EXT0_HEATER_PIN,!HEATER_PINS_INVERTED);
@@ -1171,36 +1156,49 @@ ISR(PWM_TIMER_VECTOR)
 #endif // FEATURE_RGB_LIGHT_EFFECTS
 
     (void)pwm_cooler_pos_set;
-    insideTimerPWM--;
+    //insideTimerPWM--;
 } // ISR(PWM_TIMER_VECTOR)
 
+#if USE_ADVANCE
 
-#if defined(USE_ADVANCE)
+static int8_t extruderLastDirection = 0;
+#ifndef ADVANCE_DIR_FILTER_STEPS
+#define ADVANCE_DIR_FILTER_STEPS 2
+#endif
+
+void HAL::resetExtruderDirection()
+{
+    extruderLastDirection = 0;
+}
 /** \brief Timer routine for extruder stepper.
 Several methods need to move the extruder. To get a optima result,
-all methods update the Printer::extruderStepsNeeded with the
+all methods update the printer_state.extruderStepsNeeded with the
 number of additional steps needed. During this interrupt, one step
 is executed. This will keep the extruder moving, until the total
 wanted movement is achieved. This will be done with the maximum
-allowable speed for the extruder. */
+allowable speed for the extruder.
+*/
 ISR(EXTRUDER_TIMER_VECTOR)
 {
-    static int8_t   extruderLastDirection = 0;
-    uint8_t         timer = EXTRUDER_OCR;
-
-
+    uint8_t timer = EXTRUDER_OCR;
     if(!Printer::isAdvanceActivated()) return; // currently no need
-    if(Printer::extruderStepsNeeded > 0 && extruderLastDirection!=1)
+    if(Printer::extruderStepsNeeded > 0 && extruderLastDirection != 1)
     {
-        Extruder::setDirection(true);
-        extruderLastDirection = 1;
-        timer += 40; // Add some more wait time to prevent blocking
+        if(Printer::extruderStepsNeeded >= ADVANCE_DIR_FILTER_STEPS)
+        {
+            Extruder::setDirection(true);
+            extruderLastDirection = 1;
+            timer += 40; // Add some more wait time to prevent blocking
+        }
     }
-    else if(Printer::extruderStepsNeeded < 0 && extruderLastDirection!=-1)
+    else if(Printer::extruderStepsNeeded < 0 && extruderLastDirection != -1)
     {
-        Extruder::setDirection(false);
-        extruderLastDirection = -1;
-        timer += 40; // Add some more wait time to prevent blocking
+        if(-Printer::extruderStepsNeeded >= ADVANCE_DIR_FILTER_STEPS)
+        {
+            Extruder::setDirection(false);
+            extruderLastDirection = -1;
+            timer += 40; // Add some more wait time to prevent blocking
+        }
     }
     else if(Printer::extruderStepsNeeded != 0)
     {
@@ -1210,10 +1208,8 @@ ISR(EXTRUDER_TIMER_VECTOR)
         Extruder::unstep();
     }
     EXTRUDER_OCR = timer + Printer::maxExtruderSpeed;
-
-} // ISR(EXTRUDER_TIMER_VECTOR)
-#endif // defined(USE_ADVANCE)
-
+}
+#endif // USE_ADVANCE
 
 #ifndef EXTERNALSERIAL
 // Implement serial communication for one stream only!
