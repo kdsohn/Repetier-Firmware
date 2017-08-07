@@ -6762,9 +6762,6 @@ void parkPrinter( void )
 #if FEATURE_PAUSE_PRINTING
 void pausePrint( void )
 {
-    //long  Temp;
-
-
     if( Printer::debugErrors() )
     {
         Com::printFLN( PSTR( "pausePrint()" ) );
@@ -6782,7 +6779,6 @@ void pausePrint( void )
                 {
                     Com::printFLN( PSTR( "pausePrint(): pause is not available at the moment because the home position is unknown" ) );
                 }
-
                 showError( (void*)ui_text_pause, (void*)ui_text_home_unknown );
                 return;
             }
@@ -6813,11 +6809,9 @@ void pausePrint( void )
             g_nContinueSteps[Y_AXIS] = 0;
             g_nContinueSteps[Z_AXIS] = 0;
 
-
 #if FEATURE_MILLING_MODE
             if( Printer::operatingMode == OPERATING_MODE_PRINT )
-            {
-                // we do not process the extruder in case we are not in operating mode "print"
+            { // we do not process the extruder in case we are not in operating mode "print"
 #endif // FEATURE_MILLING_MODE
                 if( g_nPauseSteps[E_AXIS] )
                 {
@@ -6840,12 +6834,13 @@ void pausePrint( void )
             return;
         }
 
-        g_pauseStatus = PAUSE_STATUS_PAUSED;
-
+        //g_pauseStatus = PAUSE_STATUS_PAUSED; //Nibbels: Pausestatus ist hier in jedem Fall schon PAUSE_STATUS_PAUSED! Siehe Tasks in Queue.. und Whileschleife oben.
+        /*
         Printer::stepperDirection[X_AXIS]   = 0;
         Printer::stepperDirection[Y_AXIS]   = 0;
         Printer::stepperDirection[Z_AXIS]   = 0;
         Extruder::current->stepperDirection = 0;
+        */
         return;
     }
 
@@ -6898,23 +6893,7 @@ void pausePrint( void )
         UI_STATUS( UI_TEXT_PAUSED );
         return;
     }
-
-#if FEATURE_EMERGENCY_STOP_VIA_PAUSE
-    if( g_pauseMode == PAUSE_MODE_PAUSED_AND_MOVED )
-    {
-        // in case the print is paused and the extruder is moved away already, we kill the printing
-        if( Printer::debugInfo() )
-        {
-            Com::printFLN( PSTR( "pausePrint(): emergency stop" ) );
-        }
-        HAL::delayMilliseconds( 100 );
-        Commands::emergencyStop();
-        return;
-    }
-#endif // FEATURE_EMERGENCY_STOP_VIA_PAUSE
-
     return;
-
 } // pausePrint
 
 

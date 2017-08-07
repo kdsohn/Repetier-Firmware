@@ -3,6 +3,9 @@ TODO: Possible Z-Lift Bug in original RF1.37
 TODO: Test if ADVANCE-Feature really works. Test if it is possible to autotune due to DMS-Sensors of RFx000
 TODO: Testing, testing ..
 
+V RF.01.37s4.Mod (2017-08-07)
+- Fixed E1 motor current menu
+
 V RF.01.37s3.Mod (2017-08-06)
 - Patched ADVANCE Feature to newest Repetier development version.
 

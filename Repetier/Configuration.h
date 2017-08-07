@@ -130,9 +130,6 @@ XYZ_POSITION_BUTTON_DIRECTION = 1 : This fits more if you want to stick to stand
 */
 #define XYZ_POSITION_BUTTON_DIRECTION       1
 
-/** \brief Allows to cause an emergency stop via a 3-times push of the pause button */
-#define FEATURE_EMERGENCY_STOP_VIA_PAUSE    0                                                   // 1 = on, 0 = off
-
 /** \brief Enables/disables the emergency stop in case of too high pressure */
 #define FEATURE_EMERGENCY_STOP_ALL          1                                                   // 1 = on, 0 = off
 

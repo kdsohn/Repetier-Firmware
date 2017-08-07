@@ -718,8 +718,12 @@ can set it on for safety. */
 // ##########################################################################################
 
 /** \brief Motor Current MAX setting */
-#define MOTOR_CURRENT_MAX                       {145,140,100,90,90}                             // Values 0-255 (126 = ~2A), order: driver 1 (x), driver 2 (y), driver 3 (z), driver 4 (extruder 1), driver 5 (extruder 2)  
-/** \brief Motor Current settings at start: Tweak with menu for better silence <-> stability */
+#define MOTOR_CURRENT_MAX                       {145,140,120,105,105}                             // Values 0-255 (126 = ~2A), order: driver 1 (x), driver 2 (y), driver 3 (z), driver 4 (extruder 1), driver 5 (extruder 2)  
+
+/** \brief Motor Current settings at start: Tweak with menu for better silence <-> stability 
+// The RF2000 has one more stepper and the same 8A-24V power supply as RF1000. We think that this is the reason for lower stepper currents set by conrad renkforce - but dont know. 
+// I increased MAX a little bit over stock settings, but decreased normal settings to fairly low power and noise. Take that into account when tuning in your steppers according your needs.
+*/
 #define MOTOR_CURRENT_NORMAL                    {110,110,95,90,90}
 #define MOTOR_CURRENT_MIN                       EXTRUDER_CURRENT_PAUSED
 

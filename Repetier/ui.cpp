@@ -3919,23 +3919,20 @@ void UIDisplay::nextPreviousAction(int8_t next)
         case UI_ACTION_CHOOSE_MOTOR_E0:
         case UI_ACTION_CHOOSE_MOTOR_E1:
         {
-            if( PrintLine::linesCount && false ){
-                //während dem drucken nicht strom ändern?? oder doch möglich machen?
-            }else{
-                uint8_t steppernr = uid.menuPos[uid.menuLevel];
-                if(steppernr < 5) { // aktuell gibts nur 5
-                    int drive = Printer::motorCurrent[steppernr];
-                    const short uMotorCurrentMax[] = MOTOR_CURRENT_MAX;
-                    INCREMENT_MIN_MAX(drive,1,MOTOR_CURRENT_MIN,uMotorCurrentMax[steppernr]); //von 40 bis maximal das was in der config steht.
-                    Printer::motorCurrent[steppernr] = drive;
+            uint8_t steppernr = uid.menuPos[uid.menuLevel];
+            if(steppernr == 6) steppernr = 4; //das ist etwas stümperhaft, aber ich brauche die Zeilennummer um auszuwählen und die Einstellungen für die Extruderstepper gehören drüber, also muss Extruder 2 zwei Zeilen runter...
+            if(steppernr < 5) { // aktuell gibts nur 5
+                int drive = Printer::motorCurrent[steppernr];
+                const short uMotorCurrentMax[] = MOTOR_CURRENT_MAX;
+                INCREMENT_MIN_MAX(drive,1,MOTOR_CURRENT_MIN,uMotorCurrentMax[steppernr]); //von 40 bis maximal das was in der config steht.
+                Printer::motorCurrent[steppernr] = drive;
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
-                    HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+steppernr, (uint8_t)drive  );
-                    EEPROM::updateChecksum();
+                HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+steppernr, (uint8_t)drive  );
+                EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-                    setMotorCurrent( steppernr+1, drive );
-                    Com::printF( PSTR( "Stepper" ), steppernr+1 );
-                    Com::printFLN( PSTR( " = " ), drive );
-                }
+                setMotorCurrent( steppernr+1, drive );
+                Com::printF( PSTR( "Stepper" ), steppernr+1 );
+                Com::printFLN( PSTR( " = " ), drive );
             }
             break;
         }
