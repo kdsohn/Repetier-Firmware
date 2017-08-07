@@ -9436,7 +9436,7 @@ void processCommand( GCode* pCommand )
 								if( PrintLine::direct.isZMove() )
 								{
 									// do not perform any compensation in case the moving is blocked
-									Com::printFLN( PSTR( "; return directZ;" ) );
+									Com::printFLN( PSTR( "; return directZ;" ), PrintLine::direct.stepsRemaining );
 								}
 								if( PrintLine::cur->isZMove() )
 								{
