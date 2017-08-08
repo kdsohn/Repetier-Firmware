@@ -1,7 +1,13 @@
 TODO: Pause-Back-Drive-Bug in original RF1.37
 TODO: Possible Z-Lift Bug in original RF1.37
 TODO: Test if ADVANCE-Feature really works. Test if it is possible to autotune due to DMS-Sensors of RFx000
+TODO: Test if zCompensation is sometimes still inactive because of directDriveZ
 TODO: Testing, testing ..
+
+V RF.01.37s5.Mod (2017-08-08)
+- When DirectDrive was activ in Z sometimes the last State of "unfinished direct-Z-driving" was still set. Then the Z-Compensation did not work. I am now trying to fix or override this.
+If you still experience problems with first layer tell me!
+- Increased ADVANCE factor L Limit to 100 within Menu (was 1..60). Btw: EEPROM-Support has no limit rightnow. And ADVANCE seems to be awsome :D
 
 V RF.01.37s4.Mod (2017-08-07)
 - Fixed E1 motor current menu

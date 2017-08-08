@@ -3541,7 +3541,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 
         case UI_ACTION_ADVANCE_L_E0:
         {
-            INCREMENT_MIN_MAX(extruder[0].advanceL,1,0,60); //Nibbels TODO gute Werte zulassen? Ist Step 1 ok?
+            INCREMENT_MIN_MAX(extruder[0].advanceL,1.0f,0.0f,100.0f); //Nibbels TODO gute Werte zulassen? Ist Step 1 ok? -> 60 war zu wenig.
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EEPROM::getExtruderOffset(0)+EPR_EXTRUDER_ADVANCE_L,extruder[0].advanceL);
             EEPROM::updateChecksum();
@@ -3551,7 +3551,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if NUM_EXTRUDER > 1
         case UI_ACTION_ADVANCE_L_E1:
         {
-            INCREMENT_MIN_MAX(extruder[1].advanceL,1,0,60); //Nibbels TODO gute Werte zulassen? Ist Step 1 ok?
+            INCREMENT_MIN_MAX(extruder[1].advanceL,1.0f,0.0f,100.0f); //Nibbels TODO gute Werte zulassen? Ist Step 1 ok? -> 60 war zu wenig.
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EEPROM::getExtruderOffset(1)+EPR_EXTRUDER_ADVANCE_L,extruder[1].advanceL);
             EEPROM::updateChecksum();
