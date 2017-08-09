@@ -892,7 +892,6 @@ If your EXT0_PID_MAX is low, you should prefer the second method. */
 
 /** \brief Temperature range for target temperature to hold in M109 command. 5 means +/-5 degC
 Uncomment define to force the temperature into the range for given watchperiod. */
-//#define TEMP_HYSTERESIS                   5
 #define TEMP_TOLERANCE                      2.0f                                               // [°C]
 
 /** \brief Bits of the ADC converter */

@@ -6918,9 +6918,6 @@ void continuePrint( void )
 
 void determinePausePosition( void )
 {
-    long    Max;
-    long    Temp;
-
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
@@ -6943,7 +6940,7 @@ void determinePausePosition( void )
 
     if( g_nPauseSteps[X_AXIS] )
     {
-        Temp = g_nPauseSteps[X_AXIS];
+        long Temp = g_nPauseSteps[X_AXIS];
         Temp += Printer::queuePositionCurrentSteps[X_AXIS];
         Temp += Printer::directPositionTargetSteps[X_AXIS];
 
@@ -6966,7 +6963,7 @@ void determinePausePosition( void )
         }
         else if( g_nPauseSteps[X_AXIS] > 0 )
         {
-            Max = long((Printer::lengthMM[X_AXIS] -5) * Printer::axisStepsPerMM[X_AXIS]);
+            long  Max = long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS]) - PAUSE_X_MIN;
             if( Temp > Max )
             {
                 // we can move only partially
@@ -6988,7 +6985,7 @@ void determinePausePosition( void )
 
     if( g_nPauseSteps[Y_AXIS] )
     {
-        Temp =  g_nPauseSteps[Y_AXIS];
+        long Temp = g_nPauseSteps[Y_AXIS];
         Temp += Printer::queuePositionCurrentSteps[Y_AXIS];
         Temp += Printer::directPositionTargetSteps[Y_AXIS];
 
@@ -7011,7 +7008,7 @@ void determinePausePosition( void )
         }
         else if( g_nPauseSteps[Y_AXIS] > 0 )
         {
-            Max = long((Printer::lengthMM[Y_AXIS] -5) * Printer::axisStepsPerMM[Y_AXIS]);
+            long  Max = long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS]) - PAUSE_Y_MIN;
             if( Temp > Max )
             {
                 // we can move only partially
@@ -7030,8 +7027,6 @@ void determinePausePosition( void )
     }else{
         g_nContinueSteps[Y_AXIS] = 0;
     }
-    return;
-
 } // determinePausePosition
 
 void determineZPausePositionForPrint( void )
@@ -7050,7 +7045,7 @@ void determineZPausePositionForPrint( void )
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
         Temp += Printer::directPositionTargetSteps[Z_AXIS];
-        Max  =  long((Printer::lengthMM[Z_AXIS] -2) * Printer::axisStepsPerMM[Z_AXIS]);
+        Max  =  long(Printer::lengthMM[Z_AXIS] * Printer::axisStepsPerMM[Z_AXIS]) - PAUSE_Z_MIN;
 
         if( Temp <= Max )
         {

@@ -539,9 +539,6 @@ The codes are only executed for multiple extruder when changing the extruder. */
 /** \brief Maximal temperature which can be set for the heating bed */
 #define HEATED_BED_MAX_TEMP                 180
 
-/** \brief Skip M190 wait, if heated bed is already within x degrees. Fixed numbers only, 0 = off. */
-#define SKIP_M190_IF_WITHIN                 3
-
 /** \brief Select type of your heated bed. It's the same as for EXT0_TEMPSENSOR_TYPE
 set to 0 if you don't have a heated bed */
 #define HEATED_BED_SENSOR_TYPE              3
@@ -1155,10 +1152,10 @@ Above this value the z compensation will distribute the roughness of the surface
 #if FEATURE_PAUSE_PRINTING 
 
 /** \brief Configuration of the pause steps */
-#define DEFAULT_PAUSE_STEPS_X               (XAXIS_STEPS_PER_MM *50)
-#define DEFAULT_PAUSE_STEPS_Y               (YAXIS_STEPS_PER_MM *50)
-#define DEFAULT_PAUSE_STEPS_Z               (ZAXIS_STEPS_PER_MM *2)
-#define DEFAULT_PAUSE_STEPS_EXTRUDER        (EXT0_STEPS_PER_MM * Z_PAUSE_RETRACT_MM)
+#define DEFAULT_PAUSE_STEPS_X               (XAXIS_STEPS_PER_MM * -200)
+#define DEFAULT_PAUSE_STEPS_Y               (YAXIS_STEPS_PER_MM * 200)
+#define DEFAULT_PAUSE_STEPS_Z               (ZAXIS_STEPS_PER_MM * 100)
+#define DEFAULT_PAUSE_STEPS_EXTRUDER        (EXT0_STEPS_PER_MM  * 1.5f)
 
 #define PAUSE_X_MIN                         (XAXIS_STEPS_PER_MM *5)
 #define PAUSE_Y_MIN                         (YAXIS_STEPS_PER_MM *5)

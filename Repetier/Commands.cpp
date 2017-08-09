@@ -1183,18 +1183,14 @@ void Commands::executeGCode(GCode *com)
                     Commands::waitUntilEndOfAllMoves();
                     if (com->hasS()) Extruder::setHeatedBedTemperature(com->S,com->hasF() && com->F>0);
 
-#if defined (SKIP_M190_IF_WITHIN) && SKIP_M190_IF_WITHIN>0
-                    if(abs(heatedBedController.currentTemperatureC-heatedBedController.targetTemperatureC)<SKIP_M190_IF_WITHIN)
+                    if( fabs(heatedBedController.currentTemperatureC-heatedBedController.targetTemperatureC) < TEMP_TOLERANCE )
                     {
                         // we are already in range
-
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                         Printer::waitMove = 0;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-
                         break;
                     }
-#endif // (SKIP_M190_IF_WITHIN) && SKIP_M190_IF_WITHIN>0
 
                     while(heatedBedController.currentTemperatureC+TEMP_TOLERANCE < heatedBedController.targetTemperatureC)
                     {
