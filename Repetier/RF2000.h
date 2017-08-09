@@ -105,7 +105,7 @@ If EEPROM is enabled these values will be overidden with the values in the EEPRO
 #define X_MAX_LENGTH_PRINT                  (long)180
 #define X_MAX_LENGTH_MILL                   (long)230
 #define Y_MAX_LENGTH                        (long)245
-#define Z_MAX_LENGTH                        (long)200
+#define Z_MAX_LENGTH                        (long)200 //RF2000 von Nibbels: ~194,86 -> PAUSE_Z_MAX_SPACING großzügig einplanen
 
 /** \brief Coordinates for the minimum axis. Can also be negative if you want to have the bed start at 0 and the printer can go to the left side
 of the bed. Maximum coordinate is given by adding the above MAX_LENGTH values. */
@@ -1157,9 +1157,9 @@ Above this value the z compensation will distribute the roughness of the surface
 #define DEFAULT_PAUSE_STEPS_Z               (ZAXIS_STEPS_PER_MM * 100)
 #define DEFAULT_PAUSE_STEPS_EXTRUDER        (EXT0_STEPS_PER_MM  * 1.5f)
 
-#define PAUSE_X_MIN                         (XAXIS_STEPS_PER_MM *5)
-#define PAUSE_Y_MIN                         (YAXIS_STEPS_PER_MM *5)
-#define PAUSE_Z_MIN                         (ZAXIS_STEPS_PER_MM *2)
+#define PAUSE_X_SPACING                     (XAXIS_STEPS_PER_MM * 5)
+#define PAUSE_Y_SPACING                     (YAXIS_STEPS_PER_MM * 5)
+#define PAUSE_Z_MAX_SPACING                 (ZAXIS_STEPS_PER_MM * 15)
 
 #endif // FEATURE_PAUSE_PRINTING
 

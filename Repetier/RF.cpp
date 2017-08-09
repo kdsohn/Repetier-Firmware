@@ -6946,10 +6946,10 @@ void determinePausePosition( void )
 
         if( g_nPauseSteps[X_AXIS] < 0 )
         {
-            if( Temp < PAUSE_X_MIN )
+            if( Temp < PAUSE_X_SPACING )
             {
                 // we can move only partially
-                Temp = PAUSE_X_MIN - Printer::directPositionTargetSteps[X_AXIS];
+                Temp = PAUSE_X_SPACING - Printer::directPositionTargetSteps[X_AXIS];
                 Temp -= Printer::queuePositionCurrentSteps[X_AXIS];
 
                 Printer::directPositionTargetSteps[X_AXIS] += Temp;
@@ -6963,7 +6963,7 @@ void determinePausePosition( void )
         }
         else if( g_nPauseSteps[X_AXIS] > 0 )
         {
-            long  Max = long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS]) - PAUSE_X_MIN;
+            long  Max = long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS]) - PAUSE_X_SPACING;
             if( Temp > Max )
             {
                 // we can move only partially
@@ -6991,10 +6991,10 @@ void determinePausePosition( void )
 
         if( g_nPauseSteps[Y_AXIS] < 0 )
         {
-            if( Temp < PAUSE_Y_MIN )
+            if( Temp < PAUSE_Y_SPACING )
             {
                 // we can move only partially
-                Temp =  PAUSE_Y_MIN - Printer::directPositionTargetSteps[Y_AXIS];
+                Temp =  PAUSE_Y_SPACING - Printer::directPositionTargetSteps[Y_AXIS];
                 Temp -= Printer::queuePositionCurrentSteps[Y_AXIS];
 
                 Printer::directPositionTargetSteps[Y_AXIS] += Temp;
@@ -7008,7 +7008,7 @@ void determinePausePosition( void )
         }
         else if( g_nPauseSteps[Y_AXIS] > 0 )
         {
-            long  Max = long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS]) - PAUSE_Y_MIN;
+            long  Max = long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS]) - PAUSE_Y_SPACING;
             if( Temp > Max )
             {
                 // we can move only partially
@@ -7031,21 +7031,18 @@ void determinePausePosition( void )
 
 void determineZPausePositionForPrint( void )
 {
-    long    Max;
-    long    Temp;
-
     // in operating mode "print", pausing drives from the current position downwards the specified g_nPauseSteps[Z_AXIS]
     if( g_nPauseSteps[Z_AXIS] )
     {
-        Temp =  g_nPauseSteps[Z_AXIS];
+        long Temp =  g_nPauseSteps[Z_AXIS];
         Temp += Printer::queuePositionCurrentSteps[Z_AXIS];
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         Temp += Printer::compensatedPositionCurrentStepsZ;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-
         Temp += Printer::directPositionTargetSteps[Z_AXIS];
-        Max  =  long(Printer::lengthMM[Z_AXIS] * Printer::axisStepsPerMM[Z_AXIS]) - PAUSE_Z_MIN;
+
+        long Max  =  long(Printer::lengthMM[Z_AXIS] * Printer::axisStepsPerMM[Z_AXIS]) - PAUSE_Z_MAX_SPACING;
 
         if( Temp <= Max )
         {
