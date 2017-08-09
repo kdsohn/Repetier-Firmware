@@ -878,13 +878,17 @@ extern void outputObject( void );
 extern void parkPrinter( void );
 #endif // FEATURE_PARK
 
+#if FEATURE_PAUSE_PRINTING
+
+extern bool processingDirectMove();
+extern void checkPauseStatus_fromTask();
+extern void waitforPauseStatus_fromButton();
 // pausePrint()
 extern void pausePrint( void );
 
 // continuePrint()
 extern void continuePrint( void );
 
-#if FEATURE_PAUSE_PRINTING
 // determinePausePosition()
 extern void determinePausePosition( void );
 

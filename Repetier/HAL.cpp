@@ -849,9 +849,16 @@ ISR(TIMER1_COMPA_vect)
     }
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
+    if(PrintLine::performPauseCheck()){
+        setTimer(1000);
+        DEBUG_MEMORY;
+        sbi(TIMSK1, OCIE1A);
+        return;
+    }
+
     if(Printer::allowQueueMove())
     {
-        setTimer(PrintLine::performQueueMove()); //hier drin volatile markieren??
+        setTimer(PrintLine::performQueueMove());
         DEBUG_MEMORY;
         sbi(TIMSK1, OCIE1A);
         return;

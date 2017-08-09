@@ -38,7 +38,6 @@
 #define FLAG_JOIN_WAIT_EXTRUDER_UP      64  // Wait for the extruder to finish it's up movement
 #define FLAG_JOIN_WAIT_EXTRUDER_DOWN    128 // Wait for the extruder to finish it's down movement
 
-
 class UIDisplay;
 class PrintLine
 {
@@ -241,21 +240,32 @@ public:
     inline void setXMoveFinished()
     {
         dir&=~16;
+        Printer::stepperDirection[X_AXIS] = 0;
     } // setXMoveFinished
 
     inline void setYMoveFinished()
     {
         dir&=~32;
+        Printer::stepperDirection[Y_AXIS] = 0;
     } // setYMoveFinished
 
     inline void setZMoveFinished()
     {
         dir&=~64;
+        Printer::stepperDirection[Z_AXIS] = 0;
     } // setZMoveFinished
+
+    inline void setEMoveFinished()
+    {
+        dir&=~128;
+        Extruder::current->stepperDirection = 0;
+    } // setEMoveFinished
 
     inline void setXYMoveFinished()
     {
         dir&=~48;
+        Printer::stepperDirection[Y_AXIS] = 0;
+        Printer::stepperDirection[X_AXIS] = 0;
     } // setXYMoveFinished
 
     inline bool isXPositiveMove()
@@ -523,6 +533,7 @@ public:
     } // getNextWriteLine
 
     static inline void computeMaxJunctionSpeed(PrintLine *previous,PrintLine *current);
+    static long performPauseCheck();
     static long performQueueMove();
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
@@ -671,5 +682,26 @@ inline void endZStep( void )
 
 } // endZStep
 
+inline bool isDirectOrQueueXMove(){
+    if( PrintLine::cur ) if( PrintLine::cur->isXMove() ) return true;
+    if( PrintLine::direct.isXMove() ) return true;
+    return false;
+} //isDirectOrQueueXMove
+inline bool isDirectOrQueueYMove(){
+    if( PrintLine::cur ) if( PrintLine::cur->isYMove() ) return true;
+    if( PrintLine::direct.isYMove() ) return true;
+    return false;
+} //isDirectOrQueueYMove
+inline bool isDirectOrQueueOrCompZMove(){
+    if( PrintLine::cur ) if( PrintLine::cur->isZMove() ) return true;
+    if( PrintLine::direct.isZMove() ) return true;
+    if( Printer::endZCompensationStep ) return true;
+    return false;
+} //isDirectOrQueueOrCompZMove
+inline bool isDirectOrQueueEMove(){
+    if( PrintLine::cur ) if( PrintLine::cur->isEMove() ) return true;
+    if( PrintLine::direct.isEMove() ) return true;
+    return false;
+} //isDirectOrQueueEMove
 
 #endif // MOTION_H
