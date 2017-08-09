@@ -9,6 +9,8 @@ V RF.01.37s6.Mod (2017-08-09)
 - changed Emergency-Pause to double Pause.
 - removed warning when changed position 1mm/10mm/50mm multiple times and too fast.
 - cleaned up "StepperPositions"
+- added ADVANCE to DirectSteps
+- ADVANCE increment rises with high values
 
 V RF.01.37s5.Mod (2017-08-08)
 - When DirectDrive was activ in Z sometimes the last State of "unfinished direct-Z-driving" was still set. Then the Z-Compensation did not work. I am now trying to fix or override this.
