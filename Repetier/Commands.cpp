@@ -280,16 +280,19 @@ void Commands::printTemperatures(bool showRaw)
     #endif // HAVE_HEATED_BED
     #endif // HEATED_BED_SENSOR_TYPE==0
 
+        // Show output of autotune when tuning!
+        Com::printF(Com::tSpaceAtColon,(autotuneIndex==255?pwm_pos[Extruder::current->id]:pwm_pos[autotuneIndex]));
+
 #if RESERVE_ANALOG_INPUTS
         //Act as heated chamber ambient temperature for Repetier-Server 0.86.2+ ---> Letter C
         TemperatureController* act = &optTempController;
         act->updateCurrentTemperature();
         Com::printF(Com::tSpaceChamber );
-        Com::printF(Com::tColon,act->currentTemperatureC);
-        Com::printF(Com::tSpaceSlash,0,0); //old :  //RESERVE_SENSOR_INDEX
+        Com::printF(Com::tColon,act->currentTemperatureC); //temp
+        Com::printF(Com::tSpaceSlash,0,0); // ziel-temp
+        Com::printF(Com::tSpaceAtColon,0); // leistung
 #endif // RESERVE_ANALOG_INPUTS
 
-    Com::printF(Com::tSpaceAtColon,(autotuneIndex==255?pwm_pos[Extruder::current->id]:pwm_pos[autotuneIndex])); // Show output of autotune when tuning!
 
     #if NUM_EXTRUDER>1
         for(uint8_t i=0; i<NUM_EXTRUDER; i++)
