@@ -98,6 +98,7 @@ public:
     FSTRINGVAR(tMS1MS2Pins)
     FSTRINGVAR(tSetOutputSpace)
     FSTRINGVAR(tSpaceToSpace)
+	FSTRINGVAR(tSpaceChamber)
     FSTRINGVAR(tHSpace)
     FSTRINGVAR(tLSpace)
     FSTRINGVAR(tXMinColon)
