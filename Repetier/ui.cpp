@@ -36,6 +36,7 @@ extern const int8_t encoder_table[16] PROGMEM ;
 
 #if UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER
 millis_t g_nAutoReturnTime       = 0;
+bool     g_nAutoReturnMessage    = false;
 #endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER
 
 char    g_nYesNo                 = 0;       // 0 = no, 1 = yes
@@ -5218,13 +5219,13 @@ void UIDisplay::slowAction()
 #if UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER
     if(menuLevel>0 && g_nAutoReturnTime && g_nAutoReturnTime<time)
     {
-        if( menu[menuLevel] != &ui_menu_message )
+        if( menu[menuLevel] != &ui_menu_message || g_nAutoReturnMessage )
         {
             lastSwitch = time;
             menuLevel=0;
             activeAction = 0;
+            g_nAutoReturnMessage = false;
         }
-        
         g_nAutoReturnTime = 0;
     }
 #endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER

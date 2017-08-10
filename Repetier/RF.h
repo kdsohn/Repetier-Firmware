@@ -933,6 +933,7 @@ extern void setMotorCurrent( unsigned char driver, uint8_t level );
 
 // motorCurrentControlInit()
 extern void motorCurrentControlInit( void );
+extern unsigned short readMotorStatus( unsigned char driver );
 #endif // CURRENT_CONTROL_DRV8711
 
 

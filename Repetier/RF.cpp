@@ -2352,6 +2352,8 @@ void searchZOScan( void )
                 if( calculateZScrewCorrection() ){
                    UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN );
                    showMyPage( (void*)ui_text_heat_bed_zoffset_search_status, (void*)ui_text_heat_bed_zoffset_fix_z1, (void*)ui_text_heat_bed_zoffset_fix_z2, (void*)ui_text_statusmsg );
+                   g_nAutoReturnMessage = true;
+                   g_nAutoReturnTime=HAL::timeInMilliseconds()+20000;
                 }else{
                    UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_ABORTED );
                 }
@@ -2364,6 +2366,7 @@ void searchZOScan( void )
                 PrintLine::moveRelativeDistanceInSteps( 0, -yScanPosition, 0, 0, MAX_FEEDRATE_Y, true, true );
                 g_nZScanZPosition += moveZ( -g_nZScanZPosition );    // g_nZScanZPosition counts z-steps. we need to move the heatbed down to be at z=0 again
                 //g_nZScanZPosition is 0 now.
+                BEEP_SHORT
                 break;
             }
         }
@@ -10606,6 +10609,15 @@ void processCommand( GCode* pCommand )
             }
 #endif // RESERVE_ANALOG_INPUTS
 
+            case 3987: // M3987 reading motor driver and stall pins - Testfunction || by Nibbels
+            {
+                Com::printFLN( PSTR( "M3987 MotorStatus X-Y-Z-E0-E1 ..." ) );
+                for(uint8_t driver = 1; driver <= 5; driver++){
+                  readMotorStatus( driver );
+                }
+                break;
+            }
+
         }
     }
 
@@ -11718,9 +11730,6 @@ void drv8711Disable( unsigned char driver )
 
 void drv8711Init( void )
 {
-    //char  i;
-  
-
     // configure the pins
     WRITE( DRV_RESET1, LOW );
     SET_OUTPUT( DRV_RESET1 );
@@ -11844,6 +11853,92 @@ void motorCurrentControlInit( void )
         else setMotorCurrent( i+1, MOTOR_CURRENT_MIN );
     }
 } // motorCurrentControlInit
+
+
+unsigned short readMotorStatus( unsigned char driver )
+{
+    //driver:
+    //X = 1
+    //Y = 2
+    //Z = 3
+    //E0 = 4
+    //E1 = 5
+
+/*
+0	OTS	1	R/W	0	0: Normal operation 
+1: Device has entered overtemperature shutdown 
+Write a 0 to this bit to clear the fault. 
+Operation automatically resumes when the temperature has fallen to safe levels.
+1	AOCP	1	R/W	0	0: Normal operation 
+1: Channel A overcurrent shutdown 
+Write a 0 to this bit to clear the fault and resume operation
+2	BOCP	1	R/W	0	0: Normal operation 
+1: Channel B overcurrent shutdown 
+Write a 0 to this bit to clear the fault and resume operation
+3	APDF	1	R/W	0	0: Normal operation 
+1: Channel A predriver fault 
+Write a 0 to this bit to clear the fault and resume operation.
+4	BPDF	1	R/W	0	0: Normal operation 
+1: Channel B predriver fault 
+Write a 0 to this bit to clear the fault and resume operation
+5	UVLO	1	R/W	0	0: Normal operation 
+1: Undervoltage lockout 
+Write a 0 to this bit to clear the fault. The UVLO bit cannot be cleared in sleep mode. Operation automatically resumes when VM has increased above VUVLO
+6	STD	1	R	0	0: Normal operation 
+1: Stall detected
+7	STDLAT	1	R/W	0	0: Normal operation 
+1: Latched stall detect 
+Write a 0 to this bit to clear the fault and resume operation
+11-8	Reserved	4	-	-	Reserved
+*/
+
+// configure the pins
+ WRITE( DRV_SCLK, LOW );
+ SET_OUTPUT( DRV_SCLK );
+ WRITE( DRV_SDATI, LOW );
+ SET_OUTPUT( DRV_SDATI );
+
+ drv8711Enable( driver );
+ unsigned short status = drv8711Receive( 7 ); //7.6.9 STATUS Register (Address = 0x07)
+ drv8711Disable( driver );
+
+ Com::printF( PSTR( "Driver: " ), driver );
+ switch( driver )
+ {
+        case 1:{ Com::printFLN( PSTR( "X" ) ); break; }
+        case 2:{ Com::printFLN( PSTR( "Y" ) ); break; }
+        case 3:{ Com::printFLN( PSTR( "Z" ) ); break; }
+        case 4:{ Com::printFLN( PSTR( "E0" ) ); break; }
+        case 5:{ Com::printFLN( PSTR( "E1" ) ); break; }
+ }
+ 
+ uint8_t bit = 0;
+ for( uint8_t n = 0; n <= 7; n++ ){
+    bit = status & (1 << n) ? 1:0;
+    switch (n){
+        case 0:{ Com::printFLN( PSTR( "OTS OverTemp " ), bit ); break; }
+        case 1:{ Com::printFLN( PSTR( "AOCP Channel A Overcurrent " ), bit ); break; }
+        case 2:{ Com::printFLN( PSTR( "BOCP Channel B Overcurrent " ), bit ); break; }
+        case 3:{ Com::printFLN( PSTR( "APDF Channel A predriver fault " ), bit ); break; }
+        case 4:{ Com::printFLN( PSTR( "BPDF Channel B predriver fault " ), bit ); break; }
+        case 5:{ Com::printFLN( PSTR( "UVLO Undervoltage lockout " ), bit ); break; }
+        case 6:{ Com::printFLN( PSTR( "STD Stall detected " ), bit ); break; }
+        case 7:{ Com::printFLN( PSTR( "STDLAT Latched stall detect " ), bit ); break; }
+    }
+ }
+
+ switch( driver )
+ {
+        case 5: { bit = READ( O1_STALL_PIN ); break; }
+        case 4: { bit = READ( O0_STALL_PIN ); break; }
+        case 3: { bit = READ( Z_STALL_PIN );  break; }
+        case 2: { bit = READ( Y_STALL_PIN );  break; }
+        case 1: { bit = READ( X_STALL_PIN );  break; }
+ }
+
+ Com::printFLN( PSTR( "Stall Pin: " ), !bit );
+ return ( status & (bit << 8) );
+} // readMotorStatus
 
 #endif // CURRENT_CONTROL_DRV8711
 
@@ -13938,7 +14033,7 @@ void showMyPage( void* line1, void* line2, void* line3, void* line4 )
     uid.showMessage( true );
     return;
 
-} // showInformation
+} // showMyPage
 
 void dump( char type, char from )
 {
