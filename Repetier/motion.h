@@ -210,26 +210,17 @@ public:
         if(isZNegativeMove() && Printer::isZMinEndstopHit())
         {
 #if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE && FEATURE_ENABLE_Z_SAFETY
-            if( Printer::isHomed() && PrintLine::direct.task != TASK_MOVE_FROM_BUTTON)
+            if( Printer::isAxisHomed(Z_AXIS) && PrintLine::direct.task != TASK_MOVE_FROM_BUTTON)
             {
-                // the following checks shall not allow to continue the z-move in case the z home position is unknown
-                if( Printer::isHomed() && PrintLine::direct.task != TASK_MOVE_FROM_BUTTON)
+                if( Printer::currentZSteps <= -Z_OVERRIDE_MAX )
                 {
+                    // --> setZMoveFinished(); //-> some lines down!
+                }else{
                     // we allow to overdrive Z-min a little bit so that also G-Codes are able to move to a smaller z-position even when Z-min has fired already
                     return;
                 }
-
-				//Nibbels
-				if( Printer::currentZSteps <= -Z_OVERRIDE_MAX )
-                {
-                    // --> setZMoveFinished(); //-> some lines down!
-                }
-				
-                // during normal operation, we never should end up here ... typically, the Z-min hardware switch must be reconfigured when you end up here
-                // doEmergencyStop( STOP_BECAUSE_OF_Z_MIN );
             }
 #endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE && FEATURE_ENABLE_Z_SAFETY
-
             setZMoveFinished();
         }
         if(isZPositiveMove() && Printer::isZMaxEndstopHit())
