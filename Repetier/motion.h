@@ -199,10 +199,24 @@ public:
                 setXMoveFinished();
             if(isYNegativeMove() && Printer::isYMinEndstopHit())
                 setYMoveFinished();
-            if(isXPositiveMove() && Printer::isXMaxEndstopHit())
+            if(isXPositiveMove() && Printer::isXMaxEndstopHit()){
                 setXMoveFinished();
-            if(isYPositiveMove() && Printer::isYMaxEndstopHit())
+                if(forQueue){
+                  Printer::queuePositionLastSteps[X_AXIS] = Printer::queuePositionTargetSteps[X_AXIS] = Printer::queuePositionCurrentSteps[X_AXIS];
+                }else
+                  Printer::directPositionLastSteps[X_AXIS] = Printer::directPositionTargetSteps[X_AXIS] = Printer::directPositionCurrentSteps[X_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
+                }
+                Printer::updateCurrentPosition();
+            }
+            if(isYPositiveMove() && Printer::isYMaxEndstopHit()){
                 setYMoveFinished();
+                if(forQueue){
+                  Printer::queuePositionLastSteps[Y_AXIS] = Printer::queuePositionTargetSteps[Y_AXIS] = Printer::queuePositionCurrentSteps[Y_AXIS];
+                }else
+                  Printer::directPositionLastSteps[Y_AXIS] = Printer::directPositionTargetSteps[Y_AXIS] = Printer::directPositionCurrentSteps[Y_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
+                }
+                Printer::updateCurrentPosition();
+            }
         }
 
         // Test Z-Axis every step if necessary, otherwise it could easyly ruin your printer!
@@ -227,8 +241,10 @@ public:
             setZMoveFinished();
             if(forQueue){
               Printer::queuePositionLastSteps[Z_AXIS] = Printer::queuePositionTargetSteps[Z_AXIS] = Printer::queuePositionCurrentSteps[Z_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
-              Printer::updateCurrentPosition();
+            }else
+              Printer::directPositionLastSteps[Z_AXIS] = Printer::directPositionTargetSteps[Z_AXIS] = Printer::directPositionCurrentSteps[Z_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
             }
+            Printer::updateCurrentPosition();
         }
     } // checkEndstops
 
