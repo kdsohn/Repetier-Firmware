@@ -543,7 +543,6 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
     if(com->hasZ())
     {
         queuePositionTargetSteps[Z_AXIS] = zSteps;
-//      Com::printFLN( PSTR( "qPTS=" ), queuePositionTargetSteps[Z_AXIS] );
     }
     else
     {

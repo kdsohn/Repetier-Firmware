@@ -761,10 +761,6 @@ can set it on for safety. */
 #define MINIMAL_Z_ENDSTOP_MIN_TO_MAX_STEPS  long(ZAXIS_STEPS_PER_MM * 100)                      // [steps]
 #define MINIMAL_Z_ENDSTOP_MAX_TO_MIN_STEPS  long(-ZAXIS_STEPS_PER_MM * 100)                     // [steps]
 
-/** \brief Defines how many steps the z-axis is moved down before the z-homing in case it is unknown which of both endstops (z-min or z-max) is active at the moment.
-*/
-#define UNKNOWN_Z_ENDSTOP_DRIVE_FREE_STEPS  long(ZAXIS_STEPS_PER_MM * 5)                        // [steps]
-
 #endif // FEATURE_MILLING_MODE
 
 

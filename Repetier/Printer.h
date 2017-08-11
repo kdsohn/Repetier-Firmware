@@ -701,7 +701,7 @@ public:
 
             // in case there is only one z-endstop and we are in operating mode "mill", the z-min endstop is not connected and can not be detected
             return false;
-#else
+#else // FEATURE_MILLING_MODE
             // in case there is only one z-endstop and we are in operating mode "print", the z-min endstop must be connected
             return READ(Z_MIN_PIN) != ENDSTOP_Z_MIN_INVERTING;
 #endif // FEATURE_MILLING_MODE
@@ -757,11 +757,11 @@ public:
         ZEndstopUnknown = 0;
         return false;
 
-#else
+#else // FEATURE_CONFIGURABLE_Z_ENDSTOPS
         return READ(Z_MIN_PIN) != ENDSTOP_Z_MIN_INVERTING;
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
 
-#else
+#else //Z_MIN_PIN>-1 && MIN_HARDWARE_ENDSTOP_Z
         return false;
 #endif // Z_MIN_PIN>-1 && MIN_HARDWARE_ENDSTOP_Z
     } // isZMinEndstopHit

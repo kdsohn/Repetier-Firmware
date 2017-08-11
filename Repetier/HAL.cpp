@@ -729,17 +729,6 @@ ISR(WDT_vect)
     WDTCSR |= (1<<WDIE); //Nibbels: nächstes mal kein Reset durch internen Watchdog, sondern wieder dieser interrupt.
     
     execute16msPeriodical = 1; //Tell commandloop that 16ms have passed 
-
-	/*
-	unsigned long T = HAL::timeInMilliseconds();
-	if(laT > 0) {
-		unsigned long diff = T - laT;
-		if(diff < miT) miT = diff;
-		if(diff > maT) maT = diff;
-		diff = T - g_uLastCommandLoop;
-		if(diff > maCoLo) maCoLo = diff;
-	}
-	laT = T;*/
 }
 
 // ================== Interrupt handling ======================
