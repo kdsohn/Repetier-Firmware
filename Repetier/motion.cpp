@@ -1976,7 +1976,7 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
     if(move->halfStep!=4) move->halfStep = 3-(move->halfStep); //full = 1|half=2 -> 3-2=1 und 3-1=2 .. wechselt
     HAL::forbidInterrupts();
 
-    if(doEven) move->checkEndstops();
+    if(doEven) move->checkEndstops(forQueue);
     int max_loops = (Printer::stepsPerTimerCall <= move->stepsRemaining ? Printer::stepsPerTimerCall : move->stepsRemaining);
 
     if(max_loops) //move->stepsRemaining ist uint32, max_loops ist int -> schneller.

@@ -191,7 +191,7 @@ public:
         flags |= FLAG_NOMINAL;
     } // setNominalMove
 
-    inline void checkEndstops()
+    inline void checkEndstops(char forQueue)
     {
         if(isCheckEndstops())
         {
@@ -225,6 +225,10 @@ public:
         if(isZPositiveMove() && Printer::isZMaxEndstopHit())
         {
             setZMoveFinished();
+            if(forQueue){
+              Printer::queuePositionTargetSteps[Z_AXIS] = Printer::queuePositionCurrentSteps[Z_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
+              Printer::queuePositionLastSteps[Z_AXIS] = Printer::queuePositionCurrentSteps[Z_AXIS];
+            }
         }
     } // checkEndstops
 
