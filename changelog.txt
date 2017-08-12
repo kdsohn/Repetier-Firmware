@@ -1,7 +1,10 @@
-TODO: Possible Z-Lift Bug in original RF1.37 -> Maybe this is not a problem within Mod-Version. 
 TODO: Test Z-Homing and Pause-Pause-Continue in Milling-Mode
 TODO: Test driving free without FEATURE drive-free in Milling-Mode @RF1000/RF2000
 TODO: Testing, testing ..
+
+V RF.01.37s9.Mod (2017-08-10)
+- Z-Max Fix / Z-Override-Fix
+- Testfunction for stepper drivers stall detection -> I guess this hardware feature is not usefull att all.
 
 V RF.01.37s7.Mod (2017-08-10)
 - Optional Temperature Sensor on RF2000 now reports the Temperatures as Heated-Chamber Sensor. https://forum.repetier.com/discussion/4102/heated-chamber -> Letter C in printTemperatures. This is fun, because Repetier-Server 0.86.2 now has an extra temperatures diagram for this.
