@@ -2352,6 +2352,8 @@ void searchZOScan( void )
                 if( calculateZScrewCorrection() ){
                    UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN );
                    showMyPage( (void*)ui_text_heat_bed_zoffset_search_status, (void*)ui_text_heat_bed_zoffset_fix_z1, (void*)ui_text_heat_bed_zoffset_fix_z2, (void*)ui_text_statusmsg );
+                   g_nAutoReturnMessage = true;
+                   g_nAutoReturnTime=HAL::timeInMilliseconds()+20000;
                 }else{
                    UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_ABORTED );
                 }
@@ -2364,6 +2366,7 @@ void searchZOScan( void )
                 PrintLine::moveRelativeDistanceInSteps( 0, -yScanPosition, 0, 0, MAX_FEEDRATE_Y, true, true );
                 g_nZScanZPosition += moveZ( -g_nZScanZPosition );    // g_nZScanZPosition counts z-steps. we need to move the heatbed down to be at z=0 again
                 //g_nZScanZPosition is 0 now.
+                BEEP_SHORT
                 break;
             }
         }
@@ -2999,7 +3002,7 @@ void doHeatBedZCompensation( void )
     long            i;
 
 
-    if( !Printer::doHeatBedZCompensation || (g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_WAIT_FOR_QUEUE_MOVE) )
+    if( !Printer::doHeatBedZCompensation || (g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE1) ) //warum && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE1 ??
     {
         // there is nothing to do at the moment
         return;
@@ -4219,7 +4222,7 @@ void doWorkPartZCompensation( void )
     long            i;
 
 
-    if( !Printer::doWorkPartZCompensation || (g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_WAIT_FOR_QUEUE_MOVE) )
+    if( !Printer::doWorkPartZCompensation || (g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE1) )
     {
         // there is nothing to do at the moment
         return;
@@ -6138,10 +6141,6 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                 if( nProcessExtruder )
                 {
                     // we have paused a few moments ago - reduce the current of the extruder motor in order to avoid unwanted heating of the filament for use cases where the printing is paused for several minutes
-/*                  Com::printF( PSTR( "loopRF(): PauseTime = " ), g_uPauseTime );
-                    Com::printF( PSTR( ", Time = " ), uTime );
-                    Com::printFLN( PSTR( ", Diff = " ), uTime - g_uPauseTime );
-*/
                     setExtruderCurrent( 0, EXTRUDER_CURRENT_PAUSED );
 #if NUM_EXTRUDER > 1
                     setExtruderCurrent( 1, EXTRUDER_CURRENT_PAUSED );
@@ -6330,10 +6329,9 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
         {
             uLastPressureTime = uTime;
 
-            if( (g_pauseStatus == PAUSE_STATUS_NONE || g_pauseStatus == PAUSE_STATUS_WAIT_FOR_QUEUE_MOVE) && PrintLine::linesCount > 5 )
+            if( (g_pauseStatus == PAUSE_STATUS_NONE || g_pauseStatus == PAUSE_STATUS_GOTO_PAUSE1) && PrintLine::linesCount > 5 )
             {
                 // this check shall be done only during the printing (for example, it shall not be done in case filament is extruded manually)
-                //short pressure = readStrainGauge( ACTIVE_STRAIN_GAUGE );
                 nPressureSum    += pressure;
                 nPressureChecks += 1;                
 
@@ -6349,11 +6347,12 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                         // the pressure is outside the allowed range, we must perform the emergency pause
                         if( Printer::debugErrors() )
                         {
-                            Com::printF( PSTR( "loopRF(): emergency pause: " ), nPressure );
+                            Com::printF( PSTR( "emergency pause: " ), nPressure );
                             Com::printFLN( PSTR( " / " ), PrintLine::linesCount );
                         }
 
                         showWarning( (void*)ui_text_emergency_pause );
+                        pausePrint();
                         pausePrint();
                     }
                 }
@@ -6545,71 +6544,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 #endif // FEATURE_SERVICE_INTERVAL
 
 #if FEATURE_PAUSE_PRINTING
-    switch( g_pauseStatus )
-    {
-        case PAUSE_STATUS_PREPARE_PAUSE_1:
-        {
-            if( (Printer::directPositionTargetSteps[E_AXIS] == Printer::directPositionCurrentSteps[E_AXIS]) )
-            {
-                // we have reached the pause position - nothing except the extruder can have been moved
-                g_pauseStatus = PAUSE_STATUS_PAUSED;
-
-                Printer::stepperDirection[X_AXIS]   = 0;
-                Printer::stepperDirection[Y_AXIS]   = 0;
-                Printer::stepperDirection[Z_AXIS]   = 0;
-                Extruder::current->stepperDirection = 0;
-            }
-            break;
-        }
-        case PAUSE_STATUS_PREPARE_PAUSE_2:
-        {
-            if( (Printer::directPositionTargetSteps[X_AXIS] == Printer::directPositionCurrentSteps[X_AXIS]) &&
-                (Printer::directPositionTargetSteps[Y_AXIS] == Printer::directPositionCurrentSteps[Y_AXIS]) &&
-                (Printer::directPositionTargetSteps[Z_AXIS] == Printer::directPositionCurrentSteps[Z_AXIS]) &&
-                (Printer::directPositionTargetSteps[E_AXIS] == Printer::directPositionCurrentSteps[E_AXIS]) )
-            {
-                // we have reached the pause position 1
-#if FEATURE_MILLING_MODE
-                if( Printer::operatingMode == OPERATING_MODE_MILL )
-                {
-                    // in operating mode mill, we have 2 pause positions because we have to leave the work part before we shall move into x/y direction
-                    g_pauseStatus = PAUSE_STATUS_PREPARE_PAUSE_3;
-
-                    determinePausePosition();
-                    PrintLine::prepareDirectMove();
-                }
-                else
-#endif // FEATURE_MILLING_MODE
-                {
-                    // in operating mode print, there is no need for a second pause position
-                    g_pauseStatus = PAUSE_STATUS_PAUSED;
-
-                    Printer::stepperDirection[X_AXIS]   = 0;
-                    Printer::stepperDirection[Y_AXIS]   = 0;
-                    Printer::stepperDirection[Z_AXIS]   = 0;
-                    Extruder::current->stepperDirection = 0;
-                }
-            }
-            break;
-        }
-        case PAUSE_STATUS_PREPARE_PAUSE_3:
-        {
-            if( (Printer::directPositionTargetSteps[X_AXIS] == Printer::directPositionCurrentSteps[X_AXIS]) &&
-                (Printer::directPositionTargetSteps[Y_AXIS] == Printer::directPositionCurrentSteps[Y_AXIS]) &&
-                (Printer::directPositionTargetSteps[Z_AXIS] == Printer::directPositionCurrentSteps[Z_AXIS]) &&
-                (Printer::directPositionTargetSteps[E_AXIS] == Printer::directPositionCurrentSteps[E_AXIS]) )
-            {
-                // we have reached the pause position 2
-                g_pauseStatus = PAUSE_STATUS_PAUSED;
-
-                Printer::stepperDirection[X_AXIS]   = 0;
-                Printer::stepperDirection[Y_AXIS]   = 0;
-                Printer::stepperDirection[Z_AXIS]   = 0;
-                Extruder::current->stepperDirection = 0;
-            }
-            break;
-        }
-    }
+    checkPauseStatus_fromTask();
 #endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_RGB_LIGHT_EFFECTS
@@ -6758,358 +6693,234 @@ void parkPrinter( void )
 } // parkPrinter
 #endif // FEATURE_PARK
 
-
 #if FEATURE_PAUSE_PRINTING
+inline bool processingDirectMove(){
+    return  (
+             (Printer::directPositionTargetSteps[X_AXIS] != Printer::directPositionCurrentSteps[X_AXIS]) ||
+             (Printer::directPositionTargetSteps[Y_AXIS] != Printer::directPositionCurrentSteps[Y_AXIS]) ||
+             (Printer::directPositionTargetSteps[Z_AXIS] != Printer::directPositionCurrentSteps[Z_AXIS]) ||
+             (Printer::directPositionTargetSteps[E_AXIS] != Printer::directPositionCurrentSteps[E_AXIS]) ||
+              PrintLine::direct.stepsRemaining > 0
+            );
+}
+
+inline void checkPauseStatus_fromTask(){
+    switch( g_pauseStatus )
+    {
+        case PAUSE_STATUS_TASKGOTO_PAUSE_1:
+        {
+            if( (Printer::directPositionTargetSteps[E_AXIS] == Printer::directPositionCurrentSteps[E_AXIS]) )
+            {
+                // we have reached the pause position - nothing except the extruder can have been moved
+                g_pauseStatus = PAUSE_STATUS_PAUSED;
+            }
+            break;
+        }
+        case PAUSE_STATUS_TASKGOTO_PAUSE_2:
+        {
+#if FEATURE_MILLING_MODE
+            // we have reached the pause position 1
+            if( Printer::operatingMode == OPERATING_MODE_MILL )
+            {
+                if( !processingDirectMove() )
+                {
+                    // in operating mode mill, we have 2 pause positions because we have to leave the work part before we shall move into x/y direction
+                    g_pauseStatus = PAUSE_STATUS_TASKGOTO_PAUSE_3;
+                    determinePausePosition();
+                    PrintLine::prepareDirectMove();
+                }
+            }else{
+#endif // FEATURE_MILLING_MODE
+                g_pauseStatus = PAUSE_STATUS_PAUSED;
+#if FEATURE_MILLING_MODE
+            }
+#endif // FEATURE_MILLING_MODE
+            break;
+        }
+#if FEATURE_MILLING_MODE
+        case PAUSE_STATUS_TASKGOTO_PAUSE_3:
+        {
+            if( Printer::operatingMode == OPERATING_MODE_MILL )
+            {
+                if( !processingDirectMove() )
+                {
+                    g_pauseStatus = PAUSE_STATUS_PAUSED;
+                }
+            }
+            break;
+        }
+#endif // FEATURE_MILLING_MODE
+    }
+}
+
+inline void waitforPauseStatus_fromButton(char Status){
+    g_pauseStatus = Status; //give job to interrupt //g_pauseStatus is volatile ;)
+    // wait until the current move is completed
+    // performQueueMove sees that pauseStatus is altered and switches to strategy + calculates direct move which has to end later + sets pause status to PAUSE_STATUS_PAUSED
+    while( g_pauseStatus != PAUSE_STATUS_PAUSED || PrintLine::direct.stepsRemaining ) //warte auf queue befehlsende
+    {
+        HAL::delayMilliseconds( 1 );
+        Commands::checkForPeriodicalActions();
+        GCode::keepAlive( Paused );
+    }
+}
+
 void pausePrint( void )
 {
-    if( Printer::debugErrors() )
-    {
-        Com::printFLN( PSTR( "pausePrint()" ) );
-    }
+    if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausePrint()" ) );
 
     if( g_pauseMode == PAUSE_MODE_NONE )
     {
-        // the printing is not paused at the moment
-        if( PrintLine::linesCount )
+        if( PrintLine::linesCount ) // the printing is not paused at the moment
         {
-            if( !Printer::areAxisHomed() )
+            if( !Printer::areAxisHomed() ) // this should never happen
             {
-                // this should never happen
-                if( Printer::debugErrors() )
-                {
-                    Com::printFLN( PSTR( "pausePrint(): pause is not available at the moment because the home position is unknown" ) );
-                }
+                if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausePrint(): pause is not available at the moment because the home position is unknown" ) );
                 showError( (void*)ui_text_pause, (void*)ui_text_home_unknown );
                 return;
             }
-
-            g_pauseStatus = PAUSE_STATUS_WAIT_FOR_QUEUE_MOVE;
             g_pauseMode   = PAUSE_MODE_PAUSED;
+            UI_STATUS_UPD( UI_TEXT_PAUSING );
 
-            // wait until the current move is completed
-            while( g_pauseStatus != PAUSE_STATUS_PAUSED )
-            {
-                HAL::delayMilliseconds( 1 );
-                Commands::checkForPeriodicalActions();
-                GCode::keepAlive( Paused );
-            }
-
+            waitforPauseStatus_fromButton(PAUSE_STATUS_GOTO_PAUSE1);
             g_uPauseTime    = HAL::timeInMilliseconds();
             g_pauseBeepDone = 0;
 
-            if( Printer::debugInfo() )
-            {
-                Com::printFLN( PSTR( "pausePrint(): the printing has been paused" ) );
-            }
-
-            UI_STATUS( UI_TEXT_PAUSED );
+            if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): the printing has been paused" ) );
+            UI_STATUS_UPD( UI_TEXT_PAUSED );
             Printer::setMenuMode( MENU_MODE_SD_PAUSED, true );
-
-            g_nContinueSteps[X_AXIS] = 0;
-            g_nContinueSteps[Y_AXIS] = 0;
-            g_nContinueSteps[Z_AXIS] = 0;
-
-#if FEATURE_MILLING_MODE
-            if( Printer::operatingMode == OPERATING_MODE_PRINT )
-            { // we do not process the extruder in case we are not in operating mode "print"
-#endif // FEATURE_MILLING_MODE
-                if( g_nPauseSteps[E_AXIS] )
-                {
-                    Printer::directPositionTargetSteps[E_AXIS] -= g_nPauseSteps[E_AXIS];
-                    g_nContinueSteps[E_AXIS]                   =  g_nPauseSteps[E_AXIS];
-                    PrintLine::prepareDirectMove();
-                }
-#if FEATURE_MILLING_MODE
-            }
-#endif // FEATURE_MILLING_MODE
         }
         else
         {
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( PSTR( "pausePrint(): pause is not available at the moment because nothing is printed" ) );
-            }
-
+            if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausePrint(): pause is not available at the moment because nothing is printed" ) );
             showError( (void*)ui_text_pause, (void*)ui_text_operation_denied );
-            return;
         }
-
-        //g_pauseStatus = PAUSE_STATUS_PAUSED; //Nibbels: Pausestatus ist hier in jedem Fall schon PAUSE_STATUS_PAUSED! Siehe Tasks in Queue.. und Whileschleife oben.
-        /*
-        Printer::stepperDirection[X_AXIS]   = 0;
-        Printer::stepperDirection[Y_AXIS]   = 0;
-        Printer::stepperDirection[Z_AXIS]   = 0;
-        Extruder::current->stepperDirection = 0;
-        */
         return;
     }
 
     if( g_pauseMode == PAUSE_MODE_PAUSED )
     {
-        // in case the print is paused already, we move the printer head to the pause position
-        InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
         g_pauseMode   = PAUSE_MODE_PAUSED_AND_MOVED;
-        g_pauseStatus = PAUSE_STATUS_PREPARE_PAUSE_2;
+        UI_STATUS_UPD( UI_TEXT_PAUSING );
+        // in case the print is paused already, we move the printer head to the pause position
+        if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): moving to the pause position" ) );
 
-        determinePausePosition();
-        PrintLine::prepareDirectMove();
-        noInts.unprotect(); //HAL::allowInterrupts();
-
-        UI_STATUS( UI_TEXT_PAUSING );
-
-        if( Printer::debugInfo() )
-        {
-            Com::printFLN( PSTR( "pausePrint(): moving to the pause position" ) );
-
-            Com::printF( PSTR( "x;" ), Printer::directPositionTargetSteps[X_AXIS] );
-            Com::printF( PSTR( ";y;" ), Printer::directPositionTargetSteps[Y_AXIS] );
-            Com::printFLN( PSTR( ";z;" ), Printer::directPositionTargetSteps[Z_AXIS] );
+        waitforPauseStatus_fromButton(PAUSE_STATUS_GOTO_PAUSE2);
+#if FEATURE_MILLING_MODE
+        if( Printer::operatingMode == OPERATING_MODE_MILL )
+        { // we do not process the extruder in case we are not in operating mode "print"
+            waitforPauseStatus_fromButton(PAUSE_STATUS_GOTO_PAUSE3);
         }
+#endif // FEATURE_MILLING_MODE
 
-        // wait until the pause position has been reached
-        if( Printer::debugInfo() )
-        {
-            Com::printFLN( PSTR( "pausePrint(): waiting for the pause position" ) );
-        }
-
-        while( g_pauseStatus != PAUSE_STATUS_PAUSED )
-        {
-            HAL::delayMilliseconds( 1 );
-            Commands::checkForPeriodicalActions();
-            GCode::keepAlive( Paused );
-
-            // NOTE: do not run runStandardTasks() within this loop
-            //runStandardTasks();
-        }
-
-        if( Printer::debugInfo() )
-        {
-            Com::printF( PSTR( "g_nPauseSteps[X_AXIS] = " ), g_nPauseSteps[X_AXIS] );
-            Com::printF( PSTR( ", g_nPauseSteps[Y_AXIS] = " ), g_nPauseSteps[X_AXIS] );
-            Com::printFLN( PSTR( ", g_nPauseSteps[Z_AXIS] = " ), g_nPauseSteps[X_AXIS] );
-            Com::printFLN( PSTR( "pausePrint(): the pause position has been reached" ) );
-        }
-
-        UI_STATUS( UI_TEXT_PAUSED );
+        if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): the pause position has been reached" ) );
+        UI_STATUS_UPD( UI_TEXT_PAUSED );
         return;
     }
-    return;
 } // pausePrint
 
 
 void continuePrint( void )
 {
-    char                    nPrinting        = 0;
+    if(g_pauseMode == PAUSE_MODE_NONE){
+        if( Printer::debugErrors() ) Com::printFLN( PSTR( "continuePrint(): continue is not available at the moment" ) );
+        return;
+    }
 
-    if( g_pauseStatus == PAUSE_STATUS_PAUSED )
-    {
-        BEEP_CONTINUE
-
+    UI_STATUS_UPD( UI_TEXT_CONTINUING );
+    BEEP_CONTINUE
 #if FEATURE_MILLING_MODE
-        if( Printer::operatingMode == OPERATING_MODE_PRINT )
-        {
-            nPrinting = 1;
-        }
+    bool nPrinting = ( Printer::operatingMode == OPERATING_MODE_PRINT );
 #else
-        nPrinting = 1;
+    bool nPrinting = true;
 #endif // FEATURE_MILLING_MODE
 
-        if( g_pauseMode == PAUSE_MODE_PAUSED_AND_MOVED )
-        {
-            // move to the continue position
-            UI_STATUS( UI_TEXT_CONTINUING );
-
-            if( Printer::debugInfo() )
-            {
-                Com::printFLN( PSTR( "continuePrint(): moving to the continue position" ) );
-            }
-
-#if EXTRUDER_CURRENT_PAUSE_DELAY
-            if( nPrinting )
-            {
-                // process the extruder only in case we are in mode "print"
-                setExtruderCurrent( 0, Printer::motorCurrent[E_AXIS] );
-#if NUM_EXTRUDER > 1
-                setExtruderCurrent( 1, Printer::motorCurrent[E_AXIS+1] );
-#endif //NUM_EXTRUDER > 1
-            }
-#endif // EXTRUDER_CURRENT_PAUSE_DELAY
-
-            InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
-            if( nPrinting )
-            {
-                if( g_nContinueSteps[X_AXIS] )      Printer::directPositionTargetSteps[X_AXIS] += g_nContinueSteps[X_AXIS];
-                if( g_nContinueSteps[Y_AXIS] )      Printer::directPositionTargetSteps[Y_AXIS] += g_nContinueSteps[Y_AXIS];
-                if( g_nContinueSteps[Z_AXIS] )      Printer::directPositionTargetSteps[Z_AXIS] += g_nContinueSteps[Z_AXIS];
-                if( g_nContinueSteps[E_AXIS] )      Printer::directPositionTargetSteps[E_AXIS] += g_nContinueSteps[E_AXIS];
-            }
-            else
-            {
-                // in operating mode mill, we have 2 continue positions because we have to move into x/y direction before we shall enter the work part
-                if( g_nContinueSteps[X_AXIS] )      Printer::directPositionTargetSteps[X_AXIS] += g_nContinueSteps[X_AXIS];
-                if( g_nContinueSteps[Y_AXIS] )      Printer::directPositionTargetSteps[Y_AXIS] += g_nContinueSteps[Y_AXIS];
-            }
-            PrintLine::prepareDirectMove();
-            noInts.unprotect(); //HAL::allowInterrupts();
-
-            // wait until the continue position has been reached
-            if( Printer::debugInfo() )
-            {
-                Com::printFLN( PSTR( "continuePrint(): waiting for the continue position 1" ) );
-            }
-
-            g_pauseStatus = PAUSE_STATUS_PREPARE_CONTINUE_1;
-
-            while( (Printer::directPositionTargetSteps[X_AXIS] != Printer::directPositionCurrentSteps[X_AXIS]) ||
-                   (Printer::directPositionTargetSteps[Y_AXIS] != Printer::directPositionCurrentSteps[Y_AXIS]) ||
-                   (Printer::directPositionTargetSteps[Z_AXIS] != Printer::directPositionCurrentSteps[Z_AXIS]) ||
-                   (Printer::directPositionTargetSteps[E_AXIS] != Printer::directPositionCurrentSteps[E_AXIS]) )
-            {
-                HAL::delayMilliseconds( 1 );
-                Commands::checkForPeriodicalActions();
-
-                // NOTE: do not run runStandardTasks() within this loop
-                //runStandardTasks();
-            }
-
-            if( !nPrinting )
-            {
-                // we are in operating mode mill - get back into the work part now
-                g_pauseStatus = PAUSE_STATUS_PREPARE_CONTINUE_2;
-
-                if( g_nContinueSteps[Z_AXIS] )
-                {
-                    Printer::directPositionTargetSteps[Z_AXIS] += g_nContinueSteps[Z_AXIS];
-
-                    while( (Printer::directPositionTargetSteps[Z_AXIS] != Printer::directPositionCurrentSteps[Z_AXIS]) )
-                    {
-                        HAL::delayMilliseconds( 1 );
-                        Commands::checkForPeriodicalActions();
-
-                        // NOTE: do not run runStandardTasks() within this loop
-                        //runStandardTasks();
-                    }
-                }
-            }
-        }
-        else if( g_pauseMode == PAUSE_MODE_PAUSED )
-        {
-            if( nPrinting )
-            {
-                // process the extruder only in case we are in mode "print"
-#if EXTRUDER_CURRENT_PAUSE_DELAY
-
-                setExtruderCurrent( 0, Printer::motorCurrent[E_AXIS] );
-#if NUM_EXTRUDER > 1
-                setExtruderCurrent( 1, Printer::motorCurrent[E_AXIS+1] );
-#endif //NUM_EXTRUDER > 1
-
-#endif // EXTRUDER_CURRENT_PAUSE_DELAY
-
-                InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
-                if( g_nContinueSteps[E_AXIS] )  Printer::directPositionTargetSteps[E_AXIS] += g_nContinueSteps[E_AXIS];
-                PrintLine::prepareDirectMove();
-                noInts.unprotect(); //HAL::allowInterrupts();
-
-                // wait until the continue position has been reached
-                if( Printer::debugInfo() )
-                {
-                    Com::printFLN( PSTR( "continuePrint(): waiting for the continue position" ) );
-                }
-
-                g_pauseStatus = PAUSE_STATUS_PREPARE_CONTINUE_1;
-
-                while( Printer::directPositionTargetSteps[E_AXIS] != Printer::directPositionCurrentSteps[E_AXIS] )
-                {
-                    HAL::delayMilliseconds( 1 );
-                    Commands::checkForPeriodicalActions();
-
-                    // NOTE: do not run runStandardTasks() within this loop
-                    //runStandardTasks();
-                }
-            }
-            else
-            {
-                g_pauseStatus = PAUSE_STATUS_PREPARE_CONTINUE_1;
-            }
-        }
-
-        // wait until the next move is started
-        g_pauseMode   = PAUSE_MODE_NONE;
-        g_pauseStatus = PAUSE_STATUS_NONE;
-        if( Printer::debugInfo() )
-        {
-            Com::printFLN( PSTR( "continuePrint(): waiting for the next move" ) );
-        }
-
-        unsigned long   startTime = HAL::timeInMilliseconds();
-        char            timeout   = 0;
-        while( !PrintLine::cur )
-        {
-            if( !PrintLine::linesCount )
-            {
-                // the printing won't continue in case there is nothing else to do
-                break;
-            }
-            HAL::delayMilliseconds( 1 );
-            Commands::checkForPeriodicalActions();
-            GCode::keepAlive( Paused );
-
-            // NOTE: do not run runStandardTasks() within this loop
-            //runStandardTasks();
-
-            if( (HAL::timeInMilliseconds() - startTime) > 5000 )
-            {
-                // do not loop forever
-                timeout = 1;
-                break;
-            }
-        }
-
-        if( timeout )
-        {
-            if( Printer::debugInfo() )
-            {
-                Com::printFLN( PSTR( "continuePrint(): the printing has been continued (timeout)" ) );
-            }
-        }
-        else
-        {
-            if( Printer::debugInfo() )
-            {
-                Com::printFLN( PSTR( "continuePrint(): the printing has been continued" ) );
-            }
-        }
-
+    if( g_pauseMode == PAUSE_MODE_PAUSED )
+    {
+#if FEATURE_MILLING_MODE
+        bool nPrinting = ( Printer::operatingMode == OPERATING_MODE_PRINT );
+#else
+        bool nPrinting = true;
+#endif // FEATURE_MILLING_MODE
         if( nPrinting )
         {
-            UI_STATUS( UI_TEXT_PRINT_POS );
+            // process the extruder only in case we are in mode "print"
+#if EXTRUDER_CURRENT_PAUSE_DELAY
+            setExtruderCurrent( 0, Printer::motorCurrent[E_AXIS] );
+ #if NUM_EXTRUDER > 1
+            setExtruderCurrent( 1, Printer::motorCurrent[E_AXIS+1] );
+ #endif //NUM_EXTRUDER > 1
+#endif // EXTRUDER_CURRENT_PAUSE_DELAY
+            if( g_nContinueSteps[E_AXIS] )
+            {
+                // continue to take back retract for pause
+                waitforPauseStatus_fromButton(PAUSE_STATUS_PREPARE_CONTINUE1);
+            }
         }
-        else
-        {
-            UI_STATUS( UI_TEXT_MILL_POS );
-        }
-
-        Printer::setMenuMode( MENU_MODE_SD_PAUSED, false );
     }
-    else
+    else if( g_pauseMode == PAUSE_MODE_PAUSED_AND_MOVED )
     {
-        if( Printer::debugErrors() )
+        // move to the continue position
+        if( Printer::debugInfo() ) Com::printFLN( PSTR( "continuePrint(): moving to the continue position" ) );
+
+#if EXTRUDER_CURRENT_PAUSE_DELAY
+        if( nPrinting ) // process the extruder only in case we are in mode "print"
         {
-            Com::printFLN( PSTR( "continuePrint(): continue is not available at the moment" ) );
+            setExtruderCurrent( 0, Printer::motorCurrent[E_AXIS] );
+#if NUM_EXTRUDER > 1
+            setExtruderCurrent( 1, Printer::motorCurrent[E_AXIS+1] );
+#endif //NUM_EXTRUDER > 1
+        }
+#endif // EXTRUDER_CURRENT_PAUSE_DELAY
+
+        waitforPauseStatus_fromButton(PAUSE_STATUS_PREPARE_CONTINUE2_1);
+        if( !nPrinting && g_nContinueSteps[Z_AXIS] )
+        {
+            // we are in operating mode mill - get back into the work part now
+            waitforPauseStatus_fromButton(PAUSE_STATUS_PREPARE_CONTINUE2_2);
         }
     }
-    return;
+
+    // wait until the next move is started
+    g_pauseMode   = PAUSE_MODE_NONE;
+    g_pauseStatus = PAUSE_STATUS_NONE;
+
+    if( Printer::debugInfo() )  Com::printFLN( PSTR( "continuePrint(): waiting for the next move" ) );
+
+    unsigned long   startTime = HAL::timeInMilliseconds();
+    char            timeout   = 0;
+    while( !PrintLine::cur )
+    {
+        if( !PrintLine::linesCount )
+        {
+            // the printing won't continue in case there is nothing else to do
+            break;
+        }
+        HAL::delayMilliseconds( 1 );
+        Commands::checkForPeriodicalActions();
+        GCode::keepAlive( Paused );
+
+        if( (HAL::timeInMilliseconds() - startTime) > 5000 )
+        {
+            // do not loop forever
+            timeout = 1;
+            break;
+        }
+    }
+
+    if( Printer::debugInfo() ){
+          if( timeout ) Com::printFLN( PSTR( "continuePrint(): the printing has been continued (timeout)" ) );
+          else Com::printFLN( PSTR( "continuePrint(): the printing has been continued" ) );
+    }
+
+    if( nPrinting ){ UI_STATUS_UPD( UI_TEXT_PRINT_POS ); }
+    else{ UI_STATUS_UPD( UI_TEXT_MILL_POS ); }
+    Printer::setMenuMode( MENU_MODE_SD_PAUSED, false );
 
 } // continuePrint
 
-
 void determinePausePosition( void )
 {
-    long    Max;
-    long    Temp;
-
-
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
@@ -7118,8 +6929,10 @@ void determinePausePosition( void )
     else
     {
         // in operating mode "mill", we must move only into z direction first in order to get the tool out of the work part
-        if( g_pauseStatus == PAUSE_STATUS_PREPARE_PAUSE_2 )
+        if( g_pauseStatus == PAUSE_STATUS_GOTO_PAUSE3 || g_pauseStatus == PAUSE_STATUS_TASKGOTO_PAUSE_3 )
         {
+            g_nContinueSteps[X_AXIS] = 0;
+            g_nContinueSteps[Y_AXIS] = 0;
             determineZPausePositionForMill();
             return;
         }
@@ -7130,16 +6943,16 @@ void determinePausePosition( void )
 
     if( g_nPauseSteps[X_AXIS] )
     {
-        Temp = g_nPauseSteps[X_AXIS];
+        long Temp = g_nPauseSteps[X_AXIS];
         Temp += Printer::queuePositionCurrentSteps[X_AXIS];
         Temp += Printer::directPositionTargetSteps[X_AXIS];
 
         if( g_nPauseSteps[X_AXIS] < 0 )
         {
-            if( Temp < PAUSE_X_MIN )
+            if( Temp < PAUSE_X_SPACING )
             {
                 // we can move only partially
-                Temp = PAUSE_X_MIN - Printer::directPositionTargetSteps[X_AXIS];
+                Temp = PAUSE_X_SPACING - Printer::directPositionTargetSteps[X_AXIS];
                 Temp -= Printer::queuePositionCurrentSteps[X_AXIS];
 
                 Printer::directPositionTargetSteps[X_AXIS] += Temp;
@@ -7153,7 +6966,7 @@ void determinePausePosition( void )
         }
         else if( g_nPauseSteps[X_AXIS] > 0 )
         {
-            Max = long((Printer::lengthMM[X_AXIS] -5) * Printer::axisStepsPerMM[X_AXIS]);
+            long  Max = long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS]) - PAUSE_X_SPACING;
             if( Temp > Max )
             {
                 // we can move only partially
@@ -7169,20 +6982,22 @@ void determinePausePosition( void )
                 g_nContinueSteps[X_AXIS]                   =  -g_nPauseSteps[X_AXIS];
             }
         }
+    }else{
+        g_nContinueSteps[X_AXIS] = 0;
     }
 
     if( g_nPauseSteps[Y_AXIS] )
     {
-        Temp =  g_nPauseSteps[Y_AXIS];
+        long Temp = g_nPauseSteps[Y_AXIS];
         Temp += Printer::queuePositionCurrentSteps[Y_AXIS];
         Temp += Printer::directPositionTargetSteps[Y_AXIS];
 
         if( g_nPauseSteps[Y_AXIS] < 0 )
         {
-            if( Temp < PAUSE_Y_MIN )
+            if( Temp < PAUSE_Y_SPACING )
             {
                 // we can move only partially
-                Temp =  PAUSE_Y_MIN - Printer::directPositionTargetSteps[Y_AXIS];
+                Temp =  PAUSE_Y_SPACING - Printer::directPositionTargetSteps[Y_AXIS];
                 Temp -= Printer::queuePositionCurrentSteps[Y_AXIS];
 
                 Printer::directPositionTargetSteps[Y_AXIS] += Temp;
@@ -7196,7 +7011,7 @@ void determinePausePosition( void )
         }
         else if( g_nPauseSteps[Y_AXIS] > 0 )
         {
-            Max = long((Printer::lengthMM[Y_AXIS] -5) * Printer::axisStepsPerMM[Y_AXIS]);
+            long  Max = long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS]) - PAUSE_Y_SPACING;
             if( Temp > Max )
             {
                 // we can move only partially
@@ -7212,30 +7027,25 @@ void determinePausePosition( void )
                 g_nContinueSteps[Y_AXIS]                   =  -g_nPauseSteps[Y_AXIS];
             }
         }
+    }else{
+        g_nContinueSteps[Y_AXIS] = 0;
     }
-    return;
-
 } // determinePausePosition
-
 
 void determineZPausePositionForPrint( void )
 {
-    long    Max;
-    long    Temp;
-
-
     // in operating mode "print", pausing drives from the current position downwards the specified g_nPauseSteps[Z_AXIS]
     if( g_nPauseSteps[Z_AXIS] )
     {
-        Temp =  g_nPauseSteps[Z_AXIS];
+        long Temp =  g_nPauseSteps[Z_AXIS];
         Temp += Printer::queuePositionCurrentSteps[Z_AXIS];
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         Temp += Printer::compensatedPositionCurrentStepsZ;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-
         Temp += Printer::directPositionTargetSteps[Z_AXIS];
-        Max  =  long((Printer::lengthMM[Z_AXIS] -2) * Printer::axisStepsPerMM[Z_AXIS]);
+
+        long Max  =  long(Printer::lengthMM[Z_AXIS] * Printer::axisStepsPerMM[Z_AXIS]) - PAUSE_Z_MAX_SPACING;
 
         if( Temp <= Max )
         {
@@ -7255,16 +7065,16 @@ void determineZPausePositionForPrint( void )
             Printer::directPositionTargetSteps[Z_AXIS] += Temp;
             g_nContinueSteps[Z_AXIS]                   =  -Temp;
         }
+    }else{
+        g_nContinueSteps[Z_AXIS] = 0;
     }
     return;
 
 } // determineZPausePositionForPrint
 
-
 void determineZPausePositionForMill( void )
 {
     long    Temp;
-
 
     // in operating mode "mill", pausing drives from the current position downwards the specified g_nPauseSteps[Z_AXIS] + queuePositionCurrentSteps[Z_AXIS] because we must drive the tool out of the work part before we can move into x or y direction
     Temp =  g_nPauseSteps[Z_AXIS];
@@ -7276,8 +7086,7 @@ void determineZPausePositionForMill( void )
 
 } // determineZPausePositionForMill
 
-
-void waitUntilContinue( void )
+void waitUntilContinue( void ) //Nibbels: Verstehe ich nicht! Man sollte Pause und Continue nutzen?? Aber warum das? Wegen der Gcode-Queue? Aber Pause hält auch die Queue an. .... TODO
 {
     if( g_pauseStatus == PAUSE_STATUS_NONE )
     {
@@ -7292,7 +7101,6 @@ void waitUntilContinue( void )
         GCode::keepAlive( Paused );
         UI_MEDIUM;
     }
-
 } // waitUntilContinue
 #endif // FEATURE_PAUSE_PRINTING
 
@@ -10801,6 +10609,15 @@ void processCommand( GCode* pCommand )
             }
 #endif // RESERVE_ANALOG_INPUTS
 
+            case 3987: // M3987 reading motor driver and stall pins - Testfunction || by Nibbels
+            {
+                Com::printFLN( PSTR( "M3987 MotorStatus X-Y-Z-E0-E1 ..." ) );
+                for(uint8_t driver = 1; driver <= 5; driver++){
+                  readMotorStatus( driver );
+                }
+                break;
+            }
+
         }
     }
 
@@ -11163,8 +10980,8 @@ void nextPreviousXAction( int8_t increment )
 #if DEBUG_SHOW_DEVELOPMENT_LOGS
         Com::printFLN( PSTR( "nextPreviousXAction(): moving x aborted (not allowed)" ) );
 #endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
-        showError( (void*)ui_text_x_axis, (void*)ui_text_operation_denied );
+        //wenn man schnell den knopf klickt, soll man nicht im showerror landen, das nervt. Man sieht das ja, was der verfährt.
+        //showError( (void*)ui_text_x_axis, (void*)ui_text_operation_denied );
         return;
     }
 
@@ -11331,8 +11148,8 @@ void nextPreviousYAction( int8_t increment )
         {
             Com::printFLN( PSTR( "nextPreviousYAction(): moving y aborted (not allowed)" ) );
         }
-
-        showError( (void*)ui_text_y_axis, (void*)ui_text_operation_denied );
+        //wenn man schnell den knopf klickt, soll man nicht im showerror landen, das nervt. Man sieht das ja, was der verfährt.
+        //showError( (void*)ui_text_y_axis, (void*)ui_text_operation_denied );
         return;
     }
 
@@ -11913,9 +11730,6 @@ void drv8711Disable( unsigned char driver )
 
 void drv8711Init( void )
 {
-    //char  i;
-  
-
     // configure the pins
     WRITE( DRV_RESET1, LOW );
     SET_OUTPUT( DRV_RESET1 );
@@ -12039,6 +11853,92 @@ void motorCurrentControlInit( void )
         else setMotorCurrent( i+1, MOTOR_CURRENT_MIN );
     }
 } // motorCurrentControlInit
+
+
+unsigned short readMotorStatus( unsigned char driver )
+{
+    //driver:
+    //X = 1
+    //Y = 2
+    //Z = 3
+    //E0 = 4
+    //E1 = 5
+
+/*
+0	OTS	1	R/W	0	0: Normal operation 
+1: Device has entered overtemperature shutdown 
+Write a 0 to this bit to clear the fault. 
+Operation automatically resumes when the temperature has fallen to safe levels.
+1	AOCP	1	R/W	0	0: Normal operation 
+1: Channel A overcurrent shutdown 
+Write a 0 to this bit to clear the fault and resume operation
+2	BOCP	1	R/W	0	0: Normal operation 
+1: Channel B overcurrent shutdown 
+Write a 0 to this bit to clear the fault and resume operation
+3	APDF	1	R/W	0	0: Normal operation 
+1: Channel A predriver fault 
+Write a 0 to this bit to clear the fault and resume operation.
+4	BPDF	1	R/W	0	0: Normal operation 
+1: Channel B predriver fault 
+Write a 0 to this bit to clear the fault and resume operation
+5	UVLO	1	R/W	0	0: Normal operation 
+1: Undervoltage lockout 
+Write a 0 to this bit to clear the fault. The UVLO bit cannot be cleared in sleep mode. Operation automatically resumes when VM has increased above VUVLO
+6	STD	1	R	0	0: Normal operation 
+1: Stall detected
+7	STDLAT	1	R/W	0	0: Normal operation 
+1: Latched stall detect 
+Write a 0 to this bit to clear the fault and resume operation
+11-8	Reserved	4	-	-	Reserved
+*/
+
+// configure the pins
+ WRITE( DRV_SCLK, LOW );
+ SET_OUTPUT( DRV_SCLK );
+ WRITE( DRV_SDATI, LOW );
+ SET_OUTPUT( DRV_SDATI );
+
+ drv8711Enable( driver );
+ unsigned short status = drv8711Receive( 7 ); //7.6.9 STATUS Register (Address = 0x07)
+ drv8711Disable( driver );
+
+ Com::printF( PSTR( "Driver: " ), driver );
+ switch( driver )
+ {
+        case 1:{ Com::printFLN( PSTR( "X" ) ); break; }
+        case 2:{ Com::printFLN( PSTR( "Y" ) ); break; }
+        case 3:{ Com::printFLN( PSTR( "Z" ) ); break; }
+        case 4:{ Com::printFLN( PSTR( "E0" ) ); break; }
+        case 5:{ Com::printFLN( PSTR( "E1" ) ); break; }
+ }
+ 
+ uint8_t bit = 0;
+ for( uint8_t n = 0; n <= 7; n++ ){
+    bit = status & (1 << n) ? 1:0;
+    switch (n){
+        case 0:{ Com::printFLN( PSTR( "OTS OverTemp " ), bit ); break; }
+        case 1:{ Com::printFLN( PSTR( "AOCP Channel A Overcurrent " ), bit ); break; }
+        case 2:{ Com::printFLN( PSTR( "BOCP Channel B Overcurrent " ), bit ); break; }
+        case 3:{ Com::printFLN( PSTR( "APDF Channel A predriver fault " ), bit ); break; }
+        case 4:{ Com::printFLN( PSTR( "BPDF Channel B predriver fault " ), bit ); break; }
+        case 5:{ Com::printFLN( PSTR( "UVLO Undervoltage lockout " ), bit ); break; }
+        case 6:{ Com::printFLN( PSTR( "STD Stall detected " ), bit ); break; }
+        case 7:{ Com::printFLN( PSTR( "STDLAT Latched stall detect " ), bit ); break; }
+    }
+ }
+
+ switch( driver )
+ {
+        case 5: { bit = READ( O1_STALL_PIN ); break; }
+        case 4: { bit = READ( O0_STALL_PIN ); break; }
+        case 3: { bit = READ( Z_STALL_PIN );  break; }
+        case 2: { bit = READ( Y_STALL_PIN );  break; }
+        case 1: { bit = READ( X_STALL_PIN );  break; }
+ }
+
+ Com::printFLN( PSTR( "Stall Pin: " ), !bit );
+ return ( status & (bit << 8) );
+} // readMotorStatus
 
 #endif // CURRENT_CONTROL_DRV8711
 
@@ -14133,7 +14033,7 @@ void showMyPage( void* line1, void* line2, void* line3, void* line4 )
     uid.showMessage( true );
     return;
 
-} // showInformation
+} // showMyPage
 
 void dump( char type, char from )
 {

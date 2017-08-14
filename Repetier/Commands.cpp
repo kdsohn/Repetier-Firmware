@@ -258,17 +258,15 @@ void Commands::printTemperatures(bool showRaw)
     millis_t now = HAL::timeInMilliseconds();
     if( (now - lastTemperatureSignal) > 1000 ){
         lastTemperatureSignal = now;
-        float temp = Extruder::current->tempControl.currentTemperatureC;
 
-    #if HEATED_BED_SENSOR_TYPE==0
-        Com::printF(Com::tTColon,temp);
-        Com::printF(Com::tSpaceSlash,Extruder::current->tempControl.targetTemperatureC,0);
-    #else
-        Com::printF(Com::tTColon,temp);
-        Com::printF(Com::tSpaceSlash,Extruder::current->tempControl.targetTemperatureC,0);
 
-    #if HAVE_HEATED_BED
-        Com::printF(Com::tSpaceBColon,Extruder::getHeatedBedTemperature());
+        Com::printF(Com::tTColon,Extruder::current->tempControl.currentTemperatureC,1);
+        Com::printF(Com::tSpaceSlash,Extruder::current->tempControl.targetTemperatureC,0);
+        // Show output of autotune when tuning!
+        Com::printF(Com::tSpaceAtColon,(pwm_pos[Extruder::current->id]));
+
+#if HAVE_HEATED_BED
+        Com::printF(Com::tSpaceBColon,Extruder::getHeatedBedTemperature(),1);
         Com::printF(Com::tSpaceSlash,heatedBedController.targetTemperatureC,0);
 
         if(showRaw)
@@ -277,18 +275,13 @@ void Commands::printTemperatures(bool showRaw)
             Com::printF(Com::tColon,(1023<<(2-ANALOG_REDUCE_BITS))-heatedBedController.currentTemperature);
         }
         Com::printF(Com::tSpaceBAtColon,(pwm_pos[heatedBedController.pwmIndex])); // Show output of autotune when tuning!
-    #endif // HAVE_HEATED_BED
-    #endif // HEATED_BED_SENSOR_TYPE==0
+#endif // HAVE_HEATED_BED
 
-
-    Com::printF(Com::tSpaceAtColon,(autotuneIndex==255?pwm_pos[Extruder::current->id]:pwm_pos[autotuneIndex])); // Show output of autotune when tuning!
-
-
-    #if NUM_EXTRUDER>1
+#if NUM_EXTRUDER>1
         for(uint8_t i=0; i<NUM_EXTRUDER; i++)
         {
             Com::printF(Com::tSpaceT,(int)i);
-            Com::printF(Com::tColon,extruder[i].tempControl.currentTemperatureC);
+            Com::printF(Com::tColon,extruder[i].tempControl.currentTemperatureC,1);
             Com::printF(Com::tSpaceSlash,extruder[i].tempControl.targetTemperatureC,0);
 
             Com::printF(Com::tSpaceAt,(int)i);
@@ -300,23 +293,27 @@ void Commands::printTemperatures(bool showRaw)
                 Com::printF(Com::tColon,(1023<<(2-ANALOG_REDUCE_BITS))-extruder[i].tempControl.currentTemperature);
             }
         }
-    #endif // NUM_EXTRUDER
+#endif // NUM_EXTRUDER
 
-    #if RESERVE_ANALOG_INPUTS
-        TemperatureController* act = &optTempController;            
+#if RESERVE_ANALOG_INPUTS
+        //Act as heated chamber ambient temperature for Repetier-Server 0.86.2+ ---> Letter C
+        TemperatureController* act = &optTempController;
         act->updateCurrentTemperature();
-        Com::printF(Com::tSpaceT, RESERVE_SENSOR_INDEX);            
-        Com::printF(Com::tColon,act->currentTemperatureC);  
-    #endif // RESERVE_ANALOG_INPUTS
+        Com::printF(Com::tSpaceChamber );
+        Com::printF(Com::tColon,act->currentTemperatureC,1); //temp
+        Com::printF(Com::tSpaceSlash,0,0); // ziel-temp
+        Com::printF(Com::tSpaceCAtColon,0); // leistung
+#endif // RESERVE_ANALOG_INPUTS
 
-    #if FEATURE_PRINT_PRESSURE
+#if FEATURE_PRINT_PRESSURE
+        Com::printF(Com::tSpace);
         Com::printF(Com::tF);
-        Com::printF(Com::tColon,(int)g_nLastDigits);
-    #endif //FEATURE_PRINT_PRESSURE
+        Com::printF(Com::tColon,(int)g_nLastDigits); //Kraft
+        Com::printF(Com::tSpaceSlash,(int)Printer::g_pressure_offset); //Offset
+        Com::printF(Com::tSpaceAtColon,0); //Ziel ^^, nein ich halte mich nur an die PWM-Syntax
+#endif //FEATURE_PRINT_PRESSURE
 
-        //Com::printF(Com::tSpaceAtColon,maCoLo);
-
-        Com::println();
+    Com::println();
     }
 } // printTemperatures
 
@@ -1183,18 +1180,14 @@ void Commands::executeGCode(GCode *com)
                     Commands::waitUntilEndOfAllMoves();
                     if (com->hasS()) Extruder::setHeatedBedTemperature(com->S,com->hasF() && com->F>0);
 
-#if defined (SKIP_M190_IF_WITHIN) && SKIP_M190_IF_WITHIN>0
-                    if(abs(heatedBedController.currentTemperatureC-heatedBedController.targetTemperatureC)<SKIP_M190_IF_WITHIN)
+                    if( fabs(heatedBedController.currentTemperatureC-heatedBedController.targetTemperatureC) < TEMP_TOLERANCE )
                     {
                         // we are already in range
-
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                         Printer::waitMove = 0;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-
                         break;
                     }
-#endif // (SKIP_M190_IF_WITHIN) && SKIP_M190_IF_WITHIN>0
 
                     while(heatedBedController.currentTemperatureC+TEMP_TOLERANCE < heatedBedController.targetTemperatureC)
                     {

@@ -1,8 +1,23 @@
-TODO: Pause-Back-Drive-Bug in original RF1.37
-TODO: Possible Z-Lift Bug in original RF1.37
-TODO: Test if ADVANCE-Feature really works. Test if it is possible to autotune due to DMS-Sensors of RFx000
-TODO: Test if zCompensation is sometimes still inactive because of directDriveZ
+TODO: Test Z-Homing and Pause-Pause-Continue in Milling-Mode
+TODO: Test driving free without FEATURE drive-free in Milling-Mode @RF1000/RF2000
 TODO: Testing, testing ..
+
+V RF.01.37s9.Mod (2017-08-10)
+- Z-Max Fix / Z-Override-Fix
+- Testfunction for stepper drivers stall detection -> I guess this hardware feature is not usefull att all.
+
+V RF.01.37s7.Mod (2017-08-10)
+- Optional Temperature Sensor on RF2000 now reports the Temperatures as Heated-Chamber Sensor. https://forum.repetier.com/discussion/4102/heated-chamber -> Letter C in printTemperatures. This is fun, because Repetier-Server 0.86.2 now has an extra temperatures diagram for this.
+Activate heated chamber temp diagramm in printer settings -> extruder -> heated chamber -> Yes. Of course RF2000 only has a sensor and no heater/control!
+
+V RF.01.37s6.Mod (2017-08-09)
+- found the double-pause-bug. It should be gone now. :D
+- change, sort and rewrote the pause functions
+- changed Emergency-Pause to double Pause.
+- removed warning when changed position 1mm/10mm/50mm multiple times and too fast.
+- cleaned up "StepperPositions"
+- added ADVANCE to DirectSteps
+- ADVANCE increment rises with high values
 
 V RF.01.37s5.Mod (2017-08-08)
 - When DirectDrive was activ in Z sometimes the last State of "unfinished direct-Z-driving" was still set. Then the Z-Compensation did not work. I am now trying to fix or override this.

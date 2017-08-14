@@ -36,6 +36,7 @@ extern const int8_t encoder_table[16] PROGMEM ;
 
 #if UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER
 millis_t g_nAutoReturnTime       = 0;
+bool     g_nAutoReturnMessage    = false;
 #endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER
 
 char    g_nYesNo                 = 0;       // 0 = no, 1 = yes
@@ -1130,14 +1131,16 @@ void UIDisplay::parse(char *txt,bool ram)
                     addFloat(Printer::motorCurrent[E_AXIS]/63.0f,1,2);  //(126 = ~2A) *2.0f/126.0f
                     if(col<MAX_COLS) printCols[col++]='A';
                     if(col<MAX_COLS) printCols[col++]=' ';
-                    addInt((int)Printer::motorCurrent[E_AXIS],3);
+                    if(g_pauseStatus == PAUSE_STATUS_PAUSED) addStringP(PSTR(UI_TEXT_PAUSED));
+                    else addInt((int)Printer::motorCurrent[E_AXIS],3);
                 }
                 else if(c2=='1')                                                                       // %M1 : Motorcurrent T1
                 {
                     addFloat(Printer::motorCurrent[E_AXIS+1]/63.0f,1,2);  //(126 = ~2A) *2.0f/126.0f
                     if(col<MAX_COLS) printCols[col++]='A';
                     if(col<MAX_COLS) printCols[col++]=' ';
-                    addInt((int)Printer::motorCurrent[E_AXIS+1],3);
+                    if(g_pauseStatus == PAUSE_STATUS_PAUSED) addStringP(PSTR(UI_TEXT_PAUSED));
+                    else addInt((int)Printer::motorCurrent[E_AXIS+1],3);
                 }
                 break;
             }
@@ -3516,6 +3519,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif // FEATURE_RGB_LIGHT_EFFECTS
         case UI_ACTION_EXTR_STEPS_E0:
         {
+           if(g_pauseMode == PAUSE_MODE_NONE){
             INCREMENT_MIN_MAX(extruder[0].stepsPerMM,1,1,9999);
             if(0 == Extruder::current->id) Extruder::selectExtruderById(Extruder::current->id); //übernehmen der werte
 
@@ -3523,11 +3527,13 @@ void UIDisplay::nextPreviousAction(int8_t next)
             HAL::eprSetFloat(EEPROM::getExtruderOffset(0)+EPR_EXTRUDER_STEPS_PER_MM,extruder[0].stepsPerMM);
             EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-            break;
+           }
+           break;
         }
 #if NUM_EXTRUDER > 1
         case UI_ACTION_EXTR_STEPS_E1:
         {
+           if(g_pauseMode == PAUSE_MODE_NONE){
             INCREMENT_MIN_MAX(extruder[1].stepsPerMM,1,1,9999);
             if(1 == Extruder::current->id) Extruder::selectExtruderById(Extruder::current->id); //übernehmen der werte
 
@@ -3535,13 +3541,15 @@ void UIDisplay::nextPreviousAction(int8_t next)
             HAL::eprSetFloat(EEPROM::getExtruderOffset(1)+EPR_EXTRUDER_STEPS_PER_MM,extruder[1].stepsPerMM);
             EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-            break;
+           }
+           break;
         }
 #endif //NUM_EXTRUDER > 1
 
         case UI_ACTION_ADVANCE_L_E0:
         {
-            INCREMENT_MIN_MAX(extruder[0].advanceL,1.0f,0.0f,100.0f); //Nibbels TODO gute Werte zulassen? Ist Step 1 ok? -> 60 war zu wenig.
+            float step = (extruder[0].advanceL < 20.0f) ? 1.0f : ((extruder[0].advanceL < 50.0f) ? 5.0f : 10.0f);
+            INCREMENT_MIN_MAX(extruder[0].advanceL,step,0.0f,250.0f); //Nibbels TODO gute Werte zulassen? Ist Step 1 ok? -> 60 war zu wenig.
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EEPROM::getExtruderOffset(0)+EPR_EXTRUDER_ADVANCE_L,extruder[0].advanceL);
             EEPROM::updateChecksum();
@@ -3551,7 +3559,8 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if NUM_EXTRUDER > 1
         case UI_ACTION_ADVANCE_L_E1:
         {
-            INCREMENT_MIN_MAX(extruder[1].advanceL,1.0f,0.0f,100.0f); //Nibbels TODO gute Werte zulassen? Ist Step 1 ok? -> 60 war zu wenig.
+            float step = (extruder[1].advanceL < 20.0f) ? 1.0f : ((extruder[1].advanceL < 50.0f) ? 5.0f : 10.0f);
+            INCREMENT_MIN_MAX(extruder[1].advanceL,step,0.0f,250.0f); //Nibbels TODO gute Werte zulassen? Ist Step 1 ok? -> 60 war zu wenig.
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EEPROM::getExtruderOffset(1)+EPR_EXTRUDER_ADVANCE_L,extruder[1].advanceL);
             EEPROM::updateChecksum();
@@ -3672,7 +3681,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 
         case UI_ACTION_ADVANCE_L:
         {
-            INCREMENT_MIN_MAX(Extruder::current->advanceL,1,0,600);
+            INCREMENT_MIN_MAX(Extruder::current->advanceL,5,0,600);
 
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EEPROM::getExtruderOffset(Extruder::current->id)+EPR_EXTRUDER_ADVANCE_L,Extruder::current->advanceL);
@@ -3924,7 +3933,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
             if(steppernr < 5) { // aktuell gibts nur 5
                 int drive = Printer::motorCurrent[steppernr];
                 const short uMotorCurrentMax[] = MOTOR_CURRENT_MAX;
-                INCREMENT_MIN_MAX(drive,1,MOTOR_CURRENT_MIN,uMotorCurrentMax[steppernr]); //von 40 bis maximal das was in der config steht.
+                INCREMENT_MIN_MAX(drive,1,MOTOR_CURRENT_MIN+1,uMotorCurrentMax[steppernr]); //von 40 bis maximal das was in der config steht.
                 Printer::motorCurrent[steppernr] = drive;
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
                 HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+steppernr, (uint8_t)drive  );
@@ -5210,13 +5219,13 @@ void UIDisplay::slowAction()
 #if UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER
     if(menuLevel>0 && g_nAutoReturnTime && g_nAutoReturnTime<time)
     {
-        if( menu[menuLevel] != &ui_menu_message )
+        if( menu[menuLevel] != &ui_menu_message || g_nAutoReturnMessage )
         {
             lastSwitch = time;
             menuLevel=0;
             activeAction = 0;
+            g_nAutoReturnMessage = false;
         }
-        
         g_nAutoReturnTime = 0;
     }
 #endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER

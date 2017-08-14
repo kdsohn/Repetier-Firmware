@@ -260,7 +260,7 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 //#define DEBUG_GENERIC
 
 /** \brief This enables code to make M666 drop an ok, so you get problems with communication. It is to test host robustness. */
-#define DEBUG_COM_ERRORS
+//#define DEBUG_COM_ERRORS
 
 /** \brief Adds a menu point in quick settings to write debg informations to the host in case of hangs where the ui still works. */
 //#define DEBUG_PRINT
@@ -436,13 +436,13 @@ Do not set them to Zero.
     #error this number of micro steps is not supported
 #endif // RF_MICRO_STEPS
 
-#define DRV8711_REGISTER_02                 0x2097                                              // 0010 0000 1001 0111: TOFF = 10010111, PWMMODE = 0
-#define DRV8711_REGISTER_03                 0x31D7                                              // 0011 0001 1101 0111: TBLANK = 11010111, ABT = 1
-#define DRV8711_REGISTER_04                 0x4430                                              // 0100 0100 0011 0000: TDECAY = 00110000, DECMOD = 100
-#define DRV8711_REGISTER_05                 0x583C                                              // 0101 1000 0011 1100: SDTHR = 00111100, SDCNT = 00, VDIV = 10
-#define DRV8711_REGISTER_06                 0x60F0                                              // 0110 0000 1111 0000: OCPTH = 00, OCPDEG = 00, TDRIVEN = 11, TDRIVEP = 11, IDRIVEN = 00, IDRIVEP = 00
-#define DRV8711_REGISTER_07                 0x7000                                              // 0111 0000 0000 0000: OTS = 0, AOCP = 0, BOCP = 0, UVLO = 0, APDF = 0, BPDF = 0, STD = 0, STDLAT = 0
-
+                                                                                                // ADRESS 11..8 7..4 3..0
+#define DRV8711_REGISTER_02                 0x2097                                              // 0010   0000  1001 0111: TOFF = 10010111, PWMMODE = 0
+#define DRV8711_REGISTER_03                 0x31D7                                              // 0011   0001  1101 0111: TBLANK = 11010111, ABT = 1
+#define DRV8711_REGISTER_04                 0x4430                                              // 0100   0100  0011 0000: TDECAY = 00110000, DECMOD = 100
+#define DRV8711_REGISTER_05                 0x583C                                              // 0101   1000  0011 1100: SDTHR = 00111100, SDCNT = 00, VDIV = 10
+#define DRV8711_REGISTER_06                 0x60F0                                              // 0110   0000  1111 0000: OCPTH = 00, OCPDEG = 00, TDRIVEN = 11, TDRIVEP = 11, IDRIVEN = 00, IDRIVEP = 00
+#define DRV8711_REGISTER_07                 0x7000                                              // 0111   0000  0000 0000: OTS = 0, AOCP = 0, BOCP = 0, UVLO = 0, APDF = 0, BPDF = 0, STD = 0, STDLAT = 0
 
 // ##########################################################################################
 // ##   configuration of user-defined thermistor tables
@@ -892,7 +892,6 @@ If your EXT0_PID_MAX is low, you should prefer the second method. */
 
 /** \brief Temperature range for target temperature to hold in M109 command. 5 means +/-5 degC
 Uncomment define to force the temperature into the range for given watchperiod. */
-//#define TEMP_HYSTERESIS                   5
 #define TEMP_TOLERANCE                      2.0f                                               // [°C]
 
 /** \brief Bits of the ADC converter */

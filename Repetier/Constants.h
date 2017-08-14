@@ -20,7 +20,7 @@
 #define CONSTANTS_H
 
 
-#define REPETIER_VERSION                    "RF.01.37s5.Mod"
+#define REPETIER_VERSION                    "RF.01.37s9.Mod"
 #define UI_PRINTER_COMPANY                  "Conrad Community"
 #define UI_VERSION_STRING                   "V " REPETIER_VERSION
 
@@ -79,13 +79,18 @@
 #define TASK_MOVE_FROM_BUTTON               10
 
 #define PAUSE_STATUS_NONE                   0   // we are not paused at the moment
-#define PAUSE_STATUS_WAIT_FOR_QUEUE_MOVE    1   // we are waiting until the last queue move is finished
-#define PAUSE_STATUS_PREPARE_PAUSE_1        2   // we are going to pause the print (= moving to the pause position)
-#define PAUSE_STATUS_PREPARE_PAUSE_2        3   // we are going to pause the print (= moving to the pause position)
-#define PAUSE_STATUS_PREPARE_PAUSE_3        4   // we are going to pause the print (= moving to the pause position)
-#define PAUSE_STATUS_PAUSED                 5   // we have paused the print (= pause position reached)
-#define PAUSE_STATUS_PREPARE_CONTINUE_1     6   // we are going to continue the print (= moving to the continue position)
-#define PAUSE_STATUS_PREPARE_CONTINUE_2     7   // we are going to continue the print (= moving to the continue position)
+#define PAUSE_STATUS_PAUSED                 1   // we have paused the print (= pause position reached)
+
+#define PAUSE_STATUS_GOTO_PAUSE1            2   // we are waiting until the last queue move is finished
+#define PAUSE_STATUS_GOTO_PAUSE2            3   // we are going to pause the print/milling (= moving to the pause position)
+#define PAUSE_STATUS_GOTO_PAUSE3            4   // we are going to pause the milling second stage: moving Z
+#define PAUSE_STATUS_PREPARE_CONTINUE2_1    5   // we are going to continue the print (= moving to the continue position)
+#define PAUSE_STATUS_PREPARE_CONTINUE2_2    6   // we are going to continue the print (= moving to the continue position)
+#define PAUSE_STATUS_PREPARE_CONTINUE1      7   // we are going to continue the print (= moving to the continue position)
+
+#define PAUSE_STATUS_TASKGOTO_PAUSE_1       7   // we are going to pause the print (= moving to the pause position)
+#define PAUSE_STATUS_TASKGOTO_PAUSE_2       8   // we are going to pause the print (= moving to the pause position)
+#define PAUSE_STATUS_TASKGOTO_PAUSE_3       9   // we are going to pause the print (= moving to the pause position)
 
 #define PAUSE_MODE_NONE                     0   // we are not paused at the moment
 #define PAUSE_MODE_PAUSED                   1   // stopp at the last printing position

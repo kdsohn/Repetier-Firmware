@@ -239,6 +239,11 @@ typedef struct
 
 extern const int8_t encoder_table[16] PROGMEM;
 
+#if UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER
+extern millis_t g_nAutoReturnTime;
+extern bool     g_nAutoReturnMessage;
+#endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER
+
 extern  char    g_nYesNo;
 extern volatile char    g_nContinueButtonPressed;
 extern  char    g_nServiceRequest;
