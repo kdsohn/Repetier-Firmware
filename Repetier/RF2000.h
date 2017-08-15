@@ -1156,6 +1156,7 @@ Above this value the z compensation will distribute the roughness of the surface
 #define PAUSE_X_SPACING                     (XAXIS_STEPS_PER_MM * 5)
 #define PAUSE_Y_SPACING                     (YAXIS_STEPS_PER_MM * 5)
 #define PAUSE_Z_MAX_SPACING                 (ZAXIS_STEPS_PER_MM * 15)
+#define PAUSE_COOLDOWN                      100                                                // [°C] 0=Off and 1..255=Temp down while paused
 
 #endif // FEATURE_PAUSE_PRINTING
 

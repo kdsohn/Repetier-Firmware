@@ -1294,6 +1294,24 @@ void Extruder::disableAllHeater()
 
 } // disableAllHeater
 
+void TemperatureController::waitForTargetTemperature() {
+    if(targetTemperatureC < 30) return;
+    if(Printer::debugDryrun()) return;
+    if(targetTemperatureC < currentTemperatureC){
+        UI_STATUS_UPD( UI_TEXT_COOLING_DOWN );
+    }else{
+        UI_STATUS_UPD( UI_TEXT_HEATING_UP );
+    }
+    while(true) {
+        Commands::printTemperatures();
+        Commands::checkForPeriodicalActions();
+        GCode::keepAlive(WaitHeater);
+        if( fabs(targetTemperatureC - currentTemperatureC) <= TEMP_TOLERANCE ) {
+            return;
+        }
+    }
+}
+
 void TemperatureController::autotunePID(float temp, uint8_t controllerId, int maxCycles, bool storeValues, int method)
 {
     float currentTemp;
@@ -1607,9 +1625,12 @@ Extruder extruder[NUM_EXTRUDER] =
             ,0,EXT0_PID_INTEGRAL_DRIVE_MAX,EXT0_PID_INTEGRAL_DRIVE_MIN,EXT0_PID_P,EXT0_PID_I,EXT0_PID_D,EXT0_PID_MAX,0,0,0,{0,0,0,0}
         ,0}
         ,ext0_select_cmd,ext0_deselect_cmd,EXT0_EXTRUDER_COOLER_SPEED,0
-        #if STEPPER_ON_DELAY
+#if STEPPER_ON_DELAY
         , '\x0'
-        #endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
+#endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
+#if FEATURE_PAUSE_PRINTING
+        ,0 //uint8_t paused
+#endif // FEATURE_PAUSE_PRINTING
     }
 #endif // NUM_EXTRUDER>0
 
@@ -1637,9 +1658,12 @@ Extruder extruder[NUM_EXTRUDER] =
             ,0,EXT1_PID_INTEGRAL_DRIVE_MAX,EXT1_PID_INTEGRAL_DRIVE_MIN,EXT1_PID_P,EXT1_PID_I,EXT1_PID_D,EXT1_PID_MAX,0,0,0,{0,0,0,0}
         ,0}
         ,ext1_select_cmd,ext1_deselect_cmd,EXT1_EXTRUDER_COOLER_SPEED,0
-        #if STEPPER_ON_DELAY
+#if STEPPER_ON_DELAY
         , '\x0'
-        #endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
+#endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
+#if FEATURE_PAUSE_PRINTING
+        ,0 //uint8_t paused
+#endif // FEATURE_PAUSE_PRINTING
     }
 #endif // NUM_EXTRUDER>1
 
@@ -1660,10 +1684,13 @@ Extruder extruder[NUM_EXTRUDER] =
             2,EXT2_TEMPSENSOR_TYPE,EXT2_SENSOR_INDEX,0,0,0,0,0,EXT2_HEAT_MANAGER
             ,0,EXT2_PID_INTEGRAL_DRIVE_MAX,EXT2_PID_INTEGRAL_DRIVE_MIN,EXT2_PID_P,EXT2_PID_I,EXT2_PID_D,EXT2_PID_MAX,0,0,0,{0,0,0,0}
         ,0}
-        ,ext2_select_cmd,ext2_deselect_cmd,EXT2_EXTRUDER_COOLER_SPEED,0     
-        #if STEPPER_ON_DELAY
+        ,ext2_select_cmd,ext2_deselect_cmd,EXT2_EXTRUDER_COOLER_SPEED,0
+#if STEPPER_ON_DELAY
         , '\x0'
-        #endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
+#endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
+#if FEATURE_PAUSE_PRINTING
+        ,0 //uint8_t paused
+#endif // FEATURE_PAUSE_PRINTING
     }
 #endif // NUM_EXTRUDER>2
 
@@ -1686,10 +1713,12 @@ Extruder extruder[NUM_EXTRUDER] =
 
         ,0}
         ,ext3_select_cmd,ext3_deselect_cmd,EXT3_EXTRUDER_COOLER_SPEED,0
-        
-        #if STEPPER_ON_DELAY
+#if STEPPER_ON_DELAY
         , '\x0'
-        #endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
+#endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
+#if FEATURE_PAUSE_PRINTING
+        ,0 //uint8_t paused
+#endif // FEATURE_PAUSE_PRINTING
     }
 #endif // NUM_EXTRUDER>3
 
@@ -1711,10 +1740,12 @@ Extruder extruder[NUM_EXTRUDER] =
             ,0,EXT4_PID_INTEGRAL_DRIVE_MAX,EXT4_PID_INTEGRAL_DRIVE_MIN,EXT4_PID_P,EXT4_PID_I,EXT4_PID_D,EXT4_PID_MAX,0,0,0,{0,0,0,0}
         ,0}
         ,ext4_select_cmd,ext4_deselect_cmd,EXT4_EXTRUDER_COOLER_SPEED,0
-        
-        #if STEPPER_ON_DELAY
+#if STEPPER_ON_DELAY
         , '\x0'
-        #endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
+#endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
+#if FEATURE_PAUSE_PRINTING
+        ,0 //uint8_t paused
+#endif // FEATURE_PAUSE_PRINTING
     }
 #endif // NUM_EXTRUDER>4
 
@@ -1736,10 +1767,12 @@ Extruder extruder[NUM_EXTRUDER] =
             ,0,EXT5_PID_INTEGRAL_DRIVE_MAX,EXT5_PID_INTEGRAL_DRIVE_MIN,EXT5_PID_P,EXT5_PID_I,EXT5_PID_D,EXT5_PID_MAX,0,0,0,{0,0,0,0}
         ,0}
         ,ext5_select_cmd,ext5_deselect_cmd,EXT5_EXTRUDER_COOLER_SPEED,0
-        
-        #if STEPPER_ON_DELAY
+#if STEPPER_ON_DELAY
         , '\x0'
-        #endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
+#endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
+#if FEATURE_PAUSE_PRINTING
+        ,0 //uint8_t paused
+#endif // FEATURE_PAUSE_PRINTING
     }
 #endif // NUM_EXTRUDER>5
 };
