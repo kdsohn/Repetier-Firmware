@@ -6141,10 +6141,18 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                 if( nProcessExtruder )
                 {
                     // we have paused a few moments ago - reduce the current of the extruder motor in order to avoid unwanted heating of the filament for use cases where the printing is paused for several minutes
-                    setExtruderCurrent( 0, EXTRUDER_CURRENT_PAUSED );
-#if NUM_EXTRUDER > 1
-                    setExtruderCurrent( 1, EXTRUDER_CURRENT_PAUSED );
-#endif //NUM_EXTRUDER > 1
+#if NUM_EXTRUDER > 0
+                    for(uint8_t i = 0; i < NUM_EXTRUDER; i++) {
+#if EXTRUDER_CURRENT_PAUSE_DELAY
+                        setExtruderCurrent( i, EXTRUDER_CURRENT_PAUSED );
+#endif //EXTRUDER_CURRENT_PAUSE_DELAY
+                        if(!extruder[i].paused){ //temperaturminimierung in paused ablegen. maximal -255 °C als Zahl 255. Config aktuell nur über RFx000.h bei PAUSE_COOLDOWN
+                            extruder[i].paused = (PAUSE_COOLDOWN > 255) ? 255 : ( ( extruder[i].tempControl.targetTemperatureC > PAUSE_COOLDOWN ) ? PAUSE_COOLDOWN : extruder[i].tempControl.targetTemperatureC );
+                            extruder[i].tempControl.targetTemperatureC -= (float)extruder[i].paused;
+                            //laden bei continuePrint(), indem paused addiert und gewartet wird.
+                        }
+                    }
+#endif
                 }
                 g_uPauseTime = 0;
             }
@@ -6830,27 +6838,37 @@ void continuePrint( void )
     UI_STATUS_UPD( UI_TEXT_CONTINUING );
     BEEP_CONTINUE
 #if FEATURE_MILLING_MODE
-    bool nPrinting = ( Printer::operatingMode == OPERATING_MODE_PRINT );
+    bool nPrintingMode = ( Printer::operatingMode == OPERATING_MODE_PRINT );
 #else
-    bool nPrinting = true;
+    bool nPrintingMode = true;
 #endif // FEATURE_MILLING_MODE
 
     if( g_pauseMode == PAUSE_MODE_PAUSED )
     {
-#if FEATURE_MILLING_MODE
-        bool nPrinting = ( Printer::operatingMode == OPERATING_MODE_PRINT );
-#else
-        bool nPrinting = true;
-#endif // FEATURE_MILLING_MODE
-        if( nPrinting )
+        if( nPrintingMode )
         {
             // process the extruder only in case we are in mode "print"
+#if NUM_EXTRUDER > 0
+            bool wait = false; 
+            for(uint8_t i = 0; i < NUM_EXTRUDER; i++){
 #if EXTRUDER_CURRENT_PAUSE_DELAY
-            setExtruderCurrent( 0, Printer::motorCurrent[E_AXIS] );
- #if NUM_EXTRUDER > 1
-            setExtruderCurrent( 1, Printer::motorCurrent[E_AXIS+1] );
- #endif //NUM_EXTRUDER > 1
-#endif // EXTRUDER_CURRENT_PAUSE_DELAY
+                setExtruderCurrent( i, Printer::motorCurrent[E_AXIS+i] );
+#endif //EXTRUDER_CURRENT_PAUSE_DELAY
+                if(extruder[i].paused){ //temperaturminimierung in paused wieder laden wenn gesetzt. Config aktuell nur über RFx000.h bei PAUSE_COOLDOWN
+                    if(extruder[i].tempControl.targetTemperatureC + (float)extruder[i].paused <= EXTRUDER_MAX_TEMP){
+                        extruder[i].tempControl.targetTemperatureC += (float)extruder[i].paused;
+                        wait = true;
+                    }
+                    extruder[i].paused = 0;
+                }
+            }
+            if(wait){
+                for(uint8_t i = 0; i < NUM_EXTRUDER; i++) {
+                    extruder[i].tempControl.waitForTargetTemperature();
+                }
+            }
+#endif //NUM_EXTRUDER > 0
+
             if( g_nContinueSteps[E_AXIS] )
             {
                 // continue to take back retract for pause
@@ -6862,19 +6880,31 @@ void continuePrint( void )
     {
         // move to the continue position
         if( Printer::debugInfo() ) Com::printFLN( PSTR( "continuePrint(): moving to the continue position" ) );
-
-#if EXTRUDER_CURRENT_PAUSE_DELAY
-        if( nPrinting ) // process the extruder only in case we are in mode "print"
+        if( nPrintingMode )
         {
-            setExtruderCurrent( 0, Printer::motorCurrent[E_AXIS] );
-#if NUM_EXTRUDER > 1
-            setExtruderCurrent( 1, Printer::motorCurrent[E_AXIS+1] );
-#endif //NUM_EXTRUDER > 1
+#if NUM_EXTRUDER > 0
+            bool wait = false; 
+            for(uint8_t i = 0; i < NUM_EXTRUDER; i++){
+#if EXTRUDER_CURRENT_PAUSE_DELAY
+                setExtruderCurrent( i, Printer::motorCurrent[E_AXIS+i] );
+#endif //EXTRUDER_CURRENT_PAUSE_DELAY
+                if(extruder[i].paused){ //temperaturminimierung in paused wieder laden wenn gesetzt. Config aktuell nur über RFx000.h bei PAUSE_COOLDOWN
+                    if(extruder[i].tempControl.targetTemperatureC + (float)extruder[i].paused <= EXTRUDER_MAX_TEMP){
+                        extruder[i].tempControl.targetTemperatureC += (float)extruder[i].paused;
+                        wait = true;
+                    }
+                    extruder[i].paused = 0;
+                }
+            }
+            if(wait){
+                for(uint8_t i = 0; i < NUM_EXTRUDER; i++) {
+                    extruder[i].tempControl.waitForTargetTemperature();
+                }
+            }
+#endif //NUM_EXTRUDER > 0
         }
-#endif // EXTRUDER_CURRENT_PAUSE_DELAY
-
         waitforPauseStatus_fromButton(PAUSE_STATUS_PREPARE_CONTINUE2_1);
-        if( !nPrinting && g_nContinueSteps[Z_AXIS] )
+        if( !nPrintingMode && g_nContinueSteps[Z_AXIS] )
         {
             // we are in operating mode mill - get back into the work part now
             waitforPauseStatus_fromButton(PAUSE_STATUS_PREPARE_CONTINUE2_2);
@@ -6913,7 +6943,7 @@ void continuePrint( void )
           else Com::printFLN( PSTR( "continuePrint(): the printing has been continued" ) );
     }
 
-    if( nPrinting ){ UI_STATUS_UPD( UI_TEXT_PRINT_POS ); }
+    if( nPrintingMode ){ UI_STATUS_UPD( UI_TEXT_PRINT_POS ); }
     else{ UI_STATUS_UPD( UI_TEXT_MILL_POS ); }
     Printer::setMenuMode( MENU_MODE_SD_PAUSED, false );
 

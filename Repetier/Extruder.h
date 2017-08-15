@@ -70,7 +70,7 @@ public:
     void updateTempControlVars();
     inline bool isAlarm() {return flags & TEMPERATURE_CONTROLLER_FLAG_ALARM;}
     inline void setAlarm(bool on) {if(on) flags |= TEMPERATURE_CONTROLLER_FLAG_ALARM; else flags &= ~TEMPERATURE_CONTROLLER_FLAG_ALARM;}
-
+    void waitForTargetTemperature();
     void autotunePID(float temp, uint8_t controllerId, int maxCycles, bool storeResult, int method);
 }; // TemperatureController
 
@@ -126,7 +126,11 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
 #if STEPPER_ON_DELAY
     char        enabled;
 #endif // STEPPER_ON_DELAY
-    
+
+#if FEATURE_PAUSE_PRINTING
+    uint8_t     paused;
+#endif // FEATURE_PAUSE_PRINTING
+
     /** \brief Sends the high-signal to the stepper for next extruder step.
     Call this function only, if interrupts are disabled.
     */
