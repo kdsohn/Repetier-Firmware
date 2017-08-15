@@ -665,7 +665,7 @@ void scanHeatBed( void )
                     // wait some time so that the desired target temperature is reached in all parts of our components
                     if( (HAL::timeInMilliseconds() - g_lastScanTime) < (PRECISE_HEAT_BED_SCAN_WARMUP_DELAY * 1000) )
                     {
-                        UI_STATUS_UPD( UI_TEXT_HEATING );
+                        UI_STATUS_UPD( UI_TEXT_HEATING ); 
                         break;
                     }
                 }
@@ -2013,7 +2013,7 @@ void searchZOScan( void )
 
                 // move a bit away from the heat bed in order to achieve better measurements in case of hardware configurations where the extruder is very close to the heat bed after the z-homing     
                 UI_STATUS_UPD( UI_TEXT_ZCALIB );
-                g_uStartOfIdle = 0; //zeige nicht gleich wieder Printer Ready an.           
+                g_uStartOfIdle = 0; //zeige nicht gleich wieder Printer Ready an.
                 GCode::keepAlive( Processing );
                 g_ZOSScanStatus = 4;   
                 break;
@@ -2348,7 +2348,8 @@ void searchZOScan( void )
                 
 #if DEBUG_HEAT_BED_SCAN == 2
                 Com::printFLN( PSTR( "ZOS(): finished" ) );
-#endif // DEBUG_HEAT_BED_SCAN            
+#endif // DEBUG_HEAT_BED_SCAN
+                g_uStartOfIdle = 0;
                 if( calculateZScrewCorrection() ){
                    UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN );
                    showMyPage( (void*)ui_text_heat_bed_zoffset_search_status, (void*)ui_text_heat_bed_zoffset_fix_z1, (void*)ui_text_heat_bed_zoffset_fix_z2, (void*)ui_text_statusmsg );
@@ -2396,7 +2397,6 @@ void abortSearchHeatBedZOffset( bool reloadMatrix )
     Printer::disableYStepper();
     Printer::disableZStepper();
     Extruder::disableAllExtruders();
-
     g_ZOS_Auto_Matrix_Leveling_State = 0;
 } /* searchHeatBedZOffset */
 
@@ -6023,7 +6023,7 @@ void doZCompensation( void )
 
 void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 {
-    static char     nEntered = 0;    
+    static char     nEntered = 0;
     if( nEntered ) return; // do not enter more than once
     nEntered ++;
 
@@ -6032,7 +6032,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 
     if( g_uStartOfIdle )
     {
-        if( (uTime - g_uStartOfIdle) > MINIMAL_IDLE_TIME ) //500ms wäre standard nach config
+        if( (uTime - g_uStartOfIdle) > MINIMAL_IDLE_TIME ) //500ms nach config
         {
             // show that we are idle for a while already
             showIdle();
@@ -6788,6 +6788,7 @@ void pausePrint( void )
                 return;
             }
             g_pauseMode   = PAUSE_MODE_PAUSED;
+            g_uStartOfIdle  = 0;
             UI_STATUS_UPD( UI_TEXT_PAUSING );
 
             waitforPauseStatus_fromButton(PAUSE_STATUS_GOTO_PAUSE1);
@@ -6809,6 +6810,7 @@ void pausePrint( void )
     if( g_pauseMode == PAUSE_MODE_PAUSED )
     {
         g_pauseMode   = PAUSE_MODE_PAUSED_AND_MOVED;
+        g_uStartOfIdle  = 0;
         UI_STATUS_UPD( UI_TEXT_PAUSING );
         // in case the print is paused already, we move the printer head to the pause position
         if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): moving to the pause position" ) );
@@ -6835,6 +6837,7 @@ void continuePrint( void )
         return;
     }
 
+    g_uStartOfIdle    = 0;
     UI_STATUS_UPD( UI_TEXT_CONTINUING );
     BEEP_CONTINUE
 #if FEATURE_MILLING_MODE
@@ -6933,6 +6936,7 @@ void continuePrint( void )
         if( (HAL::timeInMilliseconds() - startTime) > 5000 )
         {
             // do not loop forever
+            g_uStartOfIdle    = HAL::timeInMilliseconds();
             timeout = 1;
             break;
         }
