@@ -6832,7 +6832,7 @@ void pausePrint( void )
 
 void continuePrint( void )
 {
-    if(g_pauseMode == PAUSE_MODE_NONE){
+    if(g_pauseMode == PAUSE_MODE_NONE || g_pauseStatus != PAUSE_STATUS_PAUSED){
         if( Printer::debugErrors() ) Com::printFLN( PSTR( "continuePrint(): continue is not available at the moment" ) );
         return;
     }
