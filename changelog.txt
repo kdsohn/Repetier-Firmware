@@ -3,6 +3,10 @@ TODO: Test Z-Homing and Pause-Pause-Continue in Milling-Mode
 TODO: Test driving free without FEATURE drive-free in Milling-Mode @RF1000/RF2000
 TODO: Testing, testing ..
 
+V RF.01.37t2.Mod (2017-08-16)
+- Prevent continue while pause position is not reached. This might have resulted in neverending pause.
+- use of repetiers better INCREMENT_MIN_MAX definition. He sais: "// this version not have single byte variable rollover bug"
+
 V RF.01.37t.Mod (2017-08-15)
 - Pause now can lower Extruder Temps. Continue recovers temps and pushes re-retract afterwards.
 

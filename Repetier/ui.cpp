@@ -2787,10 +2787,13 @@ void UIDisplay::rightAction()
 #endif
 } // rightAction
 
+//increment ist ne variable, global -> Knopfrichtung.
+//#define INCREMENT_MIN_MAX(a,steps,_min,_max) if ( (increment<0) && (_min>=0) && (a<_min-increment*steps) ) {a=_min;} else { a+=increment*steps; if(a<_min) a=_min; else if(a>_max) a=_max;};
+// this version not have single byte variable rollover bug
+#define INCREMENT_MIN_MAX(a,steps,_min,_max) a = constrain((a + increment * steps), _min, _max);
 
-#define INCREMENT_MIN_MAX(a,steps,_min,_max) if ( (increment<0) && (_min>=0) && (a<_min-increment*steps) ) {a=_min;} else { a+=increment*steps; if(a<_min) a=_min; else if(a>_max) a=_max;};
-//increment ist ne variable, global.
-#define INCREMENT_MAX(a,steps,_max) if ( (increment<0) && (a<=-1*increment*steps) ) {a=0;} else { a+=increment*steps; if(a>_max) a=_max;};
+#define INCREMENT_MAX(a,steps,_max) if ( increment < 0 && a <= -1*increment*steps ) a=0; else { a+=increment*steps; if(a>_max) a=_max;};
+//#define INCREMENT_MAX(a,steps,_max) a = constrain((a + increment * steps), 0, _max); //Nibbels: ist für unsigned variablen gegen warning. 2x vorkommen
 
 void UIDisplay::adjustMenuPos()
 {

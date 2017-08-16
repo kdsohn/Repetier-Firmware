@@ -6789,6 +6789,8 @@ void pausePrint( void )
             }
             g_pauseMode   = PAUSE_MODE_PAUSED;
             g_uStartOfIdle  = 0;
+            uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
+            uid.menuPos[uid.menuLevel] = 0;
             UI_STATUS_UPD( UI_TEXT_PAUSING );
 
             waitforPauseStatus_fromButton(PAUSE_STATUS_GOTO_PAUSE1);
@@ -6811,6 +6813,8 @@ void pausePrint( void )
     {
         g_pauseMode   = PAUSE_MODE_PAUSED_AND_MOVED;
         g_uStartOfIdle  = 0;
+        uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
+        uid.menuPos[uid.menuLevel] = 0;
         UI_STATUS_UPD( UI_TEXT_PAUSING );
         // in case the print is paused already, we move the printer head to the pause position
         if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): moving to the pause position" ) );
@@ -6832,7 +6836,7 @@ void pausePrint( void )
 
 void continuePrint( void )
 {
-    if(g_pauseMode == PAUSE_MODE_NONE){
+    if(g_pauseMode == PAUSE_MODE_NONE || g_pauseStatus != PAUSE_STATUS_PAUSED){
         if( Printer::debugErrors() ) Com::printFLN( PSTR( "continuePrint(): continue is not available at the moment" ) );
         return;
     }
