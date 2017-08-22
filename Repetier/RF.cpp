@@ -14023,9 +14023,9 @@ void showIdle( void )
 } // showIdle
 
 
-void showError( void* line2, void* line3, void* line4 )
+void showError( const void* line2, const void* line3, const void* line4 )
 {
-    uid.messageLine1 = (void*)ui_text_error;
+    uid.messageLine1 = (const void*)ui_text_error;
     uid.messageLine2 = line2;
     uid.messageLine3 = line3;
     uid.messageLine4 = line4;
@@ -14036,9 +14036,9 @@ void showError( void* line2, void* line3, void* line4 )
 } // showError
 
 
-void showWarning( void* line2, void* line3, void* line4 )
+void showWarning( const void* line2, const void* line3, const void* line4 )
 {
-    uid.messageLine1 = (void*)ui_text_warning;
+    uid.messageLine1 = (const void*)ui_text_warning;
     uid.messageLine2 = line2;
     uid.messageLine3 = line3;
     uid.messageLine4 = line4;
@@ -14061,7 +14061,7 @@ void showInformation( const void* line2, const void* line3, const void* line4 )
 
 } // showInformation
 
-void showMyPage( void* line1, void* line2, void* line3, void* line4 )
+void showMyPage( const void* line1, const void* line2, const void* line3, const void* line4 )
 {
     uid.messageLine1 = line1;
     uid.messageLine2 = line2;

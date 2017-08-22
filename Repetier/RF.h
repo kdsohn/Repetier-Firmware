@@ -1049,16 +1049,16 @@ extern void notifyAboutWrongHardwareType( unsigned char guessedHardwareType );
 extern void showIdle( void );
 
 // showError()
-extern void showError( void* line2, void* line3 = NULL, void* line4 = NULL );
+extern void showError( const void* line2, const void* line3 = NULL, const void* line4 = NULL );
 
 // showWarning()
-extern void showWarning( void* line2, void* line3 = NULL, void* line4 = NULL );
+extern void showWarning( const void* line2, const void* line3 = NULL, const void* line4 = NULL );
 
 // showInformation()
 extern void showInformation( const void* line2, const void* line3 = NULL, const void* line4 = NULL );
 
 // showMyPage()
-extern void showMyPage( void* line1, void* line2 = NULL, void* line3 = NULL, void* line4 = NULL );
+extern void showMyPage( const void* line1, const void* line2 = NULL, const void* line3 = NULL, const void* line4 = NULL );
 
 // dump()
 extern void dump( char type, char from = 0 );
