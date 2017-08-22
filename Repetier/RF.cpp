@@ -14049,9 +14049,9 @@ void showWarning( void* line2, void* line3, void* line4 )
 } // showWarning
 
 
-void showInformation( void* line2, void* line3, void* line4 )
+void showInformation( const void* line2, const void* line3, const void* line4 )
 {
-    uid.messageLine1 = (void*)ui_text_information;
+    uid.messageLine1 = (const void*)ui_text_information;
     uid.messageLine2 = line2;
     uid.messageLine3 = line3;
     uid.messageLine4 = line4;

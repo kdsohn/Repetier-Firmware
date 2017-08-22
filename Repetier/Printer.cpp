@@ -1455,6 +1455,13 @@ void Printer::homeZAxis()
 
 #endif // FEATURE_MILLING_MODE
 
+    // if we have circuit-type Z endstops and we don't know at which endstop we currently are, first move down a bit
+#if FEATURE_CONFIGURABLE_Z_ENDSTOPS
+    if( Printer::ZEndstopUnknown ) {
+        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS]*-ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
+    }
+#endif
+
     if( nProcess )
     {
         UI_STATUS_UPD( UI_TEXT_HOME_Z );

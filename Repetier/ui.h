@@ -380,10 +380,10 @@ public:
     uint8_t             menuTop[MAX_MENU_LEVELS];   // Top row in menu
     int8_t              shift;                      // Display shift for scrolling text
     int                 pageDelay;                  // Counter. If 0 page is refreshed if menuLevel is 0.
-    void*               messageLine1;
-    void*               messageLine2;
-    void*               messageLine3;
-    void*               messageLine4;
+    const void*         messageLine1;
+    const void*         messageLine2;
+    const void*         messageLine3;
+    const void*         messageLine4;
     int         activeAction;               // action for ok/next/previous
     int         lastAction;
     millis_t            lastSwitch;                 // Last time display switched pages
