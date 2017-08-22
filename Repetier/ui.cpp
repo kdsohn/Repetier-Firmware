@@ -3548,7 +3548,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
            break;
         }
 #endif //NUM_EXTRUDER > 1
-
+#if USE_ADVANCE
         case UI_ACTION_ADVANCE_L_E0:
         {
             float step = (extruder[0].advanceL < 20.0f) ? 1.0f : ((extruder[0].advanceL < 50.0f) ? 5.0f : 10.0f);
@@ -3571,7 +3571,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
             break;
         }
 #endif //NUM_EXTRUDER > 1
-
+#endif //USE_ADVANCE
         case UI_ACTION_EXTR_STEPS:
         {
             INCREMENT_MIN_MAX(Extruder::current->stepsPerMM,1,1,9999);

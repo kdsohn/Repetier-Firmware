@@ -2104,7 +2104,9 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
                     v=Printer::vMaxReached - v;
                     if (v<move->vEnd) v = move->vEnd; // extra steps at the end of desceleration due to rounding errors
                 }
+#if USE_ADVANCE
                 move->updateAdvanceSteps(v,max_loops,false); // needs original v
+#endif // USE_ADVANCE
                 v = Printer::updateStepsPerTimerCall(v);
                 Printer::interval = HAL::CPUDivU2(v);
                 if(Printer::maxInterval < Printer::interval) // fix timing for very slow speeds
@@ -2120,14 +2122,18 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
                 if(Printer::maxInterval < Printer::interval) // fix timing for very slow speeds
                     Printer::interval = Printer::maxInterval;
                 Printer::timer+=Printer::interval;
+#if USE_ADVANCE
                 move->updateAdvanceSteps(Printer::vMaxReached,max_loops,true);
+#endif // USE_ADVANCE
                 // Printer::stepNumber += maxLoops; // is only used by moveAccelerating --> Nibbels TODO: Check if this is maybe right here: source repetier development
             }
             else // full speed reached
             {
                 // If we had acceleration, we need to use the latest vMaxReached and interval
                 // If we started full speed, we need to use move->fullInterval and vMax
+#if USE_ADVANCE
                 move->updateAdvanceSteps((!move->accelSteps ? move->vMax : Printer::vMaxReached), 0, true);
+#endif // USE_ADVANCE
                 if(!move->accelSteps) {
                     if(move->vMax > STEP_DOUBLER_FREQUENCY) {
 #if ALLOW_QUADSTEPPING
