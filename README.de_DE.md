@@ -167,6 +167,7 @@ Der Sinn dieses Features ist, dass man Filamente und ihre Viskosität zu gegeben
 Menü -> Configuration -> General  
 
 ## Konfigurierbarer Motorstrom im Menü und EEPROM  
+Man kann alle Stepperströme im Menü am Drucker einstellen. Dieses Features ist ein ersatz für den alten Silent-Mode. Auch hier besteht EEPROM support, die Einstellungen werden beim nächsten Druckerstart automatisch geladen.
 Menü -> Configuration -> Stepper  
 
 ## Konfigurierbare Temperatureinstellungen im Menü und EEPROM  
@@ -176,6 +177,7 @@ Menü -> Configuration -> Temperatures -> Extruder0/Extruder1/Heizbett
 ## Dual-Hotend TipDown Support (beta)
 * M3919 [S]mikrometer - Testfunktion für ein Herunterlass-Hotend beim rechten Hotend T1: Das rechte Hotend kann gefedert eingebaut werden. Wird das Hotend ausgewählt, wird das bett automatisch heruntergefahren, sodass es niedriger hängt wie das linke hotend, aber nicht mit dem Bett kollidiert. Der Ultimaker 3 macht das so beim rechten Hotend.
 Beispiel: M3919 T1 Z-0.6 sagt dem Drucker, dass das Rechte Hotend 0,6mm weiter herunterreichen kann, wie das linke.
+* EEPROM Support für Offset.
 
 ## Feature Digit-Z-Kompensation (beta)
 Wenn auf die DMS gedrückt wird, wird das Bett in seiner Höhe korrigiert, wenn die Z-Kompensation arbeitet. Damit wird die Durchbiegung der DMS-Sensoren unter Last korrigiert. Die Änderungen bewegen sich in etwa im Bereich von +0,01mm wenn +1000 Digits Kraft auf die Sensoren aufgebracht werden.
@@ -189,8 +191,24 @@ Sucht man in der Firmware nach RESERVE_ANALOG_INPUTS sieht man weiteren nützlic
 Man muss, um den Temperatursensor zu nutzen, ein zusätzliches Kabel mit einem Temperatursensor am Port X35 an der Druckerplatine des RF2000-Druckers anschliessen. Anschließend kann der optionale Sensor an einem beliebigen Punkt im Drucker positioniert werden.
 Es könnte z.B. die Temperatur in der Nähe der Hauptplatine, die Hitzeentwicklung an einem Steppermotor oder die Temperatur im Druckraum gemessen werden.
 
+## Erweiterte Profile für PID Autotune
+
+Erweiterter GCode M303:
+[J0] Classic PID  
+[J1] Pessen Integral Rule (empfohlen für Hotend)  
+[J2] Some Overshoot  
+[J3] No Overshoot (empfohlen für Heizbett)  
+[J4] bis [J6] sind PD, PI, P-Profile for regelungstechnik experten bzw. spezielle Anwendungsfälle.  
+[Rn] Configurable Autotune cycles  
+Autotune support über das Druckermenü am Display.  
+Siehe auch http://www.rf1000.de/viewtopic.php?f=7&t=1963  
+
+## Pause Funktion 
+Mit Temperaturabsenkung für das aktive Hotend während der Pause.  
+Mit Motorstromabsenkung für beide Extruder-Motoren während der Pause, um eine unnötige Erwärmung des Filamentes zu verhindern.  
+Manuelles extrudieren während der Pause deaktiviert den automatischen Retract des Extruders beim Fortsetzen.
+
 ## Wessix's Hilfe-Video:
 [![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)
 
-## !! 03.02.2017: An diesem Projekt wird kontinuierlich weitergearbeitet, spontane Änderungen sind jederzeit möglich.
-## !! 28.02.2017: Dieser Mod sollte sich, abgesehen von Arduino.cc 1.6.5r5 ebenfalls mit Arduino.cc Version >=1.8.4 compilieren lassen.
+## !! 22.08.2017: An diesem Projekt wird kontinuierlich weitergearbeitet, spontane Änderungen sind jederzeit möglich.

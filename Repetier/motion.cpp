@@ -474,10 +474,9 @@ void PrintLine::calculateQueueMove(float axis_diff[],uint8_t pathOptimize)
     // p->plateauN = (p->vMax*p->vMax/p->accelerationPrim)>>1;
 
 #if USE_ADVANCE
-    if(!isXYZMove() || !isEMove())
-    {
+    if(!isXYZMove() || !isEMove()) {   // No head move or E move only or sucking filament back
 #ifdef ENABLE_QUADRATIC_ADVANCE
-        advanceRate = 0;            // No head move or E move only or sucking filament back
+        advanceRate = 0;
         advanceFull = 0;
 #endif // ENABLE_QUADRATIC_ADVANCE
         advanceL = 0;
