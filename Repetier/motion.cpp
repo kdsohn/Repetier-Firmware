@@ -675,7 +675,7 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
     // p->plateauN = (p->vMax*p->vMax/p->accelerationPrim)>>1;
 
 #if USE_ADVANCE
-    if(!isXYZMove() || !isEMove())
+    if( !isXYZMove() || !isEPositiveMove() )
     {
 #ifdef ENABLE_QUADRATIC_ADVANCE
         advanceRate = 0;            // No head move or E move only or sucking filament back
@@ -812,7 +812,7 @@ void PrintLine::updateTrapezoids()
     }
 
     computeMaxJunctionSpeed(previous,act);  // Set maximum junction speed if we have a real move before
-    if(previous->isEOnlyMove() != act->isEOnlyMove())
+    if( previous->isEOnlyMove() != act->isEOnlyMove() )
     {
         previous->setEndSpeedFixed(true);
         act->setStartSpeedFixed(true);

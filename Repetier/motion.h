@@ -158,7 +158,7 @@ public:
 
     inline bool isExtruderForwardMove()
     {
-        return (dir & 136)==136;
+        return (dir & 136)==136; //isEPositiveMove()
     } // isExtruderForwardMove
 
     inline void block()
