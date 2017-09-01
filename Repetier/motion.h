@@ -210,7 +210,7 @@ public:
         if(isZNegativeMove() && Printer::isZMinEndstopHit())
         {
 #if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE && FEATURE_ENABLE_Z_SAFETY
-            if( Printer::isAxisHomed(Z_AXIS) && PrintLine::direct.task != TASK_MOVE_FROM_BUTTON)
+            if( Printer::isHomed() && PrintLine::direct.task != TASK_MOVE_FROM_BUTTON)
             {
                 if( Printer::currentZSteps <= -Z_OVERRIDE_MAX )
                 {
