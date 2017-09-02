@@ -4056,6 +4056,7 @@ void UIDisplay::finishAction(int action)
             //show menu and message to user: He cant do anything until autotune is over.
             uid.menuLevel = 0; 
             uid.menuPos[0] = 3; //show temps
+            g_uStartOfIdle = 0;
             UI_STATUS_UPD(UI_TEXT_PID);
             tempController[heater]->autotunePID(temperature,heater,cycles,writeeeprom, method);  
 #else
@@ -4574,6 +4575,7 @@ void UIDisplay::executeAction(int action)
 
             case UI_ACTION_PREHEAT_PLA:
             {
+                g_uStartOfIdle = 0;
                 UI_STATUS_UPD( UI_TEXT_PREHEAT_PLA );
                 Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_PLA,0);
 
@@ -4593,6 +4595,7 @@ void UIDisplay::executeAction(int action)
             }
             case UI_ACTION_PREHEAT_ABS:
             {
+                g_uStartOfIdle = 0;
                 UI_STATUS_UPD( UI_TEXT_PREHEAT_ABS );
                 Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_ABS,0);
 
@@ -4669,7 +4672,7 @@ void UIDisplay::executeAction(int action)
                 {
                     char    unlock = !uid.locked;
 
-
+                    g_uStartOfIdle = 0;
                     uid.executeAction(UI_ACTION_TOP_MENU);
                     UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT );
                     uid.lock();
@@ -4700,7 +4703,7 @@ void UIDisplay::executeAction(int action)
 
                     char    unlock = !uid.locked;
 
-
+                    g_uStartOfIdle = 0;
                     uid.executeAction(UI_ACTION_TOP_MENU);
                     UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT );
                     uid.lock();
@@ -4721,7 +4724,7 @@ void UIDisplay::executeAction(int action)
                 {
                     char    unlock = !uid.locked;
 
-
+                    g_uStartOfIdle = 0;
                     uid.executeAction(UI_ACTION_TOP_MENU);
                     UI_STATUS_UPD( UI_TEXT_MOUNT_FILAMENT );
                     uid.lock();
@@ -4752,7 +4755,7 @@ void UIDisplay::executeAction(int action)
 
                     char    unlock = !uid.locked;
 
-
+                    g_uStartOfIdle = 0;
                     uid.executeAction(UI_ACTION_TOP_MENU);
                     UI_STATUS_UPD( UI_TEXT_MOUNT_FILAMENT );
                     uid.lock();

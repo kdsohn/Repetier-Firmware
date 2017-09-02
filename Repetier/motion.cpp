@@ -1382,7 +1382,7 @@ long PrintLine::performQueueMove()
                     if( linesCount )
                     {
                         g_pauseMode     = PAUSE_MODE_PAUSED;
-                        g_pauseStatus   = PAUSE_STATUS_GOTO_PAUSE1;
+                        g_pauseStatus   = PAUSE_STATUS_TASKGOTO_PAUSE_1;
                         g_nContinueSteps[X_AXIS] = 0;
                         g_nContinueSteps[Y_AXIS] = 0;
                         g_nContinueSteps[Z_AXIS] = 0;

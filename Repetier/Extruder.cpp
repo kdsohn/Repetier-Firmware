@@ -1295,6 +1295,7 @@ void Extruder::disableAllHeater()
 void TemperatureController::waitForTargetTemperature() {
     if(targetTemperatureC < 30) return;
     if(Printer::debugDryrun()) return;
+    g_uStartOfIdle = 0;
     if(targetTemperatureC < currentTemperatureC){
         UI_STATUS_UPD( UI_TEXT_COOLING_DOWN );
     }else{
@@ -1308,6 +1309,7 @@ void TemperatureController::waitForTargetTemperature() {
             return;
         }
     }
+    g_uStartOfIdle = HAL::timeInMilliseconds();
 }
 
 void TemperatureController::autotunePID(float temp, uint8_t controllerId, int maxCycles, bool storeValues, int method)
