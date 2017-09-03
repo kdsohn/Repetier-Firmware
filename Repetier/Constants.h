@@ -20,7 +20,7 @@
 #define CONSTANTS_H
 
 
-#define REPETIER_VERSION                    "RF.01.37t4.Mod"
+#define REPETIER_VERSION                    "RF.01.37t5.Mod"
 #define UI_PRINTER_COMPANY                  "Conrad Community"
 #define UI_VERSION_STRING                   "V " REPETIER_VERSION
 
@@ -63,7 +63,7 @@
 
 #define MENU_MODE_SD_MOUNTED                1
 #define MENU_MODE_SD_PRINTING               2
-#define MENU_MODE_SD_PAUSED                 4
+#define MENU_MODE_PAUSED                    4
 #define MENU_MODE_FAN_RUNNING               8
 #define MENU_MODE_PRINTING                  16
 #define MENU_MODE_PRINTER                   32  // we have to show the printer menu

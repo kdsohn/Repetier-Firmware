@@ -141,7 +141,7 @@ void SDCard::unmount()
     sdactive = false;
     savetosd = false;
     Printer::setAutomount(false);
-    Printer::setMenuMode(MENU_MODE_SD_MOUNTED+MENU_MODE_SD_PAUSED+MENU_MODE_SD_PRINTING,false);
+    Printer::setMenuMode(MENU_MODE_SD_MOUNTED+MENU_MODE_PAUSED+MENU_MODE_SD_PRINTING,false);
 
 #if UI_DISPLAY_TYPE!=0
     uid.cwd[0]='/';
@@ -157,7 +157,7 @@ void SDCard::startPrint()
     if(!sdactive) return;
     sdmode = true;
     Printer::setMenuMode(MENU_MODE_SD_PRINTING,true);
-    Printer::setMenuMode(MENU_MODE_SD_PAUSED,false);
+    Printer::setMenuMode(MENU_MODE_PAUSED,false);
 
 } // startPrint
 
@@ -169,7 +169,7 @@ void SDCard::abortPrint()
         return;
     }
     Printer::setMenuMode(MENU_MODE_SD_PRINTING,false);
-    Printer::setMenuMode(MENU_MODE_SD_PAUSED,false);
+    Printer::setMenuMode(MENU_MODE_PAUSED,false);
     
     if( Printer::debugInfo() )
     {
@@ -215,13 +215,7 @@ void SDCard::abortPrint()
     Printer::queuePositionLastSteps[Z_AXIS] = Printer::queuePositionCurrentSteps[Z_AXIS];
     Printer::updateCurrentPosition( true );
 
-//  g_debugInt32 = 0;
-/*  g_debugCounter[0] = 0;
-    g_debugCounter[1] = 0;
-    g_debugCounter[2] = 0;
-    g_debugCounter[3] = 0;
-    g_debugCounter[4] = 0;
-*/  noInts.unprotect(); //HAL::allowInterrupts();
+    noInts.unprotect();
 
     BEEP_ABORT_PRINTING
 
@@ -229,7 +223,7 @@ void SDCard::abortPrint()
     if( g_pauseStatus != PAUSE_STATUS_NONE )
     {
         // the printing is paused at the moment
-        noInts.protect(); //HAL::forbidInterrupts();
+        noInts.protect();
 
         g_uPauseTime  = 0;
         g_pauseStatus = PAUSE_STATUS_NONE;
@@ -240,7 +234,7 @@ void SDCard::abortPrint()
         g_nContinueSteps[Z_AXIS] = 0;
         g_nContinueSteps[E_AXIS] = 0;
 
-        noInts.unprotect(); //HAL::allowInterrupts();
+        noInts.unprotect();
     }
 #endif // FEATURE_PAUSE_PRINTING
 

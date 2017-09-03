@@ -1150,7 +1150,7 @@ Above this value the z compensation will distribute the roughness of the surface
 /** \brief Configuration of the pause steps */
 #define DEFAULT_PAUSE_STEPS_X               (XAXIS_STEPS_PER_MM * -200)
 #define DEFAULT_PAUSE_STEPS_Y               (YAXIS_STEPS_PER_MM * 200)
-#define DEFAULT_PAUSE_STEPS_Z               (ZAXIS_STEPS_PER_MM * 100)
+#define DEFAULT_PAUSE_STEPS_Z               (ZAXIS_STEPS_PER_MM * 20)
 #define DEFAULT_PAUSE_STEPS_EXTRUDER        (EXT0_STEPS_PER_MM  * 1.5f)
 
 #define PAUSE_X_SPACING                     (XAXIS_STEPS_PER_MM * 5)

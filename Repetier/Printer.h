@@ -38,9 +38,10 @@
 #define PRINTER_FLAG1_NO_DESTINATION_CHECK      32
 #define PRINTER_FLAG1_Z_ORIGIN_SET              64
 
-#define PRINTER_FLAG2_HOMED_X                   1
-#define PRINTER_FLAG2_HOMED_Y                   2
-#define PRINTER_FLAG2_HOMED_Z                   4
+#define PRINTER_FLAG3_X_HOMED                   1 // flag3 alike original repetier
+#define PRINTER_FLAG3_Y_HOMED                   2 // flag3 alike original repetier
+#define PRINTER_FLAG3_Z_HOMED                   4 // flag3 alike original repetier
+#define PRINTER_FLAG3_PRINTING                  8 // flag3 alike original repetier
 
 
 class Printer
@@ -73,6 +74,7 @@ public:
     static uint8_t          flag0;
     static uint8_t          flag1;
     static uint8_t          flag2;
+    static uint8_t          flag3;
     static uint8_t          stepsPerTimerCall;
     static unsigned long    interval;                           // Last step duration in ticks.
     static unsigned long    timer;                              // used for acceleration/deceleration timing
@@ -558,13 +560,13 @@ public:
     {
         switch(b){
             case X_AXIS: {
-                return (flag2 & PRINTER_FLAG2_HOMED_X);
+                return (flag3 & PRINTER_FLAG3_X_HOMED);
                 }
             case Y_AXIS: {
-                return (flag2 & PRINTER_FLAG2_HOMED_Y);
+                return (flag3 & PRINTER_FLAG3_Y_HOMED);
                 }
             case Z_AXIS: {
-                return (flag2 & PRINTER_FLAG2_HOMED_Z);
+                return (flag3 & PRINTER_FLAG3_Z_HOMED);
                 }
         } 
         return 0;
@@ -589,11 +591,11 @@ public:
     static inline void setHomed(uint8_t b, int8_t x = -1, int8_t y = -1, int8_t z = -1)
     {
         flag1 = (b ? flag1 | PRINTER_FLAG1_HOMED : flag1 & ~PRINTER_FLAG1_HOMED);
-        if(x != -1) flag2 = (x ? flag2 | PRINTER_FLAG2_HOMED_X : flag2 & ~PRINTER_FLAG2_HOMED_X);
-        if(y != -1) flag2 = (y ? flag2 | PRINTER_FLAG2_HOMED_Y : flag2 & ~PRINTER_FLAG2_HOMED_Y);
-        if(z != -1) flag2 = (z ? flag2 | PRINTER_FLAG2_HOMED_Z : flag2 & ~PRINTER_FLAG2_HOMED_Z);  
-        if((flag2 & PRINTER_FLAG2_HOMED_X) && (flag2 & PRINTER_FLAG2_HOMED_Y) && (flag2 & PRINTER_FLAG2_HOMED_Z)) flag1 |= PRINTER_FLAG1_HOMED;
-        if(!(flag2 & PRINTER_FLAG2_HOMED_X) && !(flag2 & PRINTER_FLAG2_HOMED_Y) && !(flag2 & PRINTER_FLAG2_HOMED_Z)) flag1 &= ~PRINTER_FLAG1_HOMED;
+        if(x != -1) flag3 = (x ? flag3 | PRINTER_FLAG3_X_HOMED : flag3 & ~PRINTER_FLAG3_X_HOMED);
+        if(y != -1) flag3 = (y ? flag3 | PRINTER_FLAG3_Y_HOMED : flag3 & ~PRINTER_FLAG3_Y_HOMED);
+        if(z != -1) flag3 = (z ? flag3 | PRINTER_FLAG3_Z_HOMED : flag3 & ~PRINTER_FLAG3_Z_HOMED);  
+        if((flag3 & PRINTER_FLAG3_X_HOMED) && (flag3 & PRINTER_FLAG3_Y_HOMED) && (flag3 & PRINTER_FLAG3_Z_HOMED)) flag1 |= PRINTER_FLAG1_HOMED;
+        if(!(flag3 & PRINTER_FLAG3_X_HOMED) && !(flag3 & PRINTER_FLAG3_Y_HOMED) && !(flag3 & PRINTER_FLAG3_Z_HOMED)) flag1 &= ~PRINTER_FLAG1_HOMED;
     } // setHomed
 
     static inline uint8_t isZOriginSet()
@@ -655,6 +657,17 @@ public:
     {
         flag1 = (b ? flag1 | PRINTER_FLAG1_NO_DESTINATION_CHECK : flag1 & ~PRINTER_FLAG1_NO_DESTINATION_CHECK);
     } // setNoDestinationCheck
+
+    static inline uint8_t isPrinting()
+    {
+        return flag3 & PRINTER_FLAG3_PRINTING;
+    }
+
+    static inline void setPrinting(uint8_t b)
+    {
+        flag3 = (b ? flag3 | PRINTER_FLAG3_PRINTING : flag3 & ~PRINTER_FLAG3_PRINTING);
+        Printer::setMenuMode(MENU_MODE_PRINTING, b);
+    }
 
     static inline void toggleAnimation()
     {

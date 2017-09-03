@@ -6038,9 +6038,16 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
             showIdle();
             g_uStartOfIdle  = 0;
             g_nPrinterReady = 1;
+            Printer::setPrinting(false);
         }
     }
- 
+
+    if( PrintLine::linesCount > 5 )
+    {
+        // this check shall be done only during the printing (for example, it shall not be done in case filament is extruded manually)
+        Printer::setPrinting(true);
+    }
+
 #if FEATURE_CASE_FAN && !CASE_FAN_ALWAYS_ON
     if( Printer::prepareFanOff )
     {
@@ -6337,7 +6344,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
         {
             uLastPressureTime = uTime;
 
-            if( g_pauseStatus == PAUSE_STATUS_NONE && g_pauseMode == PAUSE_MODE_NONE && PrintLine::linesCount > 5 )
+            if( g_pauseStatus == PAUSE_STATUS_NONE && g_pauseMode == PAUSE_MODE_NONE && Printer::isPrinting() )
             {
                 // this check shall be done only during the printing (for example, it shall not be done in case filament is extruded manually)
                 nPressureSum    += pressure;
@@ -6775,35 +6782,34 @@ inline void waitforPauseStatus_fromButton(char Status){
 
 void pausePrint( void )
 {
-    if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausePrint()" ) );
-
     if( g_pauseMode == PAUSE_MODE_NONE )
     {
         if( PrintLine::linesCount ) // the printing is not paused at the moment
         {
             if( !Printer::areAxisHomed() ) // this should never happen
             {
-                if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausePrint(): pause is not available at the moment because the home position is unknown" ) );
+                if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausePrint(): home position is unknown" ) );
                 showError( (void*)ui_text_pause, (void*)ui_text_home_unknown );
                 return;
             }
+            if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausing..." ) );
             g_pauseMode   = PAUSE_MODE_PAUSED;
             g_uStartOfIdle  = 0;
             uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
             uid.menuPos[uid.menuLevel] = 0;
             UI_STATUS_UPD( UI_TEXT_PAUSING );
-
+            Com::printFLN( PSTR("RequestPause:") );
             waitforPauseStatus_fromButton(PAUSE_STATUS_GOTO_PAUSE1);
             g_uPauseTime    = HAL::timeInMilliseconds();
             g_pauseBeepDone = 0;
 
-            if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): the printing has been paused" ) );
+            if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): paused" ) );
             UI_STATUS_UPD( UI_TEXT_PAUSED );
-            Printer::setMenuMode( MENU_MODE_SD_PAUSED, true );
+            Printer::setMenuMode( MENU_MODE_PAUSED, true );
         }
         else
         {
-            if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausePrint(): pause is not available at the moment because nothing is printed" ) );
+            if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausePrint(): nothing is printed" ) );
             showError( (void*)ui_text_pause, (void*)ui_text_operation_denied );
         }
         return;
@@ -6817,7 +6823,7 @@ void pausePrint( void )
         uid.menuPos[uid.menuLevel] = 0;
         UI_STATUS_UPD( UI_TEXT_PAUSING );
         // in case the print is paused already, we move the printer head to the pause position
-        if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): moving to the pause position" ) );
+        if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): moving..." ) );
 
         waitforPauseStatus_fromButton(PAUSE_STATUS_GOTO_PAUSE2);
 #if FEATURE_MILLING_MODE
@@ -6827,7 +6833,7 @@ void pausePrint( void )
         }
 #endif // FEATURE_MILLING_MODE
 
-        if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): the pause position has been reached" ) );
+        if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): position reached" ) );
         UI_STATUS_UPD( UI_TEXT_PAUSED );
         return;
     }
@@ -6837,7 +6843,7 @@ void pausePrint( void )
 void continuePrint( void )
 {
     if(g_pauseMode == PAUSE_MODE_NONE || g_pauseStatus != PAUSE_STATUS_PAUSED){
-        if( Printer::debugErrors() ) Com::printFLN( PSTR( "continuePrint(): continue is not available at the moment" ) );
+        if( Printer::debugErrors() ) Com::printFLN( PSTR( "continuePrint(): we are not paused." ) );
         return;
     }
 
@@ -6886,7 +6892,7 @@ void continuePrint( void )
     else if( g_pauseMode == PAUSE_MODE_PAUSED_AND_MOVED )
     {
         // move to the continue position
-        if( Printer::debugInfo() ) Com::printFLN( PSTR( "continuePrint(): moving to the continue position" ) );
+        if( Printer::debugInfo() ) Com::printFLN( PSTR( "continuePrint(): moving..." ) );
         if( nPrintingMode )
         {
 #if NUM_EXTRUDER > 0
@@ -6918,11 +6924,12 @@ void continuePrint( void )
         }
     }
 
+    Com::printFLN( PSTR("RequestContinue:") );
     // wait until the next move is started
     g_pauseMode   = PAUSE_MODE_NONE;
     g_pauseStatus = PAUSE_STATUS_NONE;
 
-    if( Printer::debugInfo() )  Com::printFLN( PSTR( "continuePrint(): waiting for the next move" ) );
+    if( Printer::debugInfo() )  Com::printFLN( PSTR( "continuePrint(): waiting for next move" ) );
 
     unsigned long   startTime = HAL::timeInMilliseconds();
     char            timeout   = 0;
@@ -6953,7 +6960,7 @@ void continuePrint( void )
 
     if( nPrintingMode ){ UI_STATUS_UPD( UI_TEXT_PRINT_POS ); }
     else{ UI_STATUS_UPD( UI_TEXT_MILL_POS ); }
-    Printer::setMenuMode( MENU_MODE_SD_PAUSED, false );
+    Printer::setMenuMode( MENU_MODE_PAUSED, false );
 
 } // continuePrint
 

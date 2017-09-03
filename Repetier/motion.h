@@ -377,8 +377,8 @@ public:
     inline static void resetPathPlanner()
     {
         linesCount    = 0;
-        linesPos      = 0;
-        linesWritePos = 0;
+        linesPos = linesWritePos;
+        Printer::setMenuMode(MENU_MODE_PRINTING, Printer::isPrinting());
     } // resetPathPlanner
 
     inline static void resetLineBuffer()
@@ -513,29 +513,20 @@ public:
     static inline void removeCurrentLineForbidInterrupt()
     {
         nextPlannerIndex(linesPos);
-        //linesPos++;
-        //if(linesPos>=MOVE_CACHE_SIZE) linesPos=0;
         cur->task = TASK_NO_TASK;
         cur = NULL;
-
         HAL::forbidInterrupts();
         --linesCount;
-        if(!linesCount)
-            Printer::setMenuMode(MENU_MODE_PRINTING,false);
+        if(!linesCount) Printer::setMenuMode(MENU_MODE_PRINTING, Printer::isPrinting() );
     } // removeCurrentLineForbidInterrupt
 
     static inline void pushLine()
     {
         nextPlannerIndex(linesWritePos);
-        //linesWritePos++;
-        //if(linesWritePos>=MOVE_CACHE_SIZE) linesWritePos = 0;
         Printer::setMenuMode(MENU_MODE_PRINTING,true);
-        
-        InterruptProtectedBlock noInts; //BEGIN_INTERRUPT_PROTECTED
+        InterruptProtectedBlock noInts;
         linesCount++;
-        //END_INTERRUPT_PROTECTED
-
-        g_uStartOfIdle = 0;
+        g_uStartOfIdle = 0; //line not here in newest repetier
     } // pushLine
 
     static PrintLine *getNextWriteLine()
