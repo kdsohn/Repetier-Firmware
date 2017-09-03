@@ -3,6 +3,13 @@ TODO: Test Z-Homing and Pause-Pause-Continue in Milling-Mode
 TODO: Test driving free without FEATURE drive-free in Milling-Mode @RF1000/RF2000
 TODO: Testing, testing ..
 
+V RF.01.37t4.Mod (2017-09-03)
+- Fixed UI_Language 1 missing motor text and advance text
+- Forbid menu items when (paused and printing) [but printing over usb is not recognized as MENU_MODE_PRINTING yet!]
+ ... prevent menu retraction/extruding and crash throug menu. Button Extrusion within pause is still possible.
+- Continue within SD-Card menu now pushes back to menulevel 0
+- Display-Status "heating bed" and "heating extruder" is now shown while heating (not overridden by "printer ready")
+
 V RF.01.37t3.Mod (2017-08-16)
 - small cleanup
 - mhiers fix for home up while circuit mode @RF1000

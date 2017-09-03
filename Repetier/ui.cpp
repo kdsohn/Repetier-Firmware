@@ -3084,7 +3084,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         case UI_ACTION_EPOSITION:
         {
 #if EXTRUDER_ALLOW_COLD_MOVE
-            PrintLine::moveRelativeDistanceInSteps(0,0,0,Printer::axisStepsPerMM[E_AXIS]*increment,UI_SET_EXTRUDER_FEEDRATE,true,false);
+            PrintLine::moveRelativeDistanceInSteps(0,0,0,Printer::axisStepsPerMM[E_AXIS]*increment,UI_SET_EXTRUDER_FEEDRATE,true,false); //klappt nicht in Pause!!
             Commands::printCurrentPosition();
 #else
             if( Extruder::current->tempControl.targetTemperatureC > UI_SET_MIN_EXTRUDER_TEMP )
@@ -4838,11 +4838,13 @@ void UIDisplay::executeAction(int action)
             }
             case UI_ACTION_SD_PAUSE:
             {
+                uid.executeAction(UI_ACTION_TOP_MENU);
                 pausePrint();
                 break;
             }
             case UI_ACTION_SD_CONTINUE:
             {
+                uid.executeAction(UI_ACTION_TOP_MENU);
                 continuePrint();
                 break;
             }
