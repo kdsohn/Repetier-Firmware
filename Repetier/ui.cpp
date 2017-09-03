@@ -3549,7 +3549,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif // FEATURE_RGB_LIGHT_EFFECTS
         case UI_ACTION_EXTR_STEPS_E0:
         {
-           if(g_pauseMode == PAUSE_MODE_NONE){
+           if(g_pauseMode == PAUSE_MODE_NONE && !Printer::isPrinting() ){
             INCREMENT_MIN_MAX(extruder[0].stepsPerMM,1,1,9999);
             if(0 == Extruder::current->id) Extruder::selectExtruderById(Extruder::current->id); //übernehmen der werte
 
@@ -3563,7 +3563,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if NUM_EXTRUDER > 1
         case UI_ACTION_EXTR_STEPS_E1:
         {
-           if(g_pauseMode == PAUSE_MODE_NONE){
+           if(g_pauseMode == PAUSE_MODE_NONE && !Printer::isPrinting()){
             INCREMENT_MIN_MAX(extruder[1].stepsPerMM,1,1,9999);
             if(1 == Extruder::current->id) Extruder::selectExtruderById(Extruder::current->id); //übernehmen der werte
 
@@ -3601,6 +3601,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif //USE_ADVANCE
         case UI_ACTION_EXTR_STEPS:
         {
+           if(g_pauseMode == PAUSE_MODE_NONE && !Printer::isPrinting()){
             INCREMENT_MIN_MAX(Extruder::current->stepsPerMM,1,1,9999);
             Extruder::selectExtruderById(Extruder::current->id);
 
@@ -3608,8 +3609,8 @@ void UIDisplay::nextPreviousAction(int8_t next)
             HAL::eprSetFloat(EEPROM::getExtruderOffset(Extruder::current->id)+EPR_EXTRUDER_STEPS_PER_MM,Extruder::current->stepsPerMM);
             EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-
-            break;
+           }
+           break;
         }
         case UI_ACTION_EXTR_ACCELERATION:
         {
