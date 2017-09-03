@@ -17,7 +17,7 @@ https://github.com/RF1000/Repetier-Firmware (siehe Branch developement)
 ## Installationsanleitung
 
 - Das Firmwarepaket `Branch: community_development` herunterladen und entpacken.  
-- Installiere Arduino.cc 1.6.5 or 1.8.3 oder später, wenn Arduino nicht bereits installiert ist.  
+- Installiere Arduino.cc 1.6.5 or 1.8.4 oder später, wenn Arduino nicht bereits installiert ist.  
 - Man bearbeitet und speichert die Configuration.h bei Zeile 46 und 47, je nachdem welchen Drucker man besitzt mit einem Texteditor. Man muss die zwei **//** vor dem Druckermodell entfernen, welches man aktivieren will:  
 `#define MOTHERBOARD                         DEVICE_TYPE_RF1000` or  
 `#define MOTHERBOARD                         DEVICE_TYPE_RF2000`
@@ -178,6 +178,3 @@ Es könnte z.B. die Temperatur in der Nähe der Hauptplatine, die Hitzeentwicklu
 
 ## Wessix's Hilfe-Video:
 [![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)
-
-## !! 03.02.2017: An diesem Projekt wird kontinuierlich weitergearbeitet, spontane Änderungen sind jederzeit möglich.
-## !! 28.02.2017: Dieser Mod sollte sich, abgesehen von Arduino.cc 1.6.5r5 ebenfalls mit Arduino.cc Version >=1.8.1 compilieren lassen.

@@ -17,7 +17,7 @@ https://github.com/RF1000/Repetier-Firmware (see branch development)
 ## HowTo Install
 
 - Download the Firmware `Branch: community_development` and unzip all the files.  
-- Install Arduino.cc 1.6.5 or 1.8.3 and later if it is not installed on your computer already.  
+- Install Arduino.cc 1.6.5 or 1.8.4 and later if it is not installed on your computer already.  
 - Edit and save Configuration.h @Line46 and 47 according to your printers model. You have to remove the two **//** in front of the printers name you wish to activate:  
 `#define MOTHERBOARD                         DEVICE_TYPE_RF1000` or  
 `#define MOTHERBOARD                         DEVICE_TYPE_RF2000`
@@ -174,6 +174,3 @@ This sensor might keep track of your boards temperature or the air-temperature w
 
 ## Wessix`s help video:
 [![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)
-
-## !! 03.02.2017: Project is Work in Progress and untested changes are possible.
-## !! 28.02.2017: This mod should be save to complile with Arduino 1.8.1. Former problems are gone.
