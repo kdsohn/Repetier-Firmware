@@ -158,7 +158,7 @@ public:
 
     inline bool isExtruderForwardMove()
     {
-        return (dir & 136)==136;
+        return (dir & 136)==136; //isEPositiveMove()
     } // isExtruderForwardMove
 
     inline void block()
@@ -387,9 +387,9 @@ public:
         memset( lines, 0, sizeof( PrintLine ) * MOVE_CACHE_SIZE );
     } // resetLineBuffer
 
+#if USE_ADVANCE
     inline void updateAdvanceSteps(speed_t v,uint8_t max_loops,bool accelerate)
     {
-#if USE_ADVANCE
         if(!Printer::isAdvanceActivated()) return;
 #ifdef ENABLE_QUADRATIC_ADVANCE
         long advanceTarget = Printer::advanceExecuted;
@@ -433,8 +433,8 @@ public:
         (void)max_loops;
         (void)accelerate;
 #endif // ENABLE_QUADRATIC_ADVANCE
-#endif // USE_ADVANCE
     } // updateAdvanceSteps
+#endif // USE_ADVANCE
 
     inline bool moveDecelerating()
     {

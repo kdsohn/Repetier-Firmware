@@ -474,10 +474,9 @@ void PrintLine::calculateQueueMove(float axis_diff[],uint8_t pathOptimize)
     // p->plateauN = (p->vMax*p->vMax/p->accelerationPrim)>>1;
 
 #if USE_ADVANCE
-    if(!isXYZMove() || !isEMove())
-    {
+    if(!isXYZMove() || !isEMove()) {   // No head move or E move only or sucking filament back
 #ifdef ENABLE_QUADRATIC_ADVANCE
-        advanceRate = 0;            // No head move or E move only or sucking filament back
+        advanceRate = 0;
         advanceFull = 0;
 #endif // ENABLE_QUADRATIC_ADVANCE
         advanceL = 0;
@@ -676,7 +675,7 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
     // p->plateauN = (p->vMax*p->vMax/p->accelerationPrim)>>1;
 
 #if USE_ADVANCE
-    if(!isXYZMove() || !isEMove())
+    if( !isXYZMove() || !isEPositiveMove() )
     {
 #ifdef ENABLE_QUADRATIC_ADVANCE
         advanceRate = 0;            // No head move or E move only or sucking filament back
@@ -813,7 +812,7 @@ void PrintLine::updateTrapezoids()
     }
 
     computeMaxJunctionSpeed(previous,act);  // Set maximum junction speed if we have a real move before
-    if(previous->isEOnlyMove() != act->isEOnlyMove())
+    if( previous->isEOnlyMove() != act->isEOnlyMove() )
     {
         previous->setEndSpeedFixed(true);
         act->setStartSpeedFixed(true);
@@ -1383,7 +1382,7 @@ long PrintLine::performQueueMove()
                     if( linesCount )
                     {
                         g_pauseMode     = PAUSE_MODE_PAUSED;
-                        g_pauseStatus   = PAUSE_STATUS_GOTO_PAUSE1;
+                        g_pauseStatus   = PAUSE_STATUS_TASKGOTO_PAUSE_1;
                         g_nContinueSteps[X_AXIS] = 0;
                         g_nContinueSteps[Y_AXIS] = 0;
                         g_nContinueSteps[Z_AXIS] = 0;
@@ -2104,7 +2103,9 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
                     v=Printer::vMaxReached - v;
                     if (v<move->vEnd) v = move->vEnd; // extra steps at the end of desceleration due to rounding errors
                 }
+#if USE_ADVANCE
                 move->updateAdvanceSteps(v,max_loops,false); // needs original v
+#endif // USE_ADVANCE
                 v = Printer::updateStepsPerTimerCall(v);
                 Printer::interval = HAL::CPUDivU2(v);
                 if(Printer::maxInterval < Printer::interval) // fix timing for very slow speeds
@@ -2120,14 +2121,18 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
                 if(Printer::maxInterval < Printer::interval) // fix timing for very slow speeds
                     Printer::interval = Printer::maxInterval;
                 Printer::timer+=Printer::interval;
+#if USE_ADVANCE
                 move->updateAdvanceSteps(Printer::vMaxReached,max_loops,true);
+#endif // USE_ADVANCE
                 // Printer::stepNumber += maxLoops; // is only used by moveAccelerating --> Nibbels TODO: Check if this is maybe right here: source repetier development
             }
             else // full speed reached
             {
                 // If we had acceleration, we need to use the latest vMaxReached and interval
                 // If we started full speed, we need to use move->fullInterval and vMax
+#if USE_ADVANCE
                 move->updateAdvanceSteps((!move->accelSteps ? move->vMax : Printer::vMaxReached), 0, true);
+#endif // USE_ADVANCE
                 if(!move->accelSteps) {
                     if(move->vMax > STEP_DOUBLER_FREQUENCY) {
 #if ALLOW_QUADSTEPPING

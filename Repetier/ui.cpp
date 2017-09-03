@@ -3084,7 +3084,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         case UI_ACTION_EPOSITION:
         {
 #if EXTRUDER_ALLOW_COLD_MOVE
-            PrintLine::moveRelativeDistanceInSteps(0,0,0,Printer::axisStepsPerMM[E_AXIS]*increment,UI_SET_EXTRUDER_FEEDRATE,true,false);
+            PrintLine::moveRelativeDistanceInSteps(0,0,0,Printer::axisStepsPerMM[E_AXIS]*increment,UI_SET_EXTRUDER_FEEDRATE,true,false); //klappt nicht in Pause!!
             Commands::printCurrentPosition();
 #else
             if( Extruder::current->tempControl.targetTemperatureC > UI_SET_MIN_EXTRUDER_TEMP )
@@ -3548,7 +3548,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
            break;
         }
 #endif //NUM_EXTRUDER > 1
-
+#if USE_ADVANCE
         case UI_ACTION_ADVANCE_L_E0:
         {
             float step = (extruder[0].advanceL < 20.0f) ? 1.0f : ((extruder[0].advanceL < 50.0f) ? 5.0f : 10.0f);
@@ -3571,7 +3571,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
             break;
         }
 #endif //NUM_EXTRUDER > 1
-
+#endif //USE_ADVANCE
         case UI_ACTION_EXTR_STEPS:
         {
             INCREMENT_MIN_MAX(Extruder::current->stepsPerMM,1,1,9999);
@@ -4056,6 +4056,7 @@ void UIDisplay::finishAction(int action)
             //show menu and message to user: He cant do anything until autotune is over.
             uid.menuLevel = 0; 
             uid.menuPos[0] = 3; //show temps
+            g_uStartOfIdle = 0;
             UI_STATUS_UPD(UI_TEXT_PID);
             tempController[heater]->autotunePID(temperature,heater,cycles,writeeeprom, method);  
 #else
@@ -4574,6 +4575,7 @@ void UIDisplay::executeAction(int action)
 
             case UI_ACTION_PREHEAT_PLA:
             {
+                g_uStartOfIdle = 0;
                 UI_STATUS_UPD( UI_TEXT_PREHEAT_PLA );
                 Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_PLA,0);
 
@@ -4593,6 +4595,7 @@ void UIDisplay::executeAction(int action)
             }
             case UI_ACTION_PREHEAT_ABS:
             {
+                g_uStartOfIdle = 0;
                 UI_STATUS_UPD( UI_TEXT_PREHEAT_ABS );
                 Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_ABS,0);
 
@@ -4669,7 +4672,7 @@ void UIDisplay::executeAction(int action)
                 {
                     char    unlock = !uid.locked;
 
-
+                    g_uStartOfIdle = 0;
                     uid.executeAction(UI_ACTION_TOP_MENU);
                     UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT );
                     uid.lock();
@@ -4700,7 +4703,7 @@ void UIDisplay::executeAction(int action)
 
                     char    unlock = !uid.locked;
 
-
+                    g_uStartOfIdle = 0;
                     uid.executeAction(UI_ACTION_TOP_MENU);
                     UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT );
                     uid.lock();
@@ -4721,7 +4724,7 @@ void UIDisplay::executeAction(int action)
                 {
                     char    unlock = !uid.locked;
 
-
+                    g_uStartOfIdle = 0;
                     uid.executeAction(UI_ACTION_TOP_MENU);
                     UI_STATUS_UPD( UI_TEXT_MOUNT_FILAMENT );
                     uid.lock();
@@ -4752,7 +4755,7 @@ void UIDisplay::executeAction(int action)
 
                     char    unlock = !uid.locked;
 
-
+                    g_uStartOfIdle = 0;
                     uid.executeAction(UI_ACTION_TOP_MENU);
                     UI_STATUS_UPD( UI_TEXT_MOUNT_FILAMENT );
                     uid.lock();
@@ -4835,11 +4838,13 @@ void UIDisplay::executeAction(int action)
             }
             case UI_ACTION_SD_PAUSE:
             {
+                uid.executeAction(UI_ACTION_TOP_MENU);
                 pausePrint();
                 break;
             }
             case UI_ACTION_SD_CONTINUE:
             {
+                uid.executeAction(UI_ACTION_TOP_MENU);
                 continuePrint();
                 break;
             }

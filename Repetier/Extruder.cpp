@@ -421,10 +421,8 @@ void Extruder::selectExtruderById(uint8_t extruderId)
     Printer::maxTravelAccelerationStepsPerSquareSecond[E_AXIS] = Printer::maxPrintAccelerationStepsPerSquareSecond[E_AXIS] = Printer::maxAccelerationMMPerSquareSecond[E_AXIS] * Printer::axisStepsPerMM[E_AXIS];
 
 #if USE_ADVANCE
-    Printer::maxExtruderSpeed = (uint8_t)floor(HAL::maxExtruderTimerFrequency()/(Extruder::current->maxFeedrate*Extruder::current->stepsPerMM));
+    Printer::maxExtruderSpeed = (uint8_t)floor(HAL::maxExtruderTimerFrequency() / (Extruder::current->maxFeedrate * Extruder::current->stepsPerMM));
     if(Printer::maxExtruderSpeed>15) Printer::maxExtruderSpeed = 15;
-    //float maxdist = Extruder::current->maxFeedrate*Extruder::current->maxFeedrate*0.00013888/Extruder::current->maxAcceleration;
-    //maxdist-= Extruder::current->maxStartFeedrate*Extruder::current->maxStartFeedrate*0.5/Extruder::current->maxAcceleration;    
     float fmax=((float)HAL::maxExtruderTimerFrequency()/((float)Printer::maxExtruderSpeed*Printer::axisStepsPerMM[E_AXIS])); // Limit feedrate to interrupt speed
     if(fmax<Printer::maxFeedrate[E_AXIS]) Printer::maxFeedrate[E_AXIS] = fmax;
 #endif // USE_ADVANCE
@@ -1297,6 +1295,7 @@ void Extruder::disableAllHeater()
 void TemperatureController::waitForTargetTemperature() {
     if(targetTemperatureC < 30) return;
     if(Printer::debugDryrun()) return;
+    g_uStartOfIdle = 0;
     if(targetTemperatureC < currentTemperatureC){
         UI_STATUS_UPD( UI_TEXT_COOLING_DOWN );
     }else{
@@ -1310,6 +1309,7 @@ void TemperatureController::waitForTargetTemperature() {
             return;
         }
     }
+    g_uStartOfIdle = HAL::timeInMilliseconds();
 }
 
 void TemperatureController::autotunePID(float temp, uint8_t controllerId, int maxCycles, bool storeValues, int method)

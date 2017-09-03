@@ -17,7 +17,7 @@ https://github.com/RF1000/Repetier-Firmware (see branch development)
 ## HowTo Install
 
 - Download the Firmware `Branch: community_development` and unzip all the files.  
-- Install Arduino.cc 1.6.5 or 1.8.3 and later if it is not installed on your computer already.  
+- Install Arduino.cc 1.6.5 or 1.8.4 and later if it is not installed on your computer already.  
 - Edit and save Configuration.h @Line46 and 47 according to your printers model. You have to remove the two **//** in front of the printers name you wish to activate:  
 `#define MOTHERBOARD                         DEVICE_TYPE_RF1000` or  
 `#define MOTHERBOARD                         DEVICE_TYPE_RF2000`
@@ -163,6 +163,7 @@ Feature called "SensibleViscosity"
 Menü -> Configuration -> General  
 
 ## Configurable motorcurrent within menu and EEPROM  
+You can easily change the printers stepper currents within menu for more silence. This features is a replacement to our old silence-feature by gcode. EEPROM support included. The settings are restored after a reboot.
 Menü -> Configuration -> Stepper  
 
 ## Configurable temperature settings within menu and EEPROM  
@@ -172,6 +173,7 @@ Menü -> Configuration -> Temperatures -> Extruder0/Extruder1/Heizbett
 ## Dualhead Tip-Down Support (beta)
 * M3919 [S]mikrometer - Testfunction for Dip-Down-Hotend @ T1: T1 can now be springloaded and the bed will be adjusted "down" whenever T1 is selected. This is alike Ultimaker 3 does it with the right hotend.   
 Example: M3919 T1 Z-0.6 tells the Printer that the right hotend will reach 0.6mm more down than the left hotend. Test it :)
+* EEPROM Support for offset
 
 ## Feature Digit-Z-Kompensation (beta)
 If you apply force to the DMS sensors the bed is adjusted (if Z-Compensation is active). This corrects the error which bending of the sensors apply to your layers. The physical change of the beds level is approximately +0,01mm for +1000 applied force (digits).
@@ -184,8 +186,24 @@ See RESERVE_ANALOG_INPUTS to find the involved code within the firmware.
 You will need to install and additional cable and a temperature sensor at X35 on your printers Board. Then you can wire your sensor to some place needed.  
 This sensor might keep track of your boards temperature or the air-temperature within your enclosure.  
 
+## Advanced profiles for PID Autotune
+
+Additions to GCode M303:
+[J0] Classic PID  
+[J1] Pessen Integral Rule (suggested for Hotend)  
+[J2] Some Overshoot  
+[J3] No Overshoot (suggested for Heated Bed)  
+[J4] until [J6] are PD, PI, P-Profiles for control experts and special cases.  
+[Rn] Configurable Autotune cycles  
+Easy autotune support via printers menu.  
+Siehe auch http://www.rf1000.de/viewtopic.php?f=7&t=1963  
+
+## advanced Pause while printing
+Temperature drop while paused.  
+Lower motor current on both extruders while paused to prevent unnecessary heat to the extruder and filament.  
+Manual extrusion when paused resets automatic retract for continue.
+
 ## Wessix`s help video:
 [![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)
 
-## !! 03.02.2017: Project is Work in Progress and untested changes are possible.
-## !! 28.02.2017: This mod should be save to complile with Arduino 1.8.3. Former problems are gone.
+## !! 22.08.2017: Project is Work in Progress and untested changes are possible.

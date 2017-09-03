@@ -3002,7 +3002,7 @@ void doHeatBedZCompensation( void )
     long            i;
 
 
-    if( !Printer::doHeatBedZCompensation || (g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE1) ) //warum && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE1 ??
+    if( !Printer::doHeatBedZCompensation || (g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE2 && g_pauseStatus != PAUSE_STATUS_TASKGOTO_PAUSE_2) ) // -> weil evtl. bewegung in xy auch solange pausestatus da ist.
     {
         // there is nothing to do at the moment
         return;
@@ -4222,7 +4222,7 @@ void doWorkPartZCompensation( void )
     long            i;
 
 
-    if( !Printer::doWorkPartZCompensation || (g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE1) )
+    if( !Printer::doWorkPartZCompensation || (g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE2 && g_pauseStatus != PAUSE_STATUS_TASKGOTO_PAUSE_2) )
     {
         // there is nothing to do at the moment
         return;
@@ -6337,7 +6337,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
         {
             uLastPressureTime = uTime;
 
-            if( (g_pauseStatus == PAUSE_STATUS_NONE || g_pauseStatus == PAUSE_STATUS_GOTO_PAUSE1) && PrintLine::linesCount > 5 )
+            if( g_pauseStatus == PAUSE_STATUS_NONE && g_pauseMode == PAUSE_MODE_NONE && PrintLine::linesCount > 5 )
             {
                 // this check shall be done only during the printing (for example, it shall not be done in case filament is extruded manually)
                 nPressureSum    += pressure;
@@ -14023,9 +14023,9 @@ void showIdle( void )
 } // showIdle
 
 
-void showError( void* line2, void* line3, void* line4 )
+void showError( const void* line2, const void* line3, const void* line4 )
 {
-    uid.messageLine1 = (void*)ui_text_error;
+    uid.messageLine1 = (const void*)ui_text_error;
     uid.messageLine2 = line2;
     uid.messageLine3 = line3;
     uid.messageLine4 = line4;
@@ -14036,9 +14036,9 @@ void showError( void* line2, void* line3, void* line4 )
 } // showError
 
 
-void showWarning( void* line2, void* line3, void* line4 )
+void showWarning( const void* line2, const void* line3, const void* line4 )
 {
-    uid.messageLine1 = (void*)ui_text_warning;
+    uid.messageLine1 = (const void*)ui_text_warning;
     uid.messageLine2 = line2;
     uid.messageLine3 = line3;
     uid.messageLine4 = line4;
@@ -14061,7 +14061,7 @@ void showInformation( const void* line2, const void* line3, const void* line4 )
 
 } // showInformation
 
-void showMyPage( void* line1, void* line2, void* line3, void* line4 )
+void showMyPage( const void* line1, const void* line2, const void* line3, const void* line4 )
 {
     uid.messageLine1 = line1;
     uid.messageLine2 = line2;

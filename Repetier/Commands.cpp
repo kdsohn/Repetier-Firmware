@@ -1083,6 +1083,7 @@ void Commands::executeGCode(GCode *com)
                     }
                     else if ( !ExtruderTemp ) break;
                     ExtruderTemp = 1;
+                    g_uStartOfIdle = 0;
                     UI_STATUS_UPD(UI_TEXT_HEATING_EXTRUDER);
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
@@ -1171,6 +1172,7 @@ void Commands::executeGCode(GCode *com)
                     }
                     else if ( !BedTemp ) break;
                     BedTemp = 1;
+                    g_uStartOfIdle = 0;
                     UI_STATUS_UPD(UI_TEXT_HEATING_BED);
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING

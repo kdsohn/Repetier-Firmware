@@ -356,11 +356,11 @@
 #define UI_TEXT_HEAT_BED_ZOFFSET_FIX_Z2 "%zS[U] (%zD)"
 #define UI_TEXT_STATUSMSG               "%os"
 
-#define UI_TEXT_SENSOR_1            " Pico/RepRa" //1 B57560G0107F000
-#define UI_TEXT_SENSOR_3            " EPCOS-G550" //3
-#define UI_TEXT_SENSOR_4            " 10k NTC" //4 10K für heizbett vom alternativen Hersteller ohne umbau.
-#define UI_TEXT_SENSOR_8            " 104-GT2" //8
-#define UI_TEXT_SENSOR_14           " 3950-100k" //14
+#define UI_TEXT_SENSOR_1                " Pico/RepRa" //1 B57560G0107F000
+#define UI_TEXT_SENSOR_3                " EPCOS-G550" //3
+#define UI_TEXT_SENSOR_4                " 10k NTC" //4 10K für heizbett vom alternativen Hersteller ohne umbau.
+#define UI_TEXT_SENSOR_8                " 104-GT2" //8
+#define UI_TEXT_SENSOR_14               " 3950-100k" //14
 
 // Printtime output gets aggregated like <Days_5gisgits>UI_TEXT_PRINTTIME_DAYS<Hours>UI_TEXT_PRINTTIME_HOURS<Minutes>UI_TEXT_PRINTTIME_MINUTES
 // ___88 days 12:45
@@ -581,6 +581,8 @@
 #define UI_TEXT_GENERAL                 "Allgemein"
 #define UI_TEXT_EXTR_MAX_FEED           "Max FR:%XF"
 #define UI_TEXT_EXTR_ADVANCE_L          "Advance lin:%Xl"
+#define UI_TEXT_EXTR_ADVANCE_L_E0       "E0-Advance L:%Xb"
+#define UI_TEXT_EXTR_ADVANCE_L_E1       "E1-Advance L:%Xc"
 #define UI_TEXT_EXTR_ADVANCE_K          "Advance quad:%Xa"
 #define UI_TEXT_EXTR_MANAGER            "Regler:%Xh"
 #define UI_TEXT_EXTR_PGAIN              "DT/PID P:%Xp"
@@ -706,6 +708,12 @@
 #define UI_TEXT_HEAT_BED_ZOFFSET_FIX_Z2  "%zS[U] (%zD)"
 #define UI_TEXT_STATUSMSG               "%os"
 
+#define UI_TEXT_SENSOR_1                " Pico/RepRa" //1 B57560G0107F000
+#define UI_TEXT_SENSOR_3                " EPCOS-G550" //3
+#define UI_TEXT_SENSOR_4                " 10k NTC" //4 10K für heizbett vom alternativen Hersteller ohne umbau.
+#define UI_TEXT_SENSOR_8                " 104-GT2" //8
+#define UI_TEXT_SENSOR_14               " 3950-100k" //14
+
 // Printtime output gets aggregated like <Days_5gisgits>UI_TEXT_PRINTTIME_DAYS<Hours>UI_TEXT_PRINTTIME_HOURS<Minutes>UI_TEXT_PRINTTIME_MINUTES
 // ___88 days 12:45
 #define UI_TEXT_PRINTTIME_DAYS          " Tage "
@@ -719,6 +727,12 @@
 #define UI_ACTION_TEXT_PESSEN "PID Pessen-Rule"
 #define UI_ACTION_TEXT_SOME "PID Some-Overshoot"
 #define UI_ACTION_TEXT_NO "PID No-Overshoot"
+
+#define UI_TEXT_MOTOR_X                "I_x: %MX"
+#define UI_TEXT_MOTOR_Y                "I_y: %MY"
+#define UI_TEXT_MOTOR_Z                "I_z: %MZ"
+#define UI_TEXT_MOTOR_E0               "I_e0: %M0"
+#define UI_TEXT_MOTOR_E1               "I_e1: %M1"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000
 
@@ -829,7 +843,7 @@
     #define UI_TEXT_UNMOUNT_FILAMENT        "Filament entl."
     #define UI_TEXT_E_POSITION              "Position Extr."
     #define UI_TEXT_ACTIVE_EXTRUDER         "Aktiver Extr. %Oa"
-    #define UI_TEXT_CONFIG_SINGLE_STEPS        "Z-Sprung: %Sz um"
+    #define UI_TEXT_CONFIG_SINGLE_STEPS     "Z-Sprung: %Sz um"
     #define UI_TEXT_SET_E_ORIGIN            "Setze E Urspr."
     #define UI_TEXT_CONTINUE_PRINT          "Druck forts."
     #define UI_TEXT_PAUSE_MILL              "Fr" STR_auml "sen paus."
