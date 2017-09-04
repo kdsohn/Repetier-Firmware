@@ -20,7 +20,7 @@
 #define CONSTANTS_H
 
 
-#define REPETIER_VERSION                    "RF.01.37t5.Mod"
+#define REPETIER_VERSION                    "RF.01.37t6.Mod"
 #define UI_PRINTER_COMPANY                  "Conrad Community"
 #define UI_VERSION_STRING                   "V " REPETIER_VERSION
 
@@ -88,9 +88,12 @@
 #define PAUSE_STATUS_PREPARE_CONTINUE2_2    6   // we are going to continue the print (= moving to the continue position)
 #define PAUSE_STATUS_PREPARE_CONTINUE1      7   // we are going to continue the print (= moving to the continue position)
 
-#define PAUSE_STATUS_TASKGOTO_PAUSE_1       7   // we are going to pause the print (= moving to the pause position)
-#define PAUSE_STATUS_TASKGOTO_PAUSE_2       8   // we are going to pause the print (= moving to the pause position)
-#define PAUSE_STATUS_TASKGOTO_PAUSE_3       9   // we are going to pause the print (= moving to the pause position)
+#define PAUSE_STATUS_HEATING                8   // we are heating up again.
+
+#define PAUSE_STATUS_TASKGOTO_PAUSE_1       9   // we are going to pause the print (= moving to the pause position)
+#define PAUSE_STATUS_TASKGOTO_PAUSE_2      10   // we are going to pause the print (= moving to the pause position)
+#define PAUSE_STATUS_TASKGOTO_PAUSE_3      11   // we are going to pause the print (= moving to the pause position)
+
 
 #define PAUSE_MODE_NONE                     0   // we are not paused at the moment
 #define PAUSE_MODE_PAUSED                   1   // stopp at the last printing position

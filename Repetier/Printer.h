@@ -666,7 +666,7 @@ public:
     static inline void setPrinting(uint8_t b)
     {
         flag3 = (b ? flag3 | PRINTER_FLAG3_PRINTING : flag3 & ~PRINTER_FLAG3_PRINTING);
-        Printer::setMenuMode(MENU_MODE_PRINTING, b);
+        if(!Printer::isMenuMode(MENU_MODE_SD_PRINTING) || !b) Printer::setMenuMode(MENU_MODE_PRINTING, b);
     }
 
     static inline void toggleAnimation()

@@ -14,8 +14,11 @@ V RF.01.37t5.Mod (2017-09-03)
 - some cleanup
 - fixed homing axes and "isprinting" flag to flag3 instead of flag2 to be in sync with original repetier.
 - call for 
-    Com::printFLN( PSTR("RequestPause:") );
-    Com::printFLN( PSTR("RequestContinue:") ); if paused or continued
+    Com::printFLN( PSTR("RequestPause:") ); //repetier
+    Com::printFLN( PSTR( "// action:pause" ) ); //octoprint
+    Com::printFLN( PSTR("RequestContinue:") );  //repetier
+    Com::printFLN( PSTR( "// action:resume" ) ); //octoprint
+      if paused or continued
 
 V RF.01.37t4.Mod (2017-09-03)
 - Fixed UI_Language 1 missing motor text and advance text

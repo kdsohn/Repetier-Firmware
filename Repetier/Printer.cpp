@@ -1676,7 +1676,7 @@ bool Printer::allowQueueMove( void )
 {
     if( g_pauseStatus == PAUSE_STATUS_PAUSED ) return false;
 
-    if( !( (PAUSE_STATUS_GOTO_PAUSE1 <= g_pauseStatus && g_pauseStatus <= PAUSE_STATUS_PREPARE_CONTINUE1) || g_pauseStatus == PAUSE_STATUS_NONE) 
+    if( !( (PAUSE_STATUS_GOTO_PAUSE1 <= g_pauseStatus && g_pauseStatus <= PAUSE_STATUS_HEATING) || g_pauseStatus == PAUSE_STATUS_NONE) 
         && !PrintLine::cur )
     {
         // do not allow to process new moves from the queue while the printing is paused

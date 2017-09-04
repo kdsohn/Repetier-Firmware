@@ -4031,7 +4031,16 @@ void UIDisplay::finishAction(int action)
                 // continue only in case the user has chosen "Yes"
                 break;
             }
-
+            uid.executeAction(UI_ACTION_TOP_MENU);
+            if( Printer::isMenuMode(MENU_MODE_PRINTING) && !Printer::isMenuMode(MENU_MODE_SD_PRINTING) ) //prüfung auf !sdmode sollte hier eigenlicht nicht mehr nötig sein, aber ..
+            {
+                Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetierserver to stop.
+                Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
+                g_uStartOfIdle = 0;
+                UI_STATUS_UPD( UI_TEXT_OUTPUTTING_OBJECT );
+                Commands::waitUntilEndOfAllBuffers(3*MOVE_CACHE_SIZE); //only wait if chance to have been understood : else break!
+                g_uStartOfIdle = HAL::timeInMilliseconds();
+            }
             sd.abortPrint();
             break;
         }

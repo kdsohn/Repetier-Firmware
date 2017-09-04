@@ -143,10 +143,10 @@ void Commands::waitUntilEndOfAllMoves()
 } // waitUntilEndOfAllMoves
 
 
-void Commands::waitUntilEndOfAllBuffers()
+void Commands::waitUntilEndOfAllBuffers(unsigned int maxcodes)
 {
     GCode *code = NULL;
-
+    unsigned int countmax = 0;
 #ifdef DEBUG_PRINT
     debugWaitLoop = 9;
 #endif
@@ -177,6 +177,12 @@ void Commands::waitUntilEndOfAllBuffers()
 #endif
             Commands::executeGCode(code);
             code->popCurrentCommand();
+            if(maxcodes && maxcodes <= ++countmax){
+#if FEATURE_UNLOCK_MOVEMENT
+                Printer::g_unlock_movement = 0; //quit accepting G1 G0 Codes to prevent any more movement - this is for stop print if it fails to tell the source of Gcodes
+#endif //FEATURE_UNLOCK_MOVEMENT
+                break;
+            }
         }
         Commands::checkForPeriodicalActions();
         UI_MEDIUM;

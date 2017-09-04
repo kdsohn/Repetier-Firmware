@@ -378,7 +378,6 @@ public:
     {
         linesCount    = 0;
         linesPos = linesWritePos;
-        Printer::setMenuMode(MENU_MODE_PRINTING, Printer::isPrinting());
     } // resetPathPlanner
 
     inline static void resetLineBuffer()
@@ -517,13 +516,11 @@ public:
         cur = NULL;
         HAL::forbidInterrupts();
         --linesCount;
-        if(!linesCount) Printer::setMenuMode(MENU_MODE_PRINTING, Printer::isPrinting() );
     } // removeCurrentLineForbidInterrupt
 
     static inline void pushLine()
     {
         nextPlannerIndex(linesWritePos);
-        Printer::setMenuMode(MENU_MODE_PRINTING,true);
         InterruptProtectedBlock noInts;
         linesCount++;
         g_uStartOfIdle = 0; //line not here in newest repetier

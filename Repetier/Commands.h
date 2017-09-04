@@ -26,7 +26,7 @@ public:
     static void checkForPeriodicalActions();
     static void executeGCode(GCode *com);
     static void waitUntilEndOfAllMoves();
-    static void waitUntilEndOfAllBuffers();
+    static void waitUntilEndOfAllBuffers(unsigned int maxcodes = 0);
     static void waitUntilEndOfZOS();
     static void printCurrentPosition();
     static void printTemperatures(bool showRaw = false);

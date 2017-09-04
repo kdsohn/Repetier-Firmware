@@ -158,6 +158,7 @@ void SDCard::startPrint()
     sdmode = true;
     Printer::setMenuMode(MENU_MODE_SD_PRINTING,true);
     Printer::setMenuMode(MENU_MODE_PAUSED,false);
+    Printer::setMenuMode(MENU_MODE_PRINTING,false);
 
 } // startPrint
 
