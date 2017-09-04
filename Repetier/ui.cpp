@@ -1235,7 +1235,16 @@ void UIDisplay::parse(char *txt,bool ram)
                     addInt(Printer::feedrateMultiply,3);
                     break;
                 }
-
+                if(c2=='p')                                                                             // %op : Is single double or quadstepping?
+                {
+                    switch(Printer::stepsPerTimerCall){
+                        case 1: addStringP( PSTR(" Sgl") ); break; //kein double oder quadstepping
+                        case 2: addStringP( PSTR(" Dbl") ); break; //kein double oder quadstepping
+                        case 4: addStringP( PSTR(" Qud") ); break; //kein double oder quadstepping
+                    }
+                    break;
+                }
+ 
 #if FEATURE_230V_OUTPUT
                 if(c2=='u')
                 {

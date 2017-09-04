@@ -39,6 +39,7 @@ List of placeholder:
 %os : Status message
 %oB : Buffer length
 %om : Speed multiplier
+%op : Is double or quadstepping?
 %of : flow multiplier
 %oc : Connection baudrate
 %o0..9 : Output level extruder 0..9 is % including %sign

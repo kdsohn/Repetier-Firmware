@@ -842,22 +842,35 @@ own weight, so this is nearly never needed. */
 /** \brief Comment this to disable ramp acceleration */
 #define RAMP_ACCELERATION                   1
 
+
+// ##########################################################################################
+// ##   configuration of the stepper drivers
+// ##########################################################################################
+
+/** \brief Specifies whether the firmware shall wait a short time after turning on of the stepper motors - this shall avoid that the first steps are sent to the stepper before it is ready */
+#define STEPPER_ON_DELAY                    25                                                  // [ms]
+
 /** \brief If your stepper needs a longer high signal then given, you can add a delay here.
 The delay is realized as a simple loop wasting time, which is not available for other
 computations. So make it as low as possible. For the most common drivers no delay is needed, as the
 included delay is already enough. */
 #define STEPPER_HIGH_DELAY                  0
 
+// ##########################################################################################
+// ##   configuration of the speed vs. cpu usage
+// ##########################################################################################
+
+// MAIN SWITCH FOR SPEED AND PRECISION IS RF_MICRO_STEPS!! That is the source of frequency vs. speed overall!
+
 /** \brief The firmware can only handle 16000Hz interrupt frequency cleanly. If you need higher speeds
 a faster solution is needed, and this is to double/quadruple the steps in one interrupt call.
 This is like reducing your 1/16th microstepping to 1/8 or 1/4. It is much cheaper then 1 or 3
 additional stepper interrupts with all it's overhead. As a result you can go as high as
-40000Hz. STEP_DOUBLER_FREQUENCY should be in range 10000-16000.*/
+40000Hz. STEP_DOUBLER_FREQUENCY should be in range 5000-12000 for RFx000 but 8000 is much for RF2000 (with ADVANCE?).*/
+#define STEP_DOUBLER_FREQUENCY              6500
 
-#define STEP_DOUBLER_FREQUENCY              12000
 /** \brief If you need frequencies off more then 30000 you definitely need to enable this. If you have only 1/8 stepping
 enabling this may cause to stall your moves when 20000Hz is reached. */
-
 #define ALLOW_QUADSTEPPING                  true
 
 /** \brief If you reach STEP_DOUBLER_FREQUENCY the firmware will do 2 or 4 steps with nearly no delay. That can be too fast
@@ -869,6 +882,22 @@ the double computation cost. For slow movements this is not an issue, but for re
 too much. The value specified here is the number of clock cycles between a step on the driving axis.
 If the interval at full speed is below this value, smoothing is disabled for that line.*/
 #define MAX_HALFSTEP_INTERVAL               1999
+
+/** \brief Number of moves we can cache in advance.
+This number of moves can be cached in advance. If you wan't to cache more, increase this. Especially on
+many very short moves the cache may go empty. The minimum value is 5. */
+#define MOVE_CACHE_SIZE                     16
+
+/** \brief Low filled cache size.
+If the cache contains less then MOVE_CACHE_LOW segments, the time per segment is limited to LOW_TICKS_PER_MOVE clock cycles.
+If a move would be shorter, the feedrate will be reduced. This should prevent buffer underflows. Set this to 0 if you
+don't care about empty buffers during print. */
+#define MOVE_CACHE_LOW                      10
+
+/** \brief Cycles per move, if move cache is low.
+This value must be high enough, that the buffer has time to fill up. The problem only occurs at the beginning of a print or
+if you are printing many very short segments at high speed. Higher delays here allow higher values in PATH_PLANNER_CHECK_SEGMENTS. */
+#define LOW_TICKS_PER_MOVE                  400000
 
 
 // ##########################################################################################
@@ -908,22 +937,6 @@ Corner can be printed with full speed of 50 mm/s
 Overridden if EEPROM activated. */
 #define MAX_JERK                            10
 #define MAX_ZJERK                           0.1
-
-/** \brief Number of moves we can cache in advance.
-This number of moves can be cached in advance. If you wan't to cache more, increase this. Especially on
-many very short moves the cache may go empty. The minimum value is 5. */
-#define MOVE_CACHE_SIZE                     16
-
-/** \brief Low filled cache size.
-If the cache contains less then MOVE_CACHE_LOW segments, the time per segment is limited to LOW_TICKS_PER_MOVE clock cycles.
-If a move would be shorter, the feedrate will be reduced. This should prevent buffer underflows. Set this to 0 if you
-don't care about empty buffers during print. */
-#define MOVE_CACHE_LOW                      10
-
-/** \brief Cycles per move, if move cache is low.
-This value must be high enough, that the buffer has time to fill up. The problem only occurs at the beginning of a print or
-if you are printing many very short segments at high speed. Higher delays here allow higher values in PATH_PLANNER_CHECK_SEGMENTS. */
-#define LOW_TICKS_PER_MOVE                  400000
 
 
 // ##########################################################################################

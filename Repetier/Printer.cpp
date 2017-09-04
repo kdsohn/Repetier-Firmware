@@ -1139,8 +1139,9 @@ void Printer::setup()
     EEPROM::initBaudrate();
     HAL::serialSetBaudrate(baudrate);
 
-    Com::println(); //end possible crash-ending.
-    Com::printFLN(Com::tStart); //start is start-info for reset etc. -> Accepted by reptier-host and repetier-server.
+    // sending of this information tells the Repetier-Host that the firmware has restarted - never delete or change this to-be-sent information
+    Com::printFLN("");
+    Com::printFLN(Com::tStart); //http://forum.repetier.com/discussion/comment/16949/#Comment_16949
 
     UI_INITIALIZE;
 

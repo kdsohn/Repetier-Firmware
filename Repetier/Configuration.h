@@ -201,7 +201,10 @@ WARNING: Servos can draw a considerable amount of current. Make sure your system
 // ##   common configuration
 // ##########################################################################################
 
-/** \brief Define the to-be-used micro steps */
+/** \brief Define the to-be-used micro steps.
+Note that high MICRO_STEPS limit your speed because of the limit in 8bit-CPU calculation power.
+See "configuration of the speed vs. cpu usage" within RF1000.h / RF2000.h
+ */
 #define RF_MICRO_STEPS                      32                                              
 
 
@@ -411,38 +414,6 @@ Do not set them to Zero.
 #define FILAMENT_PRINTED_UNTIL_SERVICE      50000
 
 #endif // FEATURE_SERVICE_INTERVAL
-
-
-// ##########################################################################################
-// ##   configuration of the stepper drivers
-// ##########################################################################################
-
-/** \brief Specifies whether the firmware shall wait a short time after turning on of the stepper motors - this shall avoid that the first steps are sent to the stepper before it is ready */
-#define STEPPER_ON_DELAY                    25                                                  // [ms]
-
-#define DRV8711_NUM_CHANNELS                5
-
-#if RF_MICRO_STEPS == 4
-    #define DRV8711_REGISTER_00             0x0E11                                              // 0000 1110 0001 0001: ENBL = 1, RDIR = 0, RSTEP = 0, MODE = 0010, EXSTALL = 0, ISGAIN = 10, DTIME = 11
-#elif RF_MICRO_STEPS == 8
-    #define DRV8711_REGISTER_00             0x0E19                                              // 0000 1110 0001 1001: ENBL = 1, RDIR = 0, RSTEP = 0, MODE = 0011, EXSTALL = 0, ISGAIN = 10, DTIME = 11
-#elif RF_MICRO_STEPS == 16
-    #define DRV8711_REGISTER_00             0x0E21                                              // 0000 1110 0010 0001: ENBL = 1, RDIR = 0, RSTEP = 0, MODE = 0100, EXSTALL = 0, ISGAIN = 10, DTIME = 11
-#elif RF_MICRO_STEPS == 32
-    #define DRV8711_REGISTER_00             0x0E29                                              // 0000 1110 0010 1001: ENBL = 1, RDIR = 0, RSTEP = 0, MODE = 0101, EXSTALL = 0, ISGAIN = 10, DTIME = 11
-#elif RF_MICRO_STEPS == 64
-    #define DRV8711_REGISTER_00             0x0E31                                              // 0000 1110 0011 0001: ENBL = 1, RDIR = 0, RSTEP = 0, MODE = 0110, EXSTALL = 0, ISGAIN = 10, DTIME = 11
-#else
-    #error this number of micro steps is not supported
-#endif // RF_MICRO_STEPS
-
-                                                                                                // ADRESS 11..8 7..4 3..0
-#define DRV8711_REGISTER_02                 0x2097                                              // 0010   0000  1001 0111: TOFF = 10010111, PWMMODE = 0
-#define DRV8711_REGISTER_03                 0x31D7                                              // 0011   0001  1101 0111: TBLANK = 11010111, ABT = 1
-#define DRV8711_REGISTER_04                 0x4430                                              // 0100   0100  0011 0000: TDECAY = 00110000, DECMOD = 100
-#define DRV8711_REGISTER_05                 0x583C                                              // 0101   1000  0011 1100: SDTHR = 00111100, SDCNT = 00, VDIV = 10
-#define DRV8711_REGISTER_06                 0x60F0                                              // 0110   0000  1111 0000: OCPTH = 00, OCPDEG = 00, TDRIVEN = 11, TDRIVEP = 11, IDRIVEN = 00, IDRIVEP = 00
-#define DRV8711_REGISTER_07                 0x7000                                              // 0111   0000  0000 0000: OTS = 0, AOCP = 0, BOCP = 0, UVLO = 0, APDF = 0, BPDF = 0, STD = 0, STDLAT = 0
 
 // ##########################################################################################
 // ##   configuration of user-defined thermistor tables
