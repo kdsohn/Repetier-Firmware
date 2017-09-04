@@ -133,6 +133,7 @@ have problems with other modules using the eeprom */
 
 #define EPR_RF_MOTOR_CURRENT              1923 //1924+1925+1926+1927 [5byte für 5 Motorstrombytes]
 
+#define EPR_RF_FREQ_DBL                   1928 //1929 2byte für uint16 -> frequenz double grenze
 //Nibbels: Computechecksum geht bis 2047
 
 #define EEPROM_EXTRUDER_OFFSET          200

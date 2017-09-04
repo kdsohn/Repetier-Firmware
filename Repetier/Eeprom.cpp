@@ -365,6 +365,8 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
 
 /* TODO : Restliche Parameter neu einlesen. ....
 */
+    Printer::stepsDoublerFrequency = STEP_DOUBLER_FREQUENCY;
+
     Printer::ZMode = DEFAULT_Z_SCALE_MODE; //wichtig, weils im Mod einen dritten Mode gibt. Für Zurückmigration
 
 #if FEATURE_230V_OUTPUT
@@ -593,6 +595,7 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
         HAL::eprSetFloat(o+EPR_EXTRUDER_ADVANCE_L,0);
 #endif // USE_ADVANCE
     }
+    HAL::eprSetInt16( EPR_RF_FREQ_DBL, Printer::stepsDoublerFrequency );
 
     if(corrupted)
     {
@@ -919,6 +922,10 @@ void EEPROM::readDataFromEEPROM()
     //min = 0 and max = 0 -> means feature off
 #endif // FEATURE_EMERGENCY_PAUSE
 
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+    bool change = false;
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+
 #if FEATURE_EMERGENCY_STOP_ALL
     g_nZEmergencyStopAllMin = (short)constrain( HAL::eprGetInt16( EPR_RF_EMERGENCYZSTOPDIGITSMIN ) , EMERGENCY_STOP_DIGITS_MIN , EMERGENCY_STOP_DIGITS_MAX ); //limit to value in config.
     g_nZEmergencyStopAllMax = (short)constrain( HAL::eprGetInt16( EPR_RF_EMERGENCYZSTOPDIGITSMAX ) , EMERGENCY_STOP_DIGITS_MIN , EMERGENCY_STOP_DIGITS_MAX ); //limit to value in config.
@@ -926,14 +933,14 @@ void EEPROM::readDataFromEEPROM()
         g_nZEmergencyStopAllMin = EMERGENCY_STOP_DIGITS_MIN;
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
         HAL::eprSetInt16( EPR_RF_EMERGENCYZSTOPDIGITSMIN, g_nZEmergencyStopAllMin );
-        EEPROM::updateChecksum();
+        change = true;
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
     }
     if(g_nZEmergencyStopAllMax == 0){
         g_nZEmergencyStopAllMax = EMERGENCY_STOP_DIGITS_MAX;
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
         HAL::eprSetInt16( EPR_RF_EMERGENCYZSTOPDIGITSMAX, g_nZEmergencyStopAllMax );
-        EEPROM::updateChecksum();
+        change = true;
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
     }
 #endif // FEATURE_EMERGENCY_STOP_ALL
@@ -941,9 +948,6 @@ void EEPROM::readDataFromEEPROM()
     const unsigned short    uMotorCurrentMax[] = MOTOR_CURRENT_MAX; //oberes Amperelimit
     const unsigned short    uMotorCurrentUse[] = MOTOR_CURRENT_NORMAL; //Standardwert
     uint8_t current = 0;
-#if FEATURE_AUTOMATIC_EEPROM_UPDATE
-    bool change = false;
-#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
     for(uint8_t stp=0; stp<3+NUM_EXTRUDER; stp++){ //0..4 bei 5 steppern.
         current = HAL::eprGetByte(EPR_RF_MOTOR_CURRENT+stp);
         if(MOTOR_CURRENT_MIN <= current && current <= uMotorCurrentMax[stp]){
@@ -956,6 +960,17 @@ void EEPROM::readDataFromEEPROM()
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
         }
     }
+
+    if(!HAL::eprGetInt16( EPR_RF_FREQ_DBL )){
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+         HAL::eprSetInt16( EPR_RF_FREQ_DBL, STEP_DOUBLER_FREQUENCY );
+         change = true;
+         Printer::stepsDoublerFrequency = STEP_DOUBLER_FREQUENCY;
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+    }else{
+         Printer::stepsDoublerFrequency = constrain(HAL::eprGetInt16( EPR_RF_FREQ_DBL ),5000,12000);
+    }
+
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
     if( change ) EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
@@ -1304,6 +1319,7 @@ void EEPROM::writeSettings()
 #if NUM_EXTRUDER > 1
     writeByte(EPR_RF_MOTOR_CURRENT+E_AXIS+1,Com::tEPRPrinter_STEPPER_E1);
 #endif //NUM_EXTRUDER > 1
+    writeInt(EPR_RF_FREQ_DBL,Com::tEPRPrinter_FREQ_DBL);
 
 #else
     if( Printer::debugErrors() )

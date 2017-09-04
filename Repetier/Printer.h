@@ -76,6 +76,7 @@ public:
     static uint8_t          flag2;
     static uint8_t          flag3;
     static uint8_t          stepsPerTimerCall;
+    static uint16_t         stepsDoublerFrequency;
     static unsigned long    interval;                           // Last step duration in ticks.
     static unsigned long    timer;                              // used for acceleration/deceleration timing
     static unsigned long    stepNumber;                         // Step number in current move.
@@ -970,10 +971,10 @@ public:
 
     static inline speed_t updateStepsPerTimerCall(speed_t vbase)
     {
-        if(vbase>STEP_DOUBLER_FREQUENCY)
+        if( vbase > Printer::stepsDoublerFrequency )
         {
 #if ALLOW_QUADSTEPPING
-            if(vbase>STEP_DOUBLER_FREQUENCY*2)
+            if( vbase > Printer::stepsDoublerFrequency * 2 )
             {
                 Printer::stepsPerTimerCall = 4;
                 return vbase>>2;

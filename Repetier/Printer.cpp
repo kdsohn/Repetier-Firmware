@@ -63,6 +63,7 @@ uint8_t         Printer::debugLevel = 6; ///< Bitfield defining debug output. 1 
 #endif // ALLOW_EXTENDED_COMMUNICATION < 2
 
 uint8_t         Printer::stepsPerTimerCall = 1;
+uint16_t        Printer::stepsDoublerFrequency = STEP_DOUBLER_FREQUENCY;
 uint8_t         Printer::menuMode = 0;
 
 unsigned long   Printer::interval;                                      ///< Last step duration in ticks.
