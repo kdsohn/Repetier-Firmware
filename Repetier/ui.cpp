@@ -1003,19 +1003,19 @@ void UIDisplay::parse(char *txt,bool ram)
             {
                 if(c2=='x' && col<MAX_COLS)                                                                             // %hx : x homed      
                 {
-                    if(Printer::flag2 & PRINTER_FLAG2_HOMED_X) printCols[col++]='*';
+                    if(Printer::flag3 & PRINTER_FLAG3_X_HOMED) printCols[col++]='*';
                 }
                 else if(c2=='y' && col<MAX_COLS)                                                                             // %hy : y homed      
                 {
-                    if(Printer::flag2 & PRINTER_FLAG2_HOMED_Y) printCols[col++]='*';
+                    if(Printer::flag3 & PRINTER_FLAG3_Y_HOMED) printCols[col++]='*';
                 }
                 else if(c2=='z' && col<MAX_COLS)                                                                             // %hz : z homed      
                 {
-                    if(Printer::flag2 & PRINTER_FLAG2_HOMED_Z) printCols[col++]='*';
+                    if(Printer::flag3 & PRINTER_FLAG3_Z_HOMED) printCols[col++]='*';
                 }
                 else if(c2=='a' && col<MAX_COLS)                                                                             // %ha : all homed      
                 {
-                    if(Printer::flag2 & PRINTER_FLAG2_HOMED_X && Printer::flag2 & PRINTER_FLAG2_HOMED_Y && Printer::flag2 & PRINTER_FLAG2_HOMED_Z && Printer::flag1 & PRINTER_FLAG1_HOMED) printCols[col++]='*';
+                    if(Printer::flag3 & PRINTER_FLAG3_X_HOMED && Printer::flag3 & PRINTER_FLAG3_Y_HOMED && Printer::flag3 & PRINTER_FLAG3_Z_HOMED && Printer::flag1 & PRINTER_FLAG1_HOMED) printCols[col++]='*';
                 }
                 break;
             }
@@ -1656,6 +1656,14 @@ void UIDisplay::parse(char *txt,bool ram)
                 if(c2=='1')                                                                             // %s1 : current value of the strain gauge
                 {
                     addInt(g_nLastDigits,5);
+#if FEATURE_MILLING_MODE
+                    if ( Printer::operatingMode == OPERATING_MODE_MILL )
+                    {
+                        addStringP( PSTR( " V:" )); // -> Die restliche Zeile wird komplett überschrieben und der rest verworfen (Lüfterteil). Weil Millingmode ohne Lüfter.
+                        addInt(Printer::feedrateMultiply,3);
+                        addStringP( PSTR( "%     " ));
+                    }
+#endif // FEATURE_MILLING_MODE
                 }
 
                 break;
@@ -1813,8 +1821,27 @@ void UIDisplay::parse(char *txt,bool ram)
                     }
                     else if ( mode == OPERATING_MODE_MILL )
                     {
-                        addStringP( PSTR( "                  " )); //18 leerzeichen?? 
-                        break;
+#if FEATURE_230V_OUTPUT
+ #if FEATURE_CASE_LIGHT
+                        addStringP( PSTR( "MIL X19:" )); // -> Die restliche Zeile wird komplett überschrieben und der rest verworfen. Weil Millingmode keine Temperaturen hat.
+                        addStringP(Printer::enableCaseLight?ui_text_on:ui_text_off);
+                        addStringP( PSTR( " 230V:" )); 
+                        addStringP(Printer::enable230VOutput?ui_text_on:ui_text_off);
+                        addStringP( PSTR( "  " )); 
+ #else
+                        addStringP( PSTR( "MILLER  230V:" )); 
+                        addStringP(Printer::enable230VOutput?ui_text_on:ui_text_off);
+                        addStringP( PSTR( "     " )); 
+ #endif
+#else //FEATURE_230V_OUTPUT
+ #if FEATURE_CASE_LIGHT
+                        addStringP( PSTR( "MILLER X19:" )); // -> Die restliche Zeile wird komplett überschrieben und der rest verworfen. Weil Millingmode keine Temperaturen hat.
+                        addStringP(Printer::enableCaseLight?ui_text_on:ui_text_off);
+                        addStringP( PSTR( "       " ));
+ #else
+                        addStringP( PSTR( "MILLER              " ));
+ #endif
+#endif //FEATURE_230V_OUTPUT
                     }
                 }
                 break;
@@ -2885,7 +2912,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
             else if ( mode == OPERATING_MODE_MILL )
             {
                 menuPos[0]++;
-                if ( menuPos[0] == 2 )
+                if ( menuPos[0] == 1 || menuPos[0] == 3 ) //kein modmenü und kein temperaturmenü im Millingmode
                 {
                     menuPos[0]++;
                 }
@@ -2904,9 +2931,9 @@ void UIDisplay::nextPreviousAction(int8_t next)
             else if ( mode == OPERATING_MODE_MILL )
             {
                 menuPos[0] = (menuPos[0]==0 ? UI_NUM_PAGES-1 : menuPos[0]-1);
-                if ( menuPos[0] == 2 )
+                if ( menuPos[0] == 1 || menuPos[0] == 3 ) //kein modmenü und kein temperaturmenü im Millingmode
                 {
-                    menuPos[0]--;
+                    menuPos[0]--; //kann in diesem if nicht -1 werden, könnte es aber bei veränderung!
                 }
             }
         }
@@ -3522,7 +3549,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif // FEATURE_RGB_LIGHT_EFFECTS
         case UI_ACTION_EXTR_STEPS_E0:
         {
-           if(g_pauseMode == PAUSE_MODE_NONE){
+           if(g_pauseMode == PAUSE_MODE_NONE && !Printer::isPrinting() ){
             INCREMENT_MIN_MAX(extruder[0].stepsPerMM,1,1,9999);
             if(0 == Extruder::current->id) Extruder::selectExtruderById(Extruder::current->id); //übernehmen der werte
 
@@ -3536,7 +3563,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if NUM_EXTRUDER > 1
         case UI_ACTION_EXTR_STEPS_E1:
         {
-           if(g_pauseMode == PAUSE_MODE_NONE){
+           if(g_pauseMode == PAUSE_MODE_NONE && !Printer::isPrinting()){
             INCREMENT_MIN_MAX(extruder[1].stepsPerMM,1,1,9999);
             if(1 == Extruder::current->id) Extruder::selectExtruderById(Extruder::current->id); //übernehmen der werte
 
@@ -3574,6 +3601,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif //USE_ADVANCE
         case UI_ACTION_EXTR_STEPS:
         {
+           if(g_pauseMode == PAUSE_MODE_NONE && !Printer::isPrinting()){
             INCREMENT_MIN_MAX(Extruder::current->stepsPerMM,1,1,9999);
             Extruder::selectExtruderById(Extruder::current->id);
 
@@ -3581,8 +3609,8 @@ void UIDisplay::nextPreviousAction(int8_t next)
             HAL::eprSetFloat(EEPROM::getExtruderOffset(Extruder::current->id)+EPR_EXTRUDER_STEPS_PER_MM,Extruder::current->stepsPerMM);
             EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-
-            break;
+           }
+           break;
         }
         case UI_ACTION_EXTR_ACCELERATION:
         {
@@ -4003,7 +4031,16 @@ void UIDisplay::finishAction(int action)
                 // continue only in case the user has chosen "Yes"
                 break;
             }
-
+            uid.executeAction(UI_ACTION_TOP_MENU);
+            if( Printer::isMenuMode(MENU_MODE_PRINTING) && !Printer::isMenuMode(MENU_MODE_SD_PRINTING) ) //prüfung auf !sdmode sollte hier eigenlicht nicht mehr nötig sein, aber ..
+            {
+                Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetierserver to stop.
+                Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
+                g_uStartOfIdle = 0;
+                UI_STATUS_UPD( UI_TEXT_OUTPUTTING_OBJECT );
+                Commands::waitUntilEndOfAllBuffers(3*MOVE_CACHE_SIZE); //only wait if chance to have been understood : else break!
+                g_uStartOfIdle = HAL::timeInMilliseconds();
+            }
             sd.abortPrint();
             break;
         }

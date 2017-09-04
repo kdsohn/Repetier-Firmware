@@ -445,7 +445,7 @@
     #define UI_TEXT_EXTRUDER_OFFSET_Z       "Extr.T1 TipDown"
     #define UI_TEXT_E_POSITION              "Position Extr."
     #define UI_TEXT_ACTIVE_EXTRUDER         "Active Extr.  %Oa"
-    #define UI_TEXT_CONFIG_SINGLE_STEPS        "Z-Step: %Sz um"
+    #define UI_TEXT_CONFIG_SINGLE_STEPS     "Z-Step: %Sz um"
     #define UI_TEXT_EXTR_ACCEL              "Accel:%XA"
     #define UI_TEXT_EXTR_WATCH              "Stab. Time:%Xw"
     #define UI_TEXT_SPEED_MULTIPLY          "Speed Mul.:%om%%%"

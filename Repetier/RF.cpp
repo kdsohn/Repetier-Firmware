@@ -6038,9 +6038,16 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
             showIdle();
             g_uStartOfIdle  = 0;
             g_nPrinterReady = 1;
+            Printer::setPrinting(false);
         }
     }
- 
+
+    if( PrintLine::linesCount > 5 )
+    {
+        // this check shall be done only during the printing (for example, it shall not be done in case filament is extruded manually)
+        Printer::setPrinting(true);
+    }
+
 #if FEATURE_CASE_FAN && !CASE_FAN_ALWAYS_ON
     if( Printer::prepareFanOff )
     {
@@ -6122,7 +6129,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
             g_pauseBeepDone = 1;
         }
 
-        if( g_pauseStatus == PAUSE_STATUS_PAUSED )
+        if( g_pauseStatus == PAUSE_STATUS_PAUSED ) //and absolutly not PAUSE_STATUS_HEATING
         {
 #if EXTRUDER_CURRENT_PAUSE_DELAY
             if( (uTime - g_uPauseTime) > EXTRUDER_CURRENT_PAUSE_DELAY ) //das sind alle 5s 
@@ -6337,7 +6344,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
         {
             uLastPressureTime = uTime;
 
-            if( g_pauseStatus == PAUSE_STATUS_NONE && g_pauseMode == PAUSE_MODE_NONE && PrintLine::linesCount > 5 )
+            if( g_pauseStatus == PAUSE_STATUS_NONE && g_pauseMode == PAUSE_MODE_NONE && Printer::isPrinting() )
             {
                 // this check shall be done only during the printing (for example, it shall not be done in case filament is extruded manually)
                 nPressureSum    += pressure;
@@ -6472,12 +6479,12 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
             Printer::disableYStepper();
             Printer::disableZStepper();
             Extruder::disableAllExtruders();
-#endif // FEATURE_OUTPUT_FINISHED_OBJECT
-
 #if FAN_PIN>-1
             // disable the fan
             Commands::setFanSpeed(0,false);
 #endif // FAN_PIN>-1
+
+#endif // FEATURE_OUTPUT_FINISHED_OBJECT
 
             cleanupXPositions();
             cleanupYPositions();
@@ -6494,7 +6501,8 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
         {
             Com::printFLN( PSTR( "loopRF(): aborting print because of a temperature sensor defect" ) );
         }
-
+        Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetierserver to stop.
+        Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
         sd.abortPrint();
     }
 #endif // FEATURE_ABORT_PRINT_AFTER_TEMPERATURE_ERROR
@@ -6721,6 +6729,13 @@ inline void checkPauseStatus_fromTask(){
             {
                 // we have reached the pause position - nothing except the extruder can have been moved
                 g_pauseStatus = PAUSE_STATUS_PAUSED;
+                g_uStartOfIdle = 0;
+                uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
+                uid.menuPos[uid.menuLevel] = 0;
+                UI_STATUS_UPD( UI_TEXT_PAUSED );
+                Com::printFLN( PSTR("RequestPause:") ); //repetier
+                Com::printFLN( PSTR( "// action:pause" ) ); //octoprint
+                Printer::setMenuMode( MENU_MODE_PAUSED, true );
             }
             break;
         }
@@ -6740,6 +6755,13 @@ inline void checkPauseStatus_fromTask(){
             }else{
 #endif // FEATURE_MILLING_MODE
                 g_pauseStatus = PAUSE_STATUS_PAUSED;
+                g_uStartOfIdle = 0;
+                uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
+                uid.menuPos[uid.menuLevel] = 0;
+                UI_STATUS_UPD( UI_TEXT_PAUSED );
+                Com::printFLN( PSTR("RequestPause:") ); //repetier
+                Com::printFLN( PSTR( "// action:pause" ) ); //octoprint
+                Printer::setMenuMode( MENU_MODE_PAUSED, true );
 #if FEATURE_MILLING_MODE
             }
 #endif // FEATURE_MILLING_MODE
@@ -6753,6 +6775,13 @@ inline void checkPauseStatus_fromTask(){
                 if( !processingDirectMove() )
                 {
                     g_pauseStatus = PAUSE_STATUS_PAUSED;
+                    g_uStartOfIdle = 0;
+                    uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
+                    uid.menuPos[uid.menuLevel] = 0;
+                    UI_STATUS_UPD( UI_TEXT_PAUSED );
+                    Com::printFLN( PSTR("RequestPause:") ); //repetier
+                    Com::printFLN( PSTR( "// action:pause" ) ); //octoprint
+                    Printer::setMenuMode( MENU_MODE_PAUSED, true );
                 }
             }
             break;
@@ -6775,35 +6804,35 @@ inline void waitforPauseStatus_fromButton(char Status){
 
 void pausePrint( void )
 {
-    if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausePrint()" ) );
-
     if( g_pauseMode == PAUSE_MODE_NONE )
     {
         if( PrintLine::linesCount ) // the printing is not paused at the moment
         {
             if( !Printer::areAxisHomed() ) // this should never happen
             {
-                if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausePrint(): pause is not available at the moment because the home position is unknown" ) );
+                if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausePrint(): home position is unknown" ) );
                 showError( (void*)ui_text_pause, (void*)ui_text_home_unknown );
                 return;
             }
+            if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausing..." ) );
             g_pauseMode   = PAUSE_MODE_PAUSED;
             g_uStartOfIdle  = 0;
             uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
             uid.menuPos[uid.menuLevel] = 0;
             UI_STATUS_UPD( UI_TEXT_PAUSING );
-
+            Com::printFLN( PSTR("RequestPause:") ); //repetier
+            Com::printFLN( PSTR( "// action:pause" ) ); //octoprint
             waitforPauseStatus_fromButton(PAUSE_STATUS_GOTO_PAUSE1);
             g_uPauseTime    = HAL::timeInMilliseconds();
             g_pauseBeepDone = 0;
 
-            if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): the printing has been paused" ) );
+            if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): paused" ) );
             UI_STATUS_UPD( UI_TEXT_PAUSED );
-            Printer::setMenuMode( MENU_MODE_SD_PAUSED, true );
+            Printer::setMenuMode( MENU_MODE_PAUSED, true );
         }
         else
         {
-            if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausePrint(): pause is not available at the moment because nothing is printed" ) );
+            if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausePrint(): nothing is printed" ) );
             showError( (void*)ui_text_pause, (void*)ui_text_operation_denied );
         }
         return;
@@ -6817,7 +6846,7 @@ void pausePrint( void )
         uid.menuPos[uid.menuLevel] = 0;
         UI_STATUS_UPD( UI_TEXT_PAUSING );
         // in case the print is paused already, we move the printer head to the pause position
-        if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): moving to the pause position" ) );
+        if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): moving..." ) );
 
         waitforPauseStatus_fromButton(PAUSE_STATUS_GOTO_PAUSE2);
 #if FEATURE_MILLING_MODE
@@ -6827,7 +6856,7 @@ void pausePrint( void )
         }
 #endif // FEATURE_MILLING_MODE
 
-        if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): the pause position has been reached" ) );
+        if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): position reached" ) );
         UI_STATUS_UPD( UI_TEXT_PAUSED );
         return;
     }
@@ -6837,7 +6866,7 @@ void pausePrint( void )
 void continuePrint( void )
 {
     if(g_pauseMode == PAUSE_MODE_NONE || g_pauseStatus != PAUSE_STATUS_PAUSED){
-        if( Printer::debugErrors() ) Com::printFLN( PSTR( "continuePrint(): continue is not available at the moment" ) );
+        if( Printer::debugErrors() ) Com::printFLN( PSTR( "continuePrint(): we are not paused." ) );
         return;
     }
 
@@ -6856,6 +6885,7 @@ void continuePrint( void )
         {
             // process the extruder only in case we are in mode "print"
 #if NUM_EXTRUDER > 0
+            g_pauseStatus = PAUSE_STATUS_HEATING;
             bool wait = false; 
             for(uint8_t i = 0; i < NUM_EXTRUDER; i++){
 #if EXTRUDER_CURRENT_PAUSE_DELAY
@@ -6886,10 +6916,11 @@ void continuePrint( void )
     else if( g_pauseMode == PAUSE_MODE_PAUSED_AND_MOVED )
     {
         // move to the continue position
-        if( Printer::debugInfo() ) Com::printFLN( PSTR( "continuePrint(): moving to the continue position" ) );
+        if( Printer::debugInfo() ) Com::printFLN( PSTR( "continuePrint(): moving..." ) );
         if( nPrintingMode )
         {
 #if NUM_EXTRUDER > 0
+            g_pauseStatus = PAUSE_STATUS_HEATING;
             bool wait = false; 
             for(uint8_t i = 0; i < NUM_EXTRUDER; i++){
 #if EXTRUDER_CURRENT_PAUSE_DELAY
@@ -6918,11 +6949,13 @@ void continuePrint( void )
         }
     }
 
+    Com::printFLN( PSTR("RequestContinue:") ); //repetier
+    Com::printFLN( PSTR( "// action:resume" ) ); //octoprint
     // wait until the next move is started
     g_pauseMode   = PAUSE_MODE_NONE;
     g_pauseStatus = PAUSE_STATUS_NONE;
 
-    if( Printer::debugInfo() )  Com::printFLN( PSTR( "continuePrint(): waiting for the next move" ) );
+    if( Printer::debugInfo() )  Com::printFLN( PSTR( "continuePrint(): waiting for next move" ) );
 
     unsigned long   startTime = HAL::timeInMilliseconds();
     char            timeout   = 0;
@@ -6953,7 +6986,7 @@ void continuePrint( void )
 
     if( nPrintingMode ){ UI_STATUS_UPD( UI_TEXT_PRINT_POS ); }
     else{ UI_STATUS_UPD( UI_TEXT_MILL_POS ); }
-    Printer::setMenuMode( MENU_MODE_SD_PAUSED, false );
+    Printer::setMenuMode( MENU_MODE_PAUSED, false );
 
 } // continuePrint
 
@@ -7124,7 +7157,7 @@ void determineZPausePositionForMill( void )
 
 } // determineZPausePositionForMill
 
-void waitUntilContinue( void ) //Nibbels: Verstehe ich nicht! Man sollte Pause und Continue nutzen?? Aber warum das? Wegen der Gcode-Queue? Aber Pause hält auch die Queue an. .... TODO
+void waitUntilContinue( void ) //Nibbels: Verstehe ich nicht! Man sollte Pause und Continue nutzen?? Aber warum das? Wegen der Gcode-Queue? Aber Pause hält auch die Queue an. .... TODO-> 03.09.2017 Das ist ein Warte-GCode 3071 der aufs Auflösen der Pause wartet, aber auch andere GCodes blockt. Kann mir nur gerade keine Anwendung dafür ausdenken.
 {
     if( g_pauseStatus == PAUSE_STATUS_NONE )
     {
@@ -8191,7 +8224,7 @@ void processCommand( GCode* pCommand )
                 }
                 else
                 {
-                    showInvalidSyntax( pCommand->M );
+                    queueTask( TASK_PAUSE_PRINT ); 
                 }
 
                 break;
@@ -10653,6 +10686,12 @@ void processCommand( GCode* pCommand )
                 for(uint8_t driver = 1; driver <= 5; driver++){
                   readMotorStatus( driver );
                 }
+                break;
+            }
+            case 3988: // M3988 Stop message for Repetier-Server/-Host - Testfunction || by Nibbels
+            {
+                Com::printFLN( PSTR( "RequestStop:" ) );
+                Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
                 break;
             }
 
@@ -14108,6 +14147,8 @@ void dump( char type, char from )
 void doEmergencyStop( char reason )
 {
     showError( (void*)ui_text_emergency_stop );
+    Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetierserver to stop.
+    Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
 
     Com::printF( PSTR( "doEmergencyStop(): block all" ) );
     if( reason == STOP_BECAUSE_OF_Z_MIN )

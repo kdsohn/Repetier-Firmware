@@ -1264,7 +1264,7 @@ long PrintLine::performPauseCheck(){
     if(cur == NULL)
     {
 #if FEATURE_PAUSE_PRINTING
-        if( g_pauseStatus > PAUSE_STATUS_PAUSED && g_pauseStatus <= PAUSE_STATUS_PREPARE_CONTINUE1 ) //siehe gate in Printer::allowQueueMove
+        if( g_pauseStatus > PAUSE_STATUS_PAUSED && g_pauseStatus <= PAUSE_STATUS_HEATING ) //siehe gate in Printer::allowQueueMove
         {
             // pause the print now
             switch(g_pauseStatus){

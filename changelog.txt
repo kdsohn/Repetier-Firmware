@@ -3,6 +3,31 @@ TODO: Test Z-Homing and Pause-Pause-Continue in Milling-Mode
 TODO: Test driving free without FEATURE drive-free in Milling-Mode @RF1000/RF2000
 TODO: Testing, testing ..
 
+V RF.01.37t6.Mod (2017-09-04)
+- call for possible twoway communication with host software
+    Com::printFLN( PSTR("RequestPause:") ); //repetier
+    Com::printFLN( PSTR( "// action:pause" ) ); //octoprint
+    Com::printFLN( PSTR("RequestContinue:") );  //repetier
+    Com::printFLN( PSTR( "// action:resume" ) ); //octoprint
+    Com::printFLN( PSTR("RequestStop:") );  //repetier
+    Com::printFLN( PSTR( "// action:disconnect" ) ); //octoprint
+      if paused or continued or stop print
+(still missing commands for S3D machine control and other software!)
+- more sync on messages when starting pause from GCode vs. Button
+- more distinct menu filter for SD-Print vs. Host-Print.
+- M3070 without S1|S2 now goes to "simple pause without move"
+
+V RF.01.37t5.Mod (2017-09-03)
+- Millingmode: Show X19 / 230V status instead of nothing in temperatures row at menu 0
+- Fixed Menu count within configuration -> z-configuration
+- fixed MENU_MODE_PRINTING which is recognized now when printing
+- Menu is restricted to specific actions if MENU_MODE_PRINTING while printing. (rightnow not yet when heating and homing)
+- Milling-Mode: Mod-Menu is not shown anymore
+- Milling-Mode: Temperatures Menu at level 0 is not shown anymore, instead X-Y-Z-Positions menu is shown again, which dropped out at implementing mod menu because dropping temperatures menu was a hardcoded tweak for milling mode.
+- removed z-positions menu from configuration - z-configuration menu.
+- some cleanup
+- fixed homing axes and "isprinting" flag to flag3 instead of flag2 to be in sync with original repetier.
+
 V RF.01.37t4.Mod (2017-09-03)
 - Fixed UI_Language 1 missing motor text and advance text
 - Forbid menu items when (paused and printing) [but printing over usb is not recognized as MENU_MODE_PRINTING yet!]
