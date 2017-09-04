@@ -286,6 +286,7 @@ FSTRINGVALUE(Com::tEPRPrinter_STEPPER_E0,"Stepper E0 Current [2A/126]")
 #if NUM_EXTRUDER > 1
 FSTRINGVALUE(Com::tEPRPrinter_STEPPER_E1,"Stepper E1 Current [2A/126]")
 #endif //NUM_EXTRUDER > 1
+FSTRINGVALUE(Com::tEPRPrinter_FREQ_DBL,"Step Double Frequency [1/s]")
 
 #endif // EEPROM_MODE
 

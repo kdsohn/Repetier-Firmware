@@ -291,6 +291,7 @@ public:
 #if NUM_EXTRUDER > 1
     FSTRINGVAR(tEPRPrinter_STEPPER_E1)
 #endif //NUM_EXTRUDER > 1
+    FSTRINGVAR(tEPRPrinter_FREQ_DBL)
 
 #endif // EEPROM_MODE==0
 

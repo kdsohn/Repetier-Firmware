@@ -22,9 +22,9 @@
 #ifndef STEP_DOUBLER_FREQUENCY
 #error Please add new parameter STEP_DOUBLER_FREQUENCY to your configuration.
 #else
-#if STEP_DOUBLER_FREQUENCY<10000 || STEP_DOUBLER_FREQUENCY>20000
-#error STEP_DOUBLER_FREQUENCY should be in range 10000-16000.
-#endif // STEP_DOUBLER_FREQUENCY<10000 || STEP_DOUBLER_FREQUENCY>20000
+#if STEP_DOUBLER_FREQUENCY<5000 || STEP_DOUBLER_FREQUENCY>12000
+#error STEP_DOUBLER_FREQUENCY should be in range 5000-12000.
+#endif // STEP_DOUBLER_FREQUENCY<5000 || STEP_DOUBLER_FREQUENCY>12000
 #endif // STEP_DOUBLER_FREQUENCY
 
 #ifdef EXTRUDER_SPEED
@@ -2134,19 +2134,19 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
                 move->updateAdvanceSteps((!move->accelSteps ? move->vMax : Printer::vMaxReached), 0, true);
 #endif // USE_ADVANCE
                 if(!move->accelSteps) {
-                    if(move->vMax > STEP_DOUBLER_FREQUENCY) {
+                    if(move->vMax > Printer::stepsDoublerFrequency) {
 #if ALLOW_QUADSTEPPING
-                        if(move->vMax > STEP_DOUBLER_FREQUENCY * 2) {
+                        if(move->vMax > Printer::stepsDoublerFrequency * 2) {
                             Printer::stepsPerTimerCall = 4;
                             Printer::interval = move->fullInterval << 2;
                         } else {
                             Printer::stepsPerTimerCall = 2;
                             Printer::interval = move->fullInterval << 1;
                         }
-#else
+#else // ALLOW_QUADSTEPPING
                         Printer::stepsPerTimerCall = 2;
                         Printer::interval = move->fullInterval << 1;
-#endif
+#endif // ALLOW_QUADSTEPPING
                     } else {
                         Printer::stepsPerTimerCall = 1;
                         Printer::interval = move->fullInterval;

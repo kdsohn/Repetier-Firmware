@@ -177,6 +177,7 @@
 #define UI_ACTION_EXTR_STEPS_E1             1688
 #define UI_ACTION_ADVANCE_L_E0              1689
 #define UI_ACTION_ADVANCE_L_E1              1690
+#define UI_ACTION_FREQ_DBL                  1691
 
 #define UI_ACTION_FET1_OUTPUT               2001
 #define UI_ACTION_FET2_OUTPUT               2002

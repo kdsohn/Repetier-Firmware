@@ -63,6 +63,7 @@ uint8_t         Printer::debugLevel = 6; ///< Bitfield defining debug output. 1 
 #endif // ALLOW_EXTENDED_COMMUNICATION < 2
 
 uint8_t         Printer::stepsPerTimerCall = 1;
+uint16_t        Printer::stepsDoublerFrequency = STEP_DOUBLER_FREQUENCY;
 uint8_t         Printer::menuMode = 0;
 
 unsigned long   Printer::interval;                                      ///< Last step duration in ticks.
@@ -1139,8 +1140,9 @@ void Printer::setup()
     EEPROM::initBaudrate();
     HAL::serialSetBaudrate(baudrate);
 
-    Com::println(); //end possible crash-ending.
-    Com::printFLN(Com::tStart); //start is start-info for reset etc. -> Accepted by reptier-host and repetier-server.
+    // sending of this information tells the Repetier-Host that the firmware has restarted - never delete or change this to-be-sent information
+    Com::printFLN("");
+    Com::printFLN(Com::tStart); //http://forum.repetier.com/discussion/comment/16949/#Comment_16949
 
     UI_INITIALIZE;
 

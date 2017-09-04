@@ -3,6 +3,13 @@ TODO: Test Z-Homing and Pause-Pause-Continue in Milling-Mode
 TODO: Test driving free without FEATURE drive-free in Milling-Mode @RF1000/RF2000
 TODO: Testing, testing ..
 
+V RF.01.37u.Mod (2017-09-05)
+- Changed STEP_DOUBLER_FREQUENCY to standard 6500 because of performance reasons
+- Added Menu-Support and EEPROM-Support to change STEP_DOUBLER_FREQUENCY onthefly.
+   These changes are awsome!! My Printer runs way better now, when going to 50..80mm/s. It has more calculating power leftover to care for fluent bufferuse.
+- minor tweaks.
+- resort stepper drivers config in order to build them in dynamically some day from now.
+
 V RF.01.37t6.Mod (2017-09-04)
 - call for possible twoway communication with host software
     Com::printFLN( PSTR("RequestPause:") ); //repetier

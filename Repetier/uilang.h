@@ -230,6 +230,7 @@
 #define UI_TEXT_EXTR_ADVANCE_L          "Advance lin:%Xl"
 #define UI_TEXT_EXTR_ADVANCE_L_E0       "E0-Advance L:%Xb"
 #define UI_TEXT_EXTR_ADVANCE_L_E1       "E1-Advance L:%Xc"
+#define UI_TEXT_FREQ_DBL                "DblFq:%Xg"
 #define UI_TEXT_EXTR_ADVANCE_K          "Advance quad:%Xa"
 #define UI_TEXT_EXTR_MANAGER            "Control:%Xh"
 #define UI_TEXT_EXTR_PGAIN              "DT/PID P:%Xp"
@@ -320,7 +321,6 @@
 #define UI_TEXT_SET_SCAN_DELTA_X        "Set dX: %Dxmm"
 #define UI_TEXT_SET_SCAN_DELTA_Y        "Set dY: %Dymm"
 #define UI_TEXT_STRAIN_GAUGE            "F: %s1 L: %Fs%%%"
-#define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%"
 #define UI_TEXT_SERVICE                 "SERVICE"
 #define UI_TEXT_SERVICE_TIME            "Until service"
 #define UI_TEXT_PRINTING_ROOM_LIGHT     "PRL: " 
@@ -390,6 +390,7 @@
 #define UI_TEXT_MOTOR_E1               "I_e1: %M1"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000
+    #define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min reached unhomed"
     #define UI_TEXT_RGB_LIGHT_MODE          "RGB Light: %li"
     #define UI_TEXT_230V_OUTPUT             "230V Output: %ou"
@@ -428,6 +429,7 @@
     #define UI_TEXT_OPERATION_DENIED        "Operation denied"
     #define UI_TEXT_TEMPERATURE_WRONG       "Temperature wrong"
 #else   
+    #define UI_TEXT_STRAIN_GAUGE_SPEED      "F:%s1 V:%om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min reached uho."
     #define UI_TEXT_RGB_LIGHT_MODE          "RGB Light: %li"
     #define UI_TEXT_BAUDRATE                "Baudrate:%oc"
@@ -583,6 +585,7 @@
 #define UI_TEXT_EXTR_ADVANCE_L          "Advance lin:%Xl"
 #define UI_TEXT_EXTR_ADVANCE_L_E0       "E0-Advance L:%Xb"
 #define UI_TEXT_EXTR_ADVANCE_L_E1       "E1-Advance L:%Xc"
+#define UI_TEXT_FREQ_DBL                "DblFq:%Xg"
 #define UI_TEXT_EXTR_ADVANCE_K          "Advance quad:%Xa"
 #define UI_TEXT_EXTR_MANAGER            "Regler:%Xh"
 #define UI_TEXT_EXTR_PGAIN              "DT/PID P:%Xp"
@@ -667,7 +670,6 @@
 #define UI_TEXT_SET_SCAN_DELTA_X        "Setze dX: %Dxmm"
 #define UI_TEXT_SET_SCAN_DELTA_Y        "Setze dY: %Dymm"
 #define UI_TEXT_STRAIN_GAUGE            "F: %s1 L: %Fs%%%"
-#define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%"
 #define UI_TEXT_SERVICE                 "WARTUNG"
 #define UI_TEXT_SERVICE_TIME            "N" STR_auml "chster Service"
 #define UI_TEXT_PRINTING_ROOM_LIGHT     "PRL: "
@@ -736,6 +738,7 @@
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000
 
+    #define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min Kontakt unhomed"
     #define UI_TEXT_EXTRUDER_OFFSET_X       "Extruder Abstand X"
     #define UI_TEXT_EXTRUDER_OFFSET_Y       "Extruder Abstand Y"
@@ -810,6 +813,7 @@
     
 #else
     
+    #define UI_TEXT_STRAIN_GAUGE_SPEED      "F:%s1 V:%om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min Kontakt uho."
     #define UI_TEXT_EXTRUDER_OFFSET_X       "Extr. Abstand X"
     #define UI_TEXT_EXTRUDER_OFFSET_Y       "Extr. Abstand Y"  

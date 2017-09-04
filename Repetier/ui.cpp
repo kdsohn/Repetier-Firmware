@@ -1235,7 +1235,16 @@ void UIDisplay::parse(char *txt,bool ram)
                     addInt(Printer::feedrateMultiply,3);
                     break;
                 }
-
+                if(c2=='p')                                                                             // %op : Is single double or quadstepping?
+                {
+                    switch(Printer::stepsPerTimerCall){
+                        case 1: addStringP( PSTR(" Sgl") ); break; //kein double oder quadstepping
+                        case 2: addStringP( PSTR(" Dbl") ); break; //kein double oder quadstepping
+                        case 4: addStringP( PSTR(" Qud") ); break; //kein double oder quadstepping
+                    }
+                    break;
+                }
+ 
 #if FEATURE_230V_OUTPUT
                 if(c2=='u')
                 {
@@ -1534,7 +1543,13 @@ void UIDisplay::parse(char *txt,bool ram)
                     addFloat(Extruder::current->maxAcceleration,5,0);
                 }
 #endif // NUM_EXTRUDER>0
-
+                else if(c2 == 'g')                                                                      // %Xg : Printer::stepsDoublerFrequency 
+                {
+                    addInt(Printer::stepsDoublerFrequency,5);
+                    addStringP( PSTR(" ") );
+                    addFloat(Printer::stepsDoublerFrequency/RMath::max(XAXIS_STEPS_PER_MM,YAXIS_STEPS_PER_MM),3,0);
+                    addStringP( PSTR("mm/s") );
+                }
                 break;
             }
             case 's': // Endstop positions
@@ -3974,6 +3989,15 @@ void UIDisplay::nextPreviousAction(int8_t next)
                 Com::printF( PSTR( "Stepper" ), steppernr+1 );
                 Com::printFLN( PSTR( " = " ), drive );
             }
+            break;
+        }
+        case UI_ACTION_FREQ_DBL:
+        {
+            INCREMENT_MIN_MAX(Printer::stepsDoublerFrequency,500,5000,12000);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetInt16( EPR_RF_FREQ_DBL, Printer::stepsDoublerFrequency  );
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
             break;
         }
     }
