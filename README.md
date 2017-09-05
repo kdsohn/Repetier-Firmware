@@ -1,6 +1,5 @@
-[<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Flag_of_the_United_Kingdom.svg/100px-Flag_of_the_United_Kingdom.svg.png" height="30">](README.md)
-[<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Flag_of_the_United_States.svg/100px-Flag_of_the_United_States.svg.png" height="30">](README.md)
-[<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Flag_of_Germany.svg/100px-Flag_of_Germany.svg.png" height="30">](README.de_DE.md)
+[<img src="us.png" height="30">](README.md)
+[<img src="de.png" height="30">](README.de_DE.md)
 
 # Inofficial modification of the RF firmware for RF1000 and RF2000 devices
 Based on Repetier-Firmware - the fast and user friendly firmware.
@@ -165,6 +164,11 @@ Menü -> Configuration -> General
 ## Configurable motorcurrent within menu and EEPROM  
 You can easily change the printers stepper currents within menu for more silence. This features is a replacement to our old silence-feature by gcode. EEPROM support included. The settings are restored after a reboot.
 Menü -> Configuration -> Stepper  
+
+## Configurable frequency limit to shift to double stepping / quad stepping within menu and EEPROM  
+You can easily improve your printers speed when driving ~43mm/s till 80mm/s. We changed this setting from 12000 to 6500 to achive better performance and a more precise interrupt timing due to an earlier shift to doublesteps. We included the configuration option to give full controll to you. Double and Quadstepping works like gear shifting. Pulses are packed and sent in a row to save calculation power at high speeds. The frequency tells the printer when to shift up/down. Quad steps are sent when reaching two times the set frequency and higher speeds.
+See http://www.rf1000.de/viewtopic.php?f=70&t=1986 also for more details. EEPROM support included. The settings are restored after a reboot.  
+Menü -> Configuration -> Stepper :: DblFq = 6500 or {5000...12000}  
 
 ## Configurable temperature settings within menu and EEPROM  
 PID-Autotune, other controlparameters and the sensortype is adjustable within the menu.  

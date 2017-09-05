@@ -1,6 +1,5 @@
-[<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/ae/Flag_of_the_United_Kingdom.svg/100px-Flag_of_the_United_Kingdom.svg.png" height="30">](README.md)
-[<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Flag_of_the_United_States.svg/100px-Flag_of_the_United_States.svg.png" height="30">](README.md)
-[<img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/ba/Flag_of_Germany.svg/100px-Flag_of_Germany.svg.png" height="30">](README.de_DE.md)
+[<img src="us.png" height="30">](README.md)
+[<img src="de.png" height="30">](README.de_DE.md)
 
 # Inoffizielle Modifikation der RF Firmware für RF1000 und RF2000 Geräte
 
@@ -169,6 +168,12 @@ Menü -> Configuration -> General
 ## Konfigurierbarer Motorstrom im Menü und EEPROM  
 Man kann alle Stepperströme im Menü am Drucker einstellen. Dieses Features ist ein ersatz für den alten Silent-Mode. Auch hier besteht EEPROM support, die Einstellungen werden beim nächsten Druckerstart automatisch geladen.
 Menü -> Configuration -> Stepper  
+
+## Konfigurierbare Double-/Quad-Step Freqenz im Menü und EEPROM  
+Damit kann man sehr einfach die Druckergeschwindigkeit im Bereich ~43mm/s bis 80mm/s optimieren bzw. die CPU für Kleinbewegungen entlasten. Wir haben die Umschaltfrequenz von 12000 auf 6500 heruntergesetzt, um eine bessere Performance und ein präziseres Timing bei der Ansteuerung zu erhalten - diese Umstellung aber auch für jeden selbst konfigurierbar gemacht.
+Double-/Quad-Stepping wirkt wie eine Gangschaltung. Die Pulse zum Motordriver werden gepackt in 2er oder 4er Pulspäckchen ausgegeben um Rechenleistung einzusparen. Die einstellbare Frequenz legt fest, wann auf Dual-Steps hochgeschalten wird. Bei der doppelten Frequenz oder höher wird auf Quad-Steps umgeschaltet.
+Siehe http://www.rf1000.de/viewtopic.php?f=70&t=1986 für mehr Details.
+Menü -> Configuration -> Stepper :: DblFq = 6500 oder {5000...12000}
 
 ## Konfigurierbare Temperatureinstellungen im Menü und EEPROM  
 Der PID-Autotune, die weiteren Regelparameter und der Sensortyp sind im Menü einstellbar.  
