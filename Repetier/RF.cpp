@@ -8222,9 +8222,9 @@ void processCommand( GCode* pCommand )
                         queueTask( TASK_PAUSE_PRINT_AND_MOVE );
                     }
                 }
-                else if( pCommand->hasR() ){
-                    continuePrint();
-                }
+                //else if( pCommand->hasR() ){
+                //    continuePrint(); //doesnt work with this version of gcode processing while paused.
+                //}
                 else
                 {
                     queueTask( TASK_PAUSE_PRINT ); 
