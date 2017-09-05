@@ -1,3 +1,7 @@
+V RF.01.37j.mod.5 (2017-09-05)
+- Fix STEP_DOUBLER_FREQUENCY from 12000 to 7000 for RFx000 to avoid speed lag, menu speed lags and hangs between 46mm/s and 79mm/s (printing @32Microsteps/1.8°Steppers)
+Use branch development 1.37u+ for adjustable STEP_DOUBLER_FREQUENCY. This is just "another minimum patch" with maximum outcome for this stable release.
+
 V RF.01.37j.mod.4 (2017-08-02)
 - Watchdog Timeout to 20000 which fixed crash with RF.01.37j.mod according to user zage
 

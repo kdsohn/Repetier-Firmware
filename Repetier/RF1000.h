@@ -841,7 +841,7 @@ This is like reducing your 1/16th microstepping to 1/8 or 1/4. It is much cheape
 additional stepper interrupts with all it's overhead. As a result you can go as high as
 40000Hz. */
 
-#define STEP_DOUBLER_FREQUENCY              12000
+#define STEP_DOUBLER_FREQUENCY              7000
 /** \brief If you need frequencies off more then 30000 you definitely need to enable this. If you have only 1/8 stepping
 enabling this may cause to stall your moves when 20000Hz is reached. */
 
