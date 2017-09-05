@@ -166,7 +166,7 @@ You can easily change the printers stepper currents within menu for more silence
 Menü -> Configuration -> Stepper  
 
 ## Configurable frequency limit to shift to double stepping / quad stepping within menu and EEPROM  
-You can easily improve your printers speed when driving ~43mm/s till 80mm/s. We changed this setting from 12000 to 6500 to achive better performance and a more precise interrupt timing due to an earlier shift to doublesteps. We included the configuration option to give full controll to you. Double and Quadstepping works like gear shifting. Pulses are packed and sent in a row to save calculation power at high speeds. The frequency tells the printer when to shift up/down. Quad steps are sent when reaching two times the set frequency and higher speeds.
+You can easily improve your printers speed when driving ~43mm/s till 80mm/s. We changed this setting from 12000 = 79mm/s to 6500 = 43mm/s to achive better performance and a more precise interrupt timing due to an earlier shift to doublesteps. We included the configuration option to give full controll to you. Double and Quadstepping works like gear shifting. Pulses are packed and sent in a row to save calculation power at high speeds. The frequency tells the printer when to shift up/down. Quad steps are sent when reaching two times the set frequency and higher speeds.
 See http://www.rf1000.de/viewtopic.php?f=70&t=1986 also for more details. EEPROM support included. The settings are restored after a reboot.  
 Menü -> Configuration -> Stepper :: DblFq = 6500 or {5000...12000}  
 

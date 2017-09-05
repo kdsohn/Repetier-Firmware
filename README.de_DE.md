@@ -170,9 +170,9 @@ Man kann alle Stepperströme im Menü am Drucker einstellen. Dieses Features ist
 Menü -> Configuration -> Stepper  
 
 ## Konfigurierbare Double-/Quad-Step Freqenz im Menü und EEPROM  
-Damit kann man sehr einfach die Druckergeschwindigkeit im Bereich ~43mm/s bis 80mm/s optimieren bzw. die CPU für Kleinbewegungen entlasten. Wir haben die Umschaltfrequenz von 12000 auf 6500 heruntergesetzt, um eine bessere Performance und ein präziseres Timing bei der Ansteuerung zu erhalten - diese Umstellung aber auch für jeden selbst konfigurierbar gemacht.
-Double-/Quad-Stepping wirkt wie eine Gangschaltung. Die Pulse zum Motordriver werden gepackt in 2er oder 4er Pulspäckchen ausgegeben um Rechenleistung einzusparen. Die einstellbare Frequenz legt fest, wann auf Dual-Steps hochgeschalten wird. Bei der doppelten Frequenz oder höher wird auf Quad-Steps umgeschaltet.
-Siehe http://www.rf1000.de/viewtopic.php?f=70&t=1986 für mehr Details.
+Damit kann man sehr einfach die Druckergeschwindigkeit im Bereich ~43mm/s bis 80mm/s optimieren bzw. die CPU für Kleinbewegungen entlasten. Wir haben die Umschaltfrequenz von 12000 = 79mm/s auf 6500 = 43mm/s heruntergesetzt, um eine bessere Performance und ein präziseres Timing bei der Ansteuerung zu erhalten - diese Umstellung aber auch für jeden selbst konfigurierbar gemacht.
+Double-/Quad-Stepping wirkt wie eine Gangschaltung. Die Pulse zum Motordriver werden gepackt in 2er oder 4er Pulspäckchen ausgegeben um Rechenleistung einzusparen. Die einstellbare Frequenz legt fest, wann auf Dual-Steps hochgeschaltet wird. Bei der doppelten Frequenz oder höher wird auf Quad-Steps umgeschaltet.
+Siehe http://www.rf1000.de/viewtopic.php?f=70&t=1986 für mehr Details.  
 Menü -> Configuration -> Stepper :: DblFq = 6500 oder {5000...12000}
 
 ## Konfigurierbare Temperatureinstellungen im Menü und EEPROM  
