@@ -443,12 +443,12 @@ void Printer::moveToReal(float x,float y,float z,float e,float f)
 
 uint8_t Printer::setOrigin(float xOff,float yOff,float zOff)
 {
-    if( !isHomed() )
+    if( !areAxisHomed() )
     {
         if( debugErrors() )
         {
             // we can not set the origin when we do not know the home position
-            Com::printFLN( PSTR("setOrigin(): the origin can not be set because the home position is unknown") );
+            Com::printFLN( PSTR("setOrigin(): home position is unknown") );
         }
 
         showError( (void*)ui_text_set_origin, (void*)ui_text_home_unknown );
