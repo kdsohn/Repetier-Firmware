@@ -3,6 +3,12 @@ TODO: Test Z-Homing and Pause-Pause-Continue in Milling-Mode
 TODO: Test driving free without FEATURE drive-free in Milling-Mode @RF1000/RF2000
 TODO: Testing, testing ..
 
+V RF.01.37u2.Mod (2017-09-10)
+- Milling: finally tested PAUSE with MOVE while Milling and it did not work as expected. Small bug which is now patched.
+- Milling: moved "Set XY Origin" to Menu "Position->" for manual positioning.
+- Milling: fix possible homing one axis allowes "set xy origin" which needs at least 2 or 3 axes.
+- Milling: fix "Find Z origin" automatic driveback 15mm https://github.com/RF1000community/Repetier-Firmware/issues/81
+
 V RF.01.37u.Mod (2017-09-05)
 - Changed STEP_DOUBLER_FREQUENCY to standard 6500 because of performance reasons
 - Added Menu-Support and EEPROM-Support to change STEP_DOUBLER_FREQUENCY onthefly.

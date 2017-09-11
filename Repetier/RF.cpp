@@ -6997,10 +6997,10 @@ void determinePausePosition( void )
     {
         determineZPausePositionForPrint();
     }
-    else
+    else //Printer::operatingMode == OPERATING_MODE_MILL
     {
         // in operating mode "mill", we must move only into z direction first in order to get the tool out of the work part
-        if( g_pauseStatus == PAUSE_STATUS_GOTO_PAUSE3 || g_pauseStatus == PAUSE_STATUS_TASKGOTO_PAUSE_3 )
+        if( g_pauseStatus == PAUSE_STATUS_GOTO_PAUSE2 || g_pauseStatus == PAUSE_STATUS_TASKGOTO_PAUSE_2 )
         {
             g_nContinueSteps[X_AXIS] = 0;
             g_nContinueSteps[Y_AXIS] = 0;
