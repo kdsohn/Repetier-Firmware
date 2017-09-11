@@ -1,6 +1,5 @@
-TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift.
-TODO: Test Z-Homing and Pause-Pause-Continue in Milling-Mode
-TODO: Test driving free without FEATURE drive-free in Milling-Mode @RF1000/RF2000
+TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad
+TODO: ADVANCE cannot handle "wipe while retract", which is a Checkbox in Simplify3D (Profile-Tab: Advanced): Todo @repetier
 TODO: Testing, testing ..
 
 V RF.01.37u2.Mod (2017-09-10)

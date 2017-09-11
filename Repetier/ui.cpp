@@ -1375,7 +1375,8 @@ void UIDisplay::parse(char *txt,bool ram)
 #if FEATURE_MILLING_MODE
                     if( Printer::operatingMode == OPERATING_MODE_MILL )
                     {
-                        addStringP(Printer::ZMode==Z_VALUE_MODE_Z_ORIGIN?ui_text_z_mode_z_origin:ui_text_z_mode_surface);
+                        //addStringP(Printer::ZMode==Z_VALUE_MODE_Z_ORIGIN?ui_text_z_mode_z_origin:ui_text_z_mode_surface);
+                        addStringP(Printer::ZMode==Z_VALUE_MODE_Z_ORIGIN ? ui_text_z_mode_z_origin : (Printer::ZMode==Z_VALUE_MODE_SURFACE ? ui_text_z_mode_surface : ui_text_z_mode_gcode) );
                     }
                     else
 #endif // FEATURE_MILLING_MODE
