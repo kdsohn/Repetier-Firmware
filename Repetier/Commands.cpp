@@ -867,13 +867,13 @@ void Commands::executeGCode(GCode *com)
 
         case 90: // G90
         {
-            Commands::waitUntilEndOfAllMoves();
+            //Commands::waitUntilEndOfAllMoves(); https://github.com/RF1000community/Repetier-Firmware/commit/986a246b5faf625357e3202a93b7e8cb38916ce1 evtl. blöd! interne scripte mit G90 gehen dann evtl. nicht mehr.
             Printer::relativeCoordinateMode = false;
             break;
         }
         case 91: // G91
         {
-            Commands::waitUntilEndOfAllMoves();
+            //Commands::waitUntilEndOfAllMoves(); https://github.com/RF1000community/Repetier-Firmware/commit/986a246b5faf625357e3202a93b7e8cb38916ce1 evtl. blöd! interne scripte mit G91 gehen dann evtl. nicht mehr.
             Printer::relativeCoordinateMode = true;
             break;
         }
