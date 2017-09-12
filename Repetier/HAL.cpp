@@ -1207,6 +1207,14 @@ ISR(EXTRUDER_TIMER_VECTOR)
 }
 #endif // USE_ADVANCE
 
+#if FEATURE_USER_INT3
+volatile unsigned long g_uCOUNT_INT3 = 0; //dummy variable for dummy function!
+
+void USER_INTERRUPT3_HOOK(){
+    g_uCOUNT_INT3++; //dummy function!
+}
+#endif //FEATURE_USER_INT3
+
 #ifndef EXTERNALSERIAL
 // Implement serial communication for one stream only!
 /*

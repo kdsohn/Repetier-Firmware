@@ -10698,6 +10698,13 @@ void processCommand( GCode* pCommand )
                 break;
             }
 
+#if FEATURE_USER_INT3
+            case 3989: // M3989 : proof that dummy function/additional hardware button works!
+            {
+                Com::printFLN( PSTR( "Request INT3:" ), g_uCOUNT_INT3 ); //evtl. je nach Anwendung entprellen nötig: wenn entprellen nötig, hilft evtl. interrupt nach ausführung sperren und mit dem watchdog-timer erneut entsperren.
+                break;
+            }
+#endif //FEATURE_USER_INT3
         }
     }
 

@@ -946,5 +946,8 @@ and it is elsewise difficult to know, what your reprap is currently doing. */
 /** \brief Defines the default z scale */
 #define DEFAULT_Z_SCALE_MODE                Z_VALUE_MODE_Z_MIN
 
+/** \brief For Nibbels external interrupt 3 button at RF1000 X25.8 und RF2000 X34.2 "EXT_IRQ"/INT3 
+You can activate this to 1 and connect some Button. If you connect ground to pull the pullup down you will let the firmware jump into interrupt routine */
+#define FEATURE_USER_INT3                   0                                                   // 0 = OFF, 1 = ON
 
 #endif // CONFIGURATION_H

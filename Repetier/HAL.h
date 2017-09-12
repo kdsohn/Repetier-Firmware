@@ -122,6 +122,12 @@ typedef uint8_t     flag8_t;
 
 #define FAST_INTEGER_SQRT
 
+#if FEATURE_USER_INT3
+extern volatile unsigned long g_uCOUNT_INT3; //dummy variable for dummy function!
+
+void USER_INTERRUPT3_HOOK(); //dummy function!
+#endif //FEATURE_USER_INT3
+
 #ifndef EXTERNALSERIAL
 // Implement serial communication for one stream only!
 /*
@@ -204,7 +210,7 @@ public:
 extern RFHardwareSerial RFSerial;
 #define RFSERIAL RFSerial
 #define WAIT_OUT_EMPTY while(tx_buffer.head != tx_buffer.tail) {}
-#else
+#else // EXTERNALSERIAL
 #define RFSERIAL Serial
 #endif // EXTERNALSERIAL
 
