@@ -261,7 +261,7 @@
 #define RESERVE_DIGITAL_PIN_PC5 32 //X25.6
 
 #define RESERVE_DIGITAL_PIN_PD2 19 //X25.7
-#define RESERVE_DIGITAL_PIN_PD3 18 //X25.8
+#define RESERVE_DIGITAL_PIN_PD3 18 //RF1000 X25.8 und RF2000 X34.2 "EXT_IRQ"
 
 #define RESERVE_ANALOG_PIN_PF3 3 //X25.10
 #define RESERVE_ANALOG_PIN_PF4 4 //X25.11
@@ -507,6 +507,8 @@
 
 #define RESERVE_DIGITAL_PIN_PE4 2 //RF2000 X33.5
 
+#define RESERVE_DIGITAL_PIN_PD3 18 //RF1000 X25.8 und RF2000 X34.2 "EXT_IRQ"
+/* X34.3=SCL und X34.4=SDA ist I²C siehe wire.h. (X34.1=5V und X34.5/X34.6=VSS) An diesem Bus sind auch die DMS und EEPROMs für Geräteidentifikation (EEPROM 2) und das EEPROM für die Z-Matrix (EEPROM 1) angeschlossen. */
 #endif // MOTHERBOARD == DEVICE_TYPE_RF2000
 
 
