@@ -339,14 +339,14 @@ short readStrainGauge( unsigned char uAddress ) //readStrainGauge dauert etwas u
     Register = Wire.read();
     (void)Register; //Nibbels: Tut so als würde die variable benutzt werden. Macht aber nix.
     Wire.endTransmission();
-	
+
 #if FEATURE_ZERO_DIGITS
-	if(-27768 < Result && Result < 27767){
-		Result -= Printer::g_pressure_offset; //no overflow possible: pressure_offset ist 5000 max.
-	}
+    if(-27768 < Result && Result < 27767){
+        Result -= Printer::g_pressure_offset; //no overflow possible: pressure_offset ist 5000 max.
+    }
 #endif // FEATURE_ZERO_DIGITS
 
-	
+
 /* brief: This is for correcting sinking hotends at high digit values because of DMS-Sensor by Nibbels  */
 #if FEATURE_DIGIT_Z_COMPENSATION
     static long nSensibleCompensationSum    = 0;
@@ -10698,6 +10698,13 @@ void processCommand( GCode* pCommand )
                 break;
             }
 
+#if FEATURE_USER_INT3
+            case 3989: // M3989 : proof that dummy function/additional hardware button works!
+            {
+                Com::printFLN( PSTR( "Request INT3:" ), g_uCOUNT_INT3 ); //evtl. je nach Anwendung entprellen nötig: wenn entprellen nötig, hilft evtl. interrupt nach ausführung sperren und mit dem watchdog-timer erneut entsperren.
+                break;
+            }
+#endif //FEATURE_USER_INT3
         }
     }
 
