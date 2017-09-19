@@ -1908,7 +1908,7 @@ void Commands::executeGCode(GCode *com)
 void Commands::emergencyStop()
 {
 #if defined(KILL_METHOD) && KILL_METHOD==1
-    HAL::resetHardware();
+    HAL::resetHardware(); //RF2000 / RF1000!
 #else
     InterruptProtectedBlock noInts; //BEGIN_INTERRUPT_PROTECTED
     Printer::kill(false);

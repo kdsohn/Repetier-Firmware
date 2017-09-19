@@ -128,6 +128,12 @@ extern volatile unsigned long g_uCOUNT_INT3; //dummy variable for dummy function
 void USER_INTERRUPT3_HOOK(); //dummy function!
 #endif //FEATURE_USER_INT3
 
+#if FEATURE_READ_CALLIPER
+extern volatile long calliper_um; //last valid readout
+
+void FEATURE_READ_CALLIPER_HOOK(); //read in callipers 48bit protocol bitwise!
+#endif //FEATURE_READ_CALLIPER
+
 #ifndef EXTERNALSERIAL
 // Implement serial communication for one stream only!
 /*

@@ -904,6 +904,17 @@ void Printer::setup()
     attachInterrupt( digitalPinToInterrupt(RESERVE_DIGITAL_PIN_PD3) , USER_INTERRUPT3_HOOK, FALLING );
 #endif //FEATURE_USER_INT3
 
+#if FEATURE_READ_CALLIPER
+// read for using pins : https://www.arduino.cc/en/Tutorial/DigitalPins
+//where the clock comes in and triggers an interrupt which reads data then:
+    SET_INPUT( FEATURE_READ_CALLIPER_INT_PIN ); //input as default already this is here for explaination more than really having an input.
+    PULLUP( FEATURE_READ_CALLIPER_INT_PIN, HIGH ); //do I need this pullup??
+    attachInterrupt( digitalPinToInterrupt(FEATURE_READ_CALLIPER_INT_PIN) , FEATURE_READ_CALLIPER_HOOK, FALLING );
+//where data is to read when Int triggers because of clock from calliper:
+    SET_INPUT( FEATURE_READ_CALLIPER_DATA_PIN ); //input as default already this is here for explaination more than really having an input.
+    PULLUP( FEATURE_READ_CALLIPER_DATA_PIN, HIGH ); //do I need this pullup??
+#endif //FEATURE_READ_CALLIPER
+
 #if FAN_PIN>-1
     SET_OUTPUT(FAN_PIN);
     WRITE(FAN_PIN,LOW);

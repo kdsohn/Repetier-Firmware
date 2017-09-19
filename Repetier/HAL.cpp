@@ -1215,6 +1215,48 @@ void USER_INTERRUPT3_HOOK(){
 }
 #endif //FEATURE_USER_INT3
 
+#if FEATURE_READ_CALLIPER
+volatile long calliper_um = 0;
+
+void FEATURE_READ_CALLIPER_HOOK(){  //read in callipers 48bit protocol bitwise when falling edge on clock
+    //http://www.instructables.com/id/Reading-Digital-Callipers-with-an-Arduino-USB/
+    static uint8_t  bitnr = 1;
+    static millis_t calliper_lastint = 0; //time of last int
+    static uint16_t calliper_reading = 0; //bits for callipers message * 100
+    static bool     sign = 0; //is positive?
+
+    millis_t time = micros();
+
+    if(time - calliper_lastint > 2000){ //longest diff should be 0.5ms if higher we wasted somedata somehow or message was incomplete : start hearing new message.
+        //new message
+        calliper_reading = 0;
+        bitnr = 1;
+    }
+    else if (time - calliper_lastint < 100){
+        return; //must be some spike triggering int?
+    }
+
+    uint8_t readdata = READ(FEATURE_READ_CALLIPER_DATA_PIN);
+    readdata += READ(FEATURE_READ_CALLIPER_DATA_PIN);
+    readdata += READ(FEATURE_READ_CALLIPER_DATA_PIN);
+
+    if(bitnr <= 16){
+        calliper_reading = calliper_reading >> 1; // shift bits to left
+        if(readdata > 1) calliper_reading |= 0x8000; //write one to start
+    }else if(bitnr == 22){
+        sign = (readdata > 1 ? true : false); //remember plus or minus bit sign
+    }else if(bitnr >= 24){
+        //auswerten:
+        bitnr = 0; //wird gleich 1
+        calliper_um = calliper_reading * 5 * (sign ? -1 : 1); //*10 (10um -> um) und durch 2 (shift out lowest unused bit)
+        //calliper_mm = (float)calliper_reading * 0.005f * (sign ? -1.0f : 1.0f); //wipe first bit which is unknown in function by dividing *0.5, go from 10um to 1mm by dividing *0.01 -> shift first is bogus because in any case we have to divide?
+    }
+
+    bitnr++;
+    calliper_lastint = time;
+}
+#endif //FEATURE_READ_CALLIPER
+
 #ifndef EXTERNALSERIAL
 // Implement serial communication for one stream only!
 /*
