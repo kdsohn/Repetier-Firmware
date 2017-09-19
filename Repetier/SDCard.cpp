@@ -99,6 +99,10 @@ void SDCard::initsd()
         return;
 #endif // defined(SDCARDDETECT) && SDCARDDETECT>-1
 
+    //fix in https://github.com/repetier/Repetier-Firmware/commit/d4e396d0f4d1b81cc4d388360be461f11ceb9edd ??
+    fat.begin(SDSS, SPI_FULL_SPEED);  // dummy init of SD_CARD
+    HAL::delayMilliseconds(50);       // wait for init end
+
     if(!fat.begin(SDSS,SPI_FULL_SPEED))
     {
         if( Printer::debugErrors() )

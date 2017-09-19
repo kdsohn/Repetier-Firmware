@@ -652,9 +652,12 @@ public:
 
     } // spiBegin
 
-    static inline void spiInit(uint8_t spiRate)
+    static inline void spiInit(uint8_t spiRate) //TODO ?? : see https://github.com/repetier/Repetier-Firmware/commit/5c139806139d738419e666147c28b51971e1bab5 ??
     {
-        spiRate = spiRate > 12 ? 6 : spiRate/2;
+        //spiRate = spiRate > 12 ? 6 : spiRate/2;
+        uint8_t r = 0;
+        for (uint8_t b = 2; spiRate > b && r < 6; b <<= 1, r++);
+
         SET_OUTPUT(SS);
         WRITE(SS,HIGH);
         SET_OUTPUT(SCK);
@@ -668,9 +671,11 @@ public:
 #endif // PRR
 
         // See avr processor documentation
-        SPCR = (1 << SPE) | (1 << MSTR) | (spiRate >> 1);
-        SPSR = spiRate & 1 || spiRate == 6 ? 0 : 1 << SPI2X;
+        //SPCR = (1 << SPE) | (1 << MSTR) | (spiRate >> 1);
+        //SPSR = spiRate & 1 || spiRate == 6 ? 0 : 1 << SPI2X;
 
+        SPCR = (1 << SPE) | (1 << MSTR) | (r >> 1);
+        SPSR = (r & 1 || r == 6 ? 0 : 1) << SPI2X;
     } // spiInit
 
     static inline uint8_t spiReceive(uint8_t send=0xff)
