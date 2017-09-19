@@ -675,6 +675,8 @@ void Printer::setup()
 {
     HAL::stopWatchdog();
 
+    for(uint8_t i=0; i<NUM_EXTRUDER+3; i++) pwm_pos[i]=0;
+
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
@@ -999,7 +1001,6 @@ void Printer::setup()
     advanceStepsSet = 0;
 #endif // USE_ADVANCE
 
-    for(uint8_t i=0; i<NUM_EXTRUDER+3; i++) pwm_pos[i]=0;
     queuePositionLastSteps[X_AXIS] = queuePositionLastSteps[Y_AXIS] = queuePositionLastSteps[Z_AXIS] = queuePositionLastSteps[E_AXIS] = 0;
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
