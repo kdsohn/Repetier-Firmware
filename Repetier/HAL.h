@@ -29,6 +29,8 @@
 #include <avr/io.h>
 #define prog_char   char
 
+#define INLINE __attribute__((always_inline))
+
 #define PACK
 
 #define FSTRINGVALUE(var,value) const char var[] PROGMEM = value;
@@ -119,6 +121,8 @@ typedef uint16_t    speed_t;
 typedef uint32_t    ticks_t;
 typedef uint32_t    millis_t;
 typedef uint8_t     flag8_t;
+typedef int8_t      fast8_t;
+typedef uint8_t     ufast8_t;
 
 #define FAST_INTEGER_SQRT
 

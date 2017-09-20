@@ -1913,11 +1913,11 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
 {
     HAL::allowInterrupts();
     move->checkEndstops(forQueue);
-    int max_loops = Printer::stepsPerTimerCall;
+    fast8_t max_loops = Printer::stepsPerTimerCall;
     if(move->stepsRemaining < max_loops) max_loops = move->stepsRemaining;
     HAL::forbidInterrupts();
 
-    for(int loop=0; loop < max_loops; loop++) {
+    for(fast8_t loop=0; loop < max_loops; loop++) {
         ANALYZER_ON(ANALYZER_CH1);
 
 #if STEPPER_HIGH_DELAY+DOUBLE_STEP_DELAY > 0
