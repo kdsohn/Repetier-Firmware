@@ -1215,6 +1215,54 @@ void USER_INTERRUPT3_HOOK(){
 }
 #endif //FEATURE_USER_INT3
 
+#if FEATURE_READ_CALLIPER
+volatile long calliper_um = 0;
+
+void FEATURE_READ_CALLIPER_HOOK(){
+    // read in one bit of callipers 24bit protocol
+    // when falling edge on clock is detected
+    // http://www.instructables.com/id/Reading-Digital-Callipers-with-an-Arduino-USB/
+    static uint8_t  bitnr = 1;
+    static millis_t lasttime = 0; //time of last int
+    static uint16_t bit_cache = 0; //bits for callipers message * 100
+    static bool     sign = 0; //is positive?
+
+    millis_t time = micros();
+
+    millis_t tdiff = time - lasttime;
+    if(tdiff > 2000){ // longest diff should be 0.5ms
+        // new message arrived: 
+        // - this happens if we begin to read within half a message -> we drop everything and read the new one.
+        // - this happens if a new message begins
+        bit_cache = 0x0000;
+        bitnr = 1;
+    }
+    else if (tdiff < 100){ // must be some spike triggering int?
+        return;
+    }
+
+    uint8_t readdata = READ(FEATURE_READ_CALLIPER_DATA_PIN);
+    readdata += READ(FEATURE_READ_CALLIPER_DATA_PIN);
+    readdata += READ(FEATURE_READ_CALLIPER_DATA_PIN);
+
+    if(bitnr <= 16){
+        //bits nacheinander von links reinschieben:
+        bit_cache = bit_cache >> 1; // shift bits to left
+        if(readdata > 1) bit_cache |= 0x8000; //write one to start
+    }else if(bitnr == 22){
+        //welches Vorzeichen?
+        sign = (readdata > 1 ? true : false); //remember plus or minus bit sign
+    }else if(bitnr >= 24){
+        //auswerten:
+        bit_cache >>= 1; //lowest bit is not necessary
+        calliper_um = (long)bit_cache * (sign ? -10 : 10); //auflösung ist 10um
+    }
+
+    bitnr++;
+    lasttime = time;
+}
+#endif //FEATURE_READ_CALLIPER
+
 #ifndef EXTERNALSERIAL
 // Implement serial communication for one stream only!
 /*

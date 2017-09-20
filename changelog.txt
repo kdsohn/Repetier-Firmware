@@ -1,6 +1,21 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad
+-> Is this possibly fixed by removing halfstepping in 1.37u4?
 TODO: ADVANCE cannot handle "wipe while retract", which is a Checkbox in Simplify3D (Profile-Tab: Advanced): Todo @repetier
+-> Is this fixed by moving "Printer::stepNumber += max_loops;" into "if acceleration block" in 1.37u4?
 TODO: Testing, testing ..
+
+V RF.01.37u4.Mod (2017-09-20)
+- Possibly removed shift-bug by removing Feature HalfStepping as repetier did 27 Apr 2015 @ https://github.com/repetier/Repetier-Firmware/commit/50af89fef714bc271ac98bba3153210a8a61b275
+- Getting move function closer to repetier development
+- moving Printer::stepNumber+=max_loops into "if acceleration block". It was not there until now! possible bugfix for anything?
+- pulling repetiers changes on spiInit and SDCard::initsd() to this mod (no negative impact seen so far)
+- removed some garbage like rest of babystepping which is something like directSteps or Z-Compensation for driving Z aside from queue.
+- PWM initialisation is now the first we do at Printer::setup() while booting. This as well is some pull from repetiers changes. (no negative impact seen so far)
+
+V RF.01.37u3.Mod (2017-09-19)
+- remove bug with sending rom data over serial before starting/booting up (since ~RF.01.37t6.Mod).
+- implemented FEATURE_USER_INT3 as a dummy feature to easily implement some users interrupt function to pin PD3 @RF1000 or RF2000
+- implemented FEATURE_READ_CALLIPER to get the possibility to plug an digital calliper to reserve pins at RF2000 (or RF1000 with pinchanges)
 
 V RF.01.37u2.Mod (2017-09-10)
 - Milling: finally tested PAUSE with MOVE while Milling and it did not work as expected. Small bug which is now patched.

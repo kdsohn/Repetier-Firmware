@@ -894,6 +894,8 @@ void Commands::executeGCode(GCode *com)
             if(com->hasE())
             {
                 Printer::queuePositionLastSteps[E_AXIS] = Printer::convertToMM(com->E)*Printer::axisStepsPerMM[E_AXIS];
+                //Nibbels TODO??: Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = Printer::convertToMM(com->E)*Printer::axisStepsPerMM[E_AXIS];
+                //weil: https://github.com/repetier/Repetier-Firmware/commit/a63c660289b760faf033fdfd86bbc69c1050cfc9 ?
             }
         }
         break;
@@ -1908,7 +1910,7 @@ void Commands::executeGCode(GCode *com)
 void Commands::emergencyStop()
 {
 #if defined(KILL_METHOD) && KILL_METHOD==1
-    HAL::resetHardware();
+    HAL::resetHardware(); //RF2000 / RF1000!
 #else
     InterruptProtectedBlock noInts; //BEGIN_INTERRUPT_PROTECTED
     Printer::kill(false);

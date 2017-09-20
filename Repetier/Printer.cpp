@@ -94,7 +94,6 @@ unsigned int    Printer::vMaxReached;                                   ///< Max
 unsigned long   Printer::msecondsPrinting;                              ///< Milliseconds of printing time (means time with heated extruder)
 unsigned long   Printer::msecondsMilling;                               ///< Milliseconds of milling time
 float           Printer::filamentPrinted;                               ///< mm of filament printed since counting started
-uint8_t         Printer::wasLastHalfstepping;                           ///< Indicates if last move had halfstepping enabled
 long            Printer::ZOffset;                                       ///< Z Offset in um
 char            Printer::ZMode               = DEFAULT_Z_SCALE_MODE;    ///< Z Scale  1 = show the z-distance to z-min (print) or to the z-origin (mill), 2 = show the z-distance to the surface of the heat bed (print) or work part (mill)
 char            Printer::moveMode[3];                                   ///< move mode which is applied within the Position X/Y/Z menus
@@ -675,6 +674,8 @@ void Printer::setup()
 {
     HAL::stopWatchdog();
 
+    for(uint8_t i=0; i<NUM_EXTRUDER+3; i++) pwm_pos[i]=0;
+
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
@@ -904,6 +905,17 @@ void Printer::setup()
     attachInterrupt( digitalPinToInterrupt(RESERVE_DIGITAL_PIN_PD3) , USER_INTERRUPT3_HOOK, FALLING );
 #endif //FEATURE_USER_INT3
 
+#if FEATURE_READ_CALLIPER
+// read for using pins : https://www.arduino.cc/en/Tutorial/DigitalPins
+//where the clock comes in and triggers an interrupt which reads data then:
+    SET_INPUT( FEATURE_READ_CALLIPER_INT_PIN ); //input as default already this is here for explaination more than really having an input.
+    PULLUP( FEATURE_READ_CALLIPER_INT_PIN, HIGH ); //do I need this pullup??
+    attachInterrupt( digitalPinToInterrupt(FEATURE_READ_CALLIPER_INT_PIN) , FEATURE_READ_CALLIPER_HOOK, FALLING );
+//where data is to read when Int triggers because of clock from calliper:
+    SET_INPUT( FEATURE_READ_CALLIPER_DATA_PIN ); //input as default already this is here for explaination more than really having an input.
+    PULLUP( FEATURE_READ_CALLIPER_DATA_PIN, HIGH ); //do I need this pullup??
+#endif //FEATURE_READ_CALLIPER
+
 #if FAN_PIN>-1
     SET_OUTPUT(FAN_PIN);
     WRITE(FAN_PIN,LOW);
@@ -988,7 +1000,6 @@ void Printer::setup()
     advanceStepsSet = 0;
 #endif // USE_ADVANCE
 
-    for(uint8_t i=0; i<NUM_EXTRUDER+3; i++) pwm_pos[i]=0;
     queuePositionLastSteps[X_AXIS] = queuePositionLastSteps[Y_AXIS] = queuePositionLastSteps[Z_AXIS] = queuePositionLastSteps[E_AXIS] = 0;
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
@@ -1009,7 +1020,6 @@ void Printer::setup()
     msecondsMilling = 0;
     filamentPrinted = 0;
     flag0 = PRINTER_FLAG0_STEPPER_DISABLED;
-    wasLastHalfstepping = 0;
 
     moveMode[X_AXIS] = DEFAULT_MOVE_MODE_X;
     moveMode[Y_AXIS] = DEFAULT_MOVE_MODE_Y;
@@ -1147,7 +1157,7 @@ void Printer::setup()
     HAL::serialSetBaudrate(baudrate);
 
     // sending of this information tells the Repetier-Host that the firmware has restarted - never delete or change this to-be-sent information
-    Com::printFLN("");
+    Com::println();
     Com::printFLN(Com::tStart); //http://forum.repetier.com/discussion/comment/16949/#Comment_16949
 
     UI_INITIALIZE;

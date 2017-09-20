@@ -869,13 +869,7 @@ enabling this may cause to stall your moves when 20000Hz is reached. */
 
 /** \brief If you reach STEP_DOUBLER_FREQUENCY the firmware will do 2 or 4 steps with nearly no delay. That can be too fast
 for some printers causing an early stall. */
-#define DOUBLE_STEP_DELAY                   1                                                   // [us]
-
-/** \brief The firmware supports trajectory smoothing. To achieve this, it divides the stepsize by 2, resulting in
-the double computation cost. For slow movements this is not an issue, but for really fast moves this is
-too much. The value specified here is the number of clock cycles between a step on the driving axis.
-If the interval at full speed is below this value, smoothing is disabled for that line.*/
-#define MAX_HALFSTEP_INTERVAL               1999
+#define DOUBLE_STEP_DELAY                   1                                                   // [us] TODO NIBBELS: Repetier set this to 0 when removing half stepping
 
 /** \brief Number of moves we can cache in advance.
 This number of moves can be cached in advance. If you wan't to cache more, increase this. Especially on

@@ -10699,12 +10699,21 @@ void processCommand( GCode* pCommand )
             }
 
 #if FEATURE_USER_INT3
-            case 3989: // M3989 : proof that dummy function/additional hardware button works!
+            case 3989: // M3989 : proof that dummy function/additional hardware button works! || by Nibbels
             {
                 Com::printFLN( PSTR( "Request INT3:" ), g_uCOUNT_INT3 ); //evtl. je nach Anwendung entprellen nötig: wenn entprellen nötig, hilft evtl. interrupt nach ausführung sperren und mit dem watchdog-timer erneut entsperren.
                 break;
             }
 #endif //FEATURE_USER_INT3
+
+#if FEATURE_READ_CALLIPER
+            case 3999: // M3999 : proof that dummy function/additional hardware button works! || by Nibbels
+            {
+                Com::printF( PSTR( "Calliper: " ), calliper_um );
+                Com::printFLN( PSTR( "[um]" ) );
+                break;
+            }
+#endif //FEATURE_READ_CALLIPER
         }
     }
 

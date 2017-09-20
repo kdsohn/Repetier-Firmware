@@ -54,7 +54,6 @@ public:
 private:
     flag8_t             primaryAxis;
     int32_t             timeInTicks;
-    flag8_t             halfStep;                   ///< 4 = disabled, 1 = halfstep, 2 = fulstep
     flag8_t             dir;                        ///< Direction of movement. 1 = X+, 2 = Y+, 4= Z+, values can be combined.
     int32_t             delta[4];                   ///< Steps we want to move.
     int32_t             error[4];                   ///< Error calculation for Bresenham algorithm
@@ -435,7 +434,7 @@ public:
     } // updateAdvanceSteps
 #endif // USE_ADVANCE
 
-    inline bool moveDecelerating()
+    INLINE bool moveDecelerating()
     {
         if(stepsRemaining <= static_cast<int32_t>(decelSteps))
         {
@@ -449,17 +448,12 @@ public:
         else return false;
     } // moveDecelerating
 
-    inline bool moveAccelerating()
+    INLINE bool moveAccelerating()
     {
         return Printer::stepNumber <= accelSteps;
     } // moveAccelerating
 
-    inline bool isFullstepping()
-    {
-        return halfStep == 4;
-    } // isFullstepping
-
-    inline void startXStep()
+    INLINE void startXStep()
     {
         ANALYZER_ON(ANALYZER_CH6);
         ANALYZER_ON(ANALYZER_CH2);
@@ -470,7 +464,7 @@ public:
 #endif // FEATURE_TWO_XSTEPPER
     } // startXStep
 
-    inline void startYStep()
+    INLINE void startYStep()
     {
         ANALYZER_ON(ANALYZER_CH7);
         ANALYZER_ON(ANALYZER_CH3);
@@ -489,27 +483,27 @@ public:
     void calculateDirectMove(float axis_diff[],uint8_t pathOptimize);
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
-    inline long getWaitTicks()
+    INLINE long getWaitTicks()
     {
         return timeInTicks;
     } // getWaitTicks
 
-    inline void setWaitTicks(long wait)
+    INLINE void setWaitTicks(long wait)
     {
         timeInTicks = wait;
     } // setWaitTicks
 
-    static inline bool hasLines()
+    static INLINE bool hasLines()
     {
         return linesCount;
     } // hasLines
 
-    static inline void setCurrentLine()
+    static INLINE void setCurrentLine()
     {
         cur = &lines[linesPos];
     } // setCurrentLine
 
-    static inline void removeCurrentLineForbidInterrupt()
+    static INLINE void removeCurrentLineForbidInterrupt()
     {
         nextPlannerIndex(linesPos);
         cur->task = TASK_NO_TASK;
@@ -518,7 +512,7 @@ public:
         --linesCount;
     } // removeCurrentLineForbidInterrupt
 
-    static inline void pushLine()
+    static INLINE void pushLine()
     {
         nextPlannerIndex(linesWritePos);
         InterruptProtectedBlock noInts;
@@ -561,12 +555,12 @@ public:
     static void arc(float *position, float *target, float *offset, float radius, uint8_t isclockwise);
 #endif // FEATURE_ARC_SUPPORT
 
-    static inline void previousPlannerIndex(uint8_t &p)
+    static INLINE void previousPlannerIndex(uint8_t &p)
     {
         p = (p ? p-1 : MOVE_CACHE_SIZE-1);
     } // previousPlannerIndex
 
-    static inline void nextPlannerIndex(uint8_t& p)
+    static INLINE void nextPlannerIndex(uint8_t& p)
     {
         p = (p >= MOVE_CACHE_SIZE - 1 ? 0 : p + 1);
     } // nextPlannerIndex
