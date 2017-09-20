@@ -1,3 +1,12 @@
+HINWEIS: wir werden den shift bug in dieser version nicht mehr reparieren, nutzt bitte die development!
+NOTICE: we will not fix the doublestep shift bug within this version. Use development instead!
+
+V RF.01.37j.mod.6 (2017-09-20)
+- correctly send start and enter at boot time
+- do pwm init first at boottime
+- changed STEP_DOUBLER_FREQUENCY back to 10000 as a tradeoff not to stumble into shiftbug so easily. Shiftbug might occur if driving around than 66mm/s
+NOTICE: shiftbug is already fixed in development version.
+
 V RF.01.37j.mod.5 (2017-09-05)
 - Fix STEP_DOUBLER_FREQUENCY from 12000 to 7000 for RFx000 to avoid speed lag, menu speed lags and hangs between 46mm/s and 79mm/s (printing @32Microsteps/1.8°Steppers)
 Use branch development 1.37u+ for adjustable STEP_DOUBLER_FREQUENCY. This is just "another minimum patch" with maximum outcome for this stable release.
