@@ -102,7 +102,6 @@ public:
     static unsigned long    msecondsPrinting;                   // Milliseconds of printing time (means time with heated extruder)
     static unsigned long    msecondsMilling;                    // Milliseconds of milling time
     static float            filamentPrinted;                    // mm of filament printed since counting started
-    static uint8_t          wasLastHalfstepping;                // Indicates if last move had halfstepping enabled
     static long             ZOffset;                            // Z Offset in um
     static char             ZMode;                              // Z Scale
     static char             moveMode[3];                        // move mode which is applied within the Position X/Y/Z menus

@@ -54,7 +54,6 @@ public:
 private:
     flag8_t             primaryAxis;
     int32_t             timeInTicks;
-    flag8_t             halfStep;                   ///< 4 = disabled, 1 = halfstep, 2 = fulstep
     flag8_t             dir;                        ///< Direction of movement. 1 = X+, 2 = Y+, 4= Z+, values can be combined.
     int32_t             delta[4];                   ///< Steps we want to move.
     int32_t             error[4];                   ///< Error calculation for Bresenham algorithm
@@ -453,11 +452,6 @@ public:
     {
         return Printer::stepNumber <= accelSteps;
     } // moveAccelerating
-
-    inline bool isFullstepping()
-    {
-        return halfStep == 4;
-    } // isFullstepping
 
     inline void startXStep()
     {

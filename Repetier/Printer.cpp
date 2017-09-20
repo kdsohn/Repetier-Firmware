@@ -94,7 +94,6 @@ unsigned int    Printer::vMaxReached;                                   ///< Max
 unsigned long   Printer::msecondsPrinting;                              ///< Milliseconds of printing time (means time with heated extruder)
 unsigned long   Printer::msecondsMilling;                               ///< Milliseconds of milling time
 float           Printer::filamentPrinted;                               ///< mm of filament printed since counting started
-uint8_t         Printer::wasLastHalfstepping;                           ///< Indicates if last move had halfstepping enabled
 long            Printer::ZOffset;                                       ///< Z Offset in um
 char            Printer::ZMode               = DEFAULT_Z_SCALE_MODE;    ///< Z Scale  1 = show the z-distance to z-min (print) or to the z-origin (mill), 2 = show the z-distance to the surface of the heat bed (print) or work part (mill)
 char            Printer::moveMode[3];                                   ///< move mode which is applied within the Position X/Y/Z menus
@@ -1021,7 +1020,6 @@ void Printer::setup()
     msecondsMilling = 0;
     filamentPrinted = 0;
     flag0 = PRINTER_FLAG0_STEPPER_DISABLED;
-    wasLastHalfstepping = 0;
 
     moveMode[X_AXIS] = DEFAULT_MOVE_MODE_X;
     moveMode[Y_AXIS] = DEFAULT_MOVE_MODE_Y;
