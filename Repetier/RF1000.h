@@ -926,6 +926,11 @@ Overridden if EEPROM activated. */
 #define MAX_JERK                            10
 #define MAX_ZJERK                           0.1
 
+//that will slowdown if you have sever direction changes in a short distance which is nearly the same as adding several jerks in a short sequence.
+#define REDUCE_ON_SMALL_SEGMENTS            1
+#define MAX_JERK_DISTANCE                   0.6
+//for a more logical jerk computation.
+#define ALTERNATIVE_JERK                    1
 
 // ##########################################################################################
 // ##   Extruder control

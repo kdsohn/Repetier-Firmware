@@ -814,12 +814,37 @@ void PrintLine::updateTrapezoids()
 } // updateTrapezoids
 
 
+
+/* Computes the maximum junction speed of the newly added segment under
+optimal conditions. There is no guarantee that the previous move will be able to reach the
+speed at all, but if it could exceed it will never exceed this theoretical limit.
+if you define ALTERNATIVE_JERK the new jerk computations are used. These
+use the cosine of the angle and the maximum speed
+Jerk = (1-cos(alpha))*min(v1,v2)
+This sets jerk to 0 on zero angle change.
+        Old               New
+0°:       0               0
+30°:     51,8             13.4
+45°:     76.53            29.3
+90°:    141               100
+180°:   200               200
+Speed from 100 to 200
+        Old               New(min)   New(max)
+0°:     100               0          0
+30°:    123,9             13.4       26.8
+45°:    147.3             29.3       58.6
+90°:    223               100        200
+180°:   300               200        400
+*/
+
 inline void PrintLine::computeMaxJunctionSpeed(PrintLine *previous,PrintLine *current)
 {
 #if USE_ADVANCE
     if(Printer::isAdvanceActivated())
     {
-        if(previous->isEMove() != current->isEMove() ) //&& (previous->isXOrYMove() || current->isXOrYMove()) according to newest dev
+        // if we start/stop extrusion we need to do so with lowest possible end speed
+        // or advance would leave a drolling extruder and can not adjust fast enough.
+        if(previous->isEMove() != current->isEMove()) //&& (previous->isXOrYMove() || current->isXOrYMove())
         {
             previous->setEndSpeedFixed(true);
             current->setStartSpeedFixed(true);
@@ -831,7 +856,46 @@ inline void PrintLine::computeMaxJunctionSpeed(PrintLine *previous,PrintLine *cu
     }
 #endif // USE_ADVANCE
 
+    // if we are here we have to identical move types
+    // either pure extrusion -> pure extrusion or
+    // move -> move (with or without extrusion)
     // First we compute the normalized jerk for speed 1
+
+    float factor = 1.0;
+    float lengthFactor = 1.0;
+#if REDUCE_ON_SMALL_SEGMENTS
+    if(previous->distance < MAX_JERK_DISTANCE)
+        lengthFactor = static_cast<float>(MAX_JERK_DISTANCE * MAX_JERK_DISTANCE) / (previous->distance * previous->distance);
+#endif
+    float maxJoinSpeed = RMath::min(current->fullSpeed, previous->fullSpeed);
+
+#if ALTERNATIVE_JERK
+    float jerk = maxJoinSpeed * lengthFactor * (1.0 - (current->speedX * previous->speedX + current->speedY * previous->speedY + current->speedZ * previous->speedZ) / (current->fullSpeed * previous->fullSpeed));
+#else
+    float dx = current->speedX - previous->speedX;
+    float dy = current->speedY - previous->speedY;
+    float jerk = sqrt(dx * dx + dy * dy) * lengthFactor;
+#endif // ALTERNATIVE_JERK
+
+    if(jerk > Printer::maxJerk) {
+        factor = Printer::maxJerk / jerk; // always < 1.0!
+        if(factor * maxJoinSpeed * 2.0 < Printer::maxJerk)
+            factor = Printer::maxJerk / (2.0 * maxJoinSpeed);
+    }
+
+    if((previous->dir | current->dir) & 64) {
+        float dz = fabs(current->speedZ - previous->speedZ);
+        if(dz > Printer::maxZJerk)
+            factor = RMath::min(factor, Printer::maxZJerk / dz);
+    }
+
+    float eJerk = fabs(current->speedE - previous->speedE);
+    if(eJerk > Extruder::current->maxStartFeedrate)
+        factor = RMath::min(factor, Extruder::current->maxStartFeedrate / eJerk);
+    previous->maxJunctionSpeed = maxJoinSpeed * factor; // set speed limit
+
+
+/* OLD RF JERK
     float dx = current->speedX-previous->speedX;
     float dy = current->speedY-previous->speedY;
     float factor = 1;
@@ -851,7 +915,11 @@ inline void PrintLine::computeMaxJunctionSpeed(PrintLine *previous,PrintLine *cu
     if(eJerk > Extruder::current->maxStartFeedrate)
         factor = RMath::min(factor,Extruder::current->maxStartFeedrate / eJerk);
     previous->maxJunctionSpeed = RMath::min(previous->fullSpeed * factor,current->fullSpeed);
+*/
 } // computeMaxJunctionSpeed
+
+
+
 
 
 /** \brief Update parameter used by updateTrapezoids
