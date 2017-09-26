@@ -723,6 +723,8 @@ void PrintLine::updateTrapezoids()
     PrintLine*  act = &lines[linesWritePos];
     InterruptProtectedBlock noInts; //BEGIN_INTERRUPT_PROTECTED;
     
+    // First we find out how far back we could go with optimization.
+
     uint8_t maxfirst = linesPos;            // first non fixed segment
 
     if(maxfirst != linesWritePos)
@@ -734,7 +736,14 @@ void PrintLine::updateTrapezoids()
     millis_t timeleft = 0;
 
     // Skip as many stored moves as needed to gain enough time for computation
-    millis_t minTime = 4500L * RMath::min(MOVE_CACHE_SIZE,10);
+    //millis_t minTime = 4500L * RMath::min(MOVE_CACHE_SIZE,10);
+    
+#if MOVE_CACHE_SIZE < 10
+ #define minTime 4500L * MOVE_CACHE_SIZE
+#else
+ #define minTime 45000L
+#endif
+    
     while(timeleft < minTime && maxfirst != linesWritePos)
     {
         timeleft += lines[maxfirst].timeInTicks;
@@ -747,10 +756,12 @@ void PrintLine::updateTrapezoids()
 
     if(first != linesWritePos && lines[first].isEndSpeedFixed())
         nextPlannerIndex(first);
+    // now first points to last segment before the end speed is fixed
+    // so start speed is also fixed.
 
     if(first == linesWritePos)              // Nothing to plan
     {
-        act->block();
+        act->block(); // Prevent stepper interrupt from using this
         noInts.unprotect(); //ESCAPE_INTERRUPT_PROTECTED
         act->setStartSpeedFixed(true);
         act->updateStepsParameter();
@@ -771,25 +782,27 @@ void PrintLine::updateTrapezoids()
     PrintLine *previous = &lines[previousIndex];
 
     // filters z-move<->not z-move
-    if((previous->primaryAxis == Z_AXIS && act->primaryAxis != Z_AXIS) || (previous->primaryAxis != Z_AXIS && act->primaryAxis == Z_AXIS))
+    /*if((previous->primaryAxis == Z_AXIS && act->primaryAxis != Z_AXIS) || (previous->primaryAxis != Z_AXIS && act->primaryAxis == Z_AXIS))
     {
         previous->setEndSpeedFixed(true);
         act->setStartSpeedFixed(true);
         act->updateStepsParameter();
         firstLine->unblock();
         return;
-    }
+    }*/
 
-    computeMaxJunctionSpeed(previous,act);  // Set maximum junction speed if we have a real move before
     if( previous->isEOnlyMove() != act->isEOnlyMove() )
     {
+        previous->maxJunctionSpeed = previous->endSpeed;
         previous->setEndSpeedFixed(true);
         act->setStartSpeedFixed(true);
         act->updateStepsParameter();
         firstLine->unblock();
         return;
+    }else{
+        computeMaxJunctionSpeed(previous, act);  // Set maximum junction speed if we have a real move before
     }
-
+    // Increase speed if possible neglecting current speed
     backwardPlanner(linesWritePos,first);
     
     // Reduce speed to reachable speeds
@@ -801,7 +814,7 @@ void PrintLine::updateTrapezoids()
         lines[first].updateStepsParameter();
 
         //noInts.protect(); //BEGIN_INTERRUPT_PROTECTED;
-        lines[first].unblock();             // Flying block to release next used segment as early as possible
+        lines[first].unblock();             // start with first block to release next used segment as early as possible
         nextPlannerIndex(first);
         lines[first].block();
         //noInts.unprotect(); //END_INTERRUPT_PROTECTED;
@@ -923,7 +936,7 @@ inline void PrintLine::computeMaxJunctionSpeed(PrintLine *previous,PrintLine *cu
 
 
 /** \brief Update parameter used by updateTrapezoids
-Computes the acceleration/decelleration steps and advanced parameter associated.
+Computes the acceleration/deceleration steps and advanced parameter associated.
 */
 void PrintLine::updateStepsParameter()
 {
@@ -935,8 +948,8 @@ void PrintLine::updateStepsParameter()
     vEnd   = vMax * endFactor;
 
     uint32_t vmax2 = HAL::U16SquaredToU32(vMax);
-    accelSteps = ((vmax2 - HAL::U16SquaredToU32(vStart)) / (accelerationPrim<<1)) + 1; // Always add 1 for missing precision
-    decelSteps = ((vmax2 - HAL::U16SquaredToU32(vEnd))  /(accelerationPrim<<1)) + 1;
+    accelSteps = ((vmax2 - HAL::U16SquaredToU32(vStart)) / (accelerationPrim << 1)) + 1; // Always add 1 for missing precision
+    decelSteps = ((vmax2 - HAL::U16SquaredToU32(vEnd))  /(accelerationPrim << 1)) + 1;
 
 #if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
@@ -964,16 +977,16 @@ last = last element until we check
 */
 inline void PrintLine::backwardPlanner(uint8_t start,uint8_t last)
 {
-    PrintLine *act = &lines[start],*previous;
+    PrintLine *act = &lines[start], *previous;
     float lastJunctionSpeed = act->endSpeed;    // Start always with safe speed
 
     while(start != last)
     {
         previousPlannerIndex(start);
         previous = &lines[start];
-
-        // Avoid speed calc once crusing in split delta move
-        // Avoid speed calcs if we know we can accelerate within the line
+        previous->block();
+        // Avoid speed calculate once cruising in split delta move
+        // Avoid speed calculate if we know we can accelerate within the line
         lastJunctionSpeed = (act->isNominalMove() ? act->fullSpeed : sqrt(lastJunctionSpeed * lastJunctionSpeed + act->accelerationDistance2));     // acceleration is acceleration*distance*2! What can be reached if we try?
 
         // If that speed is more that the maximum junction speed allowed then ...
@@ -983,13 +996,13 @@ inline void PrintLine::backwardPlanner(uint8_t start,uint8_t last)
             if(previous->endSpeed != previous->maxJunctionSpeed)
             {
                 previous->invalidateParameter();                // Needs recomputation
-                previous->endSpeed = RMath::max(previous->minSpeed,previous->maxJunctionSpeed);     // possibly unneeded???
+                previous->endSpeed = RMath::max(previous->minSpeed, previous->maxJunctionSpeed);     // possibly unneeded???
             }
 
             // If actual line start speed has not been updated to maximum speed then do it now
             if(act->startSpeed != previous->maxJunctionSpeed)
             {
-                act->startSpeed = RMath::max(act->minSpeed,previous->maxJunctionSpeed);             // possibly unneeded???
+                act->startSpeed = RMath::max(act->minSpeed, previous->maxJunctionSpeed);             // possibly unneeded???
                 act->invalidateParameter();
             }
             lastJunctionSpeed = previous->endSpeed;
@@ -997,8 +1010,8 @@ inline void PrintLine::backwardPlanner(uint8_t start,uint8_t last)
         else
         {
             // Block prev end and act start as calculated speed and recalculate plateau speeds (which could move the speed higher again)
-            act->startSpeed = RMath::max(act->minSpeed,lastJunctionSpeed);
-            lastJunctionSpeed = previous->endSpeed = RMath::max(lastJunctionSpeed,previous->minSpeed);
+            act->startSpeed = RMath::max(act->minSpeed, lastJunctionSpeed);
+            lastJunctionSpeed = previous->endSpeed = RMath::max(lastJunctionSpeed, previous->minSpeed);
             previous->invalidateParameter();
             act->invalidateParameter();
         }
@@ -1012,20 +1025,14 @@ void PrintLine::forwardPlanner(uint8_t first)
 {
     PrintLine *act;
     PrintLine *next = &lines[first];
-    //float vmaxRight;
+    float vmaxRight;
     float leftSpeed = next->startSpeed;
-
-
     while(first != linesWritePos)           // All except last segment, which has fixed end speed
     {
         act = next;
         nextPlannerIndex(first);
         next = &lines[first];
-
-        // Avoid speed calc once crusing in split delta move
-        float vmaxRight;
-
-        // Avoid speed calcs if we know we can accelerate within the line.
+        // Avoid speed calculate if we know we can accelerate within the line.
         vmaxRight = (act->isNominalMove() ? act->fullSpeed : sqrt(leftSpeed * leftSpeed + act->accelerationDistance2));
         if(vmaxRight > act->endSpeed)       // Could be higher next run?
         {
@@ -1059,50 +1066,28 @@ void PrintLine::forwardPlanner(uint8_t first)
         }
     } // While
     next->startSpeed = RMath::max(next->minSpeed,leftSpeed);    // This is the new segment, wgich is updated anyway, no extra flag needed.
-
 } // forwardPlanner
 
 
 inline float PrintLine::safeSpeed()
 {
     float safe(Printer::maxJerk * 0.5);
-
-
-    if(isZMove())
-    {
-        if(primaryAxis == Z_AXIS)
-        {
-            safe = Printer::maxZJerk*0.5*fullSpeed/fabs(speedZ);
-        }
-        else if(fabs(speedZ) > Printer::maxZJerk * 0.5)
-        {
-            safe = RMath::min(safe,Printer::maxZJerk * 0.5 * fullSpeed / fabs(speedZ));
+    if(isZMove()) {
+        float mz = Printer::maxZJerk * 0.5;
+        if(isXOrYMove()) {
+            if(fabs(speedZ) > mz)
+                safe = RMath::min(safe, mz * fullSpeed / fabs(speedZ));
+        } else {
+            safe = mz;
         }
     }
-
-    if(isEMove())
-    {
+    if(isEMove()) {
         if(isXYZMove())
-        {
-            safe = RMath::min(safe,0.5*Extruder::current->maxStartFeedrate*fullSpeed/fabs(speedE));
-        }
+            safe = RMath::min(safe, 0.5 * Extruder::current->maxStartFeedrate * fullSpeed / fabs(speedE));
         else
-        {
-            safe = 0.5*Extruder::current->maxStartFeedrate;     // This is a retraction move
-        }
+            safe = 0.5 * Extruder::current->maxStartFeedrate; // This is a retraction move
     }
-	//this is depreached within repetier dev :
-    if(primaryAxis == X_AXIS || primaryAxis == Y_AXIS)          // enforce minimum speed for numerical stability of explicit speed integration
-    {
-        safe = RMath::max(Printer::minimumSpeed,safe);
-    }
-    else if(primaryAxis == Z_AXIS)
-    {
-        safe = RMath::max(Printer::minimumZSpeed,safe);
-    }
-	//END this is depreached within repetier dev
-    return RMath::min(safe,fullSpeed);
-
+    return RMath::min(safe, fullSpeed);
 } // safeSpeed
 
 
@@ -1124,7 +1109,7 @@ uint8_t PrintLine::insertWaitMovesIfNeeded(uint8_t pathOptimize, uint8_t waitExt
             p->joinFlags = FLAG_JOIN_STEPPARAMS_COMPUTED | FLAG_JOIN_END_FIXED | FLAG_JOIN_START_FIXED;
             p->dir = 0;
             p->setWaitForXLinesFilled(w + waitExtraLines);
-            p->setWaitTicks(25000);
+            p->setWaitTicks(100000); //repetier changed this from 25k to 100k in https://github.com/repetier/Repetier-Firmware/commit/2385051856278c189d7c1f1fd67acc27825c82ac#diff-11347f18746fb080f5bda21c30428558R1080
             pushLine();
         }
         return 1;
