@@ -30,6 +30,7 @@
 #define PRINTER_FLAG0_FORCE_CHECKSUM            8
 #define PRINTER_FLAG0_MANUAL_MOVE_MODE          16
 #define PRINTER_FLAG0_LARGE_MACHINE             128
+
 #define PRINTER_FLAG1_HOMED                     1
 #define PRINTER_FLAG1_AUTOMOUNT                 2
 #define PRINTER_FLAG1_ANIMATION                 4
@@ -38,6 +39,8 @@
 #define PRINTER_FLAG1_NO_DESTINATION_CHECK      32
 #define PRINTER_FLAG1_Z_ORIGIN_SET              64
 
+#define PRINTER_FLAG2_HOMING                    64
+ 
 #define PRINTER_FLAG3_X_HOMED                   1 // flag3 alike original repetier
 #define PRINTER_FLAG3_Y_HOMED                   2 // flag3 alike original repetier
 #define PRINTER_FLAG3_Z_HOMED                   4 // flag3 alike original repetier
@@ -918,6 +921,16 @@ public:
         pwm_pos[NUM_EXTRUDER+1] = 255;
 #endif // FAN_BOARD_PIN
     } // unsetAllSteppersDisabled
+
+    static INLINE uint8_t isHoming()
+    {
+        return flag2 & PRINTER_FLAG2_HOMING;
+    }
+
+    static INLINE void setHoming(uint8_t b)
+    {
+        flag2 = (b ? flag2 | PRINTER_FLAG2_HOMING : flag2 & ~PRINTER_FLAG2_HOMING);
+    }
 
     static INLINE bool isAnyTempsensorDefect()
     {
