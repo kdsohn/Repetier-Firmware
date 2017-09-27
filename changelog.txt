@@ -11,6 +11,8 @@ V RF.01.37u5.Mod (2017-09-28)
 - quite a lot of little updates to reach more of repetier devs code and code style
 - lot of comments added around jerk code and path planning
 
+- prepared looking into https://github.com/repetier/Repetier-Firmware/commit/a63c660289b760faf033fdfd86bbc69c1050cfc9 as comment (found commit but it is not too easy to understand absolute safe without a good test.)
+
 V RF.01.37u4.Mod (2017-09-20)
 - Possibly removed shift-bug by removing Feature HalfStepping as repetier did 27 Apr 2015 @ https://github.com/repetier/Repetier-Firmware/commit/50af89fef714bc271ac98bba3153210a8a61b275
 - Getting move function closer to repetier development
