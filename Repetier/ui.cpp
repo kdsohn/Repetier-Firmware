@@ -5113,8 +5113,8 @@ void UIDisplay::executeAction(int action)
                 Com::printF(PSTR(" Buf. Len:"),(int)GCode::bufferLength);
                 Com::printF(PSTR(" Wait resend:"),(int)GCode::waitingForResend);
                 Com::printFLN(PSTR(" Recv. Write Pos:"),(int)GCode::commandsReceivingWritePosition);
-                Com::printF(PSTR("Min. XY Speed:"),Printer::minimumSpeed);
-                Com::printF(PSTR(" Min. Z Speed:"),Printer::minimumZSpeed);
+                //Com::printF(PSTR("Min. XY Speed:"),Printer::minimumSpeed);
+                //Com::printF(PSTR(" Min. Z Speed:"),Printer::minimumZSpeed);
                 Com::printF(PSTR(" Buffer:"),PrintLine::linesCount);
                 Com::printF(PSTR(" Lines pos:"),(int)PrintLine::linesPos);
                 Com::printFLN(PSTR(" Write Pos:"),(int)PrintLine::linesWritePos);

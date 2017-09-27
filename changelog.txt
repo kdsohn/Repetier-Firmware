@@ -1,8 +1,17 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad
 -> Is this possibly fixed by removing halfstepping in 1.37u4?
-TODO: ADVANCE cannot handle "wipe while retract", which is a Checkbox in Simplify3D (Profile-Tab: Advanced): Todo @repetier
--> Is this fixed by moving "Printer::stepNumber += max_loops;" into "if acceleration block" in 1.37u4?
 TODO: Testing, testing ..
+
+V RF.01.37u5.Mod (2017-09-28)
+- Finally killed Advance blobs caused by "wipe while retract". Bug was: we have two functions where repetier has one - tested within the wrong one but the fix was actually good.
+- Added alternative Jerk function
+- Added jerk test for minimalspeed and autoupgrade if jerk was set too low for acceleration and minspeed.
+- pulled some changes from repetier which targeted better inserted moves / synced prepareQueueMoves
+- tuned inline to INLINE -> __attribute__((always_inline)) like repetier did for more computation speed
+- quite a lot of little updates to reach more of repetier devs code and code style
+- lot of comments added around jerk code and path planning
+
+- prepared looking into https://github.com/repetier/Repetier-Firmware/commit/a63c660289b760faf033fdfd86bbc69c1050cfc9 as comment (found commit but it is not too easy to understand absolute safe without a good test.)
 
 V RF.01.37u4.Mod (2017-09-20)
 - Possibly removed shift-bug by removing Feature HalfStepping as repetier did 27 Apr 2015 @ https://github.com/repetier/Repetier-Firmware/commit/50af89fef714bc271ac98bba3153210a8a61b275

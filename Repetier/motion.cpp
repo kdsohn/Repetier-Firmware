@@ -143,42 +143,44 @@ void PrintLine::moveRelativeDistanceInStepsReal(long x,long y,long z,long e,floa
 void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize)
 {
     Printer::unsetAllSteppersDisabled();
-    waitForXFreeLines(1);
+    PrintLine::waitForXFreeLines(1);
 
-    uint8_t newPath=insertWaitMovesIfNeeded(pathOptimize, 0);
-    PrintLine *p = getNextWriteLine();
+    uint8_t newPath = PrintLine::insertWaitMovesIfNeeded(pathOptimize, 0);
+    PrintLine *p = PrintLine::getNextWriteLine();
 
     p->task = 0;
 
-    float axis_diff[4]; // Axis movement in mm
-    if(check_endstops) p->flags = FLAG_CHECK_ENDSTOPS;
-    else p->flags = 0;
+    float axisDistanceMM[4]; // Axis movement in mm
+    p->flags = (check_endstops ? FLAG_CHECK_ENDSTOPS : 0);
     p->joinFlags = 0;
     if(!pathOptimize) p->setEndSpeedFixed(true);
     p->dir = 0;
 
-    Printer::constrainQueueDestinationCoords();
+    Printer::constrainQueueDestinationCoords(); //not in newest repetier!
 
     // Find direction
     for(uint8_t axis=0; axis < 4; axis++)
     {
-        if((p->delta[axis]=Printer::queuePositionTargetSteps[axis]-Printer::queuePositionLastSteps[axis])>=0)
+        p->delta[axis] = Printer::queuePositionTargetSteps[axis] - Printer::queuePositionLastSteps[axis];
+        if(axis == E_AXIS 
+          && Printer::extrudeMultiply!=100){
+            p->delta[E_AXIS] = (long)((p->delta[E_AXIS] * (float)Printer::extrudeMultiply) * 0.01f);
+        }
+        if(p->delta[axis] >= 0)
             p->setPositiveDirectionForAxis(axis);
         else
             p->delta[axis] = -p->delta[axis];
-        if(axis == E_AXIS && Printer::extrudeMultiply!=100)
-            p->delta[E_AXIS] = (long)((p->delta[E_AXIS] * (float)Printer::extrudeMultiply) * 0.01f);
-        axis_diff[axis] = p->delta[axis] * Printer::invAxisStepsPerMM[axis];
+        axisDistanceMM[axis] = p->delta[axis] * Printer::invAxisStepsPerMM[axis];
         if(p->delta[axis]) p->setMoveOfAxis(axis);
         Printer::queuePositionLastSteps[axis] = Printer::queuePositionTargetSteps[axis];
     }
     if(p->isNoMove())
     {
         if(newPath)     // need to delete dummy elements, otherwise commands can get locked.
-            resetPathPlanner();
+            PrintLine::resetPathPlanner();
         return;         // No steps included
     }
-    Printer::filamentPrinted += axis_diff[E_AXIS];
+    Printer::filamentPrinted += axisDistanceMM[E_AXIS];
     float xydist2;
 
 #if ENABLE_BACKLASH_COMPENSATION
@@ -234,15 +236,15 @@ void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize)
     p->stepsRemaining = p->delta[p->primaryAxis];
     if(p->isXYZMove())
     {
-        xydist2 = axis_diff[X_AXIS] * axis_diff[X_AXIS] + axis_diff[Y_AXIS] * axis_diff[Y_AXIS];
+        xydist2 = axisDistanceMM[X_AXIS] * axisDistanceMM[X_AXIS] + axisDistanceMM[Y_AXIS] * axisDistanceMM[Y_AXIS];
         if(p->isZMove())
-            p->distance = RMath::max((float)sqrt(xydist2 + axis_diff[Z_AXIS] * axis_diff[Z_AXIS]),fabs(axis_diff[E_AXIS]));
+            p->distance = RMath::max((float)sqrt(xydist2 + axisDistanceMM[Z_AXIS] * axisDistanceMM[Z_AXIS]),fabs(axisDistanceMM[E_AXIS]));
         else
-            p->distance = RMath::max((float)sqrt(xydist2),fabs(axis_diff[E_AXIS]));
+            p->distance = RMath::max((float)sqrt(xydist2),fabs(axisDistanceMM[E_AXIS]));
     }
     else
-        p->distance = fabs(axis_diff[E_AXIS]);
-    p->calculateQueueMove(axis_diff,pathOptimize);
+        p->distance = fabs(axisDistanceMM[E_AXIS]);
+    p->calculateQueueMove(axisDistanceMM, pathOptimize);
 
 } // prepareQueueMove
 
@@ -256,7 +258,7 @@ void PrintLine::prepareDirectMove(void)
 
     p->task = 0;
 
-    float axis_diff[4]; // Axis movement in mm
+    float axisDistanceMM[4]; // Axis movement in mm
     p->flags = FLAG_CHECK_ENDSTOPS;
     p->joinFlags = 0;
     p->setEndSpeedFixed(true);
@@ -273,7 +275,7 @@ void PrintLine::prepareDirectMove(void)
             p->delta[axis] = -p->delta[axis];
         if(axis == E_AXIS && Printer::extrudeMultiply!=100)
             p->delta[E_AXIS] = (long)((p->delta[E_AXIS] * (float)Printer::extrudeMultiply) * 0.01f);
-        axis_diff[axis] = p->delta[axis] * Printer::invAxisStepsPerMM[axis];
+        axisDistanceMM[axis] = p->delta[axis] * Printer::invAxisStepsPerMM[axis];
         if(p->delta[axis]) p->setMoveOfAxis(axis);
         Printer::directPositionLastSteps[axis] = Printer::directPositionTargetSteps[axis];
     }
@@ -282,7 +284,7 @@ void PrintLine::prepareDirectMove(void)
         p->stepsRemaining = 0;
         return;         // No steps included
     }
-    Printer::filamentPrinted += axis_diff[E_AXIS];
+    Printer::filamentPrinted += axisDistanceMM[E_AXIS];
     float xydist2;
 
     // Define variables that are needed for the Bresenham algorithm. Please note that Z is not currently included in the Bresenham algorithm.
@@ -297,15 +299,15 @@ void PrintLine::prepareDirectMove(void)
     p->stepsRemaining = p->delta[p->primaryAxis];
     if(p->isXYZMove())
     {
-        xydist2 = axis_diff[X_AXIS] * axis_diff[X_AXIS] + axis_diff[Y_AXIS] * axis_diff[Y_AXIS];
+        xydist2 = axisDistanceMM[X_AXIS] * axisDistanceMM[X_AXIS] + axisDistanceMM[Y_AXIS] * axisDistanceMM[Y_AXIS];
         if(p->isZMove())
-            p->distance = RMath::max((float)sqrt(xydist2 + axis_diff[Z_AXIS] * axis_diff[Z_AXIS]),fabs(axis_diff[E_AXIS]));
+            p->distance = RMath::max((float)sqrt(xydist2 + axisDistanceMM[Z_AXIS] * axisDistanceMM[Z_AXIS]),fabs(axisDistanceMM[E_AXIS]));
         else
-            p->distance = RMath::max((float)sqrt(xydist2),fabs(axis_diff[E_AXIS]));
+            p->distance = RMath::max((float)sqrt(xydist2),fabs(axisDistanceMM[E_AXIS]));
     }
     else
-        p->distance = fabs(axis_diff[E_AXIS]);
-    p->calculateDirectMove(axis_diff,false);
+        p->distance = fabs(axisDistanceMM[E_AXIS]);
+    p->calculateDirectMove(axisDistanceMM,false);
 
 } // prepareDirectMove
 
@@ -325,122 +327,95 @@ void PrintLine::stopDirectMove( void ) //Funktion ist bereits zur ausführzeit v
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 
-void PrintLine::calculateQueueMove(float axis_diff[],uint8_t pathOptimize)
+void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize)
 {
     long    axisInterval[4];
-    float   timeForMove = (float)(F_CPU)*distance / (isXOrYMove() ? RMath::max(Printer::minimumSpeed,Printer::feedrate) : Printer::feedrate);   // time is in ticks
-
+    //float   timeForMove = (float)(F_CPU)*distance / (isXOrYMove() ? RMath::max(Printer::minimumSpeed,Printer::feedrate) : Printer::feedrate);   // time is in ticks
+    float timeForMove = (float)(F_CPU) * distance / Printer::feedrate; // time is in ticks
+    
     if(linesCount < MOVE_CACHE_LOW && timeForMove < LOW_TICKS_PER_MOVE)   // Limit speed to keep cache full.
     {
         //OUT_P_I("L:",lines_count);
-        timeForMove += (3 * (LOW_TICKS_PER_MOVE-timeForMove)) / (linesCount+1); // Increase time if queue gets empty. Add more time if queue gets smaller.
+        timeForMove += (3 * (LOW_TICKS_PER_MOVE - timeForMove)) / (linesCount + 1); // Increase time if queue gets empty. Add more time if queue gets smaller.
         //OUT_P_F_LN("Slow ",time_for_move);
     }
     timeInTicks = timeForMove;
     UI_MEDIUM;                      // do check encoder
     // Compute the solwest allowed interval (ticks/step), so maximum feedrate is not violated
-    long limitInterval = timeForMove/stepsRemaining; // until not violated by other constraints it is your target speed
+    int32_t limitInterval0;
+    int32_t limitInterval = limitInterval0 = timeForMove/stepsRemaining; // until not violated by other constraints it is your target speed
+    float toTicks = static_cast<float>(F_CPU) / stepsRemaining;
     if(isXMove())
     {
-        axisInterval[X_AXIS] = fabs(axis_diff[X_AXIS]) * F_CPU / (Printer::maxFeedrate[X_AXIS] * stepsRemaining);   // mm*ticks/s/(mm/s*steps) = ticks/step
-        limitInterval = RMath::max(axisInterval[X_AXIS],limitInterval);
-    }
-    else
-    {
-        axisInterval[X_AXIS] = 0;
-    }
+        axisInterval[X_AXIS] = axisDistanceMM[X_AXIS] * toTicks / (Printer::maxFeedrate[X_AXIS]); // mm*ticks/s/(mm/s*steps) = ticks/step
+        limitInterval = RMath::max(axisInterval[X_AXIS], limitInterval);
+    } else axisInterval[X_AXIS] = 0;
 
     if(isYMove())
     {
-        axisInterval[Y_AXIS] = fabs(axis_diff[Y_AXIS])*F_CPU/(Printer::maxFeedrate[Y_AXIS]*stepsRemaining);
-        limitInterval = RMath::max(axisInterval[Y_AXIS],limitInterval);
-    }
-    else
-    {
-        axisInterval[Y_AXIS] = 0;
-    }
+        axisInterval[Y_AXIS] = axisDistanceMM[Y_AXIS] * toTicks / Printer::maxFeedrate[Y_AXIS];
+        limitInterval = RMath::max(axisInterval[Y_AXIS], limitInterval);
+    } else axisInterval[Y_AXIS] = 0;
+
 
     if(isZMove())                   // normally no move in z direction
     {
-        axisInterval[Z_AXIS] = fabs((float)axis_diff[Z_AXIS])*(float)F_CPU/(float)(Printer::maxFeedrate[Z_AXIS]*stepsRemaining);    // must prevent overflow!
-        limitInterval = RMath::max(axisInterval[Z_AXIS],limitInterval);
-    }
-    else
-    {
-        axisInterval[Z_AXIS] = 0;
-    }
+        axisInterval[Z_AXIS] = axisDistanceMM[Z_AXIS] * toTicks / Printer::maxFeedrate[Z_AXIS]; // must prevent overflow!
+        limitInterval = RMath::max(axisInterval[Z_AXIS], limitInterval);
+    } else axisInterval[Z_AXIS] = 0;
 
     if(isEMove())
     {
-        axisInterval[E_AXIS] = fabs(axis_diff[E_AXIS])*F_CPU/(Printer::maxFeedrate[E_AXIS]*stepsRemaining);
-        limitInterval = RMath::max(axisInterval[E_AXIS],limitInterval);
+        axisInterval[E_AXIS] = axisDistanceMM[E_AXIS] * toTicks / Printer::maxFeedrate[E_AXIS];
+        limitInterval = RMath::max(axisInterval[E_AXIS], limitInterval);
+    } else axisInterval[E_AXIS] = 0;
+
+    fullInterval = limitInterval = (limitInterval > LIMIT_INTERVAL ? limitInterval : LIMIT_INTERVAL);   // This is our target speed
+    if(limitInterval != limitInterval0) {
+        // new time at full speed = limitInterval*p->stepsRemaining [ticks]
+        timeForMove = (float)limitInterval * (float)stepsRemaining;                                     // for large z-distance this overflows with long computation
     }
-    else
-    {
-        axisInterval[E_AXIS] = 0;
-    }
-
-    fullInterval = limitInterval = limitInterval>LIMIT_INTERVAL ? limitInterval : LIMIT_INTERVAL;   // This is our target speed
-
-    // new time at full speed = limitInterval*p->stepsRemaining [ticks]
-    timeForMove = (float)limitInterval * (float)stepsRemaining;                                     // for large z-distance this overflows with long computation
-    float inv_time_s = (float)F_CPU / timeForMove;
-
+    float inverseTimeS = static_cast<float>(F_CPU) / timeForMove;
     if(isXMove())
     {
         axisInterval[X_AXIS] = timeForMove / delta[X_AXIS];
-        speedX = axis_diff[X_AXIS] * inv_time_s;
+        speedX = axisDistanceMM[X_AXIS] * inverseTimeS;
         if(isXNegativeMove()) speedX = -speedX;
-    }
-    else
-    {
-        speedX = 0;
-    }
-
+    } else speedX = 0;
     if(isYMove())
     {
-        axisInterval[Y_AXIS] = timeForMove/delta[Y_AXIS];
-        speedY = axis_diff[Y_AXIS] * inv_time_s;
+        axisInterval[Y_AXIS] = timeForMove / delta[Y_AXIS];
+        speedY = axisDistanceMM[Y_AXIS] * inverseTimeS;
         if(isYNegativeMove()) speedY = -speedY;
-    }
-    else
-    {
-        speedY = 0;
-    }
-
+    } else speedY = 0;
     if(isZMove())
     {
-        axisInterval[Z_AXIS] = timeForMove/delta[Z_AXIS];
-        speedZ = axis_diff[Z_AXIS] * inv_time_s;
+        axisInterval[Z_AXIS] = timeForMove / delta[Z_AXIS];
+        speedZ = axisDistanceMM[Z_AXIS] * inverseTimeS;
         if(isZNegativeMove()) speedZ = -speedZ;
-    }
-    else
-    {
-        speedZ = 0;
-    }
-
+    } else speedZ = 0;
     if(isEMove())
     {
-        axisInterval[E_AXIS] = timeForMove/delta[E_AXIS];
-        speedE = axis_diff[E_AXIS] * inv_time_s;
+        axisInterval[E_AXIS] = timeForMove / delta[E_AXIS];
+        speedE = axisDistanceMM[E_AXIS] * inverseTimeS;
         if(isENegativeMove()) speedE = -speedE;
     }
-    fullSpeed = distance * inv_time_s;
+    fullSpeed = distance * inverseTimeS;
     // long interval = axis_interval[primary_axis]; // time for every step in ticks with full speed
     // If acceleration is enabled, do some Bresenham calculations depending on which axis will lead it.
 
 #ifdef RAMP_ACCELERATION
     // slowest time to accelerate from v0 to limitInterval determines used acceleration
     // t = (v_end-v_start)/a
-    float           slowest_axis_plateau_time_repro = 1e15; // repro to reduce division Unit: 1/s
-    unsigned long*  accel                           = (isEPositiveMove() ?  Printer::maxPrintAccelerationStepsPerSquareSecond : Printer::maxTravelAccelerationStepsPerSquareSecond);
-
+    float slowestAxisPlateauTimeRepro = 1e15; // repro to reduce division Unit: 1/s
+    uint32_t* accel = (isEPositiveMove() ?  Printer::maxPrintAccelerationStepsPerSquareSecond : Printer::maxTravelAccelerationStepsPerSquareSecond);
+    
     for(uint8_t i=0; i < 4 ; i++)
     {
         if(isMoveOfAxis(i))
         {
             // v = a * t => t = v/a = F_CPU/(c*a) => 1/t = c*a/F_CPU
-            slowest_axis_plateau_time_repro = RMath::min(slowest_axis_plateau_time_repro,(float)axisInterval[i] * (float)accel[i]);     // steps/s^2 * step/tick  Ticks/s^2
+            slowestAxisPlateauTimeRepro = RMath::min(slowestAxisPlateauTimeRepro, (float)axisInterval[i] * (float)accel[i]);     // steps/s^2 * step/tick  Ticks/s^2
         }
     }
 
@@ -448,18 +423,17 @@ void PrintLine::calculateQueueMove(float axis_diff[],uint8_t pathOptimize)
     error[X_AXIS] = error[Y_AXIS] = error[Z_AXIS] = delta[primaryAxis] >> 1;
 
     invFullSpeed = 1.0/fullSpeed;
-    accelerationPrim = slowest_axis_plateau_time_repro / axisInterval[primaryAxis];                 // a = v/t = F_CPU/(c*t): Steps/s^2
+    accelerationPrim = slowestAxisPlateauTimeRepro / axisInterval[primaryAxis];                 // a = v/t = F_CPU/(c*t): Steps/s^2
 
     // Now we can calculate the new primary axis acceleration, so that the slowest axis max acceleration is not violated
-    fAcceleration = 262144.0*(float)accelerationPrim/F_CPU;                                         // will overflow without float!
-    accelerationDistance2 = 2.0*distance*slowest_axis_plateau_time_repro*fullSpeed/((float)F_CPU);  // mm^2/s^2
+    fAcceleration = 262144.0*(float)accelerationPrim / F_CPU; // will overflow without float!
+    accelerationDistance2 = 2.0 * distance * slowestAxisPlateauTimeRepro * fullSpeed / ((float)F_CPU);  // mm^2/s^2
     startSpeed = endSpeed = minSpeed = safeSpeed();
-
+    if(startSpeed > Printer::feedrate)
+        startSpeed = endSpeed = minSpeed = Printer::feedrate;
     // Can accelerate to full speed within the line
     if (startSpeed * startSpeed + accelerationDistance2 >= fullSpeed * fullSpeed)
-    {
         setNominalMove();
-    }
 
     vMax = F_CPU / fullInterval;    // maximum steps per second, we can reach
     // if(p->vMax>46000)            // gets overflow in N computation
@@ -467,7 +441,7 @@ void PrintLine::calculateQueueMove(float axis_diff[],uint8_t pathOptimize)
     // p->plateauN = (p->vMax*p->vMax/p->accelerationPrim)>>1;
 
 #if USE_ADVANCE
-    if(!isXYZMove() || !isEMove()) {   // No head move or E move only or sucking filament back
+    if(!isXYZMove() || !isEPositiveMove()) {   // No head move or E move only or sucking filament back
 #ifdef ENABLE_QUADRATIC_ADVANCE
         advanceRate = 0;
         advanceFull = 0;
@@ -497,7 +471,7 @@ void PrintLine::calculateQueueMove(float axis_diff[],uint8_t pathOptimize)
     UI_MEDIUM;          // do check encoder
     updateTrapezoids();
     // how much steps on primary axis do we need to reach target feedrate
-    // p->plateauSteps = (long) (((float)p->acceleration *0.5f / slowest_axis_plateau_time_repro + p->vMin) *1.01f/slowest_axis_plateau_time_repro);
+    // p->plateauSteps = (long) (((float)p->acceleration *0.5f / slowestAxisPlateauTimeRepro + p->vMin) *1.01f/slowestAxisPlateauTimeRepro);
 #else
 #if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
@@ -517,7 +491,7 @@ void PrintLine::calculateQueueMove(float axis_diff[],uint8_t pathOptimize)
 
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
+void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize)
 {
     long    axisInterval[4];
     float   timeForMove = (float)(F_CPU)*distance / (isXOrYMove() ? DIRECT_FEEDRATE_XY : isZMove() ? DIRECT_FEEDRATE_Z : DIRECT_FEEDRATE_E);    // time is in ticks
@@ -530,7 +504,7 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
 
     if(isXMove())
     {
-        axisInterval[X_AXIS] = fabs(axis_diff[X_AXIS]) * F_CPU / (DIRECT_FEEDRATE_XY * stepsRemaining); // mm*ticks/s/(mm/s*steps) = ticks/step
+        axisInterval[X_AXIS] = fabs(axisDistanceMM[X_AXIS]) * F_CPU / (DIRECT_FEEDRATE_XY * stepsRemaining); // mm*ticks/s/(mm/s*steps) = ticks/step
         limitInterval = RMath::max(axisInterval[X_AXIS],limitInterval);
     }
     else
@@ -540,7 +514,7 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
 
     if(isYMove())
     {
-        axisInterval[Y_AXIS] = fabs(axis_diff[Y_AXIS])*F_CPU / (DIRECT_FEEDRATE_XY * stepsRemaining);
+        axisInterval[Y_AXIS] = fabs(axisDistanceMM[Y_AXIS])*F_CPU / (DIRECT_FEEDRATE_XY * stepsRemaining);
         limitInterval = RMath::max(axisInterval[Y_AXIS],limitInterval);
     }
     else
@@ -550,7 +524,7 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
 
     if(isZMove())                   // normally no move in z direction
     {
-        axisInterval[Z_AXIS] = fabs((float)axis_diff[Z_AXIS])*(float)F_CPU / (float)(DIRECT_FEEDRATE_Z*stepsRemaining); // must prevent overflow!
+        axisInterval[Z_AXIS] = fabs((float)axisDistanceMM[Z_AXIS])*(float)F_CPU / (float)(DIRECT_FEEDRATE_Z*stepsRemaining); // must prevent overflow!
         limitInterval = RMath::max(axisInterval[Z_AXIS],limitInterval);
     }
     else
@@ -560,7 +534,7 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
 
     if(isEMove())
     {
-        axisInterval[E_AXIS] = fabs(axis_diff[E_AXIS])*F_CPU / (DIRECT_FEEDRATE_E * stepsRemaining);
+        axisInterval[E_AXIS] = fabs(axisDistanceMM[E_AXIS])*F_CPU / (DIRECT_FEEDRATE_E * stepsRemaining);
         limitInterval = RMath::max(axisInterval[E_AXIS],limitInterval);
     }
     else
@@ -568,7 +542,7 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
         axisInterval[E_AXIS] = 0;
     }
 
-    fullInterval = limitInterval = limitInterval>LIMIT_INTERVAL ? limitInterval : LIMIT_INTERVAL;   // This is our target speed
+    fullInterval = limitInterval = (limitInterval > LIMIT_INTERVAL ? limitInterval : LIMIT_INTERVAL);   // This is our target speed
 
     // new time at full speed = limitInterval*p->stepsRemaining [ticks]
     timeForMove = (float)limitInterval * (float)stepsRemaining;                                     // for large z-distance this overflows with long computation
@@ -577,7 +551,7 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
     if(isXMove())
     {
         axisInterval[X_AXIS] = timeForMove / delta[X_AXIS];
-        speedX = axis_diff[X_AXIS] * inv_time_s;
+        speedX = axisDistanceMM[X_AXIS] * inv_time_s;
         if(isXNegativeMove()) speedX = -speedX;
     }
     else
@@ -588,7 +562,7 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
     if(isYMove())
     {
         axisInterval[Y_AXIS] = timeForMove/delta[Y_AXIS];
-        speedY = axis_diff[Y_AXIS] * inv_time_s;
+        speedY = axisDistanceMM[Y_AXIS] * inv_time_s;
         if(isYNegativeMove()) speedY = -speedY;
     }
     else
@@ -599,7 +573,7 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
     if(isZMove())
     {
         axisInterval[Z_AXIS] = timeForMove/delta[Z_AXIS];
-        speedZ = axis_diff[Z_AXIS] * inv_time_s;
+        speedZ = axisDistanceMM[Z_AXIS] * inv_time_s;
         if(isZNegativeMove()) speedZ = -speedZ;
     }
     else
@@ -610,7 +584,7 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
     if(isEMove())
     {
         axisInterval[E_AXIS] = timeForMove/delta[E_AXIS];
-        speedE = axis_diff[E_AXIS] * inv_time_s;
+        speedE = axisDistanceMM[E_AXIS] * inv_time_s;
         if(isENegativeMove()) speedE = -speedE;
     }
     fullSpeed = distance * inv_time_s;
@@ -620,7 +594,7 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
 #ifdef RAMP_ACCELERATION
     // slowest time to accelerate from v0 to limitInterval determines used acceleration
     // t = (v_end-v_start)/a
-    float           slowest_axis_plateau_time_repro = 1e15; // repro to reduce division Unit: 1/s
+    float           slowestAxisPlateauTimeRepro = 1e15; // repro to reduce division Unit: 1/s
     unsigned long*  accel                           = (isEPositiveMove() ?  Printer::maxPrintAccelerationStepsPerSquareSecond : Printer::maxTravelAccelerationStepsPerSquareSecond);
 
     for(uint8_t i=0; i < 4 ; i++)
@@ -628,7 +602,7 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
         if(isMoveOfAxis(i))
         {
             // v = a * t => t = v/a = F_CPU/(c*a) => 1/t = c*a/F_CPU
-            slowest_axis_plateau_time_repro = RMath::min(slowest_axis_plateau_time_repro,(float)axisInterval[i] * (float)accel[i]);     // steps/s^2 * step/tick  Ticks/s^2
+            slowestAxisPlateauTimeRepro = RMath::min(slowestAxisPlateauTimeRepro,(float)axisInterval[i] * (float)accel[i]);     // steps/s^2 * step/tick  Ticks/s^2
         }
     }
 
@@ -636,18 +610,17 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
     error[X_AXIS] = error[Y_AXIS] = error[Z_AXIS] = delta[primaryAxis] >> 1;
 
     invFullSpeed = 1.0/fullSpeed;
-    accelerationPrim = slowest_axis_plateau_time_repro / axisInterval[primaryAxis];                 // a = v/t = F_CPU/(c*t): Steps/s^2
+    accelerationPrim = slowestAxisPlateauTimeRepro / axisInterval[primaryAxis];                 // a = v/t = F_CPU/(c*t): Steps/s^2
 
     // Now we can calculate the new primary axis acceleration, so that the slowest axis max acceleration is not violated
     fAcceleration = 262144.0*(float)accelerationPrim/F_CPU;                                         // will overflow without float!
-    accelerationDistance2 = 2.0*distance*slowest_axis_plateau_time_repro*fullSpeed/((float)F_CPU);  // mm^2/s^2
+    accelerationDistance2 = 2.0*distance*slowestAxisPlateauTimeRepro*fullSpeed/((float)F_CPU);  // mm^2/s^2
     startSpeed = endSpeed = minSpeed = safeSpeed();
-
+    if(startSpeed > Printer::feedrate)
+        startSpeed = endSpeed = minSpeed = Printer::feedrate;
     // Can accelerate to full speed within the line
     if (startSpeed * startSpeed + accelerationDistance2 >= fullSpeed * fullSpeed)
-    {
         setNominalMove();
-    }
 
     vMax = F_CPU / fullInterval;    // maximum steps per second, we can reach
     // if(p->vMax>46000)            // gets overflow in N computation
@@ -686,7 +659,7 @@ void PrintLine::calculateDirectMove(float axis_diff[],uint8_t pathOptimize)
     UI_MEDIUM;          // do check encoder
     updateTrapezoids();
     // how much steps on primary axis do we need to reach target feedrate
-    // p->plateauSteps = (long) (((float)p->acceleration *0.5f / slowest_axis_plateau_time_repro + p->vMin) *1.01f/slowest_axis_plateau_time_repro);
+    // p->plateauSteps = (long) (((float)p->acceleration *0.5f / slowestAxisPlateauTimeRepro + p->vMin) *1.01f/slowestAxisPlateauTimeRepro);
 #else
 #if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
@@ -723,6 +696,8 @@ void PrintLine::updateTrapezoids()
     PrintLine*  act = &lines[linesWritePos];
     InterruptProtectedBlock noInts; //BEGIN_INTERRUPT_PROTECTED;
     
+    // First we find out how far back we could go with optimization.
+
     uint8_t maxfirst = linesPos;            // first non fixed segment
 
     if(maxfirst != linesWritePos)
@@ -734,7 +709,14 @@ void PrintLine::updateTrapezoids()
     millis_t timeleft = 0;
 
     // Skip as many stored moves as needed to gain enough time for computation
-    millis_t minTime = 4500L * RMath::min(MOVE_CACHE_SIZE,10);
+    //millis_t minTime = 4500L * RMath::min(MOVE_CACHE_SIZE,10);
+    
+#if MOVE_CACHE_SIZE < 10
+ #define minTime 4500L * MOVE_CACHE_SIZE
+#else
+ #define minTime 45000L
+#endif
+    
     while(timeleft < minTime && maxfirst != linesWritePos)
     {
         timeleft += lines[maxfirst].timeInTicks;
@@ -747,10 +729,12 @@ void PrintLine::updateTrapezoids()
 
     if(first != linesWritePos && lines[first].isEndSpeedFixed())
         nextPlannerIndex(first);
+    // now first points to last segment before the end speed is fixed
+    // so start speed is also fixed.
 
     if(first == linesWritePos)              // Nothing to plan
     {
-        act->block();
+        act->block(); // Prevent stepper interrupt from using this
         noInts.unprotect(); //ESCAPE_INTERRUPT_PROTECTED
         act->setStartSpeedFixed(true);
         act->updateStepsParameter();
@@ -771,25 +755,27 @@ void PrintLine::updateTrapezoids()
     PrintLine *previous = &lines[previousIndex];
 
     // filters z-move<->not z-move
-    if((previous->primaryAxis == Z_AXIS && act->primaryAxis != Z_AXIS) || (previous->primaryAxis != Z_AXIS && act->primaryAxis == Z_AXIS))
+    /*if((previous->primaryAxis == Z_AXIS && act->primaryAxis != Z_AXIS) || (previous->primaryAxis != Z_AXIS && act->primaryAxis == Z_AXIS))
     {
         previous->setEndSpeedFixed(true);
         act->setStartSpeedFixed(true);
         act->updateStepsParameter();
         firstLine->unblock();
         return;
-    }
+    }*/
 
-    computeMaxJunctionSpeed(previous,act);  // Set maximum junction speed if we have a real move before
     if( previous->isEOnlyMove() != act->isEOnlyMove() )
     {
+        previous->maxJunctionSpeed = previous->endSpeed;
         previous->setEndSpeedFixed(true);
         act->setStartSpeedFixed(true);
         act->updateStepsParameter();
         firstLine->unblock();
         return;
+    }else{
+        computeMaxJunctionSpeed(previous, act);  // Set maximum junction speed if we have a real move before
     }
-
+    // Increase speed if possible neglecting current speed
     backwardPlanner(linesWritePos,first);
     
     // Reduce speed to reachable speeds
@@ -801,7 +787,7 @@ void PrintLine::updateTrapezoids()
         lines[first].updateStepsParameter();
 
         //noInts.protect(); //BEGIN_INTERRUPT_PROTECTED;
-        lines[first].unblock();             // Flying block to release next used segment as early as possible
+        lines[first].unblock();             // start with first block to release next used segment as early as possible
         nextPlannerIndex(first);
         lines[first].block();
         //noInts.unprotect(); //END_INTERRUPT_PROTECTED;
@@ -814,12 +800,37 @@ void PrintLine::updateTrapezoids()
 } // updateTrapezoids
 
 
+
+/* Computes the maximum junction speed of the newly added segment under
+optimal conditions. There is no guarantee that the previous move will be able to reach the
+speed at all, but if it could exceed it will never exceed this theoretical limit.
+if you define ALTERNATIVE_JERK the new jerk computations are used. These
+use the cosine of the angle and the maximum speed
+Jerk = (1-cos(alpha))*min(v1,v2)
+This sets jerk to 0 on zero angle change.
+        Old               New
+0°:       0               0
+30°:     51,8             13.4
+45°:     76.53            29.3
+90°:    141               100
+180°:   200               200
+Speed from 100 to 200
+        Old               New(min)   New(max)
+0°:     100               0          0
+30°:    123,9             13.4       26.8
+45°:    147.3             29.3       58.6
+90°:    223               100        200
+180°:   300               200        400
+*/
+
 inline void PrintLine::computeMaxJunctionSpeed(PrintLine *previous,PrintLine *current)
 {
 #if USE_ADVANCE
     if(Printer::isAdvanceActivated())
     {
-        if(previous->isEMove() != current->isEMove() ) //&& (previous->isXOrYMove() || current->isXOrYMove()) according to newest dev
+        // if we start/stop extrusion we need to do so with lowest possible end speed
+        // or advance would leave a drolling extruder and can not adjust fast enough.
+        if(previous->isEMove() != current->isEMove()) //&& (previous->isXOrYMove() || current->isXOrYMove())
         {
             previous->setEndSpeedFixed(true);
             current->setStartSpeedFixed(true);
@@ -831,7 +842,46 @@ inline void PrintLine::computeMaxJunctionSpeed(PrintLine *previous,PrintLine *cu
     }
 #endif // USE_ADVANCE
 
+    // if we are here we have to identical move types
+    // either pure extrusion -> pure extrusion or
+    // move -> move (with or without extrusion)
     // First we compute the normalized jerk for speed 1
+
+    float factor = 1.0;
+    float lengthFactor = 1.0;
+#if REDUCE_ON_SMALL_SEGMENTS
+    if(previous->distance < MAX_JERK_DISTANCE)
+        lengthFactor = static_cast<float>(MAX_JERK_DISTANCE * MAX_JERK_DISTANCE) / (previous->distance * previous->distance);
+#endif
+    float maxJoinSpeed = RMath::min(current->fullSpeed, previous->fullSpeed);
+
+#if ALTERNATIVE_JERK
+    float jerk = maxJoinSpeed * lengthFactor * (1.0 - (current->speedX * previous->speedX + current->speedY * previous->speedY + current->speedZ * previous->speedZ) / (current->fullSpeed * previous->fullSpeed));
+#else
+    float dx = current->speedX - previous->speedX;
+    float dy = current->speedY - previous->speedY;
+    float jerk = sqrt(dx * dx + dy * dy) * lengthFactor;
+#endif // ALTERNATIVE_JERK
+
+    if(jerk > Printer::maxJerk) {
+        factor = Printer::maxJerk / jerk; // always < 1.0!
+        if(factor * maxJoinSpeed * 2.0 < Printer::maxJerk)
+            factor = Printer::maxJerk / (2.0 * maxJoinSpeed);
+    }
+
+    if((previous->dir | current->dir) & 64) {
+        float dz = fabs(current->speedZ - previous->speedZ);
+        if(dz > Printer::maxZJerk)
+            factor = RMath::min(factor, Printer::maxZJerk / dz);
+    }
+
+    float eJerk = fabs(current->speedE - previous->speedE);
+    if(eJerk > Extruder::current->maxStartFeedrate)
+        factor = RMath::min(factor, Extruder::current->maxStartFeedrate / eJerk);
+    previous->maxJunctionSpeed = maxJoinSpeed * factor; // set speed limit
+
+
+/* OLD RF JERK
     float dx = current->speedX-previous->speedX;
     float dy = current->speedY-previous->speedY;
     float factor = 1;
@@ -851,11 +901,15 @@ inline void PrintLine::computeMaxJunctionSpeed(PrintLine *previous,PrintLine *cu
     if(eJerk > Extruder::current->maxStartFeedrate)
         factor = RMath::min(factor,Extruder::current->maxStartFeedrate / eJerk);
     previous->maxJunctionSpeed = RMath::min(previous->fullSpeed * factor,current->fullSpeed);
+*/
 } // computeMaxJunctionSpeed
 
 
+
+
+
 /** \brief Update parameter used by updateTrapezoids
-Computes the acceleration/decelleration steps and advanced parameter associated.
+Computes the acceleration/deceleration steps and advanced parameter associated.
 */
 void PrintLine::updateStepsParameter()
 {
@@ -867,8 +921,8 @@ void PrintLine::updateStepsParameter()
     vEnd   = vMax * endFactor;
 
     uint32_t vmax2 = HAL::U16SquaredToU32(vMax);
-    accelSteps = ((vmax2 - HAL::U16SquaredToU32(vStart)) / (accelerationPrim<<1)) + 1; // Always add 1 for missing precision
-    decelSteps = ((vmax2 - HAL::U16SquaredToU32(vEnd))  /(accelerationPrim<<1)) + 1;
+    accelSteps = ((vmax2 - HAL::U16SquaredToU32(vStart)) / (accelerationPrim << 1)) + 1; // Always add 1 for missing precision
+    decelSteps = ((vmax2 - HAL::U16SquaredToU32(vEnd))  /(accelerationPrim << 1)) + 1;
 
 #if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
@@ -896,16 +950,16 @@ last = last element until we check
 */
 inline void PrintLine::backwardPlanner(uint8_t start,uint8_t last)
 {
-    PrintLine *act = &lines[start],*previous;
+    PrintLine *act = &lines[start], *previous;
     float lastJunctionSpeed = act->endSpeed;    // Start always with safe speed
 
     while(start != last)
     {
         previousPlannerIndex(start);
         previous = &lines[start];
-
-        // Avoid speed calc once crusing in split delta move
-        // Avoid speed calcs if we know we can accelerate within the line
+        previous->block();
+        // Avoid speed calculate once cruising in split delta move
+        // Avoid speed calculate if we know we can accelerate within the line
         lastJunctionSpeed = (act->isNominalMove() ? act->fullSpeed : sqrt(lastJunctionSpeed * lastJunctionSpeed + act->accelerationDistance2));     // acceleration is acceleration*distance*2! What can be reached if we try?
 
         // If that speed is more that the maximum junction speed allowed then ...
@@ -915,13 +969,13 @@ inline void PrintLine::backwardPlanner(uint8_t start,uint8_t last)
             if(previous->endSpeed != previous->maxJunctionSpeed)
             {
                 previous->invalidateParameter();                // Needs recomputation
-                previous->endSpeed = RMath::max(previous->minSpeed,previous->maxJunctionSpeed);     // possibly unneeded???
+                previous->endSpeed = RMath::max(previous->minSpeed, previous->maxJunctionSpeed);     // possibly unneeded???
             }
 
             // If actual line start speed has not been updated to maximum speed then do it now
             if(act->startSpeed != previous->maxJunctionSpeed)
             {
-                act->startSpeed = RMath::max(act->minSpeed,previous->maxJunctionSpeed);             // possibly unneeded???
+                act->startSpeed = RMath::max(act->minSpeed, previous->maxJunctionSpeed);             // possibly unneeded???
                 act->invalidateParameter();
             }
             lastJunctionSpeed = previous->endSpeed;
@@ -929,8 +983,8 @@ inline void PrintLine::backwardPlanner(uint8_t start,uint8_t last)
         else
         {
             // Block prev end and act start as calculated speed and recalculate plateau speeds (which could move the speed higher again)
-            act->startSpeed = RMath::max(act->minSpeed,lastJunctionSpeed);
-            lastJunctionSpeed = previous->endSpeed = RMath::max(lastJunctionSpeed,previous->minSpeed);
+            act->startSpeed = RMath::max(act->minSpeed, lastJunctionSpeed);
+            lastJunctionSpeed = previous->endSpeed = RMath::max(lastJunctionSpeed, previous->minSpeed);
             previous->invalidateParameter();
             act->invalidateParameter();
         }
@@ -944,20 +998,14 @@ void PrintLine::forwardPlanner(uint8_t first)
 {
     PrintLine *act;
     PrintLine *next = &lines[first];
-    //float vmaxRight;
+    float vmaxRight;
     float leftSpeed = next->startSpeed;
-
-
     while(first != linesWritePos)           // All except last segment, which has fixed end speed
     {
         act = next;
         nextPlannerIndex(first);
         next = &lines[first];
-
-        // Avoid speed calc once crusing in split delta move
-        float vmaxRight;
-
-        // Avoid speed calcs if we know we can accelerate within the line.
+        // Avoid speed calculate if we know we can accelerate within the line.
         vmaxRight = (act->isNominalMove() ? act->fullSpeed : sqrt(leftSpeed * leftSpeed + act->accelerationDistance2));
         if(vmaxRight > act->endSpeed)       // Could be higher next run?
         {
@@ -991,50 +1039,28 @@ void PrintLine::forwardPlanner(uint8_t first)
         }
     } // While
     next->startSpeed = RMath::max(next->minSpeed,leftSpeed);    // This is the new segment, wgich is updated anyway, no extra flag needed.
-
 } // forwardPlanner
 
 
 inline float PrintLine::safeSpeed()
 {
     float safe(Printer::maxJerk * 0.5);
-
-
-    if(isZMove())
-    {
-        if(primaryAxis == Z_AXIS)
-        {
-            safe = Printer::maxZJerk*0.5*fullSpeed/fabs(speedZ);
-        }
-        else if(fabs(speedZ) > Printer::maxZJerk * 0.5)
-        {
-            safe = RMath::min(safe,Printer::maxZJerk * 0.5 * fullSpeed / fabs(speedZ));
+    if(isZMove()) {
+        float mz = Printer::maxZJerk * 0.5;
+        if(isXOrYMove()) {
+            if(fabs(speedZ) > mz)
+                safe = RMath::min(safe, mz * fullSpeed / fabs(speedZ));
+        } else {
+            safe = mz;
         }
     }
-
-    if(isEMove())
-    {
+    if(isEMove()) {
         if(isXYZMove())
-        {
-            safe = RMath::min(safe,0.5*Extruder::current->maxStartFeedrate*fullSpeed/fabs(speedE));
-        }
+            safe = RMath::min(safe, 0.5 * Extruder::current->maxStartFeedrate * fullSpeed / fabs(speedE));
         else
-        {
-            safe = 0.5*Extruder::current->maxStartFeedrate;     // This is a retraction move
-        }
+            safe = 0.5 * Extruder::current->maxStartFeedrate; // This is a retraction move
     }
-	//this is depreached within repetier dev :
-    if(primaryAxis == X_AXIS || primaryAxis == Y_AXIS)          // enforce minimum speed for numerical stability of explicit speed integration
-    {
-        safe = RMath::max(Printer::minimumSpeed,safe);
-    }
-    else if(primaryAxis == Z_AXIS)
-    {
-        safe = RMath::max(Printer::minimumZSpeed,safe);
-    }
-	//END this is depreached within repetier dev
-    return RMath::min(safe,fullSpeed);
-
+    return RMath::min(safe, fullSpeed);
 } // safeSpeed
 
 
@@ -1056,7 +1082,7 @@ uint8_t PrintLine::insertWaitMovesIfNeeded(uint8_t pathOptimize, uint8_t waitExt
             p->joinFlags = FLAG_JOIN_STEPPARAMS_COMPUTED | FLAG_JOIN_END_FIXED | FLAG_JOIN_START_FIXED;
             p->dir = 0;
             p->setWaitForXLinesFilled(w + waitExtraLines);
-            p->setWaitTicks(25000);
+            p->setWaitTicks(100000); //repetier changed this from 25k to 100k in https://github.com/repetier/Repetier-Firmware/commit/2385051856278c189d7c1f1fd67acc27825c82ac#diff-11347f18746fb080f5bda21c30428558R1080
             pushLine();
         }
         return 1;

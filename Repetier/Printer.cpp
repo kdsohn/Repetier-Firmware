@@ -78,8 +78,8 @@ long            Printer::advanceExecuted;                               ///< Exe
 volatile int    Printer::advanceStepsSet;
 #endif // USE_ADVANCE
 
-float           Printer::minimumSpeed;                                  ///< lowest allowed speed to keep integration error small
-float           Printer::minimumZSpeed;
+//float         Printer::minimumSpeed;                                  ///< lowest allowed speed to keep integration error small
+//float         Printer::minimumZSpeed;
 long            Printer::maxSteps[3];                                   ///< For software endstops, limit of move in positive direction.
 long            Printer::minSteps[3];                                   ///< For software endstops, limit of move in negative direction.
 float           Printer::lengthMM[3];
@@ -212,7 +212,7 @@ unsigned char   Printer::g_unlock_movement = 0;
 uint8_t         Printer::motorCurrent[5] = {0,0,0,0,0};
 
 #if FEATURE_ZERO_DIGITS
-short   Printer::g_pressure_offset = 0;
+short           Printer::g_pressure_offset = 0;
 #endif // FEATURE_ZERO_DIGITS
 
 void Printer::constrainQueueDestinationCoords()
@@ -304,27 +304,38 @@ void Printer::updateDerivedParameter()
     if(backlashZ!=0) backlashDir |= 32;
 #endif // ENABLE_BACKLASH_COMPENSATION
 
-    for(uint8_t i=0; i<4; i++)
+    for(uint8_t i = 0; i < 4; i++)
     {
-        invAxisStepsPerMM[i] = 1.0f/axisStepsPerMM[i];
+        invAxisStepsPerMM[i] = 1.0f / axisStepsPerMM[i];
 
 #ifdef RAMP_ACCELERATION
-        /** Acceleration in steps/s^3 in printing mode.*/
+        /** Acceleration in steps/s^2 in printing mode.*/
         maxPrintAccelerationStepsPerSquareSecond[i] = maxAccelerationMMPerSquareSecond[i] * axisStepsPerMM[i];
         /** Acceleration in steps/s^2 in movement mode.*/
         maxTravelAccelerationStepsPerSquareSecond[i] = maxTravelAccelerationMMPerSquareSecond[i] * axisStepsPerMM[i];
 #endif // RAMP_ACCELERATION
     }
-    float accel = RMath::max(maxAccelerationMMPerSquareSecond[X_AXIS],maxTravelAccelerationMMPerSquareSecond[X_AXIS]);
-    minimumSpeed = accel*sqrt(2.0f/(axisStepsPerMM[X_AXIS]*accel));
-    accel = RMath::max(maxAccelerationMMPerSquareSecond[Z_AXIS],maxTravelAccelerationMMPerSquareSecond[Z_AXIS]);
-    minimumZSpeed = accel*sqrt(2.0f/(axisStepsPerMM[Z_AXIS]*accel));
-
+    float accel = RMath::max(maxAccelerationMMPerSquareSecond[X_AXIS], maxTravelAccelerationMMPerSquareSecond[X_AXIS]);
+    float minimumSpeed = accel * sqrt(2.0f / (axisStepsPerMM[X_AXIS] * accel));
+    if(maxJerk < 2 * minimumSpeed) {// Enforce minimum start speed if target is faster and jerk too low
+        maxJerk = 2 * minimumSpeed;
+        Com::printFLN(PSTR("XY jerk was too low, setting to "), maxJerk);
+    }
+    
+    accel = RMath::max(maxAccelerationMMPerSquareSecond[Z_AXIS], maxTravelAccelerationMMPerSquareSecond[Z_AXIS]);
+    float minimumZSpeed = 0.5 * accel * sqrt(2.0f / (axisStepsPerMM[Z_AXIS] * accel));
+    if(maxZJerk < 2 * minimumZSpeed) {
+        maxZJerk = 2 * minimumZSpeed;
+        Com::printFLN(PSTR("Z jerk was too low, setting to "), maxZJerk);
+    }
+    
     maxInterval = F_CPU / (minimumSpeed * axisStepsPerMM[X_AXIS]);
     uint32_t tmp = F_CPU / (minimumSpeed * axisStepsPerMM[Y_AXIS]);
-    if(tmp < maxInterval) maxInterval = tmp;
+    if(tmp < maxInterval)
+        maxInterval = tmp;
     tmp = F_CPU / (minimumZSpeed * axisStepsPerMM[Z_AXIS]);
-    if(tmp < maxInterval) maxInterval = tmp;
+    if(tmp < maxInterval) 
+        maxInterval = tmp;
 
     Printer::updateAdvanceFlags();
 
@@ -1343,10 +1354,14 @@ void Printer::homeXAxis()
 
         steps = (Printer::maxSteps[X_AXIS]-Printer::minSteps[X_AXIS]) * X_HOME_DIR;
         queuePositionLastSteps[X_AXIS] = -steps;
+        setHoming(true);
         PrintLine::moveRelativeDistanceInSteps(2*steps,0,0,0,homingFeedrate[X_AXIS],true,true);
+        setHoming(false);
         queuePositionLastSteps[X_AXIS] = (X_HOME_DIR == -1) ? minSteps[X_AXIS]- offX : maxSteps[X_AXIS] + offX;
         PrintLine::moveRelativeDistanceInSteps(axisStepsPerMM[X_AXIS] * -ENDSTOP_X_BACK_MOVE * X_HOME_DIR,0,0,0,homingFeedrate[X_AXIS] / ENDSTOP_X_RETEST_REDUCTION_FACTOR,true,false);
+        setHoming(true);
         PrintLine::moveRelativeDistanceInSteps(axisStepsPerMM[X_AXIS] * 2 * ENDSTOP_X_BACK_MOVE * X_HOME_DIR,0,0,0,homingFeedrate[X_AXIS] / ENDSTOP_X_RETEST_REDUCTION_FACTOR,true,true);
+        setHoming(false);
 
 #if defined(ENDSTOP_X_BACK_ON_HOME)
         if(ENDSTOP_X_BACK_ON_HOME > 0)
@@ -1408,10 +1423,14 @@ void Printer::homeYAxis()
 
         steps = (maxSteps[Y_AXIS]-Printer::minSteps[Y_AXIS]) * Y_HOME_DIR;
         queuePositionLastSteps[Y_AXIS] = -steps;
+        setHoming(true);
         PrintLine::moveRelativeDistanceInSteps(0,2*steps,0,0,homingFeedrate[Y_AXIS],true,true);
+        setHoming(false);
         queuePositionLastSteps[Y_AXIS] = (Y_HOME_DIR == -1) ? minSteps[Y_AXIS]-offY : maxSteps[Y_AXIS]+offY;
         PrintLine::moveRelativeDistanceInSteps(0,axisStepsPerMM[Y_AXIS]*-ENDSTOP_Y_BACK_MOVE * Y_HOME_DIR,0,0,homingFeedrate[Y_AXIS]/ENDSTOP_X_RETEST_REDUCTION_FACTOR,true,false);
+        setHoming(true);
         PrintLine::moveRelativeDistanceInSteps(0,axisStepsPerMM[Y_AXIS]*2*ENDSTOP_Y_BACK_MOVE * Y_HOME_DIR,0,0,homingFeedrate[Y_AXIS]/ENDSTOP_X_RETEST_REDUCTION_FACTOR,true,true);
+        setHoming(false);
 
 #if defined(ENDSTOP_Y_BACK_ON_HOME)
         if(ENDSTOP_Y_BACK_ON_HOME > 0)
@@ -1505,10 +1524,14 @@ void Printer::homeZAxis()
 
         steps = (maxSteps[Z_AXIS] - minSteps[Z_AXIS]) * nHomeDir;
         queuePositionLastSteps[Z_AXIS] = -steps;
+        setHoming(true);
         PrintLine::moveRelativeDistanceInSteps(0,0,2*steps,0,homingFeedrate[Z_AXIS],true,true);
+        setHoming(false);
         queuePositionLastSteps[Z_AXIS] = (nHomeDir == -1) ? minSteps[Z_AXIS] : maxSteps[Z_AXIS];
         PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS]*-ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
+        setHoming(true);
         PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS]*2*ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,true);
+        setHoming(false);
 
 #if FEATURE_MILLING_MODE
         // when the milling mode is active and we are in operating mode "mill", we use the z max endstop and we free the z-max endstop after it has been hit
