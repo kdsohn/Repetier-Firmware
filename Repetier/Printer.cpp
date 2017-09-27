@@ -78,8 +78,8 @@ long            Printer::advanceExecuted;                               ///< Exe
 volatile int    Printer::advanceStepsSet;
 #endif // USE_ADVANCE
 
-float           Printer::minimumSpeed;                                  ///< lowest allowed speed to keep integration error small
-float           Printer::minimumZSpeed;
+//float         Printer::minimumSpeed;                                  ///< lowest allowed speed to keep integration error small
+//float         Printer::minimumZSpeed;
 long            Printer::maxSteps[3];                                   ///< For software endstops, limit of move in positive direction.
 long            Printer::minSteps[3];                                   ///< For software endstops, limit of move in negative direction.
 float           Printer::lengthMM[3];
@@ -304,27 +304,38 @@ void Printer::updateDerivedParameter()
     if(backlashZ!=0) backlashDir |= 32;
 #endif // ENABLE_BACKLASH_COMPENSATION
 
-    for(uint8_t i=0; i<4; i++)
+    for(uint8_t i = 0; i < 4; i++)
     {
-        invAxisStepsPerMM[i] = 1.0f/axisStepsPerMM[i];
+        invAxisStepsPerMM[i] = 1.0f / axisStepsPerMM[i];
 
 #ifdef RAMP_ACCELERATION
-        /** Acceleration in steps/s^3 in printing mode.*/
+        /** Acceleration in steps/s^2 in printing mode.*/
         maxPrintAccelerationStepsPerSquareSecond[i] = maxAccelerationMMPerSquareSecond[i] * axisStepsPerMM[i];
         /** Acceleration in steps/s^2 in movement mode.*/
         maxTravelAccelerationStepsPerSquareSecond[i] = maxTravelAccelerationMMPerSquareSecond[i] * axisStepsPerMM[i];
 #endif // RAMP_ACCELERATION
     }
-    float accel = RMath::max(maxAccelerationMMPerSquareSecond[X_AXIS],maxTravelAccelerationMMPerSquareSecond[X_AXIS]);
-    minimumSpeed = accel*sqrt(2.0f/(axisStepsPerMM[X_AXIS]*accel));
-    accel = RMath::max(maxAccelerationMMPerSquareSecond[Z_AXIS],maxTravelAccelerationMMPerSquareSecond[Z_AXIS]);
-    minimumZSpeed = accel*sqrt(2.0f/(axisStepsPerMM[Z_AXIS]*accel));
-
+    float accel = RMath::max(maxAccelerationMMPerSquareSecond[X_AXIS], maxTravelAccelerationMMPerSquareSecond[X_AXIS]);
+    float minimumSpeed = accel * sqrt(2.0f / (axisStepsPerMM[X_AXIS] * accel));
+    if(maxJerk < 2 * minimumSpeed) {// Enforce minimum start speed if target is faster and jerk too low
+        maxJerk = 2 * minimumSpeed;
+        Com::printFLN(PSTR("XY jerk was too low, setting to "), maxJerk);
+    }
+    
+    accel = RMath::max(maxAccelerationMMPerSquareSecond[Z_AXIS], maxTravelAccelerationMMPerSquareSecond[Z_AXIS]);
+    float minimumZSpeed = 0.5 * accel * sqrt(2.0f / (axisStepsPerMM[Z_AXIS] * accel));
+    if(maxZJerk < 2 * minimumZSpeed) {
+        maxZJerk = 2 * minimumZSpeed;
+        Com::printFLN(PSTR("Z jerk was too low, setting to "), maxZJerk);
+    }
+    
     maxInterval = F_CPU / (minimumSpeed * axisStepsPerMM[X_AXIS]);
     uint32_t tmp = F_CPU / (minimumSpeed * axisStepsPerMM[Y_AXIS]);
-    if(tmp < maxInterval) maxInterval = tmp;
+    if(tmp < maxInterval)
+        maxInterval = tmp;
     tmp = F_CPU / (minimumZSpeed * axisStepsPerMM[Z_AXIS]);
-    if(tmp < maxInterval) maxInterval = tmp;
+    if(tmp < maxInterval) 
+        maxInterval = tmp;
 
     Printer::updateAdvanceFlags();
 

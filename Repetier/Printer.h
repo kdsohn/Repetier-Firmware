@@ -89,8 +89,8 @@ public:
     static volatile float   queuePositionLastMM[3];             // Position in mm from origin.
     static volatile float   queuePositionCommandMM[3];          // Last coordinates send by gcodes
 
-    static float            minimumSpeed;                       // lowest allowed speed to keep integration error small
-    static float            minimumZSpeed;                      // lowest allowed speed to keep integration error small
+//  static float            minimumSpeed;                       // lowest allowed speed to keep integration error small
+//  static float            minimumZSpeed;                      // lowest allowed speed to keep integration error small
     static long             maxSteps[3];                        // For software endstops, limit of move in positive direction.
     static long             minSteps[3];                        // For software endstops, limit of move in negative direction.
     static float            lengthMM[3];
