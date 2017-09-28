@@ -329,10 +329,6 @@ public:
     FSTRINGVAR(tFindZOrigin)
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_TEST_STRAIN_GAUGE
-    FSTRINGVAR(tTestStrainGauge)
-#endif // FEATURE_TEST_STRAIN_GAUGE
-
     static void printNumber(uint32_t n);
     static void printWarningF(FSTRINGPARAM(text));
     static void printInfoF(FSTRINGPARAM(text));

@@ -20,6 +20,11 @@
 #define REPETIER_H
 
 #include "Constants.h"
+
+//https://gcc.gnu.org/onlinedocs/cpp/Stringizing.html#Stringizing for using number-#defines in string-#defines
+#define xstr(a) str(a)
+#define str(a) #a
+
 #include "Configuration.h"
 
 

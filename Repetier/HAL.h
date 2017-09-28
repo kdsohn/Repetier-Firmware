@@ -751,7 +751,7 @@ public:
     static unsigned char i2cStart(unsigned char address);
     static void i2cStartWait(unsigned char address);
     static void i2cStop(void);
-    static unsigned char i2cWrite( unsigned char data );
+    static void i2cWrite( unsigned char data );
     static unsigned char i2cReadAck(void);
     static unsigned char i2cReadNak(void);
 

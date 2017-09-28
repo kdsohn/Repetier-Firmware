@@ -4503,10 +4503,6 @@ void UIDisplay::executeAction(int action)
                 if( g_nFindZOriginStatus )      deny = 1;   // the operating mode can not be switched while the z-origin is searched
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_TEST_STRAIN_GAUGE
-                if( g_nTestStrainGaugeStatus )  deny = 1;   // the operating mode can not be switched while the strain gauge is tested
-#endif // FEATURE_TEST_STRAIN_GAUGE
-
                 if( deny )
                 {
                     if( Printer::debugErrors() )

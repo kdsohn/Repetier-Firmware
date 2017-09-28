@@ -669,12 +669,6 @@ extern  long            g_nZOriginPosition[3];
 extern  int             g_nZOriginSet;
 #endif // FEATURE_FIND_Z_ORIGIN
 
-
-#if FEATURE_TEST_STRAIN_GAUGE
-extern  volatile char   g_nTestStrainGaugeStatus;
-#endif // FEATURE_TEST_STRAIN_GAUGE
-
-
 #if DEBUG_HEAT_BED_Z_COMPENSATION || DEBUG_WORK_PART_Z_COMPENSATION
 extern  volatile long   g_nLastZCompensationPositionSteps[3];
 extern  volatile long   g_nLastZCompensationTargetStepsZ;
@@ -960,15 +954,6 @@ extern void startFindZOrigin( void );
 // findZOrigin()
 extern void findZOrigin( void );
 #endif // FEATURE_FIND_Z_ORIGIN
-
-
-#if FEATURE_TEST_STRAIN_GAUGE
-// startTestStrainGauge()
-extern void startTestStrainGauge( void );
-
-// testStrainGauge()
-extern void testStrainGauge( void );
-#endif // FEATURE_TEST_STRAIN_GAUGE
 
 
 #if FEATURE_MILLING_MODE

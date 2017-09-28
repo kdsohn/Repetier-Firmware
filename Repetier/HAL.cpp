@@ -25,16 +25,15 @@ unsigned long g_uLastCommandLoop = 0;
 unsigned char g_bPingWatchdog    = 0;
 #endif // FEATURE_WATCHDOG
 
-HAL::HAL()
-{
+HAL::HAL() {
+    //ctor
 } // HAL
 
-HAL::~HAL()
-{
+HAL::~HAL() {
+    //dtor
 } // ~HAL
 
-uint16_t HAL::integerSqrt(int32_t a)
-{
+uint16_t HAL::integerSqrt(int32_t a) {
     // http://www.mikrocontroller.net/articles/AVR_Arithmetik#32_Bit_.2F_32_Bit
     //-----------------------------------------------------------
     // Fast and short 32 bits AVR sqrt routine, avr-gcc ABI compliant
@@ -90,9 +89,8 @@ uint16_t HAL::integerSqrt(int32_t a)
         "mov   %A0, R26 \n\t"
         :"=r"(b)
         :"r"(a)
-        :"r18","r19","r27","r26" );
+        :"r18", "r19", "r27", "r26" );
     return b;
-
 } // integerSqrt
 
 
@@ -245,19 +243,19 @@ void HAL::setupTimer()
 {
 #if USE_ADVANCE
     EXTRUDER_TCCR = 0;                              // need Normal not fastPWM set by arduino init
-    EXTRUDER_TIMSK |= (1<<EXTRUDER_OCIE);           // Activate compa interrupt on timer 0
+    EXTRUDER_TIMSK |= (1 << EXTRUDER_OCIE);           // Activate compa interrupt on timer 0
 #endif // USE_ADVANCE
 
     PWM_TCCR = 0;                                   // Setup PWM interrupt
     PWM_OCR = 64;
-    PWM_TIMSK |= (1<<PWM_OCIE);
+    PWM_TIMSK |= (1 << PWM_OCIE);
 
     TCCR1A = 0;                                     // Stepper timer 1 interrupt to no prescale CTC mode
     TCCR1C = 0;
     TIMSK1 = 0;
     TCCR1B =  (_BV(WGM12) | _BV(CS10));             // no prescaler == 0.0625 usec tick | 001 = clk/1
     OCR1A=65500;                                    // start off with a slow frequency.
-    TIMSK1 |= (1<<OCIE1A);                          // Enable interrupt
+    TIMSK1 |= (1 << OCIE1A);                          // Enable interrupt
 
 #if FEATURE_RGB_LIGHT_EFFECTS
     // Configure Timer 4 for RGB-PWM 
@@ -333,8 +331,7 @@ void HAL::setupTimer()
 } // setupTimer
 
 
-void HAL::showStartReason()
-{
+void HAL::showStartReason() {
     // Check startup - does nothing if bootloader sets MCUSR to 0
     uint8_t mcu = MCUSR;
 
@@ -348,13 +345,11 @@ void HAL::showStartReason()
     }else{
         Com::printInfoFLN(Com::tUnknownReset);
     }
-    MCUSR=0;
-
+    MCUSR = 0;
 } // showStartReason
 
 
-int HAL::getFreeRam()
-{
+int HAL::getFreeRam() {
     int freeram = 0;
     InterruptProtectedBlock noInts; //BEGIN_INTERRUPT_PROTECTED
     uint8_t * heapptr, * stackptr;
@@ -371,24 +366,21 @@ int HAL::getFreeRam()
 void(* resetFunc) (void) = 0; // declare reset function @ address 0
 
 
-void HAL::resetHardware()
-{
+void HAL::resetHardware() {
     resetFunc();
 
 } // resetHardware
 
 
-void HAL::analogStart()
-{
+void HAL::analogStart() {
 #if ANALOG_INPUTS>0
     ADMUX = ANALOG_REF; // refernce voltage
-    for(uint8_t i=0; i<ANALOG_INPUTS; i++)
-    {
+    for(uint8_t i=0; i<ANALOG_INPUTS; i++) {
         osAnalogInputCounter[i] = 0;
         osAnalogInputBuildup[i] = 0;
         osAnalogInputValues[i] = 0;
     }
-    ADCSRA = _BV(ADEN)|_BV(ADSC)|ANALOG_PRESCALER;
+    ADCSRA = _BV(ADEN) | _BV(ADSC) | ANALOG_PRESCALER;
     //ADCSRA |= _BV(ADSC);                  // start ADC-conversion
     while (ADCSRA & _BV(ADSC) ) {} // wait for conversion
     /* ADCW must be read once, otherwise the next result is wrong. */
@@ -432,7 +424,7 @@ void HAL::i2cInit(unsigned long clockSpeedHz)
 {
     // initialize TWI clock: 100 kHz clock, TWPS = 0 => prescaler = 1
     TWSR = 0;                               // no prescaler
-    TWBR = ((F_CPU/clockSpeedHz)-16)/2;     // must be > 10 for stable operation
+    TWBR = ((F_CPU / clockSpeedHz)-16) / 2; // must be > 10 for stable operation
 
 } // i2cInit
 
@@ -441,16 +433,15 @@ void HAL::i2cInit(unsigned long clockSpeedHz)
   Issues a start condition and sends address and transfer direction.
   return 0 = device accessible, 1= failed to access device
 *************************************************************************/
-unsigned char HAL::i2cStart(unsigned char address)
-{
+unsigned char HAL::i2cStart(unsigned char address) {
     uint8_t   twst;
 
 
     // send START condition
-    TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
+    TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
 
     // wait until transmission completed
-    while(!(TWCR & (1<<TWINT)));
+    while(!(TWCR & (1 << TWINT)));
 
     // check value of TWI Status Register. Mask prescaler bits.
     twst = TW_STATUS & 0xF8;
@@ -458,10 +449,10 @@ unsigned char HAL::i2cStart(unsigned char address)
 
     // send device address
     TWDR = address;
-    TWCR = (1<<TWINT) | (1<<TWEN);
+    TWCR = (1 << TWINT) | (1 << TWEN);
 
     // wail until transmission completed and ACK/NACK has been received
-    while(!(TWCR & (1<<TWINT)));
+    while(!(TWCR & (1 << TWINT)));
 
     // check value of TWI Status Register. Mask prescaler bits.
     twst = TW_STATUS & 0xF8;
@@ -478,18 +469,14 @@ unsigned char HAL::i2cStart(unsigned char address)
 
  Input:   address and transfer direction of I2C device
 *************************************************************************/
-void HAL::i2cStartWait(unsigned char address)
-{
+void HAL::i2cStartWait(unsigned char address) {
     uint8_t   twst;
-
-
-    while ( 1 )
-    {
+    while ( 1 ) {
         // send START condition
-        TWCR = (1<<TWINT) | (1<<TWSTA) | (1<<TWEN);
+        TWCR = (1 << TWINT) | (1 << TWSTA) | (1 << TWEN);
 
         // wait until transmission completed
-        while(!(TWCR & (1<<TWINT)));
+        while(!(TWCR & (1 << TWINT)));
 
         // check value of TWI Status Register. Mask prescaler bits.
         twst = TW_STATUS & 0xF8;
@@ -497,20 +484,20 @@ void HAL::i2cStartWait(unsigned char address)
 
         // send device address
         TWDR = address;
-        TWCR = (1<<TWINT) | (1<<TWEN);
+        TWCR = (1 << TWINT) | (1 << TWEN);
 
         // wail until transmission completed
-        while(!(TWCR & (1<<TWINT)));
+        while(!(TWCR & (1 << TWINT)));
 
         // check value of TWI Status Register. Mask prescaler bits.
         twst = TW_STATUS & 0xF8;
         if ( (twst == TW_MT_SLA_NACK )||(twst ==TW_MR_DATA_NACK) )
         {
             /* device busy, send stop condition to terminate write operation */
-            TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO);
+            TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWSTO);
 
             // wait until stop condition is executed and bus released
-            while(TWCR & (1<<TWSTO));
+            while(TWCR & (1 << TWSTO));
 
             continue;
         }
@@ -524,14 +511,11 @@ void HAL::i2cStartWait(unsigned char address)
 /*************************************************************************
  Terminates the data transfer and releases the I2C bus
 *************************************************************************/
-void HAL::i2cStop(void)
-{
+void HAL::i2cStop(void) {
     // send stop condition
-    TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWSTO);
-
+    TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWSTO);
     // wait until stop condition is executed and bus released
-    while(TWCR & (1<<TWSTO));
-
+    while(TWCR & (1 << TWSTO));
 } // i2cStop
 
 
@@ -542,23 +526,17 @@ void HAL::i2cStop(void)
   Return:   0 write successful
             1 write failed
 *************************************************************************/
-unsigned char HAL::i2cWrite( unsigned char data )
-{
-    uint8_t   twst;
-
-
+void HAL::i2cWrite( unsigned char data ) {
+    //uint8_t   twst;
     // send data to the previously addressed device
     TWDR = data;
-    TWCR = (1<<TWINT) | (1<<TWEN);
-
+    TWCR = (1 << TWINT) | (1 << TWEN);
     // wait until transmission completed
-    while(!(TWCR & (1<<TWINT)));
-
+    while(!(TWCR & (1 << TWINT)));
     // check value of TWI Status Register. Mask prescaler bits
-    twst = TW_STATUS & 0xF8;
-    if( twst != TW_MT_DATA_ACK) return 1;
-    return 0;
-
+    //twst = TW_STATUS & 0xF8;
+    //if( twst != TW_MT_DATA_ACK) return 1;
+    //return 0;
 } // i2cWrite
 
 
@@ -568,7 +546,7 @@ unsigned char HAL::i2cWrite( unsigned char data )
 *************************************************************************/
 unsigned char HAL::i2cReadAck(void)
 {
-    TWCR = (1<<TWINT) | (1<<TWEN) | (1<<TWEA);
+    TWCR = (1 << TWINT) | (1 << TWEN) | (1 << TWEA);
     while(!(TWCR & (1<<TWINT)));
     return TWDR;
 
@@ -580,12 +558,10 @@ unsigned char HAL::i2cReadAck(void)
 
  Return:  byte read from I2C device
 *************************************************************************/
-unsigned char HAL::i2cReadNak(void)
-{
-    TWCR = (1<<TWINT) | (1<<TWEN);
-    while(!(TWCR & (1<<TWINT)));
+unsigned char HAL::i2cReadNak(void) {
+    TWCR = (1 << TWINT) | (1 << TWEN);
+    while(!(TWCR & (1 << TWINT)));
     return TWDR;
-
 } // i2cReadNak
 
 

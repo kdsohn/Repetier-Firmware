@@ -117,10 +117,6 @@ void Commands::waitUntilEndOfAllMoves()
     if( g_nFindZOriginStatus )      bWait = 1;
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_TEST_STRAIN_GAUGE
-    if( g_nTestStrainGaugeStatus )  bWait = 1;
-#endif // FEATURE_TEST_STRAIN_GAUGE
-
     while( bWait )
     {
         GCode::readFromSerial();
@@ -134,10 +130,6 @@ void Commands::waitUntilEndOfAllMoves()
 #if FEATURE_FIND_Z_ORIGIN
         if( g_nFindZOriginStatus )      bWait = 1;
 #endif // FEATURE_FIND_Z_ORIGIN
-
-#if FEATURE_TEST_STRAIN_GAUGE
-        if( g_nTestStrainGaugeStatus )  bWait = 1;
-#endif // FEATURE_TEST_STRAIN_GAUGE
     }
 
 } // waitUntilEndOfAllMoves
