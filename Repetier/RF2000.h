@@ -925,8 +925,8 @@ v_diff = sqrt((50-35.36)^2+(0-35.36)^2) = 38.27 < jerk
 Corner can be printed with full speed of 50 mm/s
 
 Overridden if EEPROM activated. */
-#define MAX_JERK                            10
-#define MAX_ZJERK                           0.28
+#define MAX_JERK                            10                 //std: 20, aber RFx000 sieht zwischen ca. 7 und 18 am besten aus: Renkforce sagt 10
+#define MAX_ZJERK                           0.28               //std: 0.3
 
 //that will slowdown if you have sever direction changes in a short distance which is nearly the same as adding several jerks in a short sequence.
 #define REDUCE_ON_SMALL_SEGMENTS            1
