@@ -44,7 +44,7 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
 
 /** \brief Define the type of your device */
 //#define MOTHERBOARD                         DEVICE_TYPE_RF1000
-#define MOTHERBOARD                         DEVICE_TYPE_RF2000
+//#define MOTHERBOARD                         DEVICE_TYPE_RF2000
 #define PROTOTYPE_PCB                       0                                                   // 1 = first PCB's / 0 = Final
 
 #ifndef MOTHERBOARD
@@ -89,7 +89,7 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 #define FEATURE_ZERO_DIGITS                 1
 
 /** \brief Auto-Retract within hardcoded scripts: Pause / Output_Object / ... Vom Hotend abhängig! V2: 10mm, E3D: 1mm (?) */
-#define SCRIPT_RETRACT_MM                   2                                                   //[mm] Firmwares E-Retract */
+#define SCRIPT_RETRACT_MM                   1                                                   //[mm] Firmwares E-Retract */
 
 /** \brief Enables/diables the emergency pause in case of too high pressure ... the emergency pause can be turned on only in case the general pause functionality is available */
 #if FEATURE_PAUSE_PRINTING
