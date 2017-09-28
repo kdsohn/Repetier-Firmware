@@ -350,19 +350,10 @@ void Commands::setFanSpeed(int speed,bool wait)
 #if FAN_PIN>=0
     speed = constrain(speed,0,255);
     Printer::setMenuMode(MENU_MODE_FAN_RUNNING,speed!=0);
-
-    if(wait)
-        Commands::waitUntilEndOfAllMoves(); // use only if needed this to change the speed exactly at that point, but it may cause blobs if you do!
-
-    if( Printer::debugInfo() )
-    {
-        if(speed!=pwm_pos[NUM_EXTRUDER+2])
-            Com::printFLN(Com::tFanspeed,(speed == 1) ? 2 : speed ); //bei 1 zeigt repetierserver / repetierhost 0% an, was nicht stimmt. Das ist etwas Pfusch, aber nun funktionierts.
-    }
-
+    if(wait) Commands::waitUntilEndOfAllMoves(); // use only if needed this to change the speed exactly at that point, but it may cause blobs if you do!
+    if(speed!=pwm_pos[NUM_EXTRUDER+2]) Com::printFLN(Com::tFanspeed,(speed == 1) ? 2 : speed ); //bei 1 zeigt repetierserver / repetierhost 0% an, was nicht stimmt. Das ist etwas Pfusch, aber nun funktionierts.
     pwm_pos[NUM_EXTRUDER+2] = speed;
 #endif
-
 } // setFanSpeed
 
 

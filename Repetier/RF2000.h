@@ -775,10 +775,13 @@ can set it on for safety. */
 /** \brief Automatic filament change, mounting of the filament without heating - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
 #define MOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING       "G21\nG90\nG92 E0\nG1 E40 F80"
 
-/** \brief speed of the PWM signal, 0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz, 3 = 122.06Hz */
+/** \brief speed of the PWM signal, 0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz, 3 = 122.06Hz, 4 = 244.12Hz */
 #define HEATER_PWM_SPEED                    1
-#define COOLER_PWM_SPEED                    3
+//Nibbels 28.09.17: original ist 3, aber 3 ist wegen nem Bug wie 2, nun stimmt der Code, daher hier 2: bleibt also gleich.
+#define COOLER_PWM_SPEED                    2
 
+/** \brief use PDM instead of PWM for part fan */
+#define PDM_FOR_FAN 0
 
 // ##########################################################################################
 // ##   Movement settings

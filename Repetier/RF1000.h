@@ -776,6 +776,8 @@ can set it on for safety. */
 #define HEATER_PWM_SPEED                    1
 #define COOLER_PWM_SPEED                    0
 
+/** \brief use PDM instead of PWM for part fan */
+#define PDM_FOR_FAN 0
 
 // ##########################################################################################
 // ##   Movement settings
