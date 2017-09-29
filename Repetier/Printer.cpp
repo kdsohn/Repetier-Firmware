@@ -347,10 +347,10 @@ void Printer::kill(uint8_t only_steppers)
     if(areAllSteppersDisabled() && only_steppers) return;
     if(Printer::isAllKilled()) return;
 
-#if FAN_PIN>-1
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     // disable the fan
     Commands::setFanSpeed(0,false);
-#endif // FAN_PIN>-1
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
     setAllSteppersDisabled();
     disableXStepper();
@@ -926,10 +926,10 @@ void Printer::setup()
     PULLUP( FEATURE_READ_CALLIPER_DATA_PIN, HIGH ); //do I need this pullup??
 #endif //FEATURE_READ_CALLIPER
 
-#if FAN_PIN>-1
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     SET_OUTPUT(FAN_PIN);
     WRITE(FAN_PIN,LOW);
-#endif // FAN_PIN>-1
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #if FAN_BOARD_PIN>-1
     SET_OUTPUT(FAN_BOARD_PIN);
@@ -1259,7 +1259,7 @@ void Printer::setup()
     HAL::startWatchdog();
 #endif // FEATURE_WATCHDOG
 
-} // setup
+} // setup()
 
 
 void Printer::defaultLoopActions()

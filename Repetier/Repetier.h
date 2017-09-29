@@ -177,6 +177,10 @@ extern volatile uint8_t     execute10msPeriodical;
 
 extern void writeMonitor();
 
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+extern uint8_t fanKickstart;
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
+
 #if SDSUPPORT
 extern char                 tempLongFilename[LONG_FILENAME_LENGTH+1];
 extern char                 fullName[LONG_FILENAME_LENGTH*SD_MAX_FOLDER_DEPTH+SD_MAX_FOLDER_DEPTH+1];

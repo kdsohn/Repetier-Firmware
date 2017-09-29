@@ -876,20 +876,20 @@ ISR(TIMER1_COMPA_vect)
 #endif
 
 #if HEATER_PWM_SPEED == 0
-#define HEATER_PWM_STEP 1
-#define HEATER_PWM_MASK 255      //1111 1111
+#define HEATER_PWM_STEP 1        // 2^0 == 0000 0001 == 1 << 0
+#define HEATER_PWM_MASK 255      //1111 1111 = (255 << 0) & 0xff
 #elif HEATER_PWM_SPEED == 1
-#define HEATER_PWM_STEP 2
-#define HEATER_PWM_MASK 254      //1111 1110
+#define HEATER_PWM_STEP 2        // 2^1 == 0000 0010 == 1 << 1
+#define HEATER_PWM_MASK 254      //1111 1110 = (255 << 1) & 0xff
 #elif HEATER_PWM_SPEED == 2
-#define HEATER_PWM_STEP 4
-#define HEATER_PWM_MASK 252      //1111 1100
+#define HEATER_PWM_STEP 4        // 2^2 == 0000 0100 == 1 << 2
+#define HEATER_PWM_MASK 252      //1111 1100 = (255 << 2) & 0xff
 #elif HEATER_PWM_SPEED == 3
-#define HEATER_PWM_STEP 8
-#define HEATER_PWM_MASK 248      //1111 1000
+#define HEATER_PWM_STEP 8        // 2^3 == 0000 1000 == 1 << 3
+#define HEATER_PWM_MASK 248      //1111 1000 = (255 << 3) & 0xff
 #elif HEATER_PWM_SPEED == 4
-#define HEATER_PWM_STEP 16
-#define HEATER_PWM_MASK 240      //1111 0000
+#define HEATER_PWM_STEP 16       // 2^4 == 0001 0000 == 1 << 4
+#define HEATER_PWM_MASK 240      //1111 0000 = (255 << 4) & 0xff
 #endif // HEATER_PWM_SPEED
 
 #if !defined(COOLER_PWM_SPEED)
@@ -903,23 +903,27 @@ ISR(TIMER1_COMPA_vect)
 #endif
 
 #if COOLER_PWM_SPEED == 0
-#define COOLER_PWM_STEP 1
-#define COOLER_PWM_MASK 255      //1111 1111
+#define COOLER_PWM_STEP 1        // 2^0 == 0000 0001 == 1 << 0
+#define COOLER_PWM_MASK 255      //1111 1111 = (255 << 0) & 0xff
 #elif COOLER_PWM_SPEED == 1
-#define COOLER_PWM_STEP 2
-#define COOLER_PWM_MASK 254      //1111 1110
+#define COOLER_PWM_STEP 2        // 2^1 == 0000 0010 == 1 << 1
+#define COOLER_PWM_MASK 254      //1111 1110 = (255 << 1) & 0xff
 #elif COOLER_PWM_SPEED == 2
-#define COOLER_PWM_STEP 4
-#define COOLER_PWM_MASK 252      //1111 1100
+#define COOLER_PWM_STEP 4        // 2^2 == 0000 0100 == 1 << 2
+#define COOLER_PWM_MASK 252      //1111 1100 = (255 << 2) & 0xff
 #elif COOLER_PWM_SPEED == 3
-#define COOLER_PWM_STEP 8
-#define COOLER_PWM_MASK 248      //1111 1000
+#define COOLER_PWM_STEP 8        // 2^3 == 0000 1000 == 1 << 3
+#define COOLER_PWM_MASK 248      //1111 1000 = (255 << 3) & 0xff
 #elif COOLER_PWM_SPEED == 4
-#define COOLER_PWM_STEP 16
-#define COOLER_PWM_MASK 240      //1111 0000
+#define COOLER_PWM_STEP 16       // 2^4 == 0001 0000 == 1 << 4
+#define COOLER_PWM_MASK 240      //1111 0000 = (255 << 4) & 0xff
 #endif // COOLER_PWM_SPEED
+uint8_t cooler_pwm_speed = COOLER_PWM_SPEED;
+uint8_t cooler_pwm_step = COOLER_PWM_STEP; //1 << cooler_pwm_speed
+uint8_t cooler_pwm_mask = COOLER_PWM_MASK; //(255 << cooler_pwm_speed) & 0xff
+uint8_t cooler_mode = COOLER_MODE_PWM;
 
-#define pulseDensityModulate( pin, density,error,invert) {uint8_t carry;carry = error + (invert ? 255 - density : density); WRITE(pin, (carry < error)); error = carry;}
+#define pulseDensityModulate(pin, density, error, invert) {uint8_t carry;carry = error + (invert ? 255 - density : density); WRITE(pin, (carry < error)); error = carry;}
 /**
 This timer is called 3906 times per second. It is used to update pwm values for heater and some other frequent jobs.
 */
@@ -932,7 +936,7 @@ ISR(PWM_TIMER_VECTOR)
     static uint8_t pwm_cooler_pos_set[NUM_EXTRUDER];
 #endif
     PWM_OCR += 64;
-
+    
     if(pwm_count_heater == 0)
     {
 #if EXT0_HEATER_PIN>-1
@@ -989,12 +993,12 @@ ISR(PWM_TIMER_VECTOR)
 #endif // EXT5_EXTRUDER_COOLER_PIN>-1
 #endif // defined(EXT5_HEATER_PIN) && EXT5_HEATER_PIN>-1 && NUM_EXTRUDER>5
 #if FAN_BOARD_PIN>-1
-        if((pwm_pos_set[NUM_EXTRUDER+1] = (pwm_pos[NUM_EXTRUDER+1] & COOLER_PWM_MASK)) > 0) WRITE(FAN_BOARD_PIN,1);
+        if((pwm_pos_set[NUM_EXTRUDER+1] = (pwm_pos[NUM_EXTRUDER+1] & cooler_pwm_mask)) > 0) WRITE(FAN_BOARD_PIN,1);
 #endif // FAN_BOARD_PIN>-1
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
-#if !PDM_FOR_FAN
-        if((pwm_pos_set[NUM_EXTRUDER+2] = (pwm_pos[NUM_EXTRUDER+2] & COOLER_PWM_MASK)) > 0) WRITE(FAN_PIN,1);
-#endif
+        if(cooler_mode != COOLER_MODE_PDM){
+            if((pwm_pos_set[NUM_EXTRUDER+2] = (pwm_pos[NUM_EXTRUDER+2] & cooler_pwm_mask)) > 0) WRITE(FAN_PIN,1);
+        }
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
     }
 
@@ -1041,15 +1045,23 @@ ISR(PWM_TIMER_VECTOR)
 #endif // defined(EXT5_HEATER_PIN) && EXT5_HEATER_PIN>-1 && NUM_EXTRUDER>5
 
 #if FAN_BOARD_PIN>-1
-    if(pwm_pos_set[NUM_EXTRUDER+1] == pwm_count_cooler && pwm_pos_set[NUM_EXTRUDER+1] != COOLER_PWM_MASK) WRITE(FAN_BOARD_PIN,0);
+    if(pwm_pos_set[NUM_EXTRUDER+1] == pwm_count_cooler && pwm_pos_set[NUM_EXTRUDER+1] != cooler_pwm_mask) WRITE(FAN_BOARD_PIN,0);
 #endif // #if FAN_BOARD_PIN>-1
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
-#if PDM_FOR_FAN
-    pulseDensityModulate(FAN_PIN, pwm_pos[NUM_EXTRUDER+2], pwm_pos_set[NUM_EXTRUDER+2], false);
-#else
-    if(pwm_pos_set[NUM_EXTRUDER+2] == pwm_count_cooler && pwm_pos_set[NUM_EXTRUDER+2] != COOLER_PWM_MASK) WRITE(FAN_PIN,0);
-#endif // PDM_FOR_FAN
+    if(fanKickstart == 0) {
+        if(cooler_mode == COOLER_MODE_PDM){
+            pulseDensityModulate(FAN_PIN, pwm_pos[NUM_EXTRUDER+2], pwm_pos_set[NUM_EXTRUDER+2], false);
+        }else{
+            if(pwm_pos_set[NUM_EXTRUDER+2] == pwm_count_cooler && pwm_pos_set[NUM_EXTRUDER+2] != cooler_pwm_mask) WRITE(FAN_PIN,0);
+        }
+    }else{
+        if(cooler_mode == COOLER_MODE_PDM){
+            pulseDensityModulate(FAN_PIN, MAX_FAN_PWM, pwm_pos_set[NUM_EXTRUDER+2], false);
+        }else{
+            if((MAX_FAN_PWM & cooler_pwm_mask) == pwm_count_cooler && (MAX_FAN_PWM & cooler_pwm_mask) != cooler_pwm_mask) WRITE(FAN_PIN,0);
+        }
+    }
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #if HEATED_BED_HEATER_PIN>-1 && HAVE_HEATED_BED
@@ -1061,6 +1073,18 @@ ISR(PWM_TIMER_VECTOR)
     {
         counter100Periodical = 0;
         execute100msPeriodical = 1;
+        
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+        //fan anfangs auf high zum anlaufen, aber das muss beendet werden:
+        if (fanKickstart) fanKickstart--;
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
+
+        //um bei Frequenzumschaltung (Fan) wieder von 0 zählen. Hier drin, weils zu selten wechselt.
+        static uint8_t has_cooler_speed_changed = 255;
+        if(has_cooler_speed_changed != cooler_pwm_speed){
+            has_cooler_speed_changed = cooler_pwm_speed;
+            pwm_count_cooler = 0;
+        }
     }
 
 #if FEATURE_RGB_LIGHT_EFFECTS
@@ -1068,7 +1092,7 @@ ISR(PWM_TIMER_VECTOR)
 #endif // FEATURE_RGB_LIGHT_EFFECTS
 
     static char counter10Periodical = 0; // Approximate a 10ms timer :: blocks pingwatchdog s commandloop if not working
-    if(++counter10Periodical >= 39) //(int)(F_CPU/40960))
+    if(++counter10Periodical >= 39) //(int)(F_CPU/4096))
     {
         counter10Periodical = 0;
         execute10msPeriodical = 1;
@@ -1123,7 +1147,7 @@ ISR(PWM_TIMER_VECTOR)
 
     UI_FAST; // Short timed user interface action
 
-    pwm_count_cooler += COOLER_PWM_STEP;
+    pwm_count_cooler += cooler_pwm_step;
     pwm_count_heater += HEATER_PWM_STEP;
 
 #if FEATURE_RGB_LIGHT_EFFECTS

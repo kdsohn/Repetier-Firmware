@@ -288,6 +288,11 @@ FSTRINGVALUE(Com::tEPRPrinter_STEPPER_E1,"Stepper E1 Current [2A/126]")
 #endif //NUM_EXTRUDER > 1
 FSTRINGVALUE(Com::tEPRPrinter_FREQ_DBL,"Step Double Frequency [1/s]")
 
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+FSTRINGVALUE(Com::tEPRPrinter_FAN_MODE,"Fan Modulation [0=PWM/1=PDM]")
+FSTRINGVALUE(Com::tEPRPrinter_FAN_SPEED,"Fan PWM Mode (15.3..245Hz) [15.3*2^x Hz]")
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
+
 #endif // EEPROM_MODE
 
 #if SDSUPPORT

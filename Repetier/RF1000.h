@@ -775,9 +775,16 @@ can set it on for safety. */
 /** \brief speed of the PWM signal, 0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz, 3 = 122.06Hz */
 #define HEATER_PWM_SPEED                    1
 #define COOLER_PWM_SPEED                    0
+/** Some fans won't start for low values, but would run if started with higher power at the beginning.
+This defines the full power duration before returning to set value. Time is in milliseconds */
+#define FAN_KICKSTART_TIME  200                                                                 // [ms]
+/** Defines the max. fan speed for M106 controlled fans. Normally 255 to use full range, but for
+ 12V fans on 24V this might help preventing a defect. For all other fans there is a explicit maximum PWM value
+ you can set, so this is not used for other fans! */
+#define MAX_FAN_PWM 255
 
 /** \brief use PDM instead of PWM for part fan */
-#define PDM_FOR_FAN 0
+// --> set EEPROM value or change mode in printers menu
 
 // ##########################################################################################
 // ##   Movement settings

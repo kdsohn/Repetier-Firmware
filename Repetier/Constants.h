@@ -20,7 +20,7 @@
 #define CONSTANTS_H
 
 
-#define REPETIER_VERSION                    "RF.01.37u6.Mod"
+#define REPETIER_VERSION                    "RF.01.37v.Mod"
 #define UI_PRINTER_COMPANY                  "Conrad Community"
 #define UI_VERSION_STRING                   "V " REPETIER_VERSION
 
@@ -68,6 +68,7 @@
 #define MENU_MODE_PRINTING                  16
 #define MENU_MODE_PRINTER                   32  // we have to show the printer menu
 #define MENU_MODE_MILLER                    64  // we have to show the miller menu
+#define MENU_MODE_FAN_MODE_PDM              128  // we have to show the miller menu
 
 #define IGNORE_COORDINATE                   99999
 

@@ -2,6 +2,15 @@ TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad
 -> Is this possibly fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37v.Mod (2017-09-28)
+- the fans operating modes ar now configurable within menu and eeprom (see Menu->Fan Speed)
+   Fan-Modes: PWM or PDM
+   PWM Frequencys: 15, 30, 60, 120, 240 Hz
+   PDM: Frequencys do not count here!
+- kickstart support for part fan
+- fixed fan code for old RF2000 config = 3
+- optimized code around rgb change time
+
 V RF.01.37u6.Mod (2017-09-28)
 - cleanup: Removed FEATURE_TEST_STRAIN_GAUGE
 - cleanup: some code prettify according repetier development

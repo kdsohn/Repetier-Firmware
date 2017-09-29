@@ -6460,10 +6460,10 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
             Printer::disableYStepper();
             Printer::disableZStepper();
             Extruder::disableAllExtruders();
-#if FAN_PIN>-1
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
             // disable the fan
             Commands::setFanSpeed(0,false);
-#endif // FAN_PIN>-1
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #endif // FEATURE_OUTPUT_FINISHED_OBJECT
 
@@ -6591,10 +6591,10 @@ void outputObject( void )
         Com::printFLN( PSTR( "outputObject()" ) );
     }
 
-#if FAN_PIN>-1
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     // disable the fan
     Commands::setFanSpeed(0,false);
-#endif // FAN_PIN>-1
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
     Commands::printCurrentPosition();
 
