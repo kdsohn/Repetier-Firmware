@@ -1249,9 +1249,6 @@ Above this value the z compensation will distribute the roughness of the surface
 /** \brief Specifies the time interval after which the RGB light status switches from idle to color change */
 #define RGB_LIGHT_COLOR_CHANGE_DELAY        30                                                  // [s]
 
-/** \brief Specifies the speed of the color change */
-#define RGB_LIGHT_COLOR_CHANGE_SPEED        10                                                  // [ms]
-
 /** \brief Specfies the temperature tolerance for the switching of the RGB light */
 #define RGB_LIGHT_TEMP_TOLERANCE            5.0                                                 // [°C]
 

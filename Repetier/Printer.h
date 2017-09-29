@@ -185,7 +185,6 @@ public:
     static char             RGBLightMode;
     static char             RGBLightStatus;  
     static  unsigned long   RGBLightIdleStart;
-    static  unsigned long   RGBLightLastChange;
     static char             RGBButtonBackPressed;
     static char             RGBLightModeForceWhite;
 #endif // FEATURE_RGB_LIGHT_EFFECTS

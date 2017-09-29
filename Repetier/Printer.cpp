@@ -179,7 +179,6 @@ char            Printer::enableCaseLight;
 char            Printer::RGBLightMode;
 char            Printer::RGBLightStatus;
 unsigned long   Printer::RGBLightIdleStart;
-unsigned long   Printer::RGBLightLastChange;
 char            Printer::RGBButtonBackPressed;
 char            Printer::RGBLightModeForceWhite;
 #endif // FEATURE_RGB_LIGHT_EFFECTS
@@ -1155,7 +1154,6 @@ void Printer::setup()
         RGBLightStatus = RGB_STATUS_NOT_AUTOMATIC;
     }
     RGBLightIdleStart      = 0;
-    RGBLightLastChange     = 0;
     RGBButtonBackPressed   = 0;
     RGBLightModeForceWhite = 0;
 #endif // FEATURE_RGB_LIGHT_EFFECTS

@@ -1062,11 +1062,19 @@ ISR(PWM_TIMER_VECTOR)
         counter100Periodical = 0;
         execute100msPeriodical = 1;
     }
+
+#if FEATURE_RGB_LIGHT_EFFECTS
+    bool rgb_10ms_change_should_be_now = false;
+#endif // FEATURE_RGB_LIGHT_EFFECTS
+
     static char counter10Periodical = 0; // Approximate a 10ms timer :: blocks pingwatchdog s commandloop if not working
     if(++counter10Periodical >= 39) //(int)(F_CPU/40960))
     {
         counter10Periodical = 0;
         execute10msPeriodical = 1;
+#if FEATURE_RGB_LIGHT_EFFECTS
+        rgb_10ms_change_should_be_now = true;
+#endif // FEATURE_RGB_LIGHT_EFFECTS
     }
 
     // read analog values
@@ -1119,12 +1127,9 @@ ISR(PWM_TIMER_VECTOR)
     pwm_count_heater += HEATER_PWM_STEP;
 
 #if FEATURE_RGB_LIGHT_EFFECTS
-    if( (HAL::timeInMilliseconds() - Printer::RGBLightLastChange) > RGB_LIGHT_COLOR_CHANGE_SPEED )
+    if( rgb_10ms_change_should_be_now )
     {
         char    change = 0;
-
-        Printer::RGBLightLastChange = HAL::timeInMilliseconds();
-            
         if( g_uRGBTargetR > g_uRGBCurrentR )        { g_uRGBCurrentR ++; change = 1; }
         else if( g_uRGBTargetR < g_uRGBCurrentR )   { g_uRGBCurrentR --; change = 1; }
         if( g_uRGBTargetG > g_uRGBCurrentG )        { g_uRGBCurrentG ++; change = 1; }
@@ -1132,8 +1137,7 @@ ISR(PWM_TIMER_VECTOR)
         if( g_uRGBTargetB > g_uRGBCurrentB )        { g_uRGBCurrentB ++; change = 1; }
         else if( g_uRGBTargetB < g_uRGBCurrentB )   { g_uRGBCurrentB --; change = 1; }
 
-        if( change )
-        {
+        if( change ) {
             setRGBLEDs( g_uRGBCurrentR, g_uRGBCurrentG, g_uRGBCurrentB );
         }
     }
