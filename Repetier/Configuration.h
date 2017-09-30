@@ -951,7 +951,7 @@ and it is elsewise difficult to know, what your reprap is currently doing. */
 #define FEATURE_READ_CALLIPER               0                                                   // 0 = OFF, 1 = ON
 #define FEATURE_READ_CALLIPER_INT_PIN       RESERVE_DIGITAL_PIN_PD3                             // RF2000/RF1000: RESERVE_DIGITAL_PIN_PD3 is INT3 for having clocks falling edges collected
 #define FEATURE_READ_CALLIPER_DATA_PIN      RESERVE_DIGITAL_PIN_PE4                             // RF2000: RESERVE_DIGITAL_PIN_PE4 is some reserve pin for reading off data while clocks falling edge.
-#if MOTHERBOARD == DEVICE_TYPE_RF1000 && FEATURE_READ_CALLIPER_DATA_PIN == RESERVE_DIGITAL_PIN_PE4
+#if FEATURE_READ_CALLIPER && MOTHERBOARD == DEVICE_TYPE_RF1000 && FEATURE_READ_CALLIPER_DATA_PIN == RESERVE_DIGITAL_PIN_PE4
  #error You cannot use RESERVE_DIGITAL_PIN_PE4 on an RF1000, please connect and choose another one.
 #endif
 
