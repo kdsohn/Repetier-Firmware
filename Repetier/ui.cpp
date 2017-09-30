@@ -926,13 +926,18 @@ void UIDisplay::parse(char *txt,bool ram)
                 break;
             }
 
-#if FAN_PIN > -1
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
             case 'F': // FAN speed
             {
-                if(c2=='s') addInt(Printer::getFanSpeed(true),3);                                   // %Fs : Fan speed in Percent
+                if(c2=='s') addInt(Printer::getFanSpeed(true), 3);                                       // %Fs : Fan speed in Percent
+                if(c2=='h') addInt((1 << cooler_pwm_speed)*15, 3);                                       // %Fh : Fan frequency in Hz --> Wert passt grob, ist aber nicht exakt! F_CPU/3906/255*mode...
+                if(c2=='m'){                                                                             // %Fm : Fan modulation type PWM or PDM
+                    if(cooler_mode == COOLER_MODE_PDM) addStringP( PSTR("PDM") );
+                    else                               addStringP( PSTR("PWM") );
+                }
                 break;
             }
-#endif // FAN_PIN > -1
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
             case 'f':
             {
@@ -3056,11 +3061,13 @@ void UIDisplay::nextPreviousAction(int8_t next)
 
     switch(action)
     {
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
         case UI_ACTION_FANSPEED:
         {
             Commands::setFanSpeed(Printer::getFanSpeed()+increment*3,false);
             break;
         }
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
         case UI_ACTION_XPOSITION:
         {
             /*
@@ -4503,10 +4510,6 @@ void UIDisplay::executeAction(int action)
                 if( g_nFindZOriginStatus )      deny = 1;   // the operating mode can not be switched while the z-origin is searched
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_TEST_STRAIN_GAUGE
-                if( g_nTestStrainGaugeStatus )  deny = 1;   // the operating mode can not be switched while the strain gauge is tested
-#endif // FEATURE_TEST_STRAIN_GAUGE
-
                 if( deny )
                 {
                     if( Printer::debugErrors() )
@@ -4942,7 +4945,7 @@ void UIDisplay::executeAction(int action)
             }
 #endif // SDSUPPORT
 
-#if FAN_PIN>-1
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
             case UI_ACTION_FAN_OFF:
             {
                 Commands::setFanSpeed(0,false);
@@ -4968,7 +4971,25 @@ void UIDisplay::executeAction(int action)
                 Commands::setFanSpeed(255,false);
                 break;
             }
-#endif // FAN_PIN>-1
+            case UI_ACTION_FAN_HZ:
+            {
+                Commands::adjustFanFrequency( (cooler_pwm_speed == COOLER_MODE_MAX ? 0 : cooler_pwm_speed + 1 ) ); //0 = ~15hz, ~1=30hz, ... 4=240hz.
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                HAL::eprSetByte( EPR_RF_FAN_SPEED, cooler_pwm_speed );
+                EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+                break;
+            }
+            case UI_ACTION_FAN_MODE:
+            {
+                Commands::adjustFanMode( (cooler_mode ? COOLER_MODE_PWM : COOLER_MODE_PDM) ); //0 = pwm, 1 = pdm
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                HAL::eprSetByte( EPR_RF_FAN_MODE, cooler_mode );
+                EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+                break;
+            }
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
             case UI_ACTION_MENU_XPOS:
             {

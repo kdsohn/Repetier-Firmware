@@ -88,31 +88,31 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 /** \brief Specifies if you want to adjust your average pressure to zero digits after homing. This pushes the weight-scale to zero by adding the idle pressure as an offset. */
 #define FEATURE_ZERO_DIGITS                 1
 
+/** \brief Auto-Retract within hardcoded scripts: Pause / Output_Object / ... Vom Hotend abhängig! V2: 10mm, E3D: 1mm (?) */
+#define SCRIPT_RETRACT_MM                   1                                                   //[mm] Firmwares E-Retract */
+
 /** \brief Enables/diables the emergency pause in case of too high pressure ... the emergency pause can be turned on only in case the general pause functionality is available */
 #if FEATURE_PAUSE_PRINTING
-
-  #define Z_PAUSE_RETRACT_MM                1                                                     //The Firmwares E-Retract within PAUSE */
-  #define FEATURE_EMERGENCY_PAUSE           1                                                     // 1 = on, 0 = off
-
+  #define FEATURE_EMERGENCY_PAUSE           1                                                   // 1 = on, 0 = off
 #endif // FEATURE_PAUSE_PRINTING
 
 /** \brief Enables the precise heat bed scan */
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 
-  #define FEATURE_PRECISE_HEAT_BED_SCAN       1                                                   // 1 = on, 0 = off
+  #define FEATURE_PRECISE_HEAT_BED_SCAN       1                                                 // 1 = on, 0 = off
 
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
 /** \brief Specifies the number of pressure values which shall be averaged for inprint live z-adjustment */
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-  #define FEATURE_DIGIT_Z_COMPENSATION           1                                                 // 1 = on, 0 = off
-  #define FEATURE_SENSIBLE_PRESSURE              1                                                 // 1 = on, 0 = off
+  #define FEATURE_DIGIT_Z_COMPENSATION           1                                               // 1 = on, 0 = off
+  #define FEATURE_SENSIBLE_PRESSURE              1                                               // 1 = on, 0 = off
   #if FEATURE_SENSIBLE_PRESSURE
     // mittels SENSIBLE_PRESSURE soll im grunde ausschließlich die wärmeausdehnung in einem perfekt kalibrierten system (HBS,mhier) kompensiert werden:
     // Max lift in [um]; Standard: 180um=0,18mm, darf nie 0 sein!! größer 0.2 macht normalerweise keinen Sinn.
     // Läuft dieser Wert ins Limit ist die Düse nicht in Ordnung, die Digit-Begrenzung zu niedrig oder das Z-Offset falsch justiert.
     #define SENSIBLE_PRESSURE_MAX_OFFSET                180     
-    #define SENSIBLE_PRESSURE_INTERVAL                  100                                       //weniger macht keinen sinn. ob diese einschränkung sinn macht, aber sie bleibt vorerst mal da!
+    #define SENSIBLE_PRESSURE_INTERVAL                  100                                      //weniger macht keinen sinn. ob diese einschränkung sinn macht, aber sie bleibt vorerst mal da!
   #endif // FEATURE_SENSIBLE_PRESSURE
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
@@ -318,7 +318,7 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 #if FEATURE_OUTPUT_FINISHED_OBJECT
 
 /** \brief The following script allows to configure the exact behavior of the automatic object output */
-#define OUTPUT_OBJECT_SCRIPT_PRINT          "G21\nG91\nG1 Z210 F5000\nG1 Y250 F7500"
+#define OUTPUT_OBJECT_SCRIPT_PRINT          "G21\nG91\nG1 E-" xstr(SCRIPT_RETRACT_MM) "\nG1 Z210 F5000\nG1 Y250 F7500"
 #define OUTPUT_OBJECT_SCRIPT_MILL           "G28 Z0\nG21\nG91\nG1 Y250 F7500"
 
 #endif // FEATURE_OUTPUT_FINISHED_OBJECT
@@ -589,7 +589,7 @@ instead of driving both with a single stepper. The same works for the other axis
 #define DEFAULT_MANUAL_STEPS_E              (EXT0_STEPS_PER_MM /5)
 #define MAXIMAL_MANUAL_STEPS_E              (EXT0_STEPS_PER_MM *10)
 
-//Das hier drunter sind einigermaßen sinnvolle Stepsizes, wenn man Microsteps = 32 hat!!!
+//Das hier drunter sind einigermaßen sinnvolle Stepsizes, wenn man Microsteps = 32 eingestellt hat.
 //Siehe: https://github.com/RF1000community/Repetier-Firmware/issues/4
 //Dieser statische Ansatz wird evtl. mal umgebaut. Man könnte auch eine Funktion schreiben, die sinnvolle Einstellwerte automatisch anhand Microsteps und Mikrometertabelle sucht.
 #define NUM_ACCEPTABLE_STEP_SIZE_TABLE    7
@@ -951,7 +951,7 @@ and it is elsewise difficult to know, what your reprap is currently doing. */
 #define FEATURE_READ_CALLIPER               0                                                   // 0 = OFF, 1 = ON
 #define FEATURE_READ_CALLIPER_INT_PIN       RESERVE_DIGITAL_PIN_PD3                             // RF2000/RF1000: RESERVE_DIGITAL_PIN_PD3 is INT3 for having clocks falling edges collected
 #define FEATURE_READ_CALLIPER_DATA_PIN      RESERVE_DIGITAL_PIN_PE4                             // RF2000: RESERVE_DIGITAL_PIN_PE4 is some reserve pin for reading off data while clocks falling edge.
-#if MOTHERBOARD == DEVICE_TYPE_RF1000 && FEATURE_READ_CALLIPER_DATA_PIN == RESERVE_DIGITAL_PIN_PE4
+#if FEATURE_READ_CALLIPER && MOTHERBOARD == DEVICE_TYPE_RF1000 && FEATURE_READ_CALLIPER_DATA_PIN == RESERVE_DIGITAL_PIN_PE4
  #error You cannot use RESERVE_DIGITAL_PIN_PE4 on an RF1000, please connect and choose another one.
 #endif
 

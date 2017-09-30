@@ -36,7 +36,7 @@ float           Printer::homingFeedrate[3];
 float           Printer::maxAccelerationMMPerSquareSecond[4] = {MAX_ACCELERATION_UNITS_PER_SQ_SECOND_X,MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Y,MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Z}; ///< X, Y, Z and E max acceleration in mm/s^2 for printing moves or retracts
 float           Printer::maxTravelAccelerationMMPerSquareSecond[4] = {MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_X,MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_Y,MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_Z}; ///< X, Y, Z max acceleration in mm/s^2 for travel moves
 
-/** Acceleration in steps/s^3 in printing mode.*/
+/** Acceleration in steps/s^2 in printing mode.*/
 unsigned long   Printer::maxPrintAccelerationStepsPerSquareSecond[4];
 /** Acceleration in steps/s^2 in movement mode.*/
 unsigned long   Printer::maxTravelAccelerationStepsPerSquareSecond[4];
@@ -179,7 +179,6 @@ char            Printer::enableCaseLight;
 char            Printer::RGBLightMode;
 char            Printer::RGBLightStatus;
 unsigned long   Printer::RGBLightIdleStart;
-unsigned long   Printer::RGBLightLastChange;
 char            Printer::RGBButtonBackPressed;
 char            Printer::RGBLightModeForceWhite;
 #endif // FEATURE_RGB_LIGHT_EFFECTS
@@ -348,10 +347,10 @@ void Printer::kill(uint8_t only_steppers)
     if(areAllSteppersDisabled() && only_steppers) return;
     if(Printer::isAllKilled()) return;
 
-#if FAN_PIN>-1
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     // disable the fan
     Commands::setFanSpeed(0,false);
-#endif // FAN_PIN>-1
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
     setAllSteppersDisabled();
     disableXStepper();
@@ -927,10 +926,10 @@ void Printer::setup()
     PULLUP( FEATURE_READ_CALLIPER_DATA_PIN, HIGH ); //do I need this pullup??
 #endif //FEATURE_READ_CALLIPER
 
-#if FAN_PIN>-1
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     SET_OUTPUT(FAN_PIN);
     WRITE(FAN_PIN,LOW);
-#endif // FAN_PIN>-1
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #if FAN_BOARD_PIN>-1
     SET_OUTPUT(FAN_BOARD_PIN);
@@ -1155,7 +1154,6 @@ void Printer::setup()
         RGBLightStatus = RGB_STATUS_NOT_AUTOMATIC;
     }
     RGBLightIdleStart      = 0;
-    RGBLightLastChange     = 0;
     RGBButtonBackPressed   = 0;
     RGBLightModeForceWhite = 0;
 #endif // FEATURE_RGB_LIGHT_EFFECTS
@@ -1261,7 +1259,7 @@ void Printer::setup()
     HAL::startWatchdog();
 #endif // FEATURE_WATCHDOG
 
-} // setup
+} // setup()
 
 
 void Printer::defaultLoopActions()

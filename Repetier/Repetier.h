@@ -20,6 +20,11 @@
 #define REPETIER_H
 
 #include "Constants.h"
+
+//https://gcc.gnu.org/onlinedocs/cpp/Stringizing.html#Stringizing for using number-#defines in string-#defines
+#define xstr(a) str(a)
+#define str(a) #a
+
 #include "Configuration.h"
 
 
@@ -171,6 +176,10 @@ extern volatile uint8_t     execute16msPeriodical;
 extern volatile uint8_t     execute10msPeriodical;
 
 extern void writeMonitor();
+
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+extern uint8_t fanKickstart;
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #if SDSUPPORT
 extern char                 tempLongFilename[LONG_FILENAME_LENGTH+1];

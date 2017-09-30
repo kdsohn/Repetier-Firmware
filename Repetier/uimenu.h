@@ -91,6 +91,8 @@ List of placeholder:
 %fY : Homing feedrate y direction
 %fZ : Homing feedrate z direction
 %Fs : Fan speed
+%Fh : Fan frequency in Hz
+%Fm : Fan modulation type PWM or PDM
 %PN : Printer name
 %Se : Steps per mm current extruder
 %S0 : Steps per mm extruder0
@@ -633,22 +635,28 @@ UI_MENU(ui_menu_quick,UI_MENU_QUICK,6+UI_MENU_BACKCNT+MENU_PSON_COUNT+DEBUG_PRIN
 
 /** \brief Fan menu */
 
-#if FAN_PIN>-1
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
 UI_MENU_CHANGEACTION(ui_menu_fan_fanspeed, UI_TEXT_ACTION_FANSPEED,UI_ACTION_FANSPEED)
 UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_fan_off,UI_TEXT_FAN_OFF,UI_ACTION_FAN_OFF,MENU_MODE_FAN_RUNNING,0)
 UI_MENU_ACTIONCOMMAND(ui_menu_fan_25,UI_TEXT_FAN_25,UI_ACTION_FAN_25)
 UI_MENU_ACTIONCOMMAND(ui_menu_fan_50,UI_TEXT_FAN_50,UI_ACTION_FAN_50)
 UI_MENU_ACTIONCOMMAND(ui_menu_fan_75,UI_TEXT_FAN_75,UI_ACTION_FAN_75)
 UI_MENU_ACTIONCOMMAND(ui_menu_fan_full,UI_TEXT_FAN_FULL,UI_ACTION_FAN_FULL)
-#define UI_MENU_FAN {UI_MENU_ADDCONDBACK &ui_menu_fan_fanspeed,&ui_menu_fan_off,&ui_menu_fan_25,&ui_menu_fan_50,&ui_menu_fan_75,&ui_menu_fan_full}
-UI_MENU(ui_menu_fan,UI_MENU_FAN,6+UI_MENU_BACKCNT)
+
+
+UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_fan_hz,  UI_TEXT_FAN_HZ,  UI_ACTION_FAN_HZ  ,0,MENU_MODE_FAN_MODE_PDM)
+UI_MENU_ACTIONCOMMAND(       ui_menu_fan_mode,UI_TEXT_FAN_MODE,UI_ACTION_FAN_MODE)
+#define UI_MENU_FANHZMODE_CNT 2
+
+#define UI_MENU_FAN {UI_MENU_ADDCONDBACK &ui_menu_fan_fanspeed,&ui_menu_fan_off,&ui_menu_fan_25,&ui_menu_fan_50,&ui_menu_fan_75,&ui_menu_fan_full,&ui_menu_fan_mode,&ui_menu_fan_hz}
+UI_MENU(ui_menu_fan,UI_MENU_FAN,6+UI_MENU_BACKCNT+UI_MENU_FANHZMODE_CNT)
 UI_MENU_SUBMENU_FILTER(ui_menu_fan_sub,UI_TEXT_FANSPEED,ui_menu_fan,MENU_MODE_PRINTER,0)
 #define UI_MENU_FAN_COND &ui_menu_fan_sub,
 #define UI_MENU_FAN_CNT 1
 #else
 #define UI_MENU_FAN_COND
 #define UI_MENU_FAN_CNT 0
-#endif // FAN_PIN>-1
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 /** \brief SD card menu */
 

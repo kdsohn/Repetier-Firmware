@@ -185,7 +185,6 @@ public:
     static char             RGBLightMode;
     static char             RGBLightStatus;  
     static  unsigned long   RGBLightIdleStart;
-    static  unsigned long   RGBLightLastChange;
     static char             RGBButtonBackPressed;
     static char             RGBLightModeForceWhite;
 #endif // FEATURE_RGB_LIGHT_EFFECTS
@@ -1218,8 +1217,8 @@ public:
     static INLINE int getFanSpeed(bool percent = false)
     {
         if(!percent) return (int)pwm_pos[NUM_EXTRUDER+2]; //int
-        if(!pwm_pos[NUM_EXTRUDER+2]) return (int)0; //%
-        if(pwm_pos[NUM_EXTRUDER+2] <= 3) return (int)1; //%
+        if(!pwm_pos[NUM_EXTRUDER+2]) return 0; //%
+        if(pwm_pos[NUM_EXTRUDER+2] <= 3) return 1; //%
         return (int)(pwm_pos[NUM_EXTRUDER+2]*100/255); //%
     } // getFanSpeed
 

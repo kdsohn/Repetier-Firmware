@@ -292,6 +292,11 @@ public:
     FSTRINGVAR(tEPRPrinter_STEPPER_E1)
 #endif //NUM_EXTRUDER > 1
     FSTRINGVAR(tEPRPrinter_FREQ_DBL)
+    
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+    FSTRINGVAR(tEPRPrinter_FAN_MODE)
+    FSTRINGVAR(tEPRPrinter_FAN_SPEED)
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #endif // EEPROM_MODE==0
 
@@ -328,10 +333,6 @@ public:
 #if FEATURE_FIND_Z_ORIGIN
     FSTRINGVAR(tFindZOrigin)
 #endif // FEATURE_FIND_Z_ORIGIN
-
-#if FEATURE_TEST_STRAIN_GAUGE
-    FSTRINGVAR(tTestStrainGauge)
-#endif // FEATURE_TEST_STRAIN_GAUGE
 
     static void printNumber(uint32_t n);
     static void printWarningF(FSTRINGPARAM(text));

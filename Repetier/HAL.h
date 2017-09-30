@@ -63,6 +63,26 @@ extern  unsigned char g_bPingWatchdog;
 extern  unsigned long g_uLastCommandLoop;
 #endif // FEATURE_WATCHDOG
 
+// > 4 should not happen, only if you change code or really want that. 
+// Never set this > 7!
+// Note that > 4 is highly experimental
+#define COOLER_MODE_MAX 4
+
+#define COOLER_MODE_PWM 0
+#define COOLER_MODE_PDM 1
+extern  uint8_t cooler_pwm_speed;
+extern  uint8_t cooler_pwm_step;
+extern  uint8_t cooler_pwm_mask;
+extern  uint8_t cooler_mode;
+ 
+#if !defined(MAX_FAN_PWM) || MAX_FAN_PWM >= 255 || MAX_FAN_PWM <= 0
+#define TRIM_FAN_PWM(x) x
+#undef MAX_FAN_PWM
+#define MAX_FAN_PWM 255
+#else
+#define TRIM_FAN_PWM(x) static_cast<uint8_t>(static_cast<unsigned int>(x) * MAX_FAN_PWM / 255)
+#endif
+
 class InterruptProtectedBlock
 {
 private:
@@ -751,7 +771,7 @@ public:
     static unsigned char i2cStart(unsigned char address);
     static void i2cStartWait(unsigned char address);
     static void i2cStop(void);
-    static unsigned char i2cWrite( unsigned char data );
+    static void i2cWrite( unsigned char data );
     static unsigned char i2cReadAck(void);
     static unsigned char i2cReadNak(void);
 

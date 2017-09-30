@@ -117,10 +117,6 @@ void Commands::waitUntilEndOfAllMoves()
     if( g_nFindZOriginStatus )      bWait = 1;
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_TEST_STRAIN_GAUGE
-    if( g_nTestStrainGaugeStatus )  bWait = 1;
-#endif // FEATURE_TEST_STRAIN_GAUGE
-
     while( bWait )
     {
         GCode::readFromSerial();
@@ -134,10 +130,6 @@ void Commands::waitUntilEndOfAllMoves()
 #if FEATURE_FIND_Z_ORIGIN
         if( g_nFindZOriginStatus )      bWait = 1;
 #endif // FEATURE_FIND_Z_ORIGIN
-
-#if FEATURE_TEST_STRAIN_GAUGE
-        if( g_nTestStrainGaugeStatus )  bWait = 1;
-#endif // FEATURE_TEST_STRAIN_GAUGE
     }
 
 } // waitUntilEndOfAllMoves
@@ -353,26 +345,37 @@ void Commands::changeFlowateMultiply(int factor)
 } // changeFlowateMultiply
 
 
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+uint8_t fanKickstart = 0;
 void Commands::setFanSpeed(int speed,bool wait)
 {
-#if FAN_PIN>=0
-    speed = constrain(speed,0,255);
-    Printer::setMenuMode(MENU_MODE_FAN_RUNNING,speed!=0);
-
-    if(wait)
-        Commands::waitUntilEndOfAllMoves(); // use only if needed this to change the speed exactly at that point, but it may cause blobs if you do!
-
-    if( Printer::debugInfo() )
-    {
-        if(speed!=pwm_pos[NUM_EXTRUDER+2])
-            Com::printFLN(Com::tFanspeed,(speed == 1) ? 2 : speed ); //bei 1 zeigt repetierserver / repetierhost 0% an, was nicht stimmt. Das ist etwas Pfusch, aber nun funktionierts.
+    uint8_t trimmedSpeed = TRIM_FAN_PWM(speed);
+    if(pwm_pos[NUM_EXTRUDER+2] == trimmedSpeed)
+        return;
+    
+    Printer::setMenuMode(MENU_MODE_FAN_RUNNING,trimmedSpeed!=0);
+    if(wait) Commands::waitUntilEndOfAllMoves(); // use only if needed this to change the speed exactly at that point, but it may cause blobs if you do!
+    Com::printFLN(Com::tFanspeed,(trimmedSpeed == 1) ? 2 : trimmedSpeed ); //bei 1 zeigt repetierserver / repetierhost 0% an, was nicht stimmt. Das ist etwas Pfusch, aber nun funktionierts.
+    if(fanKickstart == 0 && trimmedSpeed > pwm_pos[NUM_EXTRUDER+2] && trimmedSpeed < 85) {
+        if(pwm_pos[NUM_EXTRUDER+2]) fanKickstart = FAN_KICKSTART_TIME / 100;
+        else                        fanKickstart = FAN_KICKSTART_TIME / 10;
     }
-
-    pwm_pos[NUM_EXTRUDER+2] = speed;
-#endif
-
+    pwm_pos[NUM_EXTRUDER+2] = trimmedSpeed;
 } // setFanSpeed
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+void Commands::adjustFanFrequency(uint8_t speed_mode = COOLER_PWM_SPEED){ //0 = ~15hz, ~1=30hz, ... 4=240hz.
+    InterruptProtectedBlock noInts;
+    cooler_pwm_speed = (speed_mode <= COOLER_MODE_MAX ? speed_mode : COOLER_PWM_SPEED); // > 4 should not happen, only if you change code and want that. 
+    cooler_pwm_step = (1 << cooler_pwm_speed);
+    cooler_pwm_mask = (255 << cooler_pwm_speed) & 0xff;
+}
+void Commands::adjustFanMode(uint8_t output_mode){ //0 = pwm, 1 = pdm
+    cooler_mode = (output_mode ? COOLER_MODE_PDM : COOLER_MODE_PWM);
+    Printer::setMenuMode(MENU_MODE_FAN_MODE_PDM, (bool)cooler_mode);
+}
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 void Commands::reportPrinterUsage()
 {
@@ -1954,9 +1957,9 @@ void Commands::emergencyStop()
     WRITE(EXT5_HEATER_PIN,HEATER_PINS_INVERTED);
 #endif // defined(EXT5_HEATER_PIN) && EXT5_HEATER_PIN>-1 && NUM_EXTRUDER>5
 
-#if FAN_PIN>-1
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     WRITE(FAN_PIN,0);
-#endif // FAN_PIN>-1
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #if HEATED_BED_HEATER_PIN>-1
     WRITE(HEATED_BED_HEATER_PIN,HEATER_PINS_INVERTED);

@@ -46,10 +46,6 @@
     #error It does not make sense to enable the work part z-compensation without enabling of the automatic detection of the z-origin
 #endif // FEATURE_WORK_PART_Z_COMPENSATION && !FEATURE_FIND_Z_ORIGIN
 
-/** \brief Experimental, do not use */
-#define FEATURE_TEST_STRAIN_GAUGE           0                                                   // 1 = on, 0 = off
-
-
 #endif // FEATURE_MILLING_MODE
 
 /** \brief Number of extruders */
@@ -765,13 +761,13 @@ can set it on for safety. */
 #define LOOP_INTERVAL                       2000                                                // [ms]
 
 /** \brief Automatic filament change, unmounting of the filament - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
-#define UNMOUNT_FILAMENT_SCRIPT_WITH_HEATING        "M109 S140\nG21\nG90\nG92 E0\nG1 E-90 F500\nM104 S0"
+#define UNMOUNT_FILAMENT_SCRIPT_WITH_HEATING        "M109 S" xstr(UI_SET_EXTRUDER_TEMP_UNMOUNT) "\nG21\nG90\nG92 E0\nG1 E-90 F500\nM104 S0"
 
 /** \brief Automatic filament change, unmounting of the filament - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
 #define UNMOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING     "G21\nG90\nG92 E0\nG1 E-90 F500"
 
 /** \brief Automatic filament change, mounting of the filament with heating - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
-#define MOUNT_FILAMENT_SCRIPT_WITH_HEATING          "M109 S250\nG21\nG90\nG92 E0\nG1 E90 F100\nM104 S0"
+#define MOUNT_FILAMENT_SCRIPT_WITH_HEATING          "M109 S" xstr(UI_SET_PRESET_EXTRUDER_TEMP_ABS) "\nG21\nG90\nG92 E0\nG1 E90 F100\nM104 S0"
 
 /** \brief Automatic filament change, mounting of the filament without heating - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
 #define MOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING       "G21\nG90\nG92 E0\nG1 E90 F100"
@@ -779,7 +775,16 @@ can set it on for safety. */
 /** \brief speed of the PWM signal, 0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz, 3 = 122.06Hz */
 #define HEATER_PWM_SPEED                    1
 #define COOLER_PWM_SPEED                    0
+/** Some fans won't start for low values, but would run if started with higher power at the beginning.
+This defines the full power duration before returning to set value. Time is in milliseconds */
+#define FAN_KICKSTART_TIME  200                                                                 // [ms]
+/** Defines the max. fan speed for M106 controlled fans. Normally 255 to use full range, but for
+ 12V fans on 24V this might help preventing a defect. For all other fans there is a explicit maximum PWM value
+ you can set, so this is not used for other fans! */
+#define MAX_FAN_PWM 255
 
+/** \brief use PDM instead of PWM for part fan */
+// --> set EEPROM value or change mode in printers menu
 
 // ##########################################################################################
 // ##   Movement settings
@@ -869,7 +874,7 @@ enabling this may cause to stall your moves when 20000Hz is reached. */
 
 /** \brief If you reach STEP_DOUBLER_FREQUENCY the firmware will do 2 or 4 steps with nearly no delay. That can be too fast
 for some printers causing an early stall. */
-#define DOUBLE_STEP_DELAY                   1                                                   // [us] TODO NIBBELS: Repetier set this to 0 when removing half stepping
+#define DOUBLE_STEP_DELAY                   0                                                   // [us] was 1, NIBBELS: Repetier set this to 0 when removing half stepping
 
 /** \brief Number of moves we can cache in advance.
 This number of moves can be cached in advance. If you wan't to cache more, increase this. Especially on
@@ -885,12 +890,14 @@ don't care about empty buffers during print. */
 /** \brief Cycles per move, if move cache is low.
 This value must be high enough, that the buffer has time to fill up. The problem only occurs at the beginning of a print or
 if you are printing many very short segments at high speed. Higher delays here allow higher values in PATH_PLANNER_CHECK_SEGMENTS. */
-#define LOW_TICKS_PER_MOVE                  400000
+#define LOW_TICKS_PER_MOVE                  250000
 
 
 // ##########################################################################################
 // ##   Acceleration settings
 // ##########################################################################################
+
+// RF2000: Tests haben gezeigt, dass x-y-accelleration unter 2000 oder unter 1500 das Teil ziemlich gut aussieht. 
 
 /** \brief X, Y, Z max acceleration in mm/s^2 for printing moves or retracts. Make sure your printer can go that high!
  Overridden if EEPROM activated. */
@@ -923,8 +930,8 @@ v_diff = sqrt((50-35.36)^2+(0-35.36)^2) = 38.27 < jerk
 Corner can be printed with full speed of 50 mm/s
 
 Overridden if EEPROM activated. */
-#define MAX_JERK                            10
-#define MAX_ZJERK                           0.1
+#define MAX_JERK                            10                 //std: 20, aber RFx000 sieht zwischen ca. 7 und 18 am besten aus: Renkforce sagt 10
+#define MAX_ZJERK                           0.28               //std: 0.3
 
 //that will slowdown if you have sever direction changes in a short distance which is nearly the same as adding several jerks in a short sequence.
 #define REDUCE_ON_SMALL_SEGMENTS            1
@@ -1161,7 +1168,7 @@ Above this value the z compensation will distribute the roughness of the surface
 #define DEFAULT_PAUSE_STEPS_X               (XAXIS_STEPS_PER_MM * -200)
 #define DEFAULT_PAUSE_STEPS_Y               (YAXIS_STEPS_PER_MM * 200)
 #define DEFAULT_PAUSE_STEPS_Z               (ZAXIS_STEPS_PER_MM * 2)
-#define DEFAULT_PAUSE_STEPS_EXTRUDER        (EXT0_STEPS_PER_MM  * 1.5f)
+#define DEFAULT_PAUSE_STEPS_EXTRUDER        (EXT0_STEPS_PER_MM  * SCRIPT_RETRACT_MM)
 
 #define PAUSE_X_SPACING                     (XAXIS_STEPS_PER_MM * 5)
 #define PAUSE_Y_SPACING                     (YAXIS_STEPS_PER_MM * 5)
@@ -1189,25 +1196,6 @@ Above this value the z compensation will distribute the roughness of the surface
 
 
 // ##########################################################################################
-// ##   configuration of the strain gauge test
-// ##########################################################################################
-
-#if FEATURE_TEST_STRAIN_GAUGE
-
-#define TEST_STRAIN_GAUGE_CONTACT_PRESSURE_DELTA    500                                             // [digits]
-#define TEST_STRAIN_GAUGE_POSITION_DELAY            100                                             // [ms]
-#define TEST_STRAIN_GAUGE_BREAKOUT_DELAY            100                                             // [ms]
-#define TEST_STRAIN_GAUGE_BED_UP_STEPS              long(-ZAXIS_STEPS_PER_MM / 20)                  // [steps]
-#define TEST_STRAIN_GAUGE_BED_DOWN_STEPS            long(ZAXIS_STEPS_PER_MM / 40)                   // [steps]
-#define TEST_STRAIN_GAUGE_TEST_STEPS                long(-ZAXIS_STEPS_PER_MM / 128)                 // [steps]
-
-/** \brief The following commands are executed before the test is ended. */
-#define TEST_STRAIN_GAUGE_SCRIPT                    "G91\nG1 Z15 F5000"
-
-#endif // FEATURE_TEST_STRAIN_GAUGE
-
-
-// ##########################################################################################
 // ##   debugging
 // ##########################################################################################
 
@@ -1226,12 +1214,6 @@ Above this value the z compensation will distribute the roughness of the surface
 
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_TEST_STRAIN_GAUGE
-
-/** \brief Enables debug outputs from the test of the strain gauge */
-#define DEBUG_TEST_STRAIN_GAUGE             0                                                   // 1 = on, 0 = off
-
-#endif // FEATURE_TEST_STRAIN_GAUGE
 #endif // FEATURE_MILLING_MODE
 
 

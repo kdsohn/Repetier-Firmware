@@ -216,11 +216,6 @@ int             g_nZOriginSet               = 0;
 char            g_abortSearch               = 0;
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_TEST_STRAIN_GAUGE
-char            g_nTestStrainGaugeStatus    = 0;
-char            g_abortStrainGaugeTest      = 0;
-#endif // FEATURE_TEST_STRAIN_GAUGE
-
 #if FEATURE_RGB_LIGHT_EFFECTS
 unsigned char   g_uRGBHeatingR              = RGB_HEATING_R;
 unsigned char   g_uRGBHeatingG              = RGB_HEATING_G;
@@ -4980,13 +4975,6 @@ int moveZ( int nSteps )
         }
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_TEST_STRAIN_GAUGE
-        if( g_abortStrainGaugeTest )
-        {
-            bBreak = 1;
-        }
-#endif // FEATURE_TEST_STRAIN_GAUGE
-
         if( bBreak )
         {
             // do not continue here in case the current operation has been cancelled
@@ -6107,13 +6095,6 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
     }
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_TEST_STRAIN_GAUGE
-    if( g_nTestStrainGaugeStatus )
-    {
-        testStrainGauge();
-    }
-#endif // FEATURE_TEST_STRAIN_GAUGE
-
 #if FEATURE_PAUSE_PRINTING
     if( g_pauseMode != PAUSE_MODE_NONE )
     {
@@ -6479,10 +6460,10 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
             Printer::disableYStepper();
             Printer::disableZStepper();
             Extruder::disableAllExtruders();
-#if FAN_PIN>-1
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
             // disable the fan
             Commands::setFanSpeed(0,false);
-#endif // FAN_PIN>-1
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #endif // FEATURE_OUTPUT_FINISHED_OBJECT
 
@@ -6610,10 +6591,10 @@ void outputObject( void )
         Com::printFLN( PSTR( "outputObject()" ) );
     }
 
-#if FAN_PIN>-1
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     // disable the fan
     Commands::setFanSpeed(0,false);
-#endif // FAN_PIN>-1
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
     Commands::printCurrentPosition();
 
@@ -8716,17 +8697,6 @@ void processCommand( GCode* pCommand )
                 break;
             }
 #endif // FEATURE_FIND_Z_ORIGIN
-
-#if FEATURE_TEST_STRAIN_GAUGE
-            case 3190: // M3190 - test the strain gauge
-            {
-                if( isSupportedMCommand( pCommand->M, OPERATING_MODE_MILL ) )
-                {
-                    startTestStrainGauge();
-                }
-                break;
-            }
-#endif // FEATURE_TEST_STRAIN_GAUGE
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
             case 3140: // M3140 - turn the z-compensation off
@@ -12543,334 +12513,6 @@ void findZOrigin( void )
 } // findZOrigin
 #endif // FEATURE_FIND_Z_ORIGIN
 
-
-#if FEATURE_TEST_STRAIN_GAUGE
-void startTestStrainGauge( void )
-{
-    if( g_nTestStrainGaugeStatus )
-    {
-        if( !g_abortStrainGaugeTest )
-        {
-            // abort the testing of the strain gauge
-            if( Printer::debugInfo() )
-            {
-                Com::printFLN( PSTR( "startTestStrainGauge(): the test has been cancelled" ) );
-            }
-            g_abortStrainGaugeTest = 1;
-        }
-    }
-    else
-    {
-        if( Printer::operatingMode != OPERATING_MODE_MILL )
-        {
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( PSTR( "startTestStrainGauge(): testing of the strain gauge is not supported in this mode" ) );
-                return;
-            }
-        }
-
-/*      if( PrintLine::linesCount )
-        {
-            // there is some printing in progress at the moment - do not start the test in this case
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( PSTR( "startTestStrainGauge(): the test can not be started while the milling is in progress" ) );
-                return;
-            }
-        }
-*/
-        // start the search
-        g_nTestStrainGaugeStatus = 1;
-
-#if FEATURE_HEAT_BED_Z_COMPENSATION
-        // when the test is running, the z-compensation must be disabled
-        if( Printer::doHeatBedZCompensation )
-        {
-            if( Printer::debugInfo() )
-            {
-                Com::printFLN( PSTR( "startTestStrainGauge(): the z compensation has been disabled" ) );
-            }
-            resetZCompensation();
-        }
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION
-
-#if FEATURE_WORK_PART_Z_COMPENSATION
-        // when the test is running, the z-compensation must be disabled
-        if( Printer::doWorkPartZCompensation )
-        {
-            if( Printer::debugInfo() )
-            {
-                Com::printFLN( PSTR( "startTestStrainGauge(): the z compensation has been disabled" ) );
-            }
-            resetZCompensation();
-        }
-#endif // FEATURE_WORK_PART_Z_COMPENSATION
-    }
-
-    return;
-
-} // startTestStrainGauge
-
-
-void testStrainGauge( void )
-{
-    static short    nMaxPressureContact;
-    static short    nMinPressureContact;
-    static short    nZ;
-    static short    nStartPressure;
-    short           nCurrentPressure;
-    unsigned long   uStartTime;
-    unsigned long   uCurrentTime;
-
-
-    if( g_abortStrainGaugeTest )
-    {
-        // the test has been aborted
-        g_abortStrainGaugeTest = 0;
-
-        // turn off the engines
-        Printer::disableZStepper();
-
-        if( Printer::debugInfo() )
-        {
-            Com::printFLN( PSTR( "testStrainGauge(): the test has been aborted" ) );
-        }
-
-        UI_STATUS_UPD( UI_TEXT_TEST_STRAIN_GAUGE_ABORTED );
-        g_nTestStrainGaugeStatus = 0;
-        return;
-    }
-
-    // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
-
-    if( g_nTestStrainGaugeStatus )
-    {
-        UI_STATUS_UPD( UI_TEXT_TEST_STRAIN_GAUGE );
-
-        //HAL::delayMilliseconds( 2000 );
-
-        switch( g_nTestStrainGaugeStatus )
-        {
-            case 1:
-            {
-                g_abortStrainGaugeTest = 0;
-
-                if( Printer::debugInfo() )
-                {
-                    Com::printFLN( PSTR( "testStrainGauge(): the test has been started" ) );
-                }
-
-                if( readAveragePressure( &nCurrentPressure ) )
-                {
-                    // some error has occurred
-                    if( Printer::debugErrors() )
-                    {
-                        Com::printFLN( PSTR( "testStrainGauge(): the start pressure could not be determined" ) );
-                    }
-                    g_abortStrainGaugeTest = 1;
-                    return;
-                }
-
-                nMinPressureContact = nCurrentPressure - TEST_STRAIN_GAUGE_CONTACT_PRESSURE_DELTA;
-                nMaxPressureContact = nCurrentPressure + TEST_STRAIN_GAUGE_CONTACT_PRESSURE_DELTA;
-
-                if( Printer::debugInfo() )
-                {
-                    Com::printF( PSTR( "testStrainGauge(): nMinPressureContact = " ), nMinPressureContact );
-                    Com::printFLN( PSTR( ", nMaxPressureContact = " ), nMaxPressureContact );
-                }
-
-                previousMillisCmd = HAL::timeInMilliseconds();
-                Printer::enableZStepper();
-                Printer::unsetAllSteppersDisabled();
-
-                // prepare the direction of the z-axis (we have to move the milling bed up)
-                prepareBedUp();
-
-                g_nTempDirectionZ        = -1;
-                g_nTestStrainGaugeStatus = 10;
-
-#if DEBUG_TEST_STRAIN_GAUGE
-                Com::printFLN( PSTR( "testStrainGauge(): 1 -> 10" ) );
-#endif // DEBUG_TEST_STRAIN_GAUGE
-                break;
-            }
-            case 10:
-            {
-                // move the bed up until we detect the contact pressure
-                uStartTime = HAL::timeInMilliseconds();
-                while( 1 )
-                {
-                    nCurrentPressure = readStrainGauge( ACTIVE_STRAIN_GAUGE );
-
-                    if( nCurrentPressure > nMaxPressureContact || nCurrentPressure < nMinPressureContact )
-                    {
-                        // we have reached the target pressure
-                        g_nTestStrainGaugeStatus = 20;
-
-#if DEBUG_TEST_STRAIN_GAUGE
-                        Com::printFLN( PSTR( "testStrainGauge(): 10 -> 20" ) );
-#endif // DEBUG_TEST_STRAIN_GAUGE
-                        return;
-                    }
-
-                    if( Printer::isZMinEndstopHit() )
-                    {
-                        // this should never happen
-                        if( Printer::debugErrors() )
-                        {
-                            Com::printFLN( PSTR( "testStrainGauge(): the z-min endstop has been reached" ) );
-                        }
-                        g_abortStrainGaugeTest = 1;
-                        return;
-                    }
-
-                    moveZ( TEST_STRAIN_GAUGE_BED_UP_STEPS );
-
-                    uCurrentTime = HAL::timeInMilliseconds();
-                    if( (uCurrentTime - uStartTime) > TEST_STRAIN_GAUGE_BREAKOUT_DELAY )
-                    {
-                        // do not stay within this loop forever
-                        return;
-                    }
-
-                    if( g_abortStrainGaugeTest )
-                    {
-                        break;
-                    }
-                }
-
-                // we should never end up here
-                break;
-            }
-            case 20:
-            {
-                // move the bed down again until we do not detect any contact anymore
-                uStartTime = HAL::timeInMilliseconds();
-                while( 1 )
-                {
-                    readAveragePressure( &nCurrentPressure );
-
-                    if( nCurrentPressure > nMinPressureContact && nCurrentPressure < nMaxPressureContact )
-                    {
-                        // we have reached the target pressure
-                        nZ                       = 0;
-                        nStartPressure           = nCurrentPressure;
-                        g_nTestStrainGaugeStatus = 30;
-
-#if DEBUG_TEST_STRAIN_GAUGE
-                        Com::printFLN( PSTR( "testStrainGauge(): 20 -> 30" ) );
-#endif // DEBUG_TEST_STRAIN_GAUGE
-                        return;
-                    }
-
-                    if( Printer::isZMaxEndstopHit() )
-                    {
-                        if( Printer::debugErrors() )
-                        {
-                            Com::printFLN( PSTR( "testStrainGauge(): the z-max endstop has been reached" ) );
-                        }
-                        g_abortStrainGaugeTest = 1;
-                        return;
-                    }
-
-                    moveZ( TEST_STRAIN_GAUGE_BED_DOWN_STEPS );
-                    HAL::delayMilliseconds( TEST_STRAIN_GAUGE_POSITION_DELAY );
-
-                    uCurrentTime = HAL::timeInMilliseconds();
-                    if( (uCurrentTime - uStartTime) > TEST_STRAIN_GAUGE_BREAKOUT_DELAY )
-                    {
-                        // do not stay within this loop forever
-                        return;
-                    }
-
-                    if( g_abortStrainGaugeTest )
-                    {
-                        break;
-                    }
-                }
-
-                // we should never end up here
-                break;
-            }
-            case 30:
-            {
-                // we have found the z-position where the tool hits the bed
-                // move the bed up until we detect the maximal allowed pressure
-
-                readAveragePressure( &nCurrentPressure );
-
-                Com::printF( PSTR( "nZ;" ), (int)nZ );
-                Com::printF( PSTR( ";" ), (float)nZ / Printer::axisStepsPerMM[Z_AXIS] );
-                Com::printF( PSTR( ";nDeltaPressure;" ), (int)(nStartPressure - nCurrentPressure) );
-                Com::printFLN( PSTR( "" ) );
-
-                if( nCurrentPressure > EMERGENCY_STOP_DIGITS_MAX || nCurrentPressure < EMERGENCY_STOP_DIGITS_MIN )
-                {
-                    // we have reached the maximal allowed pressure
-                    g_nTestStrainGaugeStatus = 40;
-
-#if DEBUG_TEST_STRAIN_GAUGE
-                    Com::printFLN( PSTR( "testStrainGauge(): 30 -> 40" ) );
-#endif // DEBUG_TEST_STRAIN_GAUGE
-                    return;
-                }
-
-                if( Printer::isZMinEndstopHit() )
-                {
-                    // this should never happen
-                    if( Printer::debugErrors() )
-                    {
-                        Com::printFLN( PSTR( "testStrainGauge(): the z-min endstop has been reached" ) );
-                    }
-                    g_abortStrainGaugeTest = 1;
-                    return;
-                }
-
-                nZ += moveZ( TEST_STRAIN_GAUGE_TEST_STEPS );
-
-                HAL::delayMilliseconds( TEST_STRAIN_GAUGE_POSITION_DELAY );
-
-                break;
-            }
-            case 40:
-            {
-                GCode::executeFString( Com::tTestStrainGauge );
-                g_nTestStrainGaugeStatus = 50;
-
-#if DEBUG_TEST_STRAIN_GAUGE
-                Com::printFLN( PSTR( "testStrainGauge(): 40 -> 50" ) );
-#endif // DEBUG_TEST_STRAIN_GAUGE
-                break;
-            }
-            case 50:
-            {
-                if( PrintLine::linesCount )
-                {
-                    // wait until all moves have been done
-                    break;
-                }
-
-                g_nTestStrainGaugeStatus = 0;
-                UI_STATUS_UPD( UI_TEXT_TEST_STRAIN_GAUGE_DONE );
-
-#if DEBUG_TEST_STRAIN_GAUGE
-                Com::printFLN( PSTR( "testStrainGauge(): 50 -> 0" ) );
-#endif // DEBUG_TEST_STRAIN_GAUGE
-                break;
-            }
-        }
-    }
-
-    // we should never end up here
-    return;
-
-} // testStrainGauge
-#endif // FEATURE_TEST_STRAIN_GAUGE
-
-
 #if FEATURE_MILLING_MODE
 void switchOperatingMode( char newOperatingMode )
 {
@@ -13670,19 +13312,6 @@ unsigned char isMovingAllowed( const char* pszCommand, char outputLog )
     }
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_TEST_STRAIN_GAUGE
-    if( g_nTestStrainGaugeStatus && g_nTestStrainGaugeStatus != 40 )
-    {
-        // do not allow manual movements while the strain gauge is tested
-        if( Printer::debugErrors() && outputLog )
-        {
-            Com::printF( pszCommand );
-            Com::printFLN( PSTR( ": this command can not be used while the strain gauge is tested" ) );
-        }
-        return 0;
-    }
-#endif // FEATURE_TEST_STRAIN_GAUGE
-
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
     if( Printer::ZEndstopUnknown )
     {
@@ -13745,20 +13374,6 @@ unsigned char isHomingAllowed( GCode* com, char outputLog )
         return 0;
     }
 #endif // FEATURE_FIND_Z_ORIGIN
-
-#if FEATURE_TEST_STRAIN_GAUGE
-    if( g_nTestStrainGaugeStatus )
-    {
-        // do not allow homing while the strain gauge is tested
-        if( Printer::debugErrors() && outputLog )
-        {
-            Com::printFLN( PSTR( "G28: homing can not be performed while the strain gauge is tested" ) );
-        }
-
-        showError( (void*)ui_text_home, (void*)ui_text_operation_denied );
-        return 0;
-    }
-#endif // FEATURE_TEST_STRAIN_GAUGE
 
     if( !com )
     {

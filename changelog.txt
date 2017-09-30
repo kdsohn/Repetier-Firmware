@@ -2,6 +2,26 @@ TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad
 -> Is this possibly fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37v.Mod (2017-09-28)
+- the fans operating modes ar now configurable within menu and eeprom (see Menu->Fan Speed)
+   Fan-Modes: PWM or PDM
+   PWM Frequencys: 15, 30, 60, 120, 240 Hz
+   PDM: Frequencys do not count here!
+- kickstart support for part fan
+- fixed fan code for old RF2000 config = 3
+- optimized code around rgb change time
+
+V RF.01.37u6.Mod (2017-09-28)
+- cleanup: Removed FEATURE_TEST_STRAIN_GAUGE
+- cleanup: some code prettify according repetier development
+- UI_SET_EXTRUDER_TEMP_UNMOUNT is now respected by UNMOUNT_FILAMENT_SCRIPT_WITH_HEATING
+- UI_SET_PRESET_EXTRUDER_TEMP_ABS is now respected by MOUNT_FILAMENT_SCRIPT_WITH_HEATING instead of 250°C
+- DOUBLE_STEP_DELAY is decreased to 0 (was 1) like repetier did when removing halfstepping (might speed up move interrupt a bit, but testing)
+- LOW_TICKS_PER_MOVE decreased to 250000 from 400000 because this as well is repetiers standard now
+- defined MAX_ZJERK to 0.28 in config (instead of 0.1) because 0.1 was too small according formula (velocity/accelleration)
+- introduced SCRIPT_RETRACT_MM instead of old Z_PAUSE_RETRACT_MM which is now used in several locations.
+- added retract to Output Object Script again using SCRIPT_RETRACT_MM. former problems should be gone now! (see https://gcc.gnu.org/onlinedocs/cpp/Stringizing.html#Stringizing )
+
 V RF.01.37u5.Mod (2017-09-28)
 - Finally killed Advance blobs caused by "wipe while retract". Bug was: we have two functions where repetier has one - tested within the wrong one but the fix was actually good.
 - Added alternative Jerk function

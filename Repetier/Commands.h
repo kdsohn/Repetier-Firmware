@@ -30,7 +30,11 @@ public:
     static void waitUntilEndOfZOS();
     static void printCurrentPosition();
     static void printTemperatures(bool showRaw = false);
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     static void setFanSpeed(int speed,bool wait); /// Set fan speed 0..255
+    static void adjustFanFrequency(uint8_t speed_mode);
+    static void adjustFanMode(uint8_t output_mode = 0);
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
     static void changeFeedrateMultiply(int factorInPercent);
     static void changeFlowateMultiply(int factorInPercent);
     static void reportPrinterUsage();

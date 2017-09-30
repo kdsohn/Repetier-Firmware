@@ -596,6 +596,11 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
     }
     HAL::eprSetInt16( EPR_RF_FREQ_DBL, Printer::stepsDoublerFrequency );
 
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+    HAL::eprSetByte( EPR_RF_FAN_SPEED, cooler_pwm_speed );
+    HAL::eprSetByte( EPR_RF_FAN_MODE, cooler_mode );
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
+
     if(corrupted)
     {
 #if FEATURE_MILLING_MODE
@@ -970,6 +975,12 @@ void EEPROM::readDataFromEEPROM()
          Printer::stepsDoublerFrequency = constrain(HAL::eprGetInt16( EPR_RF_FREQ_DBL ),5000,12000);
     }
 
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+    uint8_t tempfs = HAL::eprGetByte( EPR_RF_FAN_SPEED );
+    Commands::adjustFanFrequency( (tempfs <= COOLER_MODE_MAX ? tempfs : cooler_pwm_speed) );
+    Commands::adjustFanMode( (HAL::eprGetByte( EPR_RF_FAN_MODE ) == COOLER_MODE_PDM ? COOLER_MODE_PDM : COOLER_MODE_PWM) );
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
+
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
     if( change ) EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
@@ -1318,6 +1329,11 @@ void EEPROM::writeSettings()
     writeByte(EPR_RF_MOTOR_CURRENT+E_AXIS+1,Com::tEPRPrinter_STEPPER_E1);
 #endif //NUM_EXTRUDER > 1
     writeInt(EPR_RF_FREQ_DBL,Com::tEPRPrinter_FREQ_DBL);
+
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+    writeByte(EPR_RF_FAN_MODE,Com::tEPRPrinter_FAN_MODE);
+    writeByte(EPR_RF_FAN_SPEED,Com::tEPRPrinter_FAN_SPEED);
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #else
     if( Printer::debugErrors() )

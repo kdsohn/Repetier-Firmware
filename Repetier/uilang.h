@@ -389,6 +389,9 @@
 #define UI_TEXT_MOTOR_E0               "I_e0: %M0"
 #define UI_TEXT_MOTOR_E1               "I_e1: %M1"
 
+#define UI_TEXT_FAN_MODE               "Modulation: %Fm"
+#define UI_TEXT_FAN_HZ                 "PWM Frq: %Fh Hz"
+    
 #if MOTHERBOARD == DEVICE_TYPE_RF2000
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min reached unhomed"
@@ -735,6 +738,9 @@
 #define UI_TEXT_MOTOR_Z                "I_z: %MZ"
 #define UI_TEXT_MOTOR_E0               "I_e0: %M0"
 #define UI_TEXT_MOTOR_E1               "I_e1: %M1"
+
+#define UI_TEXT_FAN_MODE               "Modulation: %Fm"
+#define UI_TEXT_FAN_HZ                 "PWM Frq: %Fh Hz"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000
 
