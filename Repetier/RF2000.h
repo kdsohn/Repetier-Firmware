@@ -1030,9 +1030,6 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_Y_STEP_SIZE_MM            20                                                                      // [mm]
 #define HEAT_BED_SCAN_Y_STEP_SIZE_MIN_MM        10                                                                      // [mm]
 
-//Nibbels: increased from 500 to 5000 in order to avoid problems with Dip-Down-Hotends
-#define HEAT_BED_SCAN_Z_START_uM                5000                                                                    // [um]
-
 #define HEAT_BED_SCAN_CONTACT_PRESSURE_DELTA    10                                                                      // [digits]
 #define HEAT_BED_SCAN_RETRY_PRESSURE_DELTA      5                                                                       // [digits]
 #define HEAT_BED_SCAN_IDLE_PRESSURE_DELTA       0                                                                       // [digits]
