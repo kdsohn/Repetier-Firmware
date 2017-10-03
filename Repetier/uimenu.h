@@ -711,16 +711,13 @@ UI_MENU(ui_menu_debugging,UI_MENU_DEBUGGING,4+UI_MENU_BACKCNT)
 UI_MENU_CHANGEACTION_FILTER(ui_menu_accel_printx,  UI_TEXT_PRINT_X, UI_ACTION_PRINT_ACCEL_X, 0, MENU_MODE_MILLER)
 UI_MENU_CHANGEACTION_FILTER(ui_menu_accel_printy,  UI_TEXT_PRINT_Y, UI_ACTION_PRINT_ACCEL_Y, 0, MENU_MODE_MILLER)
 UI_MENU_CHANGEACTION_FILTER(ui_menu_accel_printz,  UI_TEXT_PRINT_Z, UI_ACTION_PRINT_ACCEL_Z, 0, MENU_MODE_MILLER)
-UI_MENU_CHANGEACTION_FILTER(ui_menu_accel_millx,   UI_TEXT_MILL_X,  UI_ACTION_PRINT_ACCEL_X, 0, MENU_MODE_PRINTER)
-UI_MENU_CHANGEACTION_FILTER(ui_menu_accel_milly,   UI_TEXT_MILL_Y,  UI_ACTION_PRINT_ACCEL_Y, 0, MENU_MODE_PRINTER)
-UI_MENU_CHANGEACTION_FILTER(ui_menu_accel_millz,   UI_TEXT_MILL_Z,  UI_ACTION_PRINT_ACCEL_Z, 0, MENU_MODE_PRINTER)
 UI_MENU_CHANGEACTION(ui_menu_accel_travelx, UI_TEXT_MOVE_X,  UI_ACTION_MOVE_ACCEL_X)
 UI_MENU_CHANGEACTION(ui_menu_accel_travely, UI_TEXT_MOVE_Y,  UI_ACTION_MOVE_ACCEL_Y)
 UI_MENU_CHANGEACTION(ui_menu_accel_travelz, UI_TEXT_MOVE_Z,  UI_ACTION_MOVE_ACCEL_Z)
 UI_MENU_CHANGEACTION(ui_menu_accel_jerk,    UI_TEXT_JERK,    UI_ACTION_MAX_JERK)
 UI_MENU_CHANGEACTION(ui_menu_accel_zjerk,   UI_TEXT_ZJERK,   UI_ACTION_MAX_ZJERK)
-#define UI_MENU_ACCEL {UI_MENU_ADDCONDBACK &ui_menu_accel_printx, &ui_menu_accel_millx, &ui_menu_accel_printy, &ui_menu_accel_milly, &ui_menu_accel_printz, &ui_menu_accel_millz, &ui_menu_accel_travelx, &ui_menu_accel_travely, &ui_menu_accel_travelz, &ui_menu_accel_jerk, &ui_menu_accel_zjerk}
-UI_MENU(ui_menu_accel,UI_MENU_ACCEL,11+UI_MENU_BACKCNT)
+#define UI_MENU_ACCEL {UI_MENU_ADDCONDBACK &ui_menu_accel_printx, &ui_menu_accel_printy, &ui_menu_accel_printz, &ui_menu_accel_travelx, &ui_menu_accel_travely, &ui_menu_accel_travelz, &ui_menu_accel_jerk, &ui_menu_accel_zjerk}
+UI_MENU(ui_menu_accel,UI_MENU_ACCEL,8+UI_MENU_BACKCNT)
 
 /** \brief Feedrates */
 UI_MENU_CHANGEACTION(ui_menu_feedrate_maxx,  UI_TEXT_FEED_MAX_X,  UI_ACTION_MAX_FEEDRATE_X)
@@ -917,7 +914,8 @@ UI_MENU(ui_menu_general,UI_MENU_GENERAL,UI_MENU_BACKCNT+1+1+1+BEEPER_MODE_COUNT+
 
 /** \brief Configuration menu */
 UI_MENU_SUBMENU(ui_menu_conf_general,  UI_TEXT_GENERAL,        ui_menu_general)
-UI_MENU_SUBMENU(ui_menu_conf_accel,    UI_TEXT_ACCELERATION,   ui_menu_accel)
+UI_MENU_SUBMENU_FILTER(ui_menu_conf_accel,    UI_TEXT_ACCELERATION,   ui_menu_accel, MENU_MODE_PRINTER, MENU_MODE_MILLER)
+UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_help_accel_mill,UI_TEXT_ACCEL_MILL,UI_ACTION_MILL_ACCELERATION,MENU_MODE_MILLER,MENU_MODE_PRINTER)
 UI_MENU_SUBMENU(ui_menu_conf_feed,     UI_TEXT_FEEDRATE,       ui_menu_feedrate)
 UI_MENU_SUBMENU_FILTER(ui_menu_conf_pid, UI_TEXT_TEMPERATURES, ui_menu_pid, MENU_MODE_PRINTER, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED) 
 //#if MENU_MODE_PRINTER
@@ -931,8 +929,8 @@ UI_MENU_SUBMENU(ui_menu_z_calibration, UI_TEXT_ZCALIB,         ui_menu_z)
 UI_MENU_ACTION4C(ui_menu_restore_defaults_ack,UI_ACTION_RESTORE_DEFAULTS,UI_TEXT_RESTORE_DEFAULTS4)
 UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_restore_defaults,UI_TEXT_RESTORE_DEFAULTS,ui_menu_restore_defaults_ack, 0, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED)
 
-#define UI_MENU_CONFIGURATION {UI_MENU_ADDCONDBACK &ui_menu_conf_general, &ui_menu_conf_pid, &ui_menu_conf_motor, &ui_menu_conf_accel,&ui_menu_conf_feed, &ui_menu_z_calibration, &ui_menu_restore_defaults }
-UI_MENU(ui_menu_configuration,UI_MENU_CONFIGURATION,UI_MENU_BACKCNT+1+5+1)
+#define UI_MENU_CONFIGURATION {UI_MENU_ADDCONDBACK &ui_menu_conf_general, &ui_menu_conf_pid, &ui_menu_conf_motor, &ui_menu_conf_accel, &ui_menu_help_accel_mill, &ui_menu_conf_feed, &ui_menu_z_calibration, &ui_menu_restore_defaults }
+UI_MENU(ui_menu_configuration,UI_MENU_CONFIGURATION,UI_MENU_BACKCNT+1+5+1+1)
 
 /** \brief Main menu */
 UI_MENU_SUBMENU(ui_menu_main1, UI_TEXT_QUICK_SETTINGS,  ui_menu_quick)

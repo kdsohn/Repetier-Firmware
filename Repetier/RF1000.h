@@ -85,6 +85,8 @@ WARNING: Do not enable the case fan feature in case you have a second extruder a
 
 /** \brief Define the type of the present miller hardware */
 #define MILLER_TYPE                         MILLER_TYPE_TWO_TRACKS
+/** \brief Define lower acceleration to reach very small speeds */
+#define MILLER_ACCELERATION                 15
 
 /** \brief Default operating mode */
 #define DEFAULT_OPERATING_MODE              OPERATING_MODE_PRINT

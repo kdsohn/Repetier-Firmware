@@ -3394,6 +3394,11 @@ void UIDisplay::nextPreviousAction(int8_t next)
 
             break;
         }
+        case UI_ACTION_MILL_ACCELERATION:
+        {
+            //dummy because milling acceleration is only adjustable over config rightnow.
+            break;
+        }
         case UI_ACTION_HOMING_FEEDRATE_X:
         {
             INCREMENT_MIN_MAX(Printer::homingFeedrate[X_AXIS],5,5,1000);

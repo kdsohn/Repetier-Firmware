@@ -13031,8 +13031,8 @@ void setupForPrinting( void )
     Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_PRINT;
     HAL::eprSetFloat(EPR_X_LENGTH,Printer::lengthMM[X_AXIS]);
     EEPROM::updateChecksum();
-    Printer::updateDerivedParameter();
 #endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+    Printer::updateDerivedParameter();
 
     g_staticZSteps = (Printer::ZOffset * Printer::axisStepsPerMM[Z_AXIS]) / 1000;
 
@@ -13088,8 +13088,8 @@ void setupForMilling( void )
     Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_MILL;
     HAL::eprSetFloat(EPR_X_LENGTH,Printer::lengthMM[X_AXIS]);
     EEPROM::updateChecksum();
-    Printer::updateDerivedParameter();
 #endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+    Printer::updateDerivedParameter();
 
     g_staticZSteps = 0;
 

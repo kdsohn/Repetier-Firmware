@@ -2,6 +2,12 @@ TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad
 -> Is this possibly fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37v2.Mod (2017-10-03)
+- Reduce Milling-Acceleration to #define MILLER_ACCELERATION 15 or as stated within RFx000.h to gain very small possible speeds.
+- remove milling acceleration menu when in milling-mode, show MILLER_ACCELERATION instead.
+- auto switch from normal accelerations to MILLER_ACCELERATION when switching printer mode to milling. this is reverted when switching operating mode back.
+TODO: Insert special acceleration var for milling into eeprom to change and dynamically handle the value within menu.
+
 V RF.01.37v.Mod (2017-09-28)
 - the fans operating modes ar now configurable within menu and eeprom (see Menu->Fan Speed)
    Fan-Modes: PWM or PDM

@@ -308,20 +308,56 @@ void Printer::updateDerivedParameter()
         invAxisStepsPerMM[i] = 1.0f / axisStepsPerMM[i];
 
 #ifdef RAMP_ACCELERATION
-        /** Acceleration in steps/s^2 in printing mode.*/
-        maxPrintAccelerationStepsPerSquareSecond[i] = maxAccelerationMMPerSquareSecond[i] * axisStepsPerMM[i];
-        /** Acceleration in steps/s^2 in movement mode.*/
-        maxTravelAccelerationStepsPerSquareSecond[i] = maxTravelAccelerationMMPerSquareSecond[i] * axisStepsPerMM[i];
+#if FEATURE_MILLING_MODE
+        if( Printer::operatingMode == OPERATING_MODE_PRINT )
+        {
+#endif // FEATURE_MILLING_MODE
+            /** Acceleration in steps/s^2 in printing mode.*/
+            maxPrintAccelerationStepsPerSquareSecond[i] = maxAccelerationMMPerSquareSecond[i] * axisStepsPerMM[i];
+            /** Acceleration in steps/s^2 in movement mode.*/
+            maxTravelAccelerationStepsPerSquareSecond[i] = maxTravelAccelerationMMPerSquareSecond[i] * axisStepsPerMM[i];
+#if FEATURE_MILLING_MODE
+        }
+        else
+        {
+            /** Acceleration in steps/s^2 in milling mode.*/
+            maxPrintAccelerationStepsPerSquareSecond[i] = MILLER_ACCELERATION * axisStepsPerMM[i];
+            /** Acceleration in steps/s^2 in milling-movement mode.*/
+            maxTravelAccelerationStepsPerSquareSecond[i] = MILLER_ACCELERATION * axisStepsPerMM[i];
+        }
+#endif  // FEATURE_MILLING_MODE
 #endif // RAMP_ACCELERATION
+    } 
+    
+    float accel;
+#if FEATURE_MILLING_MODE
+    if( Printer::operatingMode == OPERATING_MODE_PRINT )
+    {
+#endif // FEATURE_MILLING_MODE
+      accel = RMath::max(maxAccelerationMMPerSquareSecond[X_AXIS], maxTravelAccelerationMMPerSquareSecond[X_AXIS]);
+#if FEATURE_MILLING_MODE
     }
-    float accel = RMath::max(maxAccelerationMMPerSquareSecond[X_AXIS], maxTravelAccelerationMMPerSquareSecond[X_AXIS]);
+    else{
+      accel = MILLER_ACCELERATION;
+    }
+#endif  // FEATURE_MILLING_MODE
+    
     float minimumSpeed = accel * sqrt(2.0f / (axisStepsPerMM[X_AXIS] * accel));
     if(maxJerk < 2 * minimumSpeed) {// Enforce minimum start speed if target is faster and jerk too low
         maxJerk = 2 * minimumSpeed;
         Com::printFLN(PSTR("XY jerk was too low, setting to "), maxJerk);
     }
     
-    accel = RMath::max(maxAccelerationMMPerSquareSecond[Z_AXIS], maxTravelAccelerationMMPerSquareSecond[Z_AXIS]);
+    
+    
+#if FEATURE_MILLING_MODE
+    if( Printer::operatingMode == OPERATING_MODE_PRINT )
+    {
+#endif // FEATURE_MILLING_MODE
+      accel = RMath::max(maxAccelerationMMPerSquareSecond[Z_AXIS], maxTravelAccelerationMMPerSquareSecond[Z_AXIS]);
+#if FEATURE_MILLING_MODE
+    }
+#endif  // FEATURE_MILLING_MODE
     float minimumZSpeed = 0.5 * accel * sqrt(2.0f / (axisStepsPerMM[Z_AXIS] * accel));
     if(maxZJerk < 2 * minimumZSpeed) {
         maxZJerk = 2 * minimumZSpeed;

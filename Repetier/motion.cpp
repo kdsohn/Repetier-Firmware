@@ -880,28 +880,6 @@ inline void PrintLine::computeMaxJunctionSpeed(PrintLine *previous,PrintLine *cu
         factor = RMath::min(factor, Extruder::current->maxStartFeedrate / eJerk);
     previous->maxJunctionSpeed = maxJoinSpeed * factor; // set speed limit
 
-
-/* OLD RF JERK
-    float dx = current->speedX-previous->speedX;
-    float dy = current->speedY-previous->speedY;
-    float factor = 1;
-    float jerk = sqrt(dx*dx + dy*dy);
-
-    if(jerk>Printer::maxJerk)
-        factor = Printer::maxJerk / jerk;
-
-    if((previous->dir | current->dir) & 64)
-    {
-        float dz = fabs(current->speedZ - previous->speedZ);
-        if(dz>Printer::maxZJerk)
-            factor = RMath::min(factor,Printer::maxZJerk / dz);
-    }
-
-    float eJerk = fabs(current->speedE - previous->speedE);
-    if(eJerk > Extruder::current->maxStartFeedrate)
-        factor = RMath::min(factor,Extruder::current->maxStartFeedrate / eJerk);
-    previous->maxJunctionSpeed = RMath::min(previous->fullSpeed * factor,current->fullSpeed);
-*/
 } // computeMaxJunctionSpeed
 
 
