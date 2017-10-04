@@ -35,6 +35,9 @@ float           Printer::homingFeedrate[3];
 #ifdef RAMP_ACCELERATION
 float           Printer::maxAccelerationMMPerSquareSecond[4] = {MAX_ACCELERATION_UNITS_PER_SQ_SECOND_X,MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Y,MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Z}; ///< X, Y, Z and E max acceleration in mm/s^2 for printing moves or retracts
 float           Printer::maxTravelAccelerationMMPerSquareSecond[4] = {MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_X,MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_Y,MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_Z}; ///< X, Y, Z max acceleration in mm/s^2 for travel moves
+#if FEATURE_MILLING_MODE
+short           Printer::max_milling_all_axis_acceleration = MILLER_ACCELERATION; //miller min speed is limited to too high speed because of acceleration-formula. We use this value in milling mode and make it adjustable within small numbers like 5 to 100 or something like that.
+#endif // FEATURE_MILLING_MODE
 
 /** Acceleration in steps/s^2 in printing mode.*/
 unsigned long   Printer::maxPrintAccelerationStepsPerSquareSecond[4];

@@ -507,6 +507,8 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
     HAL::eprSetFloat(EPR_Y_MAX_TRAVEL_ACCEL,Printer::maxTravelAccelerationMMPerSquareSecond[Y_AXIS]);
     HAL::eprSetFloat(EPR_Z_MAX_TRAVEL_ACCEL,Printer::maxTravelAccelerationMMPerSquareSecond[Z_AXIS]);
 #if FEATURE_MILLING_MODE
+    }else{
+      HAL::eprSetInt16(EPR_RF_MILL_ACCELERATION,Printer::max_milling_all_axis_acceleration);
     }
 #endif  // FEATURE_MILLING_MODE
 #endif // RAMP_ACCELERATION
@@ -936,6 +938,15 @@ void EEPROM::readDataFromEEPROM()
     bool change = false;
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
 
+#if FEATURE_MILLING_MODE
+    Printer::max_milling_all_axis_acceleration = HAL::eprGetInt16(EPR_RF_MILL_ACCELERATION);
+    if(Printer::max_milling_all_axis_acceleration <= 0){
+        Printer::max_milling_all_axis_acceleration = MILLER_ACCELERATION;
+        HAL::eprSetInt16(EPR_RF_MILL_ACCELERATION,MILLER_ACCELERATION);
+        change = true;
+    }
+#endif // FEATURE_MILLING_MODE
+
 #if FEATURE_EMERGENCY_STOP_ALL
     g_nZEmergencyStopAllMin = (short)constrain( HAL::eprGetInt16( EPR_RF_EMERGENCYZSTOPDIGITSMIN ) , EMERGENCY_STOP_DIGITS_MIN , EMERGENCY_STOP_DIGITS_MAX ); //limit to value in config.
     g_nZEmergencyStopAllMax = (short)constrain( HAL::eprGetInt16( EPR_RF_EMERGENCYZSTOPDIGITSMAX ) , EMERGENCY_STOP_DIGITS_MIN , EMERGENCY_STOP_DIGITS_MAX ); //limit to value in config.
@@ -1230,6 +1241,8 @@ void EEPROM::writeSettings()
     writeFloat(EPR_Y_MAX_TRAVEL_ACCEL,Com::tEPRYTravelAcceleration);
     writeFloat(EPR_Z_MAX_TRAVEL_ACCEL,Com::tEPRZTravelAcceleration);
 #if FEATURE_MILLING_MODE
+    }else{
+      writeInt(EPR_RF_MILL_ACCELERATION,Com::tEPRZMillingAcceleration);
     }
 #endif // FEATURE_MILLING_MODE
 #endif // RAMP_ACCELERATION

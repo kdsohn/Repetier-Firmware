@@ -2,6 +2,17 @@ TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad
 -> Is this possibly fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37v3.Mod (2017-10-03)
+- added menu and eeprom support for milling all axis acceleration
+   because high acceleration needs higher minimum speed which is bad when milling.
+   you now see and use a special acceleration in milling mode (~15 mm/s² -> which you can change now)
+- fix double defined HEAT_BED_SCAN_Z_START_uM which caused ZOS to start too high.
+- fix count main menu
+- resort fan settings to CONFIGURATION -> PART FAN -> 
+- resort DMS Digits limit options to CONFIGURATION -> DMS FEATURES
+- Fix scrolling after inserting SD within milling mode
+- minor cleanup
+
 V RF.01.37v2.Mod (2017-10-03)
 - Reduce Milling-Acceleration to #define MILLER_ACCELERATION 15 or as stated within RFx000.h to gain very small possible speeds.
 - remove milling acceleration menu when in milling-mode, show MILLER_ACCELERATION instead.

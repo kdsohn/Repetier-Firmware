@@ -204,6 +204,7 @@ public:
     FSTRINGVAR(tEPRZBacklash)
     FSTRINGVAR(tEPRZAcceleration)
     FSTRINGVAR(tEPRZTravelAcceleration)
+    FSTRINGVAR(tEPRZMillingAcceleration)    
     FSTRINGVAR(tEPRZStepsPerMM)
     FSTRINGVAR(tEPRZMaxFeedrate)
     FSTRINGVAR(tEPRZHomingFeedrate)

@@ -177,7 +177,9 @@
 #define UI_TEXT_JERK                    "X/Y-Jerk:%aj"
 #define UI_TEXT_ZJERK                   "Z-Jerk  :%aJ"
 #define UI_TEXT_ACCELERATION            "Acceleration"
-#define UI_TEXT_ACCEL_MILL              "Milling accel.: " xstr(MILLER_ACCELERATION)
+#if FEATURE_MILLING_MODE
+ #define UI_TEXT_ACCEL_MILL              "Accelerat.: %XZ"
+#endif //FEATURE_MILLING_MODE
 #define UI_TEXT_DBG_ECHO                "Echo   : %do"
 #define UI_TEXT_DBG_INFO                "Info   : %di"
 #define UI_TEXT_DBG_ERROR               "Errors : %de"
@@ -220,6 +222,7 @@
 #define UI_TEXT_Z_ENDSTOP_TYPE          "Z Type: %OZ"
 #define UI_TEXT_MILLER_TYPE             "Miller: %mt"
 #define UI_TEXT_GENERAL                 "General"
+#define UI_TEXT_DMS                     "DMS Features"
 #define UI_TEXT_EXTR_STEPS              "Steps/mm:%Se"
 #define UI_TEXT_EXTR_STEPS0             "E0-Steps/mm:%S0"
 #define UI_TEXT_EXTR_STEPS1             "E1-Steps/mm:%S1"
@@ -318,7 +321,7 @@
 #define UI_TEXT_SET_SCAN_XY_END         "Set XY End"
 #define UI_TEXT_SET_SCAN_DELTA_X        "Set dX: %Dxmm"
 #define UI_TEXT_SET_SCAN_DELTA_Y        "Set dY: %Dymm"
-#define UI_TEXT_STRAIN_GAUGE            "F: %s1 L: %Fs%%%"
+#define UI_TEXT_STRAIN_GAUGE            "F: %s1 L: %Fs%%%%11F: %s1 V: %om%%%"
 #define UI_TEXT_SERVICE                 "SERVICE"
 #define UI_TEXT_SERVICE_TIME            "Until service"
 #define UI_TEXT_PRINTING_ROOM_LIGHT     "PRL: " 
@@ -387,6 +390,7 @@
 #define UI_TEXT_MOTOR_E0               "I_e0: %M0"
 #define UI_TEXT_MOTOR_E1               "I_e1: %M1"
 
+#define UI_TEXT_FAN_CONF_MENU          "Part Fan"
 #define UI_TEXT_FAN_MODE               "Modulation: %Fm"
 #define UI_TEXT_FAN_HZ                 "PWM Frq: %Fh Hz"
     
@@ -544,7 +548,9 @@
 #define UI_TEXT_MOVE_Z                  "Bewegen Z:%aZ"
 #define UI_TEXT_MOVE_Z_DELTA            "Bewegen:%aZ"
 #define UI_TEXT_ACCELERATION            "Beschleunigung"
-#define UI_TEXT_ACCEL_MILL              "Fr" STR_auml "sen Beschl.: " xstr(MILLER_ACCELERATION)
+#if FEATURE_MILLING_MODE
+ #define UI_TEXT_ACCEL_MILL              "Fr" STR_auml "sbeschl.:%XZ"
+#endif // FEATURE_MILLING_MODE
 #define UI_TEXT_DBG_ECHO                "Echo       :%do"
 #define UI_TEXT_DBG_INFO                "Info       :%di"
 #define UI_TEXT_DBG_ERROR               "Fehler     :%de"
@@ -580,6 +586,7 @@
 #define UI_TEXT_Z_ENDSTOP_TYPE          "Z Typ: %OZ"
 #define UI_TEXT_MILLER_TYPE             "Fr" STR_auml "ser: %mt"
 #define UI_TEXT_GENERAL                 "Allgemein"
+#define UI_TEXT_DMS                     "DMS Features"
 #define UI_TEXT_EXTR_MAX_FEED           "Max FR:%XF"
 #define UI_TEXT_EXTR_ADVANCE_L          "Advance lin:%Xl"
 #define UI_TEXT_EXTR_ADVANCE_L_E0       "E0-Advance L:%Xb"
@@ -735,6 +742,7 @@
 #define UI_TEXT_MOTOR_E0               "I_e0: %M0"
 #define UI_TEXT_MOTOR_E1               "I_e1: %M1"
 
+#define UI_TEXT_FAN_CONF_MENU          "Bauteil L" STR_uuml  "fter"
 #define UI_TEXT_FAN_MODE               "Modulation: %Fm"
 #define UI_TEXT_FAN_HZ                 "PWM Frq: %Fh Hz"
 

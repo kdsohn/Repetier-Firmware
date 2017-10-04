@@ -29,6 +29,8 @@ defining the value. You can use any placeholder in any position, also it doesn't
 always make sense.
 
 List of placeholder:
+%11 : Kill Line if Millingmode
+
 %ec : Current extruder temperature
 %eb : Current heated bed temperature
 %e0..9 : Temp. of extruder 0..9
@@ -121,6 +123,7 @@ List of placeholder:
 %Xf : Extruder max. start feedrate
 %XF : Extruder max. feedrate
 %XA : Extruder max. acceleration
+%XZ : Milling special max. acceleration
 
 // RF specific:
 %s1 : current value of the strain gauge
@@ -233,9 +236,9 @@ for 2 row displays. You can add additional pages or change the default pages lik
 #elif UI_ROWS>=4
     #if HAVE_HEATED_BED==true
         #if UI_COLS<=16
-            UI_PAGE4(ui_page1,"%U1%ec/%EcB%eB/%Eb","Z:%x2 mm %sC%hz",UI_TEXT_STRAIN_GAUGE,"%os")
+            UI_PAGE4(ui_page1,"%U1%ec/%EcB%eB/%Eb%U2","Z:%x2 mm %sC%hz",UI_TEXT_STRAIN_GAUGE,"%os")
         #else
-            UI_PAGE4(ui_page1,"%U1%ec/%Ec\002 B%eB/%Eb\002","Z:%x2 mm %sC%hz",UI_TEXT_STRAIN_GAUGE,"%os")
+            UI_PAGE4(ui_page1,"%U1%ec/%Ec\002 B%eB/%Eb\002%U2","Z:%x2 mm %sC%hz",UI_TEXT_STRAIN_GAUGE,"%os")
         #endif // UI_COLS<=16
     #else
         UI_PAGE4(ui_page1,UI_TEXT_PAGE_EXTRUDER,"Z:%x2 mm %sC%hz",UI_TEXT_STRAIN_GAUGE,"%os")
@@ -644,12 +647,12 @@ UI_MENU_ACTIONCOMMAND(ui_menu_fan_75,UI_TEXT_FAN_75,UI_ACTION_FAN_75)
 UI_MENU_ACTIONCOMMAND(ui_menu_fan_full,UI_TEXT_FAN_FULL,UI_ACTION_FAN_FULL)
 
 
-UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_fan_hz,  UI_TEXT_FAN_HZ,  UI_ACTION_FAN_HZ  ,0,MENU_MODE_FAN_MODE_PDM)
-UI_MENU_ACTIONCOMMAND(       ui_menu_fan_mode,UI_TEXT_FAN_MODE,UI_ACTION_FAN_MODE)
+UI_MENU_CHANGEACTION_FILTER(ui_menu_fan_hz, UI_TEXT_FAN_HZ, UI_ACTION_FAN_HZ, 0, MENU_MODE_FAN_MODE_PDM)
+UI_MENU_ACTIONCOMMAND(      ui_menu_fan_mode,UI_TEXT_FAN_MODE,UI_ACTION_FAN_MODE)
 #define UI_MENU_FANHZMODE_CNT 2
 
-#define UI_MENU_FAN {UI_MENU_ADDCONDBACK &ui_menu_fan_fanspeed,&ui_menu_fan_off,&ui_menu_fan_25,&ui_menu_fan_50,&ui_menu_fan_75,&ui_menu_fan_full,&ui_menu_fan_mode,&ui_menu_fan_hz}
-UI_MENU(ui_menu_fan,UI_MENU_FAN,6+UI_MENU_BACKCNT+UI_MENU_FANHZMODE_CNT)
+#define UI_MENU_FAN {UI_MENU_ADDCONDBACK &ui_menu_fan_fanspeed,&ui_menu_fan_off,&ui_menu_fan_25,&ui_menu_fan_50,&ui_menu_fan_75,&ui_menu_fan_full}
+UI_MENU(ui_menu_fan,UI_MENU_FAN,UI_MENU_BACKCNT+6)
 UI_MENU_SUBMENU_FILTER(ui_menu_fan_sub,UI_TEXT_FANSPEED,ui_menu_fan,MENU_MODE_PRINTER,0)
 #define UI_MENU_FAN_COND &ui_menu_fan_sub,
 #define UI_MENU_FAN_CNT 1
@@ -657,6 +660,14 @@ UI_MENU_SUBMENU_FILTER(ui_menu_fan_sub,UI_TEXT_FANSPEED,ui_menu_fan,MENU_MODE_PR
 #define UI_MENU_FAN_COND
 #define UI_MENU_FAN_CNT 0
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
+
+#define UI_MENU_CONF_FAN {UI_MENU_ADDCONDBACK &ui_menu_fan_mode,&ui_menu_fan_hz}
+UI_MENU(ui_menu_settings_fan,UI_MENU_CONF_FAN,UI_MENU_BACKCNT+1+1)
+
+/** \brief Configuration->DMS Features menu */
+UI_MENU_SUBMENU_FILTER(ui_menu_conf_fan, UI_TEXT_FAN_CONF_MENU, ui_menu_settings_fan,MENU_MODE_PRINTER,0)
+#define UI_MENU_CONFIGURATION_FAN_COND &ui_menu_conf_fan,
+#define UI_MENU_CONFIGURATION_FAN_COUNT 1
 
 /** \brief SD card menu */
 
@@ -807,7 +818,7 @@ UI_MENU_ACTION4C(ui_menu_emergency_pause_min2,UI_ACTION_EMERGENCY_PAUSE_MIN,UI_T
 UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_emergency_pause_min,UI_TEXT_EMERGENCY_PAUSE_MIN,ui_menu_emergency_pause_min2, MENU_MODE_PRINTER, 0)
 UI_MENU_ACTION4C(ui_menu_emergency_pause_max2,UI_ACTION_EMERGENCY_PAUSE_MAX,UI_TEXT_EMERGENCY_PAUSE_MAX2)
 UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_emergency_pause_max,UI_TEXT_EMERGENCY_PAUSE_MAX,ui_menu_emergency_pause_max2, MENU_MODE_PRINTER, 0)
-#define EMERGENCY_PAUSE_MINMAX_ENTRY ,&ui_menu_emergency_pause_min ,&ui_menu_emergency_pause_max 
+#define EMERGENCY_PAUSE_MINMAX_ENTRY &ui_menu_emergency_pause_min ,&ui_menu_emergency_pause_max 
 #define EMERGENCY_PAUSE_MINMAX_COUNT 2
 #else
 #define EMERGENCY_PAUSE_MINMAX_ENTRY
@@ -825,6 +836,14 @@ UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_emergency_zstop_max,UI_TEXT_EMERGENCY_ZSTO
 #define EMERGENCY_ZSTOP_MINMAX_ENTRY
 #define EMERGENCY_ZSTOP_MINMAX_COUNT 0
 #endif // FEATURE_EMERGENCY_STOP_ALL
+
+#define UI_MENU_DMS {UI_MENU_ADDCONDBACK EMERGENCY_PAUSE_MINMAX_ENTRY EMERGENCY_ZSTOP_MINMAX_ENTRY}
+UI_MENU(ui_menu_dms,UI_MENU_DMS,UI_MENU_BACKCNT+EMERGENCY_PAUSE_MINMAX_COUNT+EMERGENCY_ZSTOP_MINMAX_COUNT)
+
+/** \brief Configuration->DMS Features menu */
+UI_MENU_SUBMENU_FILTER(ui_menu_conf_dms, UI_TEXT_DMS, ui_menu_dms, MENU_MODE_PRINTER, 0)
+#define UI_MENU_CONFIGURATION_DMS_COND &ui_menu_conf_dms,
+#define UI_MENU_CONFIGURATION_DMS_COUNT 1
 
 //############################################################### PID MENU
 
@@ -909,13 +928,20 @@ UI_MENU_CHANGEACTION(ui_menu_freq_dbl,UI_TEXT_FREQ_DBL,UI_ACTION_FREQ_DBL)
 UI_MENU(ui_menu_motor,UI_MENU_MOTOR_COND,UI_MENU_MOTOR_COUNT)
 //############################################################### MOTOR MENU
 
-#define UI_MENU_GENERAL {UI_MENU_ADDCONDBACK &ui_menu_general_baud,&ui_menu_general_stepper_inactive,&ui_menu_general_max_inactive BEEPER_MODE_ENTRY RGB_LIGHT_ENTRY OPERATING_MODE_ENTRY Z_ENDSTOP_TYPE_ENTRY MILLER_TYPE_ENTRY EXTRUDER_OFFSET_TYPE_ENTRY_XY EMERGENCY_PAUSE_MINMAX_ENTRY EMERGENCY_ZSTOP_MINMAX_ENTRY}
-UI_MENU(ui_menu_general,UI_MENU_GENERAL,UI_MENU_BACKCNT+1+1+1+BEEPER_MODE_COUNT+RGB_LIGHT_COUNT+OPERATING_MODE_COUNT+Z_ENDSTOP_TYPE_COUNT+MILLER_TYPE_COUNT+EXTRUDER_OFFSET_TYPE_COUNT_XY+EMERGENCY_PAUSE_MINMAX_COUNT+EMERGENCY_ZSTOP_MINMAX_COUNT)
+#define UI_MENU_GENERAL {UI_MENU_ADDCONDBACK &ui_menu_general_baud,&ui_menu_general_stepper_inactive,&ui_menu_general_max_inactive BEEPER_MODE_ENTRY RGB_LIGHT_ENTRY OPERATING_MODE_ENTRY Z_ENDSTOP_TYPE_ENTRY MILLER_TYPE_ENTRY EXTRUDER_OFFSET_TYPE_ENTRY_XY}
+UI_MENU(ui_menu_general,UI_MENU_GENERAL,UI_MENU_BACKCNT+1+1+1+BEEPER_MODE_COUNT+RGB_LIGHT_COUNT+OPERATING_MODE_COUNT+Z_ENDSTOP_TYPE_COUNT+MILLER_TYPE_COUNT+EXTRUDER_OFFSET_TYPE_COUNT_XY)
 
 /** \brief Configuration menu */
 UI_MENU_SUBMENU(ui_menu_conf_general,  UI_TEXT_GENERAL,        ui_menu_general)
 UI_MENU_SUBMENU_FILTER(ui_menu_conf_accel,    UI_TEXT_ACCELERATION,   ui_menu_accel, MENU_MODE_PRINTER, MENU_MODE_MILLER)
-UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_help_accel_mill,UI_TEXT_ACCEL_MILL,UI_ACTION_MILL_ACCELERATION,MENU_MODE_MILLER,MENU_MODE_PRINTER)
+#if FEATURE_MILLING_MODE
+ UI_MENU_CHANGEACTION_FILTER(ui_menu_help_accel_mill,UI_TEXT_ACCEL_MILL,UI_ACTION_MILL_ACCELERATION,MENU_MODE_MILLER,MENU_MODE_PRINTER)
+ #define UI_MENU_ACCEL_MILL_COND &ui_menu_help_accel_mill,
+ #define UI_MENU_ACCEL_MILL_COUNT 1
+#else
+ #define UI_MENU_ACCEL_MILL_COND 
+ #define UI_MENU_ACCEL_MILL_COUNT 0
+#endif //FEATURE_MILLING_MODE
 UI_MENU_SUBMENU(ui_menu_conf_feed,     UI_TEXT_FEEDRATE,       ui_menu_feedrate)
 UI_MENU_SUBMENU_FILTER(ui_menu_conf_pid, UI_TEXT_TEMPERATURES, ui_menu_pid, MENU_MODE_PRINTER, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED) 
 //#if MENU_MODE_PRINTER
@@ -929,13 +955,19 @@ UI_MENU_SUBMENU(ui_menu_z_calibration, UI_TEXT_ZCALIB,         ui_menu_z)
 UI_MENU_ACTION4C(ui_menu_restore_defaults_ack,UI_ACTION_RESTORE_DEFAULTS,UI_TEXT_RESTORE_DEFAULTS4)
 UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_restore_defaults,UI_TEXT_RESTORE_DEFAULTS,ui_menu_restore_defaults_ack, 0, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED)
 
-#define UI_MENU_CONFIGURATION {UI_MENU_ADDCONDBACK &ui_menu_conf_general, &ui_menu_conf_pid, &ui_menu_conf_motor, &ui_menu_conf_accel, &ui_menu_help_accel_mill, &ui_menu_conf_feed, &ui_menu_z_calibration, &ui_menu_restore_defaults }
-UI_MENU(ui_menu_configuration,UI_MENU_CONFIGURATION,UI_MENU_BACKCNT+1+5+1+1)
+#define UI_MENU_CONFIGURATION {UI_MENU_ADDCONDBACK &ui_menu_conf_general, &ui_menu_z_calibration, UI_MENU_CONFIGURATION_DMS_COND UI_MENU_CONFIGURATION_FAN_COND &ui_menu_conf_pid, &ui_menu_conf_motor, &ui_menu_conf_accel, UI_MENU_ACCEL_MILL_COND &ui_menu_conf_feed,  &ui_menu_restore_defaults }
+UI_MENU(ui_menu_configuration,UI_MENU_CONFIGURATION,UI_MENU_BACKCNT+1+1+UI_MENU_CONFIGURATION_DMS_COUNT+UI_MENU_CONFIGURATION_FAN_COUNT+5+UI_MENU_ACCEL_MILL_COUNT)
 
 /** \brief Main menu */
 UI_MENU_SUBMENU(ui_menu_main1, UI_TEXT_QUICK_SETTINGS,  ui_menu_quick)
+#define UI_MENU_QUICK_SETTINGS_ENTRY    &ui_menu_main1,
+#define UI_MENU_QUICK_SETTINGS_COUNT    1
 UI_MENU_SUBMENU_FILTER(ui_menu_main2, UI_TEXT_POSITION, ui_menu_positions, 0, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED)
+#define UI_MENU_POSITION_ENTRY    &ui_menu_main2,
+#define UI_MENU_POSITION_COUNT    1
 UI_MENU_SUBMENU_FILTER(ui_menu_main3, UI_TEXT_EXTRUDER, ui_menu_extruder, MENU_MODE_PRINTER, 0)
+#define UI_MENU_EXTRUDER_ENTRY    &ui_menu_main3,
+#define UI_MENU_EXTRUDER_COUNT    1
 
 #if SHOW_DEBUGGING_MENU
 UI_MENU_SUBMENU(ui_menu_main4, UI_TEXT_DEBUGGING,       ui_menu_debugging)
@@ -947,14 +979,19 @@ UI_MENU_SUBMENU(ui_menu_main4, UI_TEXT_DEBUGGING,       ui_menu_debugging)
 #endif // SHOW_DEBUGGING_MENU
 
 UI_MENU_SUBMENU(ui_menu_main5, UI_TEXT_CONFIGURATION,  ui_menu_configuration)
+#define UI_MENU_CONFIGURATION_ENTRY    &ui_menu_main5
+#define UI_MENU_CONFIGURATION_COUNT    1
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000
-#define UI_MENU_MAIN {UI_MENU_ADDCONDBACK  &ui_menu_main1,&ui_menu_sd_print_file,&ui_menu_sd_mill_file,&ui_menu_main2,&ui_menu_main3,UI_MENU_FAN_COND UI_MENU_SD_COND DEBUGGING_MENU_ENTRY &ui_menu_main5}
-UI_MENU(ui_menu_main,UI_MENU_MAIN,6+UI_MENU_BACKCNT+UI_MENU_SD_CNT+UI_MENU_FAN_CNT+DEBUGGING_MENU_COUNT)
+#define UI_MENU_RF2000_FILE_COND    &ui_menu_sd_print_file, &ui_menu_sd_mill_file,
+#define UI_MENU_RF2000_FILE_COUNT   2
 #else
-#define UI_MENU_MAIN {UI_MENU_ADDCONDBACK  &ui_menu_main1,&ui_menu_main2,&ui_menu_main3,UI_MENU_FAN_COND UI_MENU_SD_COND DEBUGGING_MENU_ENTRY &ui_menu_main5}
-UI_MENU(ui_menu_main,UI_MENU_MAIN,5+UI_MENU_BACKCNT+UI_MENU_SD_CNT+UI_MENU_FAN_CNT+DEBUGGING_MENU_COUNT)
+#define UI_MENU_RF2000_FILE_COND    
+#define UI_MENU_RF2000_FILE_COUNT   0
 #endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+
+#define UI_MENU_MAIN {UI_MENU_ADDCONDBACK UI_MENU_QUICK_SETTINGS_ENTRY UI_MENU_RF2000_FILE_COND UI_MENU_POSITION_ENTRY UI_MENU_EXTRUDER_ENTRY UI_MENU_FAN_COND UI_MENU_SD_COND DEBUGGING_MENU_ENTRY UI_MENU_CONFIGURATION_ENTRY}
+UI_MENU(ui_menu_main,UI_MENU_MAIN,UI_MENU_BACKCNT+UI_MENU_QUICK_SETTINGS_COUNT+UI_MENU_RF2000_FILE_COUNT+UI_MENU_POSITION_COUNT+UI_MENU_EXTRUDER_COUNT+UI_MENU_FAN_CNT+UI_MENU_SD_CNT+DEBUGGING_MENU_COUNT+UI_MENU_CONFIGURATION_COUNT)
 
 /* Define menus accessible by action commands
 
