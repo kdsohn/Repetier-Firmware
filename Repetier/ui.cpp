@@ -799,7 +799,7 @@ void UIDisplay::parse(char *txt,bool ram)
 
     while(col<MAX_COLS)
     {
-    char c=(ram ? *(txt++) : pgm_read_byte(txt++));
+       char c=(ram ? *(txt++) : pgm_read_byte(txt++));
         if(c==0) break; // finished
         if(c!='%')
         {
@@ -816,6 +816,23 @@ void UIDisplay::parse(char *txt,bool ram)
             {
                 if(c2=='%' && col<MAX_COLS)
                     printCols[col++]='%';                                                               // %%% : The % char
+                break;
+            }
+            case '1':
+            {
+                if(c2 == '1'){                                                                          // %11 : Kill Line if Millingmode and use following string for display, else stop here
+#if FEATURE_MILLING_MODE
+                    if ( Printer::operatingMode == OPERATING_MODE_MILL )
+                    {
+                        for(uint8_t n = 0; n < MAX_COLS+1 ; n++) printCols[n]=0; //clear all text
+                        col = 0; //reset linemarker
+                    }else
+#endif // FEATURE_MILLING_MODE
+                    { //this is not milling mode: stop here
+                        if(col<MAX_COLS) printCols[col++]=0; //write 0 to end of string
+                        col = MAX_COLS; //end while
+                    }
+                }
                 break;
             }
             case 'a': // Acceleration settings
@@ -1556,6 +1573,12 @@ void UIDisplay::parse(char *txt,bool ram)
                     addFloat(Printer::stepsDoublerFrequency/RMath::max(XAXIS_STEPS_PER_MM,YAXIS_STEPS_PER_MM),3,0);
                     addStringP( PSTR("mm/s") );
                 }
+#if FEATURE_MILLING_MODE
+                else if(c2=='Z')                                                                        // %XZ : Milling special max. acceleration
+                {
+                    addInt(Printer::max_milling_all_axis_acceleration,3);
+                }
+#endif // FEATURE_MILLING_MODE
                 break;
             }
             case 's': // Endstop positions
@@ -1677,14 +1700,6 @@ void UIDisplay::parse(char *txt,bool ram)
                 if(c2=='1')                                                                             // %s1 : current value of the strain gauge
                 {
                     addInt(g_nLastDigits,5);
-#if FEATURE_MILLING_MODE
-                    if ( Printer::operatingMode == OPERATING_MODE_MILL )
-                    {
-                        addStringP( PSTR( " V:" )); // -> Die restliche Zeile wird komplett überschrieben und der rest verworfen (Lüfterteil). Weil Millingmode ohne Lüfter.
-                        addInt(Printer::feedrateMultiply,3);
-                        addStringP( PSTR( "%     " ));
-                    }
-#endif // FEATURE_MILLING_MODE
                 }
 
                 break;
@@ -1828,39 +1843,34 @@ void UIDisplay::parse(char *txt,bool ram)
             {
                 if(c2=='1')                                                                             // temperature icon
                 {
+                    addStringP(PSTR("\005"));
+                }
+                else if(c2=='2')                                                                             // replace line with new line
+                {
                     char    mode = OPERATING_MODE_PRINT;
-
-
 #if FEATURE_MILLING_MODE
                     mode = Printer::operatingMode;
 #endif // FEATURE_MILLING_MODE
-
-                    if ( mode == OPERATING_MODE_PRINT )
+                    if ( mode == OPERATING_MODE_MILL )
                     {
-                        addStringP(PSTR("\005"));
-                        break;
-                    }
-                    else if ( mode == OPERATING_MODE_MILL )
-                    {
+                        for(uint8_t n = 0; n < MAX_COLS+1 ; n++) printCols[n]=0; //clear all text
+                        col = 0; //reset linemarker
 #if FEATURE_230V_OUTPUT
  #if FEATURE_CASE_LIGHT
                         addStringP( PSTR( "MIL X19:" )); // -> Die restliche Zeile wird komplett überschrieben und der rest verworfen. Weil Millingmode keine Temperaturen hat.
                         addStringP(Printer::enableCaseLight?ui_text_on:ui_text_off);
                         addStringP( PSTR( " 230V:" )); 
                         addStringP(Printer::enable230VOutput?ui_text_on:ui_text_off);
-                        addStringP( PSTR( "  " )); 
  #else
                         addStringP( PSTR( "MILLER  230V:" )); 
                         addStringP(Printer::enable230VOutput?ui_text_on:ui_text_off);
-                        addStringP( PSTR( "     " )); 
  #endif
 #else //FEATURE_230V_OUTPUT
  #if FEATURE_CASE_LIGHT
                         addStringP( PSTR( "MILLER X19:" )); // -> Die restliche Zeile wird komplett überschrieben und der rest verworfen. Weil Millingmode keine Temperaturen hat.
                         addStringP(Printer::enableCaseLight?ui_text_on:ui_text_off);
-                        addStringP( PSTR( "       " ));
  #else
-                        addStringP( PSTR( "MILLER              " ));
+                        addStringP( PSTR( "MILLER" ));
  #endif
 #endif //FEATURE_230V_OUTPUT
                     }
@@ -3068,6 +3078,19 @@ void UIDisplay::nextPreviousAction(int8_t next)
             break;
         }
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
+        case UI_ACTION_FAN_HZ:
+        {
+            if(increment > 0){
+                Commands::adjustFanFrequency( (cooler_pwm_speed == COOLER_MODE_MAX ? 0 : cooler_pwm_speed + 1 ) ); //0 = ~15hz, ~1=30hz, ... 4=240hz.
+            }else{
+                Commands::adjustFanFrequency( (cooler_pwm_speed == 0 ? COOLER_MODE_MAX : cooler_pwm_speed - 1 ) ); //0 = ~15hz, ~1=30hz, ... 4=240hz.
+            }
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetByte( EPR_RF_FAN_SPEED, cooler_pwm_speed );
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
         case UI_ACTION_XPOSITION:
         {
             /*
@@ -3392,6 +3415,20 @@ void UIDisplay::nextPreviousAction(int8_t next)
             EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
 
+            break;
+        }
+        case UI_ACTION_MILL_ACCELERATION:
+        {
+#if FEATURE_MILLING_MODE
+            if(!Printer::isPrinting()){
+             INCREMENT_MIN_MAX(Printer::max_milling_all_axis_acceleration,2,1,200);
+             Printer::updateDerivedParameter();
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+             HAL::eprSetInt16(EPR_RF_MILL_ACCELERATION,Printer::max_milling_all_axis_acceleration);
+             EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            }
+#endif // FEATURE_MILLING_MODE
             break;
         }
         case UI_ACTION_HOMING_FEEDRATE_X:
@@ -4969,15 +5006,6 @@ void UIDisplay::executeAction(int action)
             case UI_ACTION_FAN_FULL:
             {
                 Commands::setFanSpeed(255,false);
-                break;
-            }
-            case UI_ACTION_FAN_HZ:
-            {
-                Commands::adjustFanFrequency( (cooler_pwm_speed == COOLER_MODE_MAX ? 0 : cooler_pwm_speed + 1 ) ); //0 = ~15hz, ~1=30hz, ... 4=240hz.
-#if FEATURE_AUTOMATIC_EEPROM_UPDATE
-                HAL::eprSetByte( EPR_RF_FAN_SPEED, cooler_pwm_speed );
-                EEPROM::updateChecksum();
-#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
                 break;
             }
             case UI_ACTION_FAN_MODE:

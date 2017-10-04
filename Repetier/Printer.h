@@ -68,6 +68,9 @@ public:
     static uint32_t         maxInterval; // slowest allowed interval
     static float            maxAccelerationMMPerSquareSecond[];
     static float            maxTravelAccelerationMMPerSquareSecond[];
+#if FEATURE_MILLING_MODE
+    static short            max_milling_all_axis_acceleration;
+#endif // FEATURE_MILLING_MODE
     static unsigned long    maxPrintAccelerationStepsPerSquareSecond[];
     static unsigned long    maxTravelAccelerationStepsPerSquareSecond[];
     static uint8_t          relativeCoordinateMode;             // Determines absolute (false) or relative Coordinates (true).

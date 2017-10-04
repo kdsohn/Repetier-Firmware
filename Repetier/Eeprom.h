@@ -136,6 +136,9 @@ have problems with other modules using the eeprom */
 #define EPR_RF_FREQ_DBL                   1928 //1929 2byte für uint16 -> frequenz double grenze
 #define EPR_RF_FAN_MODE                   1930 //[1byte]
 #define EPR_RF_FAN_SPEED                  1931 //[1byte]
+
+#define EPR_RF_MILL_ACCELERATION          1932 //+1933 u short
+
 //Nibbels: Computechecksum geht bis 2047
 
 #define EEPROM_EXTRUDER_OFFSET          200

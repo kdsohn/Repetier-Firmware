@@ -1555,20 +1555,34 @@ void Commands::executeGCode(GCode *com)
 #ifdef RAMP_ACCELERATION
             case 201:   // M201
             {
-                if(com->hasX()) Printer::maxAccelerationMMPerSquareSecond[X_AXIS] = com->X;
-                if(com->hasY()) Printer::maxAccelerationMMPerSquareSecond[Y_AXIS] = com->Y;
-                if(com->hasZ()) Printer::maxAccelerationMMPerSquareSecond[Z_AXIS] = com->Z;
-                if(com->hasE()) Printer::maxAccelerationMMPerSquareSecond[E_AXIS] = com->E;
-                Printer::updateDerivedParameter();
+#if FEATURE_MILLING_MODE
+                if( Printer::operatingMode == OPERATING_MODE_PRINT )
+                {
+#endif // FEATURE_MILLING_MODE
+                    if(com->hasX()) Printer::maxAccelerationMMPerSquareSecond[X_AXIS] = com->X;
+                    if(com->hasY()) Printer::maxAccelerationMMPerSquareSecond[Y_AXIS] = com->Y;
+                    if(com->hasZ()) Printer::maxAccelerationMMPerSquareSecond[Z_AXIS] = com->Z;
+                    if(com->hasE()) Printer::maxAccelerationMMPerSquareSecond[E_AXIS] = com->E;
+                    Printer::updateDerivedParameter();
+#if FEATURE_MILLING_MODE
+                }
+#endif  // FEATURE_MILLING_MODE
                 break;
             }
             case 202:   // M202
             {
-                if(com->hasX()) Printer::maxTravelAccelerationMMPerSquareSecond[X_AXIS] = com->X;
-                if(com->hasY()) Printer::maxTravelAccelerationMMPerSquareSecond[Y_AXIS] = com->Y;
-                if(com->hasZ()) Printer::maxTravelAccelerationMMPerSquareSecond[Z_AXIS] = com->Z;
-                if(com->hasE()) Printer::maxTravelAccelerationMMPerSquareSecond[E_AXIS] = com->E;
-                Printer::updateDerivedParameter();
+#if FEATURE_MILLING_MODE
+                if( Printer::operatingMode == OPERATING_MODE_PRINT )
+                {
+#endif // FEATURE_MILLING_MODE
+                    if(com->hasX()) Printer::maxTravelAccelerationMMPerSquareSecond[X_AXIS] = com->X;
+                    if(com->hasY()) Printer::maxTravelAccelerationMMPerSquareSecond[Y_AXIS] = com->Y;
+                    if(com->hasZ()) Printer::maxTravelAccelerationMMPerSquareSecond[Z_AXIS] = com->Z;
+                    if(com->hasE()) Printer::maxTravelAccelerationMMPerSquareSecond[E_AXIS] = com->E;
+                    Printer::updateDerivedParameter();
+#if FEATURE_MILLING_MODE
+                }
+#endif  // FEATURE_MILLING_MODE
                 break;
             }
 #endif // RAMP_ACCELERATION

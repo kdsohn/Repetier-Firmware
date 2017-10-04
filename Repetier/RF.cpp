@@ -6846,10 +6846,18 @@ void pausePrint( void )
 
 void continuePrint( void )
 {
+    static char countplays = 1;
     if(g_pauseMode == PAUSE_MODE_NONE || g_pauseStatus != PAUSE_STATUS_PAUSED){
         if( Printer::debugErrors() ) Com::printFLN( PSTR( "continuePrint(): we are not paused." ) );
+        if(countplays++ >= 10){
+             Com::printFLN( PSTR( "LCD re-initialization") );
+             countplays = 1;
+             showInformation( PSTR(UI_TEXT_MANUAL), PSTR(UI_TEXT_Z_CIRCUIT), PSTR(UI_TEXT_RESET) );
+             initializeLCD();
+        } 
         return;
     }
+    countplays = 1;
 
     g_uStartOfIdle    = 0;
     UI_STATUS_UPD( UI_TEXT_CONTINUING );
@@ -13031,8 +13039,8 @@ void setupForPrinting( void )
     Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_PRINT;
     HAL::eprSetFloat(EPR_X_LENGTH,Printer::lengthMM[X_AXIS]);
     EEPROM::updateChecksum();
-    Printer::updateDerivedParameter();
 #endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+    Printer::updateDerivedParameter();
 
     g_staticZSteps = (Printer::ZOffset * Printer::axisStepsPerMM[Z_AXIS]) / 1000;
 
@@ -13088,8 +13096,8 @@ void setupForMilling( void )
     Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_MILL;
     HAL::eprSetFloat(EPR_X_LENGTH,Printer::lengthMM[X_AXIS]);
     EEPROM::updateChecksum();
-    Printer::updateDerivedParameter();
 #endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+    Printer::updateDerivedParameter();
 
     g_staticZSteps = 0;
 
