@@ -1010,15 +1010,6 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_Y_STEP_SIZE_MIN_MM        10                                                                      // [mm]
 #define HEAT_BED_SCAN_Y_CALIBRATION_POINT_MM    100                                                                     // [mm] from the front border of the heat bed
 #define HEAT_BED_SCAN_Y_CALIBRATION_POINT_STEPS long(YAXIS_STEPS_PER_MM * HEAT_BED_SCAN_Y_CALIBRATION_POINT_MM)         // [steps]
-
-//Nibbels: increased from 500 to 1000 in order to avoid problems with Dip-Down-Hotends
-#define HEAT_BED_SCAN_Z_START_uM                1000                                                                    // [um]
-
-#define HEAT_BED_SCAN_CONTACT_PRESSURE_DELTA    10                                                                      // [digits]
-#define HEAT_BED_SCAN_RETRY_PRESSURE_DELTA      5                                                                       // [digits]
-#define HEAT_BED_SCAN_IDLE_PRESSURE_DELTA       0                                                                       // [digits]
-#define HEAT_BED_SCAN_IDLE_PRESSURE_MIN         -7500                                                                   // [digits]
-#define HEAT_BED_SCAN_IDLE_PRESSURE_MAX         7500                                                                    // [digits]
 #else
 #define HEAT_BED_SCAN_X_START_MM                15                                                                      // [mm] from the left border of the heat bed
 #define HEAT_BED_SCAN_X_END_MM                  5                                                                       // [mm] from the right border of the heat bed
@@ -1029,13 +1020,16 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_Y_END_MM                  5                                                                       // [mm] from the back border of the heat bed
 #define HEAT_BED_SCAN_Y_STEP_SIZE_MM            20                                                                      // [mm]
 #define HEAT_BED_SCAN_Y_STEP_SIZE_MIN_MM        10                                                                      // [mm]
+#endif // NUM_EXTRUDER == 2
+
+//Nibbels: increased from 500 to 1000 in order to avoid problems with Dip-Down-Hotends
+#define HEAT_BED_SCAN_Z_START_uM                1000                                                                    // [um]
 
 #define HEAT_BED_SCAN_CONTACT_PRESSURE_DELTA    10                                                                      // [digits]
 #define HEAT_BED_SCAN_RETRY_PRESSURE_DELTA      5                                                                       // [digits]
 #define HEAT_BED_SCAN_IDLE_PRESSURE_DELTA       0                                                                       // [digits]
 #define HEAT_BED_SCAN_IDLE_PRESSURE_MIN         -7500                                                                   // [digits]
 #define HEAT_BED_SCAN_IDLE_PRESSURE_MAX         7500                                                                    // [digits]
-#endif // NUM_EXTRUDER == 2
 
 #define HEAT_BED_SCAN_X_START_STEPS             long(XAXIS_STEPS_PER_MM * HEAT_BED_SCAN_X_START_MM)                         // [steps]
 #define HEAT_BED_SCAN_X_END_STEPS               long(XAXIS_STEPS_PER_MM * HEAT_BED_SCAN_X_END_MM)                           // [steps]
