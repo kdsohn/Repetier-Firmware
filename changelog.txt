@@ -3,6 +3,7 @@ TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad
 TODO: Testing, testing ..
 
 V RF.01.37v3.Mod (2017-10-03)
+- if you press PLAY ten times your display gets restarted. This is nice if your display blanks out and you cannot type M3200 P13 because you print from SD (...)
 - added menu and eeprom support for milling all axis acceleration
    because high acceleration needs higher minimum speed which is bad when milling.
    you now see and use a special acceleration in milling mode (~15 mm/s² -> which you can change now)
