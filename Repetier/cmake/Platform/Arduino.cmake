@@ -399,7 +399,7 @@ function(GENERATE_ARDUINO_LIBRARY INPUT_NAME)
 
     set_target_properties(${INPUT_NAME} PROPERTIES
                 COMPILE_FLAGS "${ARDUINO_COMPILE_FLAGS} ${COMPILE_FLAGS} ${LIB_DEP_INCLUDES}"
-                LINK_FLAGS "${ARDUINO_LINK_FLAGS} ${LINK_FLAGS}")
+                LINK_FLAGS "${ARDUINO_LINK_FLAGS} ${LINK_FLAGS} -fno-lto")
 
     target_link_libraries(${INPUT_NAME} ${ALL_LIBS} "-lc -lm")
 endfunction()
@@ -1127,8 +1127,8 @@ function(setup_arduino_target TARGET_NAME BOARD_ID ALL_SRCS ALL_LIBS COMPILE_FLA
     get_arduino_flags(ARDUINO_COMPILE_FLAGS ARDUINO_LINK_FLAGS  ${BOARD_ID} ${MANUAL})
 
     set_target_properties(${TARGET_NAME} PROPERTIES
-                COMPILE_FLAGS "${ARDUINO_COMPILE_FLAGS} ${COMPILE_FLAGS}"
-                LINK_FLAGS "${ARDUINO_LINK_FLAGS} ${LINK_FLAGS}")
+                COMPILE_FLAGS "${ARDUINO_COMPILE_FLAGS} ${COMPILE_FLAGS} -flto"
+                LINK_FLAGS "${ARDUINO_LINK_FLAGS} ${LINK_FLAGS} -flto")
     target_link_libraries(${TARGET_NAME} ${ALL_LIBS} "-lc -lm")
 
     if(NOT EXECUTABLE_OUTPUT_PATH)
@@ -2156,7 +2156,7 @@ endfunction()
 #                              C Flags
 #=============================================================================#
 if (NOT DEFINED ARDUINO_C_FLAGS)
-    set(ARDUINO_C_FLAGS "-g -Os -w -ffunction-sections -fdata-sections -MMD")
+    set(ARDUINO_C_FLAGS "-Os -w --std=gnu11 -ffunction-sections -fdata-sections -MMD")
 endif (NOT DEFINED ARDUINO_C_FLAGS)
 set(CMAKE_C_FLAGS                "${ARDUINO_C_FLAGS}" CACHE STRING "")
 set(CMAKE_C_FLAGS_DEBUG          "${ARDUINO_C_FLAGS}" CACHE STRING "")
@@ -2168,7 +2168,7 @@ set(CMAKE_C_FLAGS_RELWITHDEBINFO "${ARDUINO_C_FLAGS}" CACHE STRING "")
 #                             C++ Flags
 #=============================================================================#
 if (NOT DEFINED ARDUINO_CXX_FLAGS)
-    set(ARDUINO_CXX_FLAGS "-g -Os -w -fno-exceptions -ffunction-sections -fdata-sections -fno-threadsafe-statics -MMD")
+    set(ARDUINO_CXX_FLAGS "-Os -w --std=c++11 -fno-exceptions -ffunction-sections -fdata-sections -fno-threadsafe-statics -MMD")
 endif (NOT DEFINED ARDUINO_CXX_FLAGS)
 set(CMAKE_CXX_FLAGS                "${ARDUINO_CXX_FLAGS}" CACHE STRING "")
 set(CMAKE_CXX_FLAGS_DEBUG          "${ARDUINO_CXX_FLAGS}" CACHE STRING "")
@@ -2179,7 +2179,7 @@ set(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${ARDUINO_CXX_FLAGS}" CACHE STRING "")
 #=============================================================================#
 #                       Executable Linker Flags                               #
 #=============================================================================#
-set(ARDUINO_LINKER_FLAGS "-w -Os -Wl,--gc-sections")
+set(ARDUINO_LINKER_FLAGS "-w -Os -Wl,--gc-sections -fuse-linker-plugin -Wl,--gc-sections,--relax")
 set(CMAKE_EXE_LINKER_FLAGS                "${ARDUINO_LINKER_FLAGS}" CACHE STRING "")
 set(CMAKE_EXE_LINKER_FLAGS_DEBUG          "${ARDUINO_LINKER_FLAGS}" CACHE STRING "")
 set(CMAKE_EXE_LINKER_FLAGS_MINSIZEREL     "${ARDUINO_LINKER_FLAGS}" CACHE STRING "")
