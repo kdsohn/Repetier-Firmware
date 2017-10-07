@@ -1052,6 +1052,7 @@ void EEPROM::init()
         initializeAllOperatingModes();
         UI_STATUS( UI_TEXT_RESTORE_DEFAULTS );
         showInformation( PSTR(UI_TEXT_CONFIGURATION), PSTR(UI_TEXT_FAIL), PSTR(UI_TEXT_RESTORE_DEFAULTS) );
+        EEPROM::updateChecksum();
     }
 #endif // EEPROM_MODE!=0
 
