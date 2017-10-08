@@ -679,7 +679,7 @@ on this endstop. */
 /** \brief If during homing the endstop is reached, how many mm should the printer move back for the second try */
 #define ENDSTOP_X_BACK_MOVE                 5
 #define ENDSTOP_Y_BACK_MOVE                 5
-#define ENDSTOP_Z_BACK_MOVE                 0.5
+#define ENDSTOP_Z_BACK_MOVE                 float(0.1f+Z_OVERRIDE_MAX)
 
 /** \brief For higher precision you can reduce the speed for the second test on the endstop
 during homing operation. The homing speed is divided by the value. 1 = same speed, 2 = half speed */
@@ -992,8 +992,7 @@ Above this value the z compensation will distribute the roughness of the surface
 /* Maximum number of steps to scan after the Z-min switch has been reached. If within these steps the surface has not
    been reached, the scan is retried HEAT_BED_SCAN_RETRIES times and then (if still not found) aborted.
    Note that the head bed scan matrix consists of 16 bit signed values, thus more then 32767 steps will lead to an overflow! */
-#define HEAT_BED_SCAN_Z_SCAN_MAX_STEPS          long(3 * ZAXIS_STEPS_PER_MM)                                            // [steps]
-
+#define HEAT_BED_SCAN_Z_SCAN_MAX_STEPS          long(Z_OVERRIDE_MAX * ZAXIS_STEPS_PER_MM)                               // [steps]
 
 /** \brief Configuration of the heat bed scan */
 #if NUM_EXTRUDER == 2
@@ -1010,16 +1009,21 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_Y_STEP_SIZE_MIN_MM        10                                                                      // [mm]
 #define HEAT_BED_SCAN_Y_CALIBRATION_POINT_MM    100                                                                     // [mm] from the front border of the heat bed
 #define HEAT_BED_SCAN_Y_CALIBRATION_POINT_STEPS long(YAXIS_STEPS_PER_MM * HEAT_BED_SCAN_Y_CALIBRATION_POINT_MM)         // [steps]
-#else
+#else /* NUM_EXTRUDER != 2 -> */
+
 #define HEAT_BED_SCAN_X_START_MM                15                                                                      // [mm] from the left border of the heat bed
 #define HEAT_BED_SCAN_X_END_MM                  5                                                                       // [mm] from the right border of the heat bed
 #define HEAT_BED_SCAN_X_STEP_SIZE_MM            20                                                                      // [mm]
 #define HEAT_BED_SCAN_X_STEP_SIZE_MIN_MM        10                                                                      // [mm]
+#define HEAT_BED_SCAN_X_CALIBRATION_POINT_MM    100                                                                     // [mm] from the left border of the heat bed
+#define HEAT_BED_SCAN_X_CALIBRATION_POINT_STEPS long(XAXIS_STEPS_PER_MM * HEAT_BED_SCAN_X_CALIBRATION_POINT_MM)         // [steps]
 
 #define HEAT_BED_SCAN_Y_START_MM                30                                                                      // [mm] from the front border of the heat bed
 #define HEAT_BED_SCAN_Y_END_MM                  5                                                                       // [mm] from the back border of the heat bed
 #define HEAT_BED_SCAN_Y_STEP_SIZE_MM            20                                                                      // [mm]
 #define HEAT_BED_SCAN_Y_STEP_SIZE_MIN_MM        10                                                                      // [mm]
+#define HEAT_BED_SCAN_Y_CALIBRATION_POINT_MM    100                                                                     // [mm] from the front border of the heat bed
+#define HEAT_BED_SCAN_Y_CALIBRATION_POINT_STEPS long(YAXIS_STEPS_PER_MM * HEAT_BED_SCAN_Y_CALIBRATION_POINT_MM)         // [steps]
 #endif // NUM_EXTRUDER == 2
 
 //Nibbels: increased from 500 to 1000 in order to avoid problems with Dip-Down-Hotends

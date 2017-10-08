@@ -681,7 +681,7 @@ on this endstop. */
 /** \brief If during homing the endstop is reached, how many mm should the printer move back for the second try */
 #define ENDSTOP_X_BACK_MOVE                 5
 #define ENDSTOP_Y_BACK_MOVE                 5
-#define ENDSTOP_Z_BACK_MOVE                 0.5
+#define ENDSTOP_Z_BACK_MOVE                 float(0.1f+Z_OVERRIDE_MAX)
 
 /** \brief For higher precision you can reduce the speed for the second test on the endstop
 during homing operation. The homing speed is divided by the value. 1 = same speed, 2 = half speed */
@@ -987,7 +987,7 @@ Above this value the z compensation will distribute the roughness of the surface
 /* Maximum number of steps to scan after the Z-min switch has been reached. If within these steps the surface has not
    been reached, the scan is retried HEAT_BED_SCAN_RETRIES times and then (if still not found) aborted.
    Note that the head bed scan matrix consists of 16 bit signed values, thus more then 32767 steps will lead to an overflow! */
-#define HEAT_BED_SCAN_Z_SCAN_MAX_STEPS          long(1 * ZAXIS_STEPS_PER_MM)                                            // [steps]
+#define HEAT_BED_SCAN_Z_SCAN_MAX_STEPS          long(Z_OVERRIDE_MAX * ZAXIS_STEPS_PER_MM)                               // [steps]
 
 /** \brief Configuration of the heat bed scan */
 #if NUM_EXTRUDER == 2
