@@ -1228,16 +1228,23 @@ void USER_INTERRUPT3_HOOK(){
 }
 #endif //FEATURE_USER_INT3
 
-#if FEATURE_READ_CALLIPER
-volatile long calliper_um = 0;
+#if FEATURE_READ_CALIPER
+volatile long caliper_um = 0;
 
-void FEATURE_READ_CALLIPER_HOOK(){
-    // read in one bit of callipers 24bit protocol
+//auswertevariablen:
+uint16_t caliper_filament_standard = 2850; //Std: 2,85er Filament -> Siehe EEPROM-Wert.
+uint32_t caliper_collect_um = 0; //alle werte die in ein filament-raster passen, kommen hier rein für Durchschnitt.
+uint32_t caliper_collect_count = 0; //Anzahl werte die in ein filament-raster passen, kommen hier rein für Durchschnitt.
+int8_t   caliper_collect_adjust = 0; //+-127 um wertekorrektur möglich. Wenn mehr dann macht int16_t draus: Ich brauche nicht mehr und werde vermutlich der Einzige sein, der diesen Code je nutzt ^^
+                                      //Ein Federchen zieht am Messchieber, darum leicht falsche Werte, die hier ausgeglichen werden.
+
+void FEATURE_READ_CALIPER_HOOK(){
+    // read in one bit of calipers 24bit protocol
     // when falling edge on clock is detected
     // http://www.instructables.com/id/Reading-Digital-Callipers-with-an-Arduino-USB/
     static uint8_t  bitnr = 1;
     static millis_t lasttime = 0; //time of last int
-    static uint16_t bit_cache = 0; //bits for callipers message * 100
+    static uint16_t bit_cache = 0; //bits for calipers message * 100
     static bool     sign = 0; //is positive?
 
     millis_t time = micros();
@@ -1254,9 +1261,9 @@ void FEATURE_READ_CALLIPER_HOOK(){
         return;
     }
 
-    uint8_t readdata = READ(FEATURE_READ_CALLIPER_DATA_PIN);
-    readdata += READ(FEATURE_READ_CALLIPER_DATA_PIN);
-    readdata += READ(FEATURE_READ_CALLIPER_DATA_PIN);
+    uint8_t readdata = READ(FEATURE_READ_CALIPER_DATA_PIN);
+    readdata += READ(FEATURE_READ_CALIPER_DATA_PIN);
+    readdata += READ(FEATURE_READ_CALIPER_DATA_PIN);
 
     if(bitnr <= 16){
         //bits nacheinander von links reinschieben:
@@ -1268,13 +1275,23 @@ void FEATURE_READ_CALLIPER_HOOK(){
     }else if(bitnr >= 24){
         //auswerten:
         bit_cache >>= 1; //lowest bit is not necessary
-        calliper_um = (long)bit_cache * (sign ? -10 : 10); //auflösung ist 10um
+        caliper_um = (long)bit_cache * (sign ? -10 : 10); //auflösung ist 10um
+
+        if(abs(caliper_um)+caliper_collect_adjust > caliper_filament_standard - (caliper_filament_standard >> 4) && abs(caliper_um)+caliper_collect_adjust < caliper_filament_standard + (caliper_filament_standard >> 4) ){
+            //Korrigierter Messwert: Grenze der Gültigkeit: Filamentstandard *1,062 .. *0,9375 -> zwischen 2,67mm und 3,026mm
+            caliper_collect_count++;
+            caliper_collect_um += abs(caliper_um)+caliper_collect_adjust;
+            if(caliper_collect_count > 1000){ //alte Messwerte beim Dauersammeln verblassen lassen.
+                caliper_collect_count >>= 1;
+                caliper_collect_um >>= 1;
+            }
+        }
     }
 
     bitnr++;
     lasttime = time;
 }
-#endif //FEATURE_READ_CALLIPER
+#endif //FEATURE_READ_CALIPER
 
 #ifndef EXTERNALSERIAL
 // Implement serial communication for one stream only!

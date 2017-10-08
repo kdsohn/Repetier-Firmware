@@ -513,6 +513,11 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
 #endif  // FEATURE_MILLING_MODE
 #endif // RAMP_ACCELERATION
 
+#if FEATURE_READ_CALIPER
+    HAL::eprSetInt16( EPR_RF_CAL_STANDARD, caliper_filament_standard );
+    HAL::eprSetByte( EPR_RF_CAL_ADJUST, caliper_collect_adjust );
+#endif //FEATURE_READ_CALIPER
+
 #if HAVE_HEATED_BED
     HAL::eprSetByte(EPR_BED_HEAT_MANAGER,heatedBedController.heatManager);
 #else
@@ -947,6 +952,13 @@ void EEPROM::readDataFromEEPROM()
     }
 #endif // FEATURE_MILLING_MODE
 
+#if FEATURE_READ_CALIPER
+    caliper_filament_standard = HAL::eprGetInt16( EPR_RF_CAL_STANDARD );
+    if(caliper_filament_standard <= 1500 || caliper_filament_standard >= 3100) caliper_filament_standard = 2850;
+
+    caliper_collect_adjust = HAL::eprGetByte( EPR_RF_CAL_ADJUST );
+#endif //FEATURE_READ_CALIPER
+
 #if FEATURE_EMERGENCY_STOP_ALL
     g_nZEmergencyStopAllMin = (short)constrain( HAL::eprGetInt16( EPR_RF_EMERGENCYZSTOPDIGITSMIN ) , EMERGENCY_STOP_DIGITS_MIN , EMERGENCY_STOP_DIGITS_MAX ); //limit to value in config.
     g_nZEmergencyStopAllMax = (short)constrain( HAL::eprGetInt16( EPR_RF_EMERGENCYZSTOPDIGITSMAX ) , EMERGENCY_STOP_DIGITS_MIN , EMERGENCY_STOP_DIGITS_MAX ); //limit to value in config.
@@ -1247,6 +1259,11 @@ void EEPROM::writeSettings()
     }
 #endif // FEATURE_MILLING_MODE
 #endif // RAMP_ACCELERATION
+
+#if FEATURE_READ_CALIPER
+    writeInt( EPR_RF_CAL_STANDARD, Com::tEPRZCallStandard );
+    writeByte( EPR_RF_CAL_ADJUST, Com::tEPRZCallAdjust );
+#endif //FEATURE_READ_CALIPER
 
 #if HAVE_HEATED_BED
     writeByte(EPR_BED_HEAT_MANAGER,Com::tEPRBedHeatManager);

@@ -172,6 +172,11 @@ List of placeholder:
 %M0 : Motorcurrent T0
 %M1 : Motorcurrent T1
 
+%Ca : Caliper Active Reading
+%Cm : Caliper Average
+%Cs : Caliper Filament Standard
+%Cc : Caliper Correction
+%Cn : needed flow multi for measurement
 */
 
 // Define precision for temperatures. With small displays only integer values fit.
@@ -538,6 +543,25 @@ UI_MENU_ACTIONCOMMAND(ui_menu_ext_off2,UI_TEXT_EXTR2_OFF,UI_ACTION_EXTRUDER2_OFF
 #define UI_MENU_EXTRUDER {UI_MENU_ADDCONDBACK UI_MENU_BEDCOND UI_MENU_EXTCOND &ui_menu_go_epos, &ui_menu_quick_preheat_pla, &ui_menu_quick_preheat_abs, &ui_menu_quick_cooldown, &ui_menu_extruder_mount_filament, &ui_menu_extruder_unmount_filament, &ui_menu_quick_flowmultiply, &ui_menu_ext_origin}
 UI_MENU(ui_menu_extruder,UI_MENU_EXTRUDER,UI_MENU_BACKCNT+UI_MENU_BEDCNT+UI_MENU_EXTCNT+4+3+1)
 
+/** \brief Caliper Filament Reader menu */
+#if FEATURE_READ_CALIPER
+ UI_MENU_ACTIONCOMMAND( ui_menu_cal_directread,UI_TEXT_CAL_DIRECT_READ,UI_ACTION_CAL_RESET)
+ UI_MENU_CHANGEACTION ( ui_menu_cal_correct,   UI_TEXT_CAL_CORRECT,    UI_ACTION_CAL_CORRECT)
+ UI_MENU_ACTIONCOMMAND( ui_menu_cal_showreset, UI_TEXT_CAL_SHOW,       UI_ACTION_CAL_SET)
+ UI_MENU_CHANGEACTION ( ui_menu_cal_standard,  UI_TEXT_CAL_STANDARD,   UI_ACTION_CAL_STANDARD)
+
+ #define UI_MENU_CONF_CALIPER {UI_MENU_ADDCONDBACK &ui_menu_cal_directread, &ui_menu_cal_correct, &ui_menu_cal_showreset, &ui_menu_cal_standard}
+ UI_MENU(ui_menu_settings_cal,UI_MENU_CONF_CALIPER,UI_MENU_BACKCNT+4)
+
+ UI_MENU_SUBMENU_FILTER(ui_menu_conf_cal, UI_TEXT_CAL_CONF_MENU, ui_menu_settings_cal, MENU_MODE_PRINTER,0)
+ #define UI_MENU_CONFIGURATION_CAL_COND &ui_menu_conf_cal,
+ #define UI_MENU_CONFIGURATION_CAL_COUNT 1
+ 
+#else //FEATURE_READ_CALIPER
+ #define UI_MENU_CONFIGURATION_CAL_COND 
+ #define UI_MENU_CONFIGURATION_CAL_COUNT 0
+#endif //FEATURE_READ_CALIPER
+
 /** \brief Quick menu */
 #if PS_ON_PIN>=0
 UI_MENU_ACTIONCOMMAND(ui_menu_quick_power,UI_TEXT_POWER,UI_ACTION_POWER)
@@ -633,8 +657,8 @@ UI_MENU_ACTIONCOMMAND(ui_menu_quick_debug,"Write Debug",UI_ACTION_WRITE_DEBUG)
 #endif // DEBUG_PRINT
 
 //das LIGHT_MODE_ENTRY ist der X19! Könnte verwirrend sein... RGB-Light gibts in Configuration->General
-#define UI_MENU_QUICK {UI_MENU_ADDCONDBACK &ui_menu_quick_stop_print, &ui_menu_home_all, &ui_menu_quick_stopstepper, &ui_menu_quick_stop_mill OUTPUT_OBJECT_ENTRY ,&ui_menu_quick_speedmultiply,&ui_menu_quick_flowmultiply PARK_ENTRY OUTPUT_230V_ENTRY LIGHT_MODE_ENTRY OUTPUT_FET1_ENTRY OUTPUT_FET2_ENTRY RESET_VIA_MENU_ENTRY MENU_PSON_ENTRY DEBUG_PRINT_EXTRA }
-UI_MENU(ui_menu_quick,UI_MENU_QUICK,6+UI_MENU_BACKCNT+MENU_PSON_COUNT+DEBUG_PRINT_COUNT+OUTPUT_OBJECT_COUNT+PARK_COUNT+OUTPUT_230V_COUNT+LIGHT_MODE_COUNT+OUTPUT_FET1_COUNT+OUTPUT_FET2_COUNT+RESET_VIA_MENU_COUNT)
+#define UI_MENU_QUICK {UI_MENU_ADDCONDBACK &ui_menu_quick_stop_print, &ui_menu_home_all, &ui_menu_quick_stopstepper, &ui_menu_quick_stop_mill OUTPUT_OBJECT_ENTRY ,&ui_menu_quick_speedmultiply, UI_MENU_CONFIGURATION_CAL_COND &ui_menu_quick_flowmultiply  PARK_ENTRY OUTPUT_230V_ENTRY LIGHT_MODE_ENTRY OUTPUT_FET1_ENTRY OUTPUT_FET2_ENTRY RESET_VIA_MENU_ENTRY MENU_PSON_ENTRY DEBUG_PRINT_EXTRA }
+UI_MENU(ui_menu_quick,UI_MENU_QUICK,6+UI_MENU_BACKCNT+MENU_PSON_COUNT+DEBUG_PRINT_COUNT+OUTPUT_OBJECT_COUNT+UI_MENU_CONFIGURATION_CAL_COUNT+PARK_COUNT+OUTPUT_230V_COUNT+LIGHT_MODE_COUNT+OUTPUT_FET1_COUNT+OUTPUT_FET2_COUNT+RESET_VIA_MENU_COUNT)
 
 /** \brief Fan menu */
 
@@ -665,7 +689,7 @@ UI_MENU_SUBMENU_FILTER(ui_menu_fan_sub,UI_TEXT_FANSPEED,ui_menu_fan,MENU_MODE_PR
 UI_MENU(ui_menu_settings_fan,UI_MENU_CONF_FAN,UI_MENU_BACKCNT+1+1)
 
 /** \brief Configuration->DMS Features menu */
-UI_MENU_SUBMENU_FILTER(ui_menu_conf_fan, UI_TEXT_FAN_CONF_MENU, ui_menu_settings_fan,MENU_MODE_PRINTER,0)
+UI_MENU_SUBMENU_FILTER(ui_menu_conf_fan, UI_TEXT_FAN_CONF_MENU, ui_menu_settings_fan, MENU_MODE_PRINTER,0)
 #define UI_MENU_CONFIGURATION_FAN_COND &ui_menu_conf_fan,
 #define UI_MENU_CONFIGURATION_FAN_COUNT 1
 

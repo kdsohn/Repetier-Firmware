@@ -904,7 +904,7 @@ if you are printing many very short segments at high speed. Higher delays here a
 // ##   Acceleration settings
 // ##########################################################################################
 
-// RF2000: Tests haben gezeigt, dass x-y-accelleration unter 2000 oder unter 1500 das Teil ziemlich gut aussieht. 
+// RF2000: Tests haben gezeigt, dass x-y-acceleration unter 2000 oder unter 1500 das Teil ziemlich gut aussieht. 
 
 /** \brief X, Y, Z max acceleration in mm/s^2 for printing moves or retracts. Make sure your printer can go that high!
  Overridden if EEPROM activated. */

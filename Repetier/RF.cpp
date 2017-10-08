@@ -10684,14 +10684,14 @@ void processCommand( GCode* pCommand )
             }
 #endif //FEATURE_USER_INT3
 
-#if FEATURE_READ_CALLIPER
+#if FEATURE_READ_CALIPER
             case 3999: // M3999 : proof that dummy function/additional hardware button works! || by Nibbels
             {
-                Com::printF( PSTR( "Calliper: " ), calliper_um );
+                Com::printF( PSTR( "Caliper: " ), caliper_um );
                 Com::printFLN( PSTR( "[um]" ) );
                 break;
             }
-#endif //FEATURE_READ_CALLIPER
+#endif //FEATURE_READ_CALIPER
         }
     }
 

@@ -394,6 +394,12 @@
 #define UI_TEXT_FAN_MODE               "Modulation: %Fm"
 #define UI_TEXT_FAN_HZ                 "PWM Frq: %Fh Hz"
     
+#define UI_TEXT_CAL_DIRECT_READ        "Reading:%Ca mm"
+#define UI_TEXT_CAL_SHOW               "Avg:%Cm mm %Cn%%%"
+#define UI_TEXT_CAL_STANDARD           "Filament:%Cs mm"
+#define UI_TEXT_CAL_CORRECT            "Adjustment:%Cc um"
+#define UI_TEXT_CAL_CONF_MENU          "Feature Caliper"
+
 #if MOTHERBOARD == DEVICE_TYPE_RF2000
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min reached unhomed"
@@ -745,6 +751,12 @@
 #define UI_TEXT_FAN_CONF_MENU          "Bauteil L" STR_uuml  "fter"
 #define UI_TEXT_FAN_MODE               "Modulation: %Fm"
 #define UI_TEXT_FAN_HZ                 "PWM Frq: %Fh Hz"
+
+#define UI_TEXT_CAL_DIRECT_READ        "Wert:%Ca mm"
+#define UI_TEXT_CAL_SHOW               "Mittel:%Cm mm %Cn%%%"
+#define UI_TEXT_CAL_STANDARD           "Filament:%Cs mm"
+#define UI_TEXT_CAL_CORRECT            "Korrektur:%Cc um"
+#define UI_TEXT_CAL_CONF_MENU          "Feature Caliper"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000
 

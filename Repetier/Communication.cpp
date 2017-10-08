@@ -215,7 +215,13 @@ FSTRINGVALUE(Com::tEPRZAcceleration,"Z-axis acceleration [mm/s^2]")
 FSTRINGVALUE(Com::tEPRXTravelAcceleration,"X-axis travel acceleration [mm/s^2]")
 FSTRINGVALUE(Com::tEPRYTravelAcceleration,"Y-axis travel acceleration [mm/s^2]")
 FSTRINGVALUE(Com::tEPRZTravelAcceleration,"Z-axis travel acceleration [mm/s^2]")
+#if FEATURE_MILLING_MODE
 FSTRINGVALUE(Com::tEPRZMillingAcceleration,"All axis milling acceleration [mm/s^2]")
+#endif //FEATURE_MILLING_MODE
+#if FEATURE_READ_CALIPER
+FSTRINGVALUE(Com::tEPRZCallStandard,"Messschieber: Filamentdicke in Slicer [um]")
+FSTRINGVALUE(Com::tEPRZCallAdjust,"Messschieber: Korrektur [um]")
+#endif //FEATURE_READ_CALIPER
 FSTRINGVALUE(Com::tEPRZOffset,"Z-Offset [um]")
 FSTRINGVALUE(Com::tEPRZMode,"Z Scale")
 FSTRINGVALUE(Com::tEPROPSMode,"OPS operation mode [0=Off,1=Classic,2=Fast]")
