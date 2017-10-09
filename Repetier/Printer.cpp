@@ -1531,7 +1531,7 @@ void Printer::homeZAxis()
     // if we have circuit-type Z endstops and we don't know at which endstop we currently are, first move down a bit
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
     if( Printer::ZEndstopUnknown ) {
-        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS]*-ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
+        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * -1 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
     }
 #endif
 
@@ -1565,9 +1565,9 @@ void Printer::homeZAxis()
         PrintLine::moveRelativeDistanceInSteps(0,0,2*steps,0,homingFeedrate[Z_AXIS],true,true);
         setHoming(false);
         queuePositionLastSteps[Z_AXIS] = (nHomeDir == -1) ? minSteps[Z_AXIS] : maxSteps[Z_AXIS];
-        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS]*-ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
+        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * -1 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
         setHoming(true);
-        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS]*2*ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,true);
+        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * 2 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,true);
         setHoming(false);
 
 #if FEATURE_MILLING_MODE

@@ -629,6 +629,12 @@ A good start is 30 lower then the optimal value. You need to leave room for cool
 // ##   Configuration of the endstops
 // ##########################################################################################
 
+/** \brief Specifies the maximal drive over millimeters which the z-endstop can bear without getting damaged or degraded */
+#define Z_ENDSTOP_DRIVE_OVER                 0.8f                              //mm
+
+/** \brief Specifies the maximal steps which can be moved into z-direction after the z-endstop has been reached */
+#define Z_OVERRIDE_MAX                      long(ZAXIS_STEPS_PER_MM * Z_ENDSTOP_DRIVE_OVER)
+
 /** \brief By default all endstops are pulled up to HIGH. You need a pullup if you
 use a mechanical endstop connected with GND. Set value to false for no pullup
 on this endstop. */
@@ -681,7 +687,7 @@ on this endstop. */
 /** \brief If during homing the endstop is reached, how many mm should the printer move back for the second try */
 #define ENDSTOP_X_BACK_MOVE                 5
 #define ENDSTOP_Y_BACK_MOVE                 5
-#define ENDSTOP_Z_BACK_MOVE                 float(0.5f+Z_OVERRIDE_MAX)
+#define ENDSTOP_Z_BACK_MOVE                 float(0.3f+Z_ENDSTOP_DRIVE_OVER)
 
 /** \brief For higher precision you can reduce the speed for the second test on the endstop
 during homing operation. The homing speed is divided by the value. 1 = same speed, 2 = half speed */
@@ -987,7 +993,7 @@ Above this value the z compensation will distribute the roughness of the surface
 /* Maximum number of steps to scan after the Z-min switch has been reached. If within these steps the surface has not
    been reached, the scan is retried HEAT_BED_SCAN_RETRIES times and then (if still not found) aborted.
    Note that the head bed scan matrix consists of 16 bit signed values, thus more then 32767 steps will lead to an overflow! */
-#define HEAT_BED_SCAN_Z_SCAN_MAX_STEPS          long(Z_OVERRIDE_MAX * ZAXIS_STEPS_PER_MM)                               // [steps]
+#define HEAT_BED_SCAN_Z_SCAN_MAX_STEPS          long(Z_ENDSTOP_DRIVE_OVER * ZAXIS_STEPS_PER_MM)                         // [steps]
 
 /** \brief Configuration of the heat bed scan */
 #if NUM_EXTRUDER == 2

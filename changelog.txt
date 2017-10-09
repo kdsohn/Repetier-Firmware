@@ -1,6 +1,12 @@
-TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad
--> Is this possibly fixed by removing halfstepping in 1.37u4?
+TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
+
+V RF.01.37v6.Mod (2017-10-09)
+- introduced Z_ENDSTOP_DRIVE_OVER to have one value that describes the maximum drive over for the endstop. That is more accurate for our two Printer models (with different endstop types).
+   #define Z_ENDSTOP_DRIVE_OVER                 0.8f                              //mm RF1000
+   #define Z_ENDSTOP_DRIVE_OVER                 1.3f                              //mm RF2000
+- used that value for maximal HBS scan depth
+- degraded Z_OVERRIDE_MAX to a derived value of Z_ENDSTOP_DRIVE_OVER and removed unnecessary config option for feature FEATURE_ENABLE_Z_SAFETY to always on.
 
 V RF.01.37v5.Mod (2017-10-08)
 - finished plugin to read filament size with 8€ digital caliper: FEATURE_READ_CALIPER
@@ -9,8 +15,8 @@ V RF.01.37v5.Mod (2017-10-08)
     Ready to Print.
 
 V RF.01.37v4.Mod (2017-10-07)
-- kleiner Config-Bug beim RF1000 PID-I-Drive-Max darf nicht "min" = 5 sein! Sondern irgendwas über 90..120
-- Werden die EEPROM-Werte verworfen wird nun auch die Checksumme neu geschrieben.
+- kleiner Config-Bug beim RF1000 PID-I-Drive-Max darf nicht "min" = 5 sein! Sondern irgendwas über 90..120 (Thx @AtlonXP)
+- Werden die EEPROM-Werte verworfen wird nun auch die Checksumme neu geschrieben. (Thx @AtlonXP)
 
 V RF.01.37v3.Mod (2017-10-03)
 - if you press PLAY ten times your display gets restarted. This is nice if your display blanks out and you cannot type M3200 P13 because you print from SD (...)

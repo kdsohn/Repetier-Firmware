@@ -11481,7 +11481,6 @@ void nextPreviousZAction( int8_t increment )
             long    Temp; //bringt nur was wenn homed
             steps = g_nManualSteps[Z_AXIS] * increment;
 
-#if FEATURE_ENABLE_Z_SAFETY
             InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
             Temp =  Printer::directPositionTargetSteps[Z_AXIS] + steps;
             Temp += Printer::queuePositionCurrentSteps[Z_AXIS];
@@ -11498,7 +11497,6 @@ void nextPreviousZAction( int8_t increment )
                 break;
             }
             else
-#endif // FEATURE_ENABLE_Z_SAFETY
             {
                 previousMillisCmd = HAL::timeInMilliseconds();
                 Printer::unsetAllSteppersDisabled();

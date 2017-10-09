@@ -142,9 +142,6 @@ XYZ_POSITION_BUTTON_DIRECTION = 1 : This fits more if you want to stick to stand
 /** \brief Enables/disables the park feature */
 #define FEATURE_PARK                        0                                                   // 1 = on, 0 = off
 
-/** \brief Enables safety checks for the manual moving into z-direction via the additional hardware buttons */
-#define FEATURE_ENABLE_Z_SAFETY             1                                                   // 1 = checks enabled, 0 = checks disabled
-
 /** \brief Enables/disables the reset via the printer menu */
 #define FEATURE_RESET_VIA_MENU              1                                                   // 1 = on, 0 = off
 
@@ -786,13 +783,6 @@ we use blocks of 2 kByte size for the structure of our EEPROM
 // ##########################################################################################
 // ##   miscellaneous configurations
 // ##########################################################################################
-
-#if FEATURE_ENABLE_Z_SAFETY
-
-/** \brief Specifies the maximal steps which can be moved into z-direction after the z-endstop has been reached */
-#define Z_OVERRIDE_MAX                      (ZAXIS_STEPS_PER_MM * 1)
-
-#endif // FEATURE_ENABLE_Z_SAFETY
 
 /** \brief Specifies the minimal distance from z-min which must be reached before it is plausible that z-max is hit */
 #define Z_MIN_DISTANCE                      (ZAXIS_STEPS_PER_MM * 5)
