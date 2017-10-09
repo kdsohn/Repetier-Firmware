@@ -221,7 +221,7 @@ public:
         // Test Z-Axis every step if necessary, otherwise it could easyly ruin your printer!
         if(isZNegativeMove() && Printer::isZMinEndstopHit())
         {
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE && FEATURE_ENABLE_Z_SAFETY
+#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
             if( Printer::isAxisHomed(Z_AXIS) && PrintLine::direct.task != TASK_MOVE_FROM_BUTTON)
             {
                 if( Printer::currentZSteps <= -Z_OVERRIDE_MAX )
@@ -232,7 +232,7 @@ public:
                     return;
                 }
             }
-#endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE && FEATURE_ENABLE_Z_SAFETY
+#endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
             setZMoveFinished();
         }
         if(isZPositiveMove() && Printer::isZMaxEndstopHit())

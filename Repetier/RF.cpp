@@ -10684,14 +10684,14 @@ void processCommand( GCode* pCommand )
             }
 #endif //FEATURE_USER_INT3
 
-#if FEATURE_READ_CALLIPER
+#if FEATURE_READ_CALIPER
             case 3999: // M3999 : proof that dummy function/additional hardware button works! || by Nibbels
             {
-                Com::printF( PSTR( "Calliper: " ), calliper_um );
+                Com::printF( PSTR( "Caliper: " ), caliper_um );
                 Com::printFLN( PSTR( "[um]" ) );
                 break;
             }
-#endif //FEATURE_READ_CALLIPER
+#endif //FEATURE_READ_CALIPER
         }
     }
 
@@ -11481,7 +11481,6 @@ void nextPreviousZAction( int8_t increment )
             long    Temp; //bringt nur was wenn homed
             steps = g_nManualSteps[Z_AXIS] * increment;
 
-#if FEATURE_ENABLE_Z_SAFETY
             InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
             Temp =  Printer::directPositionTargetSteps[Z_AXIS] + steps;
             Temp += Printer::queuePositionCurrentSteps[Z_AXIS];
@@ -11498,7 +11497,6 @@ void nextPreviousZAction( int8_t increment )
                 break;
             }
             else
-#endif // FEATURE_ENABLE_Z_SAFETY
             {
                 previousMillisCmd = HAL::timeInMilliseconds();
                 Printer::unsetAllSteppersDisabled();

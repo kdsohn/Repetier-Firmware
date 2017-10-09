@@ -138,6 +138,9 @@ have problems with other modules using the eeprom */
 #define EPR_RF_FAN_SPEED                  1931 //[1byte]
 
 #define EPR_RF_MILL_ACCELERATION          1932 //+1933 u short
+#define EPR_RF_CAL_STANDARD               1934 //+1935 u short
+#define EPR_RF_CAL_ADJUST                 1936 //[1byte]
+
 
 //Nibbels: Computechecksum geht bis 2047
 

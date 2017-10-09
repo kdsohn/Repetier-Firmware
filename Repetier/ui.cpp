@@ -1877,6 +1877,37 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 break;
             }
+#if FEATURE_READ_CALIPER
+            case 'C':{
+                if(c2=='a')                                                                             // %Ca : Caliper Active Reading
+                {
+                    addLong(abs(caliper_um)+caliper_collect_adjust,5);
+                }
+                else if(c2=='m')                                                                        // %Cm : Caliper Average in mm
+                {
+                    addFloat(0.001f*caliper_collect_um/caliper_collect_count,2,3);
+                }
+                else if(c2=='s')                                                                        // %Cs : Caliper Filament Standard
+                {
+                    addFloat(0.001f * caliper_filament_standard,2,3);
+                }
+                else if(c2=='c')                                                                        // %Cc : Caliper Correction
+                {
+                    addInt(caliper_collect_adjust,4);
+                }
+                else if(c2=='n')                                                                        // %Cn : needed flow multi for measurement
+                {
+                    if(caliper_collect_um && caliper_collect_count){
+                        float dim = (float)caliper_filament_standard / (caliper_collect_um / caliper_collect_count);
+                        float multi = 100.0f * dim*dim;
+                        addInt((int)multi,3);
+                    }else{
+                        addInt(100,3);
+                    }
+                }
+                break;
+            }
+#endif //FEATURE_READ_CALIPER
             case 'Z':                                                                                   // %Z1-Z4: Page5 service intervall, %Z5-Z8: Page4 printing/milling time
             {
                 if(c2=='1')                                                                             // Shows text printing/milling time since last service
@@ -3417,6 +3448,36 @@ void UIDisplay::nextPreviousAction(int8_t next)
 
             break;
         }
+#if FEATURE_READ_CALIPER
+        case UI_ACTION_CAL_STANDARD:
+        {
+            if(caliper_filament_standard >= 2600){
+                INCREMENT_MIN_MAX(caliper_filament_standard,10,2590,3000);
+                if(caliper_filament_standard == 2590){
+                    caliper_filament_standard = 1750;
+                }
+            }else{
+                INCREMENT_MIN_MAX(caliper_filament_standard,10,1600,1910);
+                if(caliper_filament_standard == 1910){
+                    caliper_filament_standard = 2850;
+                }
+            }
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+             HAL::eprSetInt16( EPR_RF_CAL_STANDARD, caliper_filament_standard );
+             EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+        case UI_ACTION_CAL_CORRECT:
+        {
+            INCREMENT_MIN_MAX(caliper_collect_adjust,1,-127,127);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetByte( EPR_RF_CAL_ADJUST, caliper_collect_adjust );
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+#endif //FEATURE_READ_CALIPER
         case UI_ACTION_MILL_ACCELERATION:
         {
 #if FEATURE_MILLING_MODE
@@ -4981,6 +5042,29 @@ void UIDisplay::executeAction(int action)
                 break;
             }
 #endif // SDSUPPORT
+
+#if FEATURE_READ_CALIPER
+            case UI_ACTION_CAL_RESET:
+            {
+                InterruptProtectedBlock noInts;
+                caliper_collect_um = 0;
+                caliper_collect_count = 0;
+                noInts.unprotect();
+                BEEP_SHORT
+                break;
+            }
+            case UI_ACTION_CAL_SET:
+            {
+                if(caliper_collect_um && caliper_collect_count){
+                    float dim = (float)caliper_filament_standard / (caliper_collect_um / caliper_collect_count);
+                    float multi = 100.0f * dim*dim;
+                    Commands::changeFlowateMultiply((int)multi);
+                    Com::printFLN( PSTR( "Set Flowrate Multiplier: " ), multi );
+                    BEEP_SHORT
+                }
+                break;
+            }
+#endif //FEATURE_READ_CALIPER
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
             case UI_ACTION_FAN_OFF:

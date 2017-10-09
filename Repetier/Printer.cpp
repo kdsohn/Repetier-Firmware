@@ -954,16 +954,16 @@ void Printer::setup()
     attachInterrupt( digitalPinToInterrupt(RESERVE_DIGITAL_PIN_PD3) , USER_INTERRUPT3_HOOK, FALLING );
 #endif //FEATURE_USER_INT3
 
-#if FEATURE_READ_CALLIPER
+#if FEATURE_READ_CALIPER
 // read for using pins : https://www.arduino.cc/en/Tutorial/DigitalPins
 //where the clock comes in and triggers an interrupt which reads data then:
-    SET_INPUT( FEATURE_READ_CALLIPER_INT_PIN ); //input as default already this is here for explaination more than really having an input.
-    PULLUP( FEATURE_READ_CALLIPER_INT_PIN, HIGH ); //do I need this pullup??
-    attachInterrupt( digitalPinToInterrupt(FEATURE_READ_CALLIPER_INT_PIN) , FEATURE_READ_CALLIPER_HOOK, FALLING );
-//where data is to read when Int triggers because of clock from calliper:
-    SET_INPUT( FEATURE_READ_CALLIPER_DATA_PIN ); //input as default already this is here for explaination more than really having an input.
-    PULLUP( FEATURE_READ_CALLIPER_DATA_PIN, HIGH ); //do I need this pullup??
-#endif //FEATURE_READ_CALLIPER
+    SET_INPUT( FEATURE_READ_CALIPER_INT_PIN ); //input as default already this is here for explaination more than really having an input.
+    PULLUP( FEATURE_READ_CALIPER_INT_PIN, HIGH ); //do I need this pullup??
+    attachInterrupt( digitalPinToInterrupt(FEATURE_READ_CALIPER_INT_PIN) , FEATURE_READ_CALIPER_HOOK, FALLING );
+//where data is to read when Int triggers because of clock from caliper:
+    SET_INPUT( FEATURE_READ_CALIPER_DATA_PIN ); //input as default already this is here for explaination more than really having an input.
+    PULLUP( FEATURE_READ_CALIPER_DATA_PIN, HIGH ); //do I need this pullup??
+#endif //FEATURE_READ_CALIPER
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     SET_OUTPUT(FAN_PIN);
@@ -1531,7 +1531,7 @@ void Printer::homeZAxis()
     // if we have circuit-type Z endstops and we don't know at which endstop we currently are, first move down a bit
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
     if( Printer::ZEndstopUnknown ) {
-        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS]*-ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
+        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * -1 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
     }
 #endif
 
@@ -1565,9 +1565,9 @@ void Printer::homeZAxis()
         PrintLine::moveRelativeDistanceInSteps(0,0,2*steps,0,homingFeedrate[Z_AXIS],true,true);
         setHoming(false);
         queuePositionLastSteps[Z_AXIS] = (nHomeDir == -1) ? minSteps[Z_AXIS] : maxSteps[Z_AXIS];
-        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS]*-ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
+        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * -1 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
         setHoming(true);
-        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS]*2*ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,true);
+        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * 2 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,true);
         setHoming(false);
 
 #if FEATURE_MILLING_MODE

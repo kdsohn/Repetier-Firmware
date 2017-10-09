@@ -1,10 +1,22 @@
-TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad
--> Is this possibly fixed by removing halfstepping in 1.37u4?
+TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37v6.Mod (2017-10-09)
+- introduced Z_ENDSTOP_DRIVE_OVER to have one value that describes the maximum drive over for the endstop. That is more accurate for our two Printer models (with different endstop types).
+   #define Z_ENDSTOP_DRIVE_OVER                 0.8f                              //mm RF1000
+   #define Z_ENDSTOP_DRIVE_OVER                 1.3f                              //mm RF2000
+- used that value for maximal HBS scan depth
+- degraded Z_OVERRIDE_MAX to a derived value of Z_ENDSTOP_DRIVE_OVER and removed unnecessary config option for feature FEATURE_ENABLE_Z_SAFETY to always on.
+
+V RF.01.37v5.Mod (2017-10-08)
+- finished plugin to read filament size with 8€ digital caliper: FEATURE_READ_CALIPER
+    Caution: You need self build hardware for this feature!
+    FEATURE_READ_CALIPER is a feature to connect some digital caliper which sends the filament size. Knowing the filaments size before print starts is very nice because we do not ever have to fill filament diameter into slicer profiles anymore. Just set 2.85mm everywhere within the profiles and set 2.85 as 100% within MENU -> Quick Settings -> Feature Caliper. Plug in filament, let the size flow into your printer and accept the measurement within MENU -> Quick Settings -> Feature Caliper.
+    Ready to Print.
+
 V RF.01.37v4.Mod (2017-10-07)
-- kleiner Config-Bug beim RF1000 PID-I-Drive-Max darf nicht "min" = 5 sein! Sondern irgendwas über 90..120
-- Werden die EEPROM-Werte verworfen wird nun auch die Checksumme neu geschrieben.
+- kleiner Config-Bug beim RF1000 PID-I-Drive-Max darf nicht "min" = 5 sein! Sondern irgendwas über 90..120 (Thx @AtlonXP)
+- Werden die EEPROM-Werte verworfen wird nun auch die Checksumme neu geschrieben. (Thx @AtlonXP)
 
 V RF.01.37v3.Mod (2017-10-03)
 - if you press PLAY ten times your display gets restarted. This is nice if your display blanks out and you cannot type M3200 P13 because you print from SD (...)
@@ -40,7 +52,7 @@ V RF.01.37u6.Mod (2017-09-28)
 - UI_SET_PRESET_EXTRUDER_TEMP_ABS is now respected by MOUNT_FILAMENT_SCRIPT_WITH_HEATING instead of 250°C
 - DOUBLE_STEP_DELAY is decreased to 0 (was 1) like repetier did when removing halfstepping (might speed up move interrupt a bit, but testing)
 - LOW_TICKS_PER_MOVE decreased to 250000 from 400000 because this as well is repetiers standard now
-- defined MAX_ZJERK to 0.28 in config (instead of 0.1) because 0.1 was too small according formula (velocity/accelleration)
+- defined MAX_ZJERK to 0.28 in config (instead of 0.1) because 0.1 was too small according formula (velocity/acceleration)
 - introduced SCRIPT_RETRACT_MM instead of old Z_PAUSE_RETRACT_MM which is now used in several locations.
 - added retract to Output Object Script again using SCRIPT_RETRACT_MM. former problems should be gone now! (see https://gcc.gnu.org/onlinedocs/cpp/Stringizing.html#Stringizing )
 
@@ -66,7 +78,7 @@ V RF.01.37u4.Mod (2017-09-20)
 V RF.01.37u3.Mod (2017-09-19)
 - remove bug with sending rom data over serial before starting/booting up (since ~RF.01.37t6.Mod).
 - implemented FEATURE_USER_INT3 as a dummy feature to easily implement some users interrupt function to pin PD3 @RF1000 or RF2000
-- implemented FEATURE_READ_CALLIPER to get the possibility to plug an digital calliper to reserve pins at RF2000 (or RF1000 with pinchanges)
+- implemented FEATURE_READ_CALIPER to get the possibility to plug an digital caliper to reserve pins at RF2000 (or RF1000 with pinchanges)
 
 V RF.01.37u2.Mod (2017-09-10)
 - Milling: finally tested PAUSE with MOVE while Milling and it did not work as expected. Small bug which is now patched.

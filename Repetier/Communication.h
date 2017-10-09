@@ -204,7 +204,13 @@ public:
     FSTRINGVAR(tEPRZBacklash)
     FSTRINGVAR(tEPRZAcceleration)
     FSTRINGVAR(tEPRZTravelAcceleration)
-    FSTRINGVAR(tEPRZMillingAcceleration)    
+#if FEATURE_MILLING_MODE
+    FSTRINGVAR(tEPRZMillingAcceleration)
+#endif //FEATURE_MILLING_MODE
+#if FEATURE_READ_CALIPER
+    FSTRINGVAR(tEPRZCallStandard)
+    FSTRINGVAR(tEPRZCallAdjust)
+#endif //FEATURE_READ_CALIPER
     FSTRINGVAR(tEPRZStepsPerMM)
     FSTRINGVAR(tEPRZMaxFeedrate)
     FSTRINGVAR(tEPRZHomingFeedrate)

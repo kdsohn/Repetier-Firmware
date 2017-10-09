@@ -142,9 +142,6 @@ XYZ_POSITION_BUTTON_DIRECTION = 1 : This fits more if you want to stick to stand
 /** \brief Enables/disables the park feature */
 #define FEATURE_PARK                        0                                                   // 1 = on, 0 = off
 
-/** \brief Enables safety checks for the manual moving into z-direction via the additional hardware buttons */
-#define FEATURE_ENABLE_Z_SAFETY             1                                                   // 1 = checks enabled, 0 = checks disabled
-
 /** \brief Enables/disables the reset via the printer menu */
 #define FEATURE_RESET_VIA_MENU              1                                                   // 1 = on, 0 = off
 
@@ -787,13 +784,6 @@ we use blocks of 2 kByte size for the structure of our EEPROM
 // ##   miscellaneous configurations
 // ##########################################################################################
 
-#if FEATURE_ENABLE_Z_SAFETY
-
-/** \brief Specifies the maximal steps which can be moved into z-direction after the z-endstop has been reached */
-#define Z_OVERRIDE_MAX                      (ZAXIS_STEPS_PER_MM * 1)
-
-#endif // FEATURE_ENABLE_Z_SAFETY
-
 /** \brief Specifies the minimal distance from z-min which must be reached before it is plausible that z-max is hit */
 #define Z_MIN_DISTANCE                      (ZAXIS_STEPS_PER_MM * 5)
 
@@ -947,11 +937,11 @@ and it is elsewise difficult to know, what your reprap is currently doing. */
 #define DEFAULT_Z_SCALE_MODE                Z_VALUE_MODE_Z_MIN
 
 
-/** \brief For Nibbels external interrupt 3 plus an extra pin is used for reading digital callipers. You will have to solder some logic-converter from 1.8v to 5v see http://www.instructables.com/id/Reading-Digital-Callipers-with-an-Arduino-USB/ */
-#define FEATURE_READ_CALLIPER               0                                                   // 0 = OFF, 1 = ON
-#define FEATURE_READ_CALLIPER_INT_PIN       RESERVE_DIGITAL_PIN_PD3                             // RF2000/RF1000: RESERVE_DIGITAL_PIN_PD3 is INT3 for having clocks falling edges collected
-#define FEATURE_READ_CALLIPER_DATA_PIN      RESERVE_DIGITAL_PIN_PE4                             // RF2000: RESERVE_DIGITAL_PIN_PE4 is some reserve pin for reading off data while clocks falling edge.
-#if FEATURE_READ_CALLIPER && MOTHERBOARD == DEVICE_TYPE_RF1000 && FEATURE_READ_CALLIPER_DATA_PIN == RESERVE_DIGITAL_PIN_PE4
+/** \brief For Nibbels external interrupt 3 plus an extra pin is used for reading digital calipers. You will have to solder some logic-converter from 1.8v to 5v see http://www.instructables.com/id/Reading-Digital-Callipers-with-an-Arduino-USB/ */
+#define FEATURE_READ_CALIPER               0                                                   // 0 = OFF, 1 = ON
+#define FEATURE_READ_CALIPER_INT_PIN       RESERVE_DIGITAL_PIN_PD3                             // RF2000/RF1000: RESERVE_DIGITAL_PIN_PD3 is INT3 for having clocks falling edges collected
+#define FEATURE_READ_CALIPER_DATA_PIN      RESERVE_DIGITAL_PIN_PE4                             // RF2000: RESERVE_DIGITAL_PIN_PE4 is some reserve pin for reading off data while clocks falling edge.
+#if FEATURE_READ_CALIPER && MOTHERBOARD == DEVICE_TYPE_RF1000 && FEATURE_READ_CALIPER_DATA_PIN == RESERVE_DIGITAL_PIN_PE4
  #error You cannot use RESERVE_DIGITAL_PIN_PE4 on an RF1000, please connect and choose another one.
 #endif
 
@@ -959,8 +949,8 @@ and it is elsewise difficult to know, what your reprap is currently doing. */
 You can activate this to 1 and connect some Button. If you connect ground to pull the pullup down you will let the firmware jump into interrupt routine */
 #define FEATURE_USER_INT3                   0                                                   // 0 = OFF, 1 = ON
 
-#if FEATURE_READ_CALLIPER && FEATURE_USER_INT3
- #error You cannot use FEATURE_READ_CALLIPER and FEATURE_USER_INT3 at the same time with stock programming. Please change pins/etc. and remove this errorcheck
+#if FEATURE_READ_CALIPER && FEATURE_USER_INT3
+ #error You cannot use FEATURE_READ_CALIPER and FEATURE_USER_INT3 at the same time with stock programming. Please change pins/etc. and remove this errorcheck
 #endif
 
 #endif // CONFIGURATION_H

@@ -184,6 +184,11 @@
 
 #define UI_ACTION_MILL_ACCELERATION         1694
 
+#define UI_ACTION_CAL_RESET                 1695
+#define UI_ACTION_CAL_STANDARD              1696
+#define UI_ACTION_CAL_CORRECT               1697
+#define UI_ACTION_CAL_SET                   1698
+
 #define UI_ACTION_FET1_OUTPUT               2001
 #define UI_ACTION_FET2_OUTPUT               2002
 
