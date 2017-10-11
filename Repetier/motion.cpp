@@ -162,9 +162,12 @@ void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize)
     for(uint8_t axis=0; axis < 4; axis++)
     {
         p->delta[axis] = Printer::queuePositionTargetSteps[axis] - Printer::queuePositionLastSteps[axis];
-        if(axis == E_AXIS 
-          && Printer::extrudeMultiply!=100){
-            p->delta[E_AXIS] = (long)((p->delta[E_AXIS] * (float)Printer::extrudeMultiply) * 0.01f);
+        if(axis == E_AXIS)
+        {
+            Printer::extrudeMultiplyError += (static_cast<float>(p->delta[E_AXIS]) * Printer::extrusionFactor);
+            p->delta[E_AXIS] = static_cast<int32_t>(Printer::extrudeMultiplyError);
+            Printer::extrudeMultiplyError -= p->delta[E_AXIS];
+            Printer::filamentPrinted += p->delta[E_AXIS] * Printer::invAxisStepsPerMM[axis];
         }
         if(p->delta[axis] >= 0)
             p->setPositiveDirectionForAxis(axis);
@@ -180,7 +183,6 @@ void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize)
             PrintLine::resetPathPlanner();
         return;         // No steps included
     }
-    Printer::filamentPrinted += axisDistanceMM[E_AXIS];
     float xydist2;
 
 #if ENABLE_BACKLASH_COMPENSATION
@@ -269,12 +271,18 @@ void PrintLine::prepareDirectMove(void)
     // Find direction
     for(uint8_t axis=0; axis < 4; axis++)
     {
-        if((p->delta[axis]=Printer::directPositionTargetSteps[axis]-Printer::directPositionCurrentSteps[axis])>=0)
+        p->delta[axis] = Printer::directPositionTargetSteps[axis] - Printer::directPositionCurrentSteps[axis];
+        if(axis == E_AXIS)
+        {
+            Printer::extrudeMultiplyError += (static_cast<float>(p->delta[E_AXIS]) * Printer::extrusionFactor);
+            p->delta[E_AXIS] = static_cast<int32_t>(Printer::extrudeMultiplyError);
+            Printer::extrudeMultiplyError -= p->delta[E_AXIS];
+            Printer::filamentPrinted += p->delta[E_AXIS] * Printer::invAxisStepsPerMM[axis];
+        }
+        if(p->delta[axis] >= 0)
             p->setPositiveDirectionForAxis(axis);
         else
             p->delta[axis] = -p->delta[axis];
-        if(axis == E_AXIS && Printer::extrudeMultiply!=100)
-            p->delta[E_AXIS] = (long)((p->delta[E_AXIS] * (float)Printer::extrudeMultiply) * 0.01f);
         axisDistanceMM[axis] = p->delta[axis] * Printer::invAxisStepsPerMM[axis];
         if(p->delta[axis]) p->setMoveOfAxis(axis);
         Printer::directPositionLastSteps[axis] = Printer::directPositionTargetSteps[axis];
@@ -284,7 +292,6 @@ void PrintLine::prepareDirectMove(void)
         p->stepsRemaining = 0;
         return;         // No steps included
     }
-    Printer::filamentPrinted += axisDistanceMM[E_AXIS];
     float xydist2;
 
     // Define variables that are needed for the Bresenham algorithm. Please note that Z is not currently included in the Bresenham algorithm.

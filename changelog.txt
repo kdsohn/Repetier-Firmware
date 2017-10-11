@@ -1,6 +1,10 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37v7.Mod (2017-10-11)
+- patching in repetiers extruding-error-sum for correct math when using feed multiply setting within printer.
+- saving some ROM space by reusing debug text
+
 V RF.01.37v6.Mod (2017-10-09)
 - introduced Z_ENDSTOP_DRIVE_OVER to have one value that describes the maximum drive over for the endstop. That is more accurate for our two Printer models (with different endstop types).
    #define Z_ENDSTOP_DRIVE_OVER                 0.8f                              //mm RF1000

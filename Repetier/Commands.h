@@ -36,7 +36,7 @@ public:
     static void adjustFanMode(uint8_t output_mode = 0);
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
     static void changeFeedrateMultiply(int factorInPercent);
-    static void changeFlowateMultiply(int factorInPercent);
+    static void changeFlowrateMultiply(float factorInPercent);
     static void reportPrinterUsage();
     static void emergencyStop();
     static void checkFreeMemory();
