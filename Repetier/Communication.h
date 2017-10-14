@@ -80,6 +80,7 @@ public:
     FSTRINGVAR(tColon)
     FSTRINGVAR(tSpeedMultiply)
     FSTRINGVAR(tFlowMultiply)
+    FSTRINGVAR(tPrintingIsInProcessError)
     FSTRINGVAR(tFanspeed)
     FSTRINGVAR(tPrintedFilament)
     FSTRINGVAR(tPrintingTime)
@@ -116,6 +117,9 @@ public:
     FSTRINGVAR(tLinearLColon)
     FSTRINGVAR(tQuadraticKColon)
     FSTRINGVAR(tEEPROMUpdated)
+    FSTRINGVAR(tscanHeatBed)
+    FSTRINGVAR(tscanWorkPart)
+    FSTRINGVAR(tAutoMatrixLeveling)
 
 #if FEATURE_SERVICE_INTERVAL
     FSTRINGVAR(tPrintedFilamentService)

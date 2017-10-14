@@ -2747,7 +2747,7 @@ void UIDisplay::okAction()
                         // we do not allow to delete a file while we are printing/milling from the SD card
                         if( Printer::debugErrors() )
                         {
-                            Com::printFLN(PSTR("It is not possible to delete a file from the SD card until the current processing has finished."));
+                            Com::printFLN(PSTR("delete error: processing"));
                         }
 
                         showError( (void*)ui_text_delete_file, (void*)ui_text_operation_denied );
@@ -3188,12 +3188,12 @@ void UIDisplay::nextPreviousAction(int8_t next)
         case UI_ACTION_EPOSITION:
         {
 #if EXTRUDER_ALLOW_COLD_MOVE
-            PrintLine::moveRelativeDistanceInSteps(0,0,0,Printer::axisStepsPerMM[E_AXIS]*increment,UI_SET_EXTRUDER_FEEDRATE,true,false); //klappt nicht in Pause!!
+            PrintLine::moveRelativeDistanceInSteps(0,0,0, Printer::axisStepsPerMM[E_AXIS]*increment / Printer::extrusionFactor, UI_SET_EXTRUDER_FEEDRATE, true, false); //klappt nicht in Pause!!
             Commands::printCurrentPosition();
 #else
             if( Extruder::current->tempControl.targetTemperatureC > UI_SET_MIN_EXTRUDER_TEMP )
             {
-                PrintLine::moveRelativeDistanceInSteps(0,0,0,Printer::axisStepsPerMM[E_AXIS]*increment,UI_SET_EXTRUDER_FEEDRATE,true,false);
+                PrintLine::moveRelativeDistanceInSteps(0,0,0, Printer::axisStepsPerMM[E_AXIS]*increment / Printer::extrusionFactor, UI_SET_EXTRUDER_FEEDRATE, true, false);
                 Commands::printCurrentPosition();
             }
             else
@@ -3327,7 +3327,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         {
             int er = Printer::extrudeMultiply;
             INCREMENT_MIN_MAX(er,1,25,200);
-            Commands::changeFlowateMultiply(er);
+            Commands::changeFlowrateMultiply(static_cast<float>(er));
             break;
         }
         case UI_ACTION_STEPPER_INACTIVE:
@@ -4366,7 +4366,7 @@ void UIDisplay::executeAction(int action)
                     // do not allow homing via the menu while we are printing
                     if( Printer::debugErrors() )
                     {
-                        Com::printFLN( PSTR( "executeAction(): Home all is not available while the printing is in progress" ) );
+                        Com::printFLN( Com::tPrintingIsInProcessError );
                     }
 
                     showError( (void*)ui_text_home, (void*)ui_text_operation_denied );
@@ -4401,7 +4401,7 @@ void UIDisplay::executeAction(int action)
                     // do not allow homing via the menu while we are printing
                     if( Printer::debugErrors() )
                     {
-                        Com::printFLN( PSTR( "executeAction(): Home X is not available while the printing is in progress" ) );
+                        Com::printFLN( Com::tPrintingIsInProcessError );
                     }
 
                     showError( (void*)ui_text_home, (void*)ui_text_operation_denied );
@@ -4423,7 +4423,7 @@ void UIDisplay::executeAction(int action)
                     // do not allow homing via the menu while we are printing
                     if( Printer::debugErrors() )
                     {
-                        Com::printFLN( PSTR( "executeAction(): Home Y is not available while the printing is in progress" ) );
+                        Com::printFLN( Com::tPrintingIsInProcessError );
                     }
 
                     showError( (void*)ui_text_home, (void*)ui_text_operation_denied );
@@ -4445,12 +4445,12 @@ void UIDisplay::executeAction(int action)
                     // do not allow homing via the menu while we are printing
                     if( Printer::debugErrors() )
                     {
-                        Com::printFLN( PSTR( "executeAction(): Home Z is not available while the printing is in progress" ) );
+                        Com::printFLN( Com::tPrintingIsInProcessError );
                     }
 
                     showError( (void*)ui_text_home, (void*)ui_text_operation_denied );
                     break;
-                }                
+                }
                 if( !isHomingAllowed( NULL, 1 ) )
                 {
                     break;
@@ -4612,7 +4612,7 @@ void UIDisplay::executeAction(int action)
                 {
                     if( Printer::debugErrors() )
                     {
-                        Com::printFLN( PSTR( "executeAction(): The operating mode can not be switched while the printing is in progress" ) );
+                        Com::printFLN( Com::tPrintingIsInProcessError );
                     }
 
                     showError( (void*)ui_text_change_mode, (void*)ui_text_operation_denied );
@@ -4648,7 +4648,7 @@ void UIDisplay::executeAction(int action)
                     // the z-endstop type can not be switched while the printing is in progress
                     if( Printer::debugErrors() )
                     {
-                        Com::printFLN( PSTR( "executeAction(): The z-endstop type can not be switched while the printing is in progress" ) );
+                        Com::printFLN( Com::tPrintingIsInProcessError );
                     }
 
                     showError( (void*)ui_text_change_z_type, (void*)ui_text_operation_denied );
@@ -4708,7 +4708,7 @@ void UIDisplay::executeAction(int action)
                     // the hotend type can not be switched while the printing is in progress
                     if( Printer::debugErrors() )
                     {
-                        Com::printFLN( PSTR( "executeAction(): The miller type can not be switched while the milling is in progress" ) );
+                        Com::printFLN( Com::tPrintingIsInProcessError );
                     }
 
                     showError( (void*)ui_text_change_miller_type, (void*)ui_text_operation_denied );
@@ -5050,7 +5050,7 @@ void UIDisplay::executeAction(int action)
                 caliper_collect_um = 0;
                 caliper_collect_count = 0;
                 noInts.unprotect();
-                BEEP_SHORT
+                BEEP_ACCEPT_SET_POSITION
                 break;
             }
             case UI_ACTION_CAL_SET:
@@ -5058,9 +5058,9 @@ void UIDisplay::executeAction(int action)
                 if(caliper_collect_um && caliper_collect_count){
                     float dim = (float)caliper_filament_standard / (caliper_collect_um / caliper_collect_count);
                     float multi = 100.0f * dim*dim;
-                    Commands::changeFlowateMultiply((int)multi);
+                    Commands::changeFlowrateMultiply(multi);
                     Com::printFLN( PSTR( "Set Flowrate Multiplier: " ), multi );
-                    BEEP_SHORT
+                    BEEP_ACCEPT_SET_POSITION
                 }
                 break;
             }

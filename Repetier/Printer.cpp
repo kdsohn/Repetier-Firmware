@@ -90,6 +90,8 @@ float           Printer::minMM[3];
 float           Printer::feedrate;                                      ///< Last requested feedrate.
 int             Printer::feedrateMultiply;                              ///< Multiplier for feedrate in percent (factor 1 = 100)
 int             Printer::extrudeMultiply;                               ///< Flow multiplier in percdent (factor 1 = 100)
+float           Printer::extrudeMultiplyError = 0;
+float           Printer::extrusionFactor = 1.0;
 float           Printer::maxJerk;                                       ///< Maximum allowed jerk in mm/s
 float           Printer::maxZJerk;                                      ///< Maximum allowed jerk in z direction in mm/s
 float           Printer::extruderOffset[3];                             ///< offset for different extruder positions.
@@ -606,13 +608,13 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
         {
             if(
 #if MIN_EXTRUDER_TEMP > 30
-                Extruder::current->tempControl.currentTemperatureC<MIN_EXTRUDER_TEMP ||
+                Extruder::current->tempControl.currentTemperatureC < MIN_EXTRUDER_TEMP ||
 #endif // MIN_EXTRUDER_TEMP > 30
 
-                fabs(p - queuePositionLastSteps[E_AXIS]) > EXTRUDE_MAXLENGTH * axisStepsPerMM[E_AXIS])
-            {
-                p = 0;
-            }
+                fabs(com->E) * extrusionFactor > EXTRUDE_MAXLENGTH)
+                    {
+                        p = 0;
+                    }
             queuePositionTargetSteps[E_AXIS] = queuePositionLastSteps[E_AXIS] + p;
             
         }
@@ -620,13 +622,12 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
         {
             if(
 #if MIN_EXTRUDER_TEMP > 30
-                Extruder::current->tempControl.currentTemperatureC<MIN_EXTRUDER_TEMP ||
+                Extruder::current->tempControl.currentTemperatureC < MIN_EXTRUDER_TEMP ||
 #endif // MIN_EXTRUDER_TEMP > 30
-
-                fabs(p - queuePositionLastSteps[E_AXIS]) > EXTRUDE_MAXLENGTH * axisStepsPerMM[E_AXIS])
-            {
-                queuePositionLastSteps[E_AXIS] = p;
-            }
+                fabs(p - queuePositionLastSteps[E_AXIS]) * extrusionFactor > EXTRUDE_MAXLENGTH * axisStepsPerMM[E_AXIS])
+                    {
+                        queuePositionLastSteps[E_AXIS] = p;
+                    }
             queuePositionTargetSteps[E_AXIS] = p;
         }
     }
@@ -638,17 +639,13 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
     if(com->hasF())
     {
         if(unitIsInches)
-            feedrate = com->F * 0.0042333f * (float)feedrateMultiply;  // Factor is 25.5/60/100
+            feedrate = com->F * (float)feedrateMultiply * 0.0042333f;  // Factor is 25.5/60/100
         else
-            feedrate = com->F * 0.00016666666f * (float)feedrateMultiply;
+            feedrate = com->F * (float)feedrateMultiply * 0.00016666666f;
     }
 
     if(!Printer::isPositionAllowed(x,y,z))
     {
-        if( Printer::debugErrors() )
-        {
-            //Com::printFLN( PSTR( "We should not be here." ) );
-        }
         queuePositionLastSteps[E_AXIS] = queuePositionTargetSteps[E_AXIS];
         return false; // ignore move
     }

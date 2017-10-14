@@ -467,7 +467,8 @@ void scanHeatBed( void )
 
         if( Printer::debugInfo() )
         {
-            Com::printFLN( PSTR( "scanHeatBed(): the scan has been aborted" ) );
+            Com::printF( Com::tscanHeatBed );
+            Com::printFLN( PSTR( "the scan has been aborted" ) );
         }
 
         UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_ABORTED );
@@ -514,7 +515,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
             if( Printer::debugInfo() )
             {
-                Com::printFLN( PSTR( "scanHeatBed(): retry -> " ), g_retryStatus );
+                Com::printF( Com::tscanHeatBed );
+                Com::printFLN( PSTR( "retry -> " ), g_retryStatus );
             }
 #endif // DEBUG_HEAT_BED_SCAN == 2
         }
@@ -533,7 +535,8 @@ void scanHeatBed( void )
 
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): the scan has been started" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "the scan has been started" ) );
                 }
 
                 // clear all fields of the heat bed compensation matrix
@@ -550,7 +553,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 1 -> 10" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "1 -> 10" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -612,7 +616,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 15 -> 20" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "15 -> 20" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -639,7 +644,8 @@ void scanHeatBed( void )
                 {
                     if( Printer::debugInfo() )
                     {
-                        Com::printFLN( PSTR( "scanHeatBed(): warmup delay [s] = " ), PRECISE_HEAT_BED_SCAN_WARMUP_DELAY );
+                        Com::printF( Com::tscanHeatBed );
+                        Com::printFLN( PSTR( "warmup delay [s] = " ), PRECISE_HEAT_BED_SCAN_WARMUP_DELAY );
                     }
                 }
 #endif // FEATURE_PRECISE_HEAT_BED_SCAN
@@ -647,7 +653,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 20 -> 22" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "20 -> 22" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -673,7 +680,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): move = " ), HEAT_BED_SCAN_Z_START_STEPS );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "move = " ), HEAT_BED_SCAN_Z_START_STEPS );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
 
@@ -686,7 +694,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 22 -> 25" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "22 -> 25" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -703,7 +712,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 25 -> 30" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "25 -> 30" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -728,7 +738,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 30 -> 35" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "30 -> 35" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -762,7 +773,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 35 -> 40" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "35 -> 40" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -778,7 +790,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                     if( Printer::debugInfo() )
                     {
-                        Com::printFLN( PSTR( "scanHeatBed(): 39 -> 60" ) );
+                        Com::printF( Com::tscanHeatBed );
+                        Com::printFLN( PSTR( "39 -> 60" ) );
                     }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                     break;
@@ -794,7 +807,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                     if( Printer::debugErrors() )
                     {
-                        Com::printFLN( PSTR( "scanHeatBed(): the x-dimension of the compensation matrix became too big: " ), nIndexX );
+                        Com::printF( Com::tscanHeatBed );
+                        Com::printFLN( PSTR( "x-dimension of the z matrix became too big: " ), nIndexX );
                     }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                     g_abortZScan = 1;
@@ -819,7 +833,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 39 -> 40" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "39 -> 40" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -842,7 +857,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                     if( Printer::debugInfo() )
                     {
-                        Com::printFLN( PSTR( "scanHeatBed(): 40 -> 49" ) );
+                        Com::printF( Com::tscanHeatBed );
+                        Com::printFLN( PSTR( "40 -> 49" ) );
                     }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                     break;
@@ -854,7 +870,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 40 -> 60" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "40 -> 60" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -879,7 +896,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 45 -> 50" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "45 -> 50" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -893,7 +911,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 49 -> 50" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "49 -> 50" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -927,7 +946,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 50 -> 51" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "50 -> 51" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -943,7 +963,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 51 -> 52" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "51 -> 52" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -959,7 +980,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 52 -> 53" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "52 -> 53" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -978,7 +1000,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 53 -> 54" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "53 -> 54" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1034,7 +1057,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 54 -> 55" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "54 -> 55" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1057,7 +1081,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                         if( Printer::debugInfo() )
                         {
-                            Com::printFLN( PSTR( "scanHeatBed(): 55 -> 39" ) );
+                            Com::printF( Com::tscanHeatBed );
+                            Com::printFLN( PSTR( "55 -> 39" ) );
                         }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                         break;
@@ -1075,7 +1100,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                         if( Printer::debugInfo() )
                         {
-                            Com::printFLN( PSTR( "scanHeatBed(): 55 -> 39" ) );
+                            Com::printF( Com::tscanHeatBed );
+                            Com::printFLN( PSTR( "55 -> 39" ) );
                         }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                         break;
@@ -1092,7 +1118,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                     if( Printer::debugErrors() )
                     {
-                        Com::printFLN( PSTR( "scanWorkPart(): the y-dimension of the compensation matrix became too big: " ), nIndexY );
+                        Com::printF( Com::tscanHeatBed );
+                        Com::printFLN( PSTR( "y-dimension of the z matrix became too big: " ), nIndexY );
                     }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                     g_abortZScan = 1;
@@ -1105,7 +1132,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 55 -> 49" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "55 -> 49" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1145,7 +1173,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 60 -> 65" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "60 -> 65" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1155,7 +1184,8 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     // output the determined compensation
-                    Com::printFLN( PSTR( "scanHeatBed(): raw heat bed compensation matrix: " ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "raw heat bed z matrix: " ) );
                     determineCompensationOffsetZ();
                     outputCompensationMatrix();
                 }
@@ -1165,7 +1195,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 65 -> 70" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "65 -> 70" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1180,7 +1211,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 70 -> 75" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "70 -> 75" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1190,13 +1222,15 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     // output the pure scan time
-                    Com::printF( PSTR( "scanHeatBed(): total scan time: " ), long((HAL::timeInMilliseconds() - g_scanStartTime) / 1000) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printF( PSTR( "total scan time: " ), long((HAL::timeInMilliseconds() - g_scanStartTime) / 1000) );
                     Com::printFLN( PSTR( " [s]" ) );
                 }
 
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): g_uZMatrixMax[Y_AXIS].1 = " ), (int)g_uZMatrixMax[Y_AXIS] );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "g_uZMatrixMax[Y_AXIS].1 = " ), (int)g_uZMatrixMax[Y_AXIS] );
                 }
 
                 // prepare the heat bed compensation matrix for fast usage during the actual printing
@@ -1204,10 +1238,12 @@ void scanHeatBed( void )
 
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): g_uZMatrixMax[Y_AXIS].2 = " ), (int)g_uZMatrixMax[Y_AXIS] );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "g_uZMatrixMax[Y_AXIS].2 = " ), (int)g_uZMatrixMax[Y_AXIS] );
 
                     // output the converted heat bed compensation matrix
-                    Com::printFLN( PSTR( "scanHeatBed(): converted heat bed compensation matrix: " ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "converted heat bed z matrix: " ) );
                     outputCompensationMatrix();
                 }
 
@@ -1217,7 +1253,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 75 -> 80" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "75 -> 80" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2              
                 break;
@@ -1235,8 +1272,10 @@ void scanHeatBed( void )
 
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): idle pressure at start: " ), g_nFirstIdlePressure );
-                    Com::printFLN( PSTR( "scanHeatBed(): idle pressure at stop: " ), nTempPressure );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "idle pressure at start: " ), g_nFirstIdlePressure );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "idle pressure at stop: " ), nTempPressure );
                 }
 
 #if NUM_EXTRUDER == 2
@@ -1246,7 +1285,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 80 -> 100" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "80 -> 100" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2              
 #else
@@ -1259,7 +1299,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                     if( Printer::debugInfo() )
                     {
-                        Com::printFLN( PSTR( "scanHeatBed(): 80 -> 130" ) );
+                        Com::printF( Com::tscanHeatBed );
+                        Com::printFLN( PSTR( "80 -> 130" ) );
                     }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 }
@@ -1272,7 +1313,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                     if( Printer::debugInfo() )
                     {
-                        Com::printFLN( PSTR( "scanHeatBed(): 80 -> 150" ) );
+                        Com::printF( Com::tscanHeatBed );
+                        Com::printFLN( PSTR( "80 -> 150" ) );
                     }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 }
@@ -1292,7 +1334,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 100 -> 110" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "100 -> 110" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1317,7 +1360,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 105 -> 110" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "105 -> 110" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1351,7 +1395,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 110 -> 120" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "110 -> 120" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1367,7 +1412,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 120 -> 121" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "120 -> 121" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1386,7 +1432,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 121 -> 122" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "121 -> 122" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1402,7 +1449,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 122 -> 123" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "122 -> 123" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1419,7 +1467,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 123 -> 125" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "123 -> 125" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1441,7 +1490,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                     if( Printer::debugInfo() )
                     {
-                        Com::printFLN( PSTR( "scanHeatBed(): 125 -> 132" ) );
+                        Com::printF( Com::tscanHeatBed );
+                        Com::printFLN( PSTR( "125 -> 132" ) );
                     }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 }
@@ -1454,7 +1504,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                     if( Printer::debugInfo() )
                     {
-                        Com::printFLN( PSTR( "scanHeatBed(): 125 -> 145" ) );
+                        Com::printF( Com::tscanHeatBed );
+                        Com::printFLN( PSTR( "125 -> 145" ) );
                     }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 }
@@ -1471,7 +1522,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 130 -> 135" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "130 -> 135" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1489,7 +1541,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 132 -> 135" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "132 -> 135" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1524,7 +1577,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 135 -> 136" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "135 -> 136" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1550,14 +1604,16 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 136 -> 137" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "136 -> 137" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
 
 #if FEATURE_PRECISE_HEAT_BED_SCAN
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): calibration delay [s] =  " ), (uint32_t)PRECISE_HEAT_BED_SCAN_CALIBRATION_DELAY );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "calibration delay [s] =  " ), (uint32_t)PRECISE_HEAT_BED_SCAN_CALIBRATION_DELAY );
                 }
 #endif // FEATURE_PRECISE_HEAT_BED_SCAN
                 break;
@@ -1584,7 +1640,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 137 -> 140" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "137 -> 140" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1609,7 +1666,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 139 -> 140" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "139 -> 140" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1643,7 +1701,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 140 -> 141" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "140 -> 141" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1659,7 +1718,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 141 -> 142" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "141 -> 142" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1678,7 +1738,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 142 -> 143" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "142 -> 143" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1694,7 +1755,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 143 -> 144" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "143 -> 144" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1707,7 +1769,8 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     // output the converted heat bed compensation matrix
-                    Com::printFLN( PSTR( "scanHeatBed(): adjusted heat bed compensation matrix: " ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "adjusted heat bed z matrix: " ) );
                     outputCompensationMatrix();
                 }
 
@@ -1716,7 +1779,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 144 -> 145" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "144 -> 145" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1736,7 +1800,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 145 -> 150" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "145 -> 150" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1760,7 +1825,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 150 -> 160" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "150 -> 160" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1776,13 +1842,15 @@ void scanHeatBed( void )
                 {
                     if( Printer::debugInfo() )
                     {
-                        Com::printFLN( PSTR( "scanHeatBed(): the heat bed compensation matrix has been saved" ) );
+                        Com::printF( Com::tscanHeatBed );
+                        Com::printFLN( PSTR( "the heat bed z matrix has been saved" ) );
                     }
                 }
 
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): the scan has been completed" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "the scan has been completed" ) );
                 }
                 UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_DONE );
                 BEEP_STOP_HEAT_BED_SCAN
@@ -1792,7 +1860,8 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 160 -> 0" ) );
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "160 -> 0" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1909,7 +1978,7 @@ void searchZOScan( void )
                         g_ZOSlearningRate = 1.0f;
                         g_ZOSlearningGradient = 0.0f;
                         g_min_nZScanZPosition = HEAT_BED_SCAN_Z_START_STEPS; //nur nutzen wenn kleiner.
-                        Com::printF( PSTR( "Auto-Matrix-Leveling @X:" ), g_ZOSTestPoint[X_AXIS] );
+                        Com::printF( Com::tAutoMatrixLeveling, g_ZOSTestPoint[X_AXIS] );
                         Com::printFLN( PSTR( " Y:" ), g_ZOSTestPoint[Y_AXIS] );
                         break;
                         }
@@ -1920,7 +1989,7 @@ void searchZOScan( void )
                         g_ZOSlearningRate = 0.8f;
                         g_ZOSlearningGradient = 1.0f;
                         g_min_nZScanZPosition = HEAT_BED_SCAN_Z_START_STEPS; //nur nutzen wenn kleiner.
-                        Com::printF( PSTR( "Auto-Matrix-Leveling @X:" ), g_ZOSTestPoint[X_AXIS] );
+                        Com::printF( Com::tAutoMatrixLeveling, g_ZOSTestPoint[X_AXIS] );
                         Com::printFLN( PSTR( " Y:" ), g_ZOSTestPoint[Y_AXIS] );
                         break;
                         }
@@ -1931,7 +2000,7 @@ void searchZOScan( void )
                         g_ZOSlearningRate = 0.8f;
                         g_ZOSlearningGradient = 1.0f;
                         g_min_nZScanZPosition = HEAT_BED_SCAN_Z_START_STEPS; //nur nutzen wenn kleiner.
-                        Com::printF( PSTR( "Auto-Matrix-Leveling @X:" ), g_ZOSTestPoint[X_AXIS] );
+                        Com::printF( Com::tAutoMatrixLeveling, g_ZOSTestPoint[X_AXIS] );
                         Com::printFLN( PSTR( " Y:" ), g_ZOSTestPoint[Y_AXIS] );
                         break;
                         }
@@ -1942,7 +2011,7 @@ void searchZOScan( void )
                         g_ZOSlearningRate = 0.8f;
                         g_ZOSlearningGradient = 1.0f;
                         g_min_nZScanZPosition = HEAT_BED_SCAN_Z_START_STEPS; //nur nutzen wenn kleiner.
-                        Com::printF( PSTR( "Auto-Matrix-Leveling @X:" ), g_ZOSTestPoint[X_AXIS] );
+                        Com::printF( Com::tAutoMatrixLeveling, g_ZOSTestPoint[X_AXIS] );
                         Com::printFLN( PSTR( " Y:" ), g_ZOSTestPoint[Y_AXIS] );
                         break;
                         }
@@ -1953,7 +2022,7 @@ void searchZOScan( void )
                         g_ZOSlearningRate = 0.8f;
                         g_ZOSlearningGradient = 1.0f;
                         g_min_nZScanZPosition = HEAT_BED_SCAN_Z_START_STEPS; //nur nutzen wenn kleiner.
-                        Com::printF( PSTR( "Auto-Matrix-Leveling @X:" ), g_ZOSTestPoint[X_AXIS] );
+                        Com::printF( Com::tAutoMatrixLeveling, g_ZOSTestPoint[X_AXIS] );
                         Com::printFLN( PSTR( " Y:" ), g_ZOSTestPoint[Y_AXIS] );
                         break;
                         }
@@ -1964,7 +2033,7 @@ void searchZOScan( void )
                         g_ZOSlearningRate = 0.8f;
                         g_ZOSlearningGradient = 1.0f;
                         g_min_nZScanZPosition = HEAT_BED_SCAN_Z_START_STEPS; //nur nutzen wenn kleiner.
-                        Com::printF( PSTR( "Auto-Matrix-Leveling @X:" ), g_ZOSTestPoint[X_AXIS] );
+                        Com::printF( Com::tAutoMatrixLeveling, g_ZOSTestPoint[X_AXIS] );
                         Com::printFLN( PSTR( " Y:" ), g_ZOSTestPoint[Y_AXIS] );
                         break;
                         }
@@ -1975,7 +2044,7 @@ void searchZOScan( void )
                         g_ZOSlearningRate = 0.8f;
                         g_ZOSlearningGradient = 1.0f;
                         g_min_nZScanZPosition = HEAT_BED_SCAN_Z_START_STEPS; //nur nutzen wenn kleiner.
-                        Com::printF( PSTR( "Auto-Matrix-Leveling @X:" ), g_ZOSTestPoint[X_AXIS] );
+                        Com::printF( Com::tAutoMatrixLeveling, g_ZOSTestPoint[X_AXIS] );
                         Com::printFLN( PSTR( " Y:" ), g_ZOSTestPoint[Y_AXIS] );
                         g_ZOS_Auto_Matrix_Leveling_State = 0; //Auto-Matrix-Leveling ends after last scan.
                         break;
@@ -3370,7 +3439,8 @@ void scanWorkPart( void )
 
         if( Printer::debugInfo() )
         {
-            Com::printFLN( PSTR( "scanWorkPart(): the scan has been aborted" ) );
+            Com::printF( Com::tscanWorkPart );
+            Com::printFLN( PSTR( "the scan has been aborted" ) );
         }
 
         UI_STATUS_UPD( UI_TEXT_WORK_PART_SCAN_ABORTED );
@@ -3415,7 +3485,8 @@ void scanWorkPart( void )
 
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): the scan has been started" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "the scan has been started" ) );
                 }
 
                 // clear all fields of the work part compensation matrix
@@ -3432,7 +3503,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 1 -> 10" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "1 -> 10" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -3458,7 +3530,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 10 -> 25" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "10 -> 25" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -3479,7 +3552,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 25 -> 30" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "25 -> 30" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -3529,7 +3603,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 30 -> 32" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "30 -> 32" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -3553,7 +3628,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                         if( Printer::debugInfo() )
                         {
-                            Com::printFLN( PSTR( "scanWorkPart(): 32 -> 33" ) );
+                            Com::printF( Com::tscanWorkPart );
+                            Com::printFLN( PSTR( "32 -> 33" ) );
                         }
 #endif // DEBUG_WORK_PART_SCAN
                         return;
@@ -3564,7 +3640,8 @@ void scanWorkPart( void )
                         // this should never happen
                         if( Printer::debugErrors() )
                         {
-                            Com::printFLN( PSTR( "scanWorkPart(): the z-min endstop has been reached" ) );
+                            Com::printF( Com::tscanWorkPart );
+                            Com::printFLN( PSTR( "the z-min endstop has been reached" ) );
                         }
                         g_abortZScan = 1;
                         return;
@@ -3603,7 +3680,8 @@ void scanWorkPart( void )
                         // we have reached the target pressure / we have found the z-origin
                         if( Printer::debugErrors() )
                         {
-                            Com::printFLN( PSTR( "scanWorkPart(): the z-origin has been determined" ) );
+                            Com::printF( Com::tscanWorkPart );
+                            Com::printFLN( PSTR( "the z-origin has been determined" ) );
                         }
 
                         setZOrigin();
@@ -3619,7 +3697,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                         if( Printer::debugInfo() )
                         {
-                            Com::printFLN( PSTR( "scanWorkPart(): 33 -> 35 > " ), nZ );
+                            Com::printF( Com::tscanWorkPart );
+                            Com::printFLN( PSTR( "33 -> 35 > " ), nZ );
                         }
 #endif // DEBUG_WORK_PART_SCAN
                         return;
@@ -3629,7 +3708,8 @@ void scanWorkPart( void )
                     {
                         if( Printer::debugErrors() )
                         {
-                            Com::printFLN( PSTR( "scanWorkPart(): the z-max endstop has been reached" ) );
+                            Com::printF( Com::tscanWorkPart );
+                            Com::printFLN( PSTR( "the z-max endstop has been reached" ) );
                         }
                         g_abortZScan = 1;
                         return;
@@ -3659,7 +3739,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 35 -> 40" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "35 -> 40" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -3675,7 +3756,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                     if( Printer::debugInfo() )
                     {
-                        Com::printFLN( PSTR( "scanWorkPart(): 39 -> 60" ) );
+                        Com::printF( Com::tscanWorkPart );
+                        Com::printFLN( PSTR( "39 -> 60" ) );
                     }
 #endif // DEBUG_WORK_PART_SCAN
                     break;
@@ -3690,7 +3772,8 @@ void scanWorkPart( void )
                 {
                     if( Printer::debugErrors() )
                     {
-                        Com::printFLN( PSTR( "scanWorkPart(): the x-dimension of the compensation matrix became too big: " ), nIndexX );
+                        Com::printF( Com::tscanWorkPart );
+                        Com::printFLN( PSTR( "the x-dimension of the z matrix became too big: " ), nIndexX );
                     }
                     g_abortZScan = 1;
                     break;
@@ -3714,7 +3797,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 39 -> 40" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "39 -> 40" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -3737,7 +3821,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                     if( Printer::debugInfo() )
                     {
-                        Com::printFLN( PSTR( "scanWorkPart(): 40 -> 49 : X=" ), g_ZCompensationMatrix[nIndexX][0] );
+                        Com::printF( Com::tscanWorkPart );
+                        Com::printFLN( PSTR( "40 -> 49 : X=" ), g_ZCompensationMatrix[nIndexX][0] );
                     }
 #endif // DEBUG_WORK_PART_SCAN
                     break;
@@ -3749,7 +3834,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 40 -> 60" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "40 -> 60" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -3767,7 +3853,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 45 -> 46 > " ), nZ );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "45 -> 46 > " ), nZ );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -3799,7 +3886,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 46 -> 50" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "46 -> 50" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -3812,7 +3900,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 49 -> 50" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "49 -> 50" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -3846,7 +3935,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 50 -> 51" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "50 -> 51" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -3862,7 +3952,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 51 -> 52 > " ), nZ );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "51 -> 52 > " ), nZ );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -3878,7 +3969,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 52 -> 53 > " ), nZ );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "52 -> 53 > " ), nZ );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -3895,7 +3987,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 53 -> 54 > " ), nZ );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "53 -> 54 > " ), nZ );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -3951,7 +4044,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 54 -> 55 > " ), nZ );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "54 -> 55 > " ), nZ );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -3974,7 +4068,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                         if( Printer::debugInfo() )
                         {
-                            Com::printFLN( PSTR( "scanWorkPart(): 55 -> 39" ) );
+                            Com::printF( Com::tscanWorkPart );
+                            Com::printFLN( PSTR( "55 -> 39" ) );
                         }
 #endif // DEBUG_WORK_PART_SCAN
                         break;
@@ -3992,7 +4087,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                         if( Printer::debugInfo() )
                         {
-                            Com::printFLN( PSTR( "scanWorkPart(): 55 -> 39" ) );
+                            Com::printF( Com::tscanWorkPart );
+                            Com::printFLN( PSTR( "55 -> 39" ) );
                         }
 #endif // DEBUG_WORK_PART_SCAN
                         break;
@@ -4008,7 +4104,8 @@ void scanWorkPart( void )
                 {
                     if( Printer::debugErrors() )
                     {
-                        Com::printFLN( PSTR( "scanWorkPart(): the y-dimension of the compensation matrix became too big: " ), nIndexY );
+                        Com::printF( Com::tscanWorkPart );
+                        Com::printFLN( PSTR( "the y-dimension of the z matrix became too big: " ), nIndexY );
                     }
                     g_abortZScan = 1;
                     break;
@@ -4020,7 +4117,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 55 -> 49" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "55 -> 49" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -4050,7 +4148,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 60 -> 65" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "60 -> 65" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -4060,7 +4159,8 @@ void scanWorkPart( void )
                 if( Printer::debugInfo() )
                 {
                     // output the determined compensation
-                    Com::printFLN( PSTR( "scanWorkPart(): raw work part compensation matrix: " ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "raw work part z matrix: " ) );
                     outputCompensationMatrix();
                 }
 
@@ -4069,7 +4169,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 65 -> 70" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "65 -> 70" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -4084,7 +4185,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 70 -> 75" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "70 -> 75" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -4094,7 +4196,8 @@ void scanWorkPart( void )
                 if( Printer::debugInfo() )
                 {
                     // output the pure scan time
-                    Com::printF( PSTR( "scanWorkPart(): total scan time: " ), long((HAL::timeInMilliseconds() - g_scanStartTime) / 1000) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printF( PSTR( "total scan time: " ), long((HAL::timeInMilliseconds() - g_scanStartTime) / 1000) );
                     Com::printFLN( PSTR( " [s]" ) );
                 }
 
@@ -4103,15 +4206,18 @@ void scanWorkPart( void )
 
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): g_uZMatrixMax[Y_AXIS].1 = " ), (int)g_uZMatrixMax[Y_AXIS] );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "g_uZMatrixMax[Y_AXIS].1 = " ), (int)g_uZMatrixMax[Y_AXIS] );
                 }
 
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): g_uZMatrixMax[Y_AXIS].2 = " ), (int)g_uZMatrixMax[Y_AXIS] );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "g_uZMatrixMax[Y_AXIS].2 = " ), (int)g_uZMatrixMax[Y_AXIS] );
 
                     // output the converted work part compensation matrix
-                    Com::printFLN( PSTR( "scanWorkPart(): converted work part compensation matrix: " ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "converted work part z matrix: " ) );
                     outputCompensationMatrix();
                 }
 
@@ -4124,7 +4230,8 @@ void scanWorkPart( void )
                 {
                     if( Printer::debugInfo() )
                     {
-                        Com::printFLN( PSTR( "scanWorkPart(): the work part compensation matrix has been saved > " ), g_nActiveWorkPart );
+                        Com::printF( Com::tscanWorkPart );
+                        Com::printFLN( PSTR( "the work part z matrix has been saved > " ), g_nActiveWorkPart );
                     }
                 }
 
@@ -4134,7 +4241,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 75 -> 80" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "75 -> 80" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -4152,8 +4260,10 @@ void scanWorkPart( void )
 
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): idle pressure at start: " ), g_nFirstIdlePressure );
-                    Com::printFLN( PSTR( "scanWorkPart(): idle pressure at stop: " ), nTempPressure );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "idle pressure at start: " ), g_nFirstIdlePressure );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "idle pressure at stop: " ), nTempPressure );
                 }
 
                 g_nWorkPartScanStatus = 100;
@@ -4161,7 +4271,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 80 -> 100" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "80 -> 100" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -4170,7 +4281,8 @@ void scanWorkPart( void )
             {
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): the scan has been completed" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "the scan has been completed" ) );
                 }
                 UI_STATUS_UPD( UI_TEXT_WORK_PART_SCAN_DONE );
                 BEEP_STOP_WORK_PART_SCAN
@@ -4180,7 +4292,8 @@ void scanWorkPart( void )
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanWorkPart(): 100 -> 0" ) );
+                    Com::printF( Com::tscanWorkPart );
+                    Com::printFLN( PSTR( "100 -> 0" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;

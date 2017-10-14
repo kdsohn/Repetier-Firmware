@@ -331,18 +331,19 @@ void Commands::changeFeedrateMultiply(int factor)
 } // changeFeedrateMultiply
 
 
-void Commands::changeFlowateMultiply(int factor)
+void Commands::changeFlowrateMultiply(float factorpercent)
 {
-    if(factor<25)   factor = 25;
-    if(factor>200)  factor = 200;
-    Printer::extrudeMultiply = factor;
+    if(factorpercent < 25.0f)   factorpercent = 25.0f;
+    if(factorpercent > 200.0f)  factorpercent = 200.0f;
+    Printer::extrudeMultiply = static_cast<int>(factorpercent);
+    
+    //if(Extruder::current->diameter <= 0)
+        Printer::extrusionFactor = 0.01f * static_cast<float>(factorpercent);
+    //else
+    //    Printer::extrusionFactor = 0.01f * static_cast<float>(factor) * 4.0f / (Extruder::current->diameter * Extruder::current->diameter * 3.141592654f);
 
-    if( Printer::debugInfo() )
-    {
-        Com::printFLN(Com::tFlowMultiply,factor);
-    }
-
-} // changeFlowateMultiply
+    Com::printFLN(Com::tFlowMultiply,factorpercent);
+} // changeFlowrateMultiply
 
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
@@ -1661,7 +1662,7 @@ void Commands::executeGCode(GCode *com)
             }
             case 221:   // M221 - S<Extrusion flow multiplier in percent>
             {
-                changeFlowateMultiply(com->getS(100));
+                changeFlowrateMultiply(static_cast<float>(com->getS(100)));
                 break;
             }
 
