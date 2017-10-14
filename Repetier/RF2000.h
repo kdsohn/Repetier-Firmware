@@ -1116,7 +1116,7 @@ Above this value the z compensation will distribute the roughness of the surface
 #define WORK_PART_SCAN_X_END_STEPS              long(XAXIS_STEPS_PER_MM * WORK_PART_SCAN_X_END_MM)                          // [steps]
 #define WORK_PART_SCAN_X_STEP_SIZE_MM           20                                                                          // [mm]
 #define WORK_PART_SCAN_X_STEP_SIZE_STEPS        long(XAXIS_STEPS_PER_MM * WORK_PART_SCAN_X_STEP_SIZE_MM)                    // [steps]
-#define WORK_PART_SCAN_X_STEP_SIZE_MIN_MM       10                                                                          // [mm]
+#define WORK_PART_SCAN_X_STEP_SIZE_MIN_MM       5                                                                           // [mm]
 #define WORK_PART_SCAN_X_STEP_SIZE_MIN_STEPS    long(XAXIS_STEPS_PER_MM * WORK_PART_SCAN_X_STEP_SIZE_MIN_MM)                // [steps]
 #define WORK_PART_SCAN_X_MAX_POSITION_STEPS     long(X_MAX_LENGTH_MILL * XAXIS_STEPS_PER_MM - WORK_PART_SCAN_X_END_STEPS)   // [steps]
 
@@ -1126,7 +1126,7 @@ Above this value the z compensation will distribute the roughness of the surface
 #define WORK_PART_SCAN_Y_END_STEPS              long(YAXIS_STEPS_PER_MM * WORK_PART_SCAN_Y_END_MM)                      // [steps]
 #define WORK_PART_SCAN_Y_STEP_SIZE_MM           20                                                                      // [mm]
 #define WORK_PART_SCAN_Y_STEP_SIZE_STEPS        long(YAXIS_STEPS_PER_MM * WORK_PART_SCAN_Y_STEP_SIZE_MM)                // [steps]
-#define WORK_PART_SCAN_Y_STEP_SIZE_MIN_MM       10                                                                      // [mm]
+#define WORK_PART_SCAN_Y_STEP_SIZE_MIN_MM       5                                                                       // [mm]
 #define WORK_PART_SCAN_Y_STEP_SIZE_MIN_STEPS    long(YAXIS_STEPS_PER_MM * WORK_PART_SCAN_Y_STEP_SIZE_MIN_MM)            // [steps]
 #define WORK_PART_SCAN_Y_MAX_POSITION_STEPS     long(Y_MAX_LENGTH * YAXIS_STEPS_PER_MM - WORK_PART_SCAN_Y_END_STEPS)    // [steps]
 
