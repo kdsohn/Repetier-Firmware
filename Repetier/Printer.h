@@ -218,9 +218,10 @@ public:
     static unsigned char    g_unlock_movement;
 #endif //FEATURE_UNLOCK_MOVEMENT
 
-    static uint8_t   motorCurrent[5];
+    static uint8_t          motorCurrent[5];
 
 #if FEATURE_ZERO_DIGITS
+    static bool             g_pressure_offset_active;
     static short            g_pressure_offset;
 #endif // FEATURE_ZERO_DIGITS
 

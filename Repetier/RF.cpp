@@ -203,6 +203,7 @@ char            g_nSensiblePressure1stMarke = 0; //sagt, ob regelung aktiv oder 
 short           g_nLastDigits = 0;
 #if FEATURE_DIGIT_Z_COMPENSATION
 float           g_nDigitZCompensationDigits = 0.0f;
+bool            g_nDigitZCompensationDigits_active = true;
 #endif // FEATURE_DIGIT_Z_COMPENSATION
 
 #if FEATURE_EMERGENCY_STOP_ALL
@@ -336,7 +337,7 @@ short readStrainGauge( unsigned char uAddress ) //readStrainGauge dauert etwas u
     Wire.endTransmission();
 
 #if FEATURE_ZERO_DIGITS
-    if(-27768 < Result && Result < 27767){
+    if(Printer::g_pressure_offset_active && -27768 < Result && Result < 27767){
         Result -= Printer::g_pressure_offset; //no overflow possible: pressure_offset ist 5000 max.
     }
 #endif // FEATURE_ZERO_DIGITS
@@ -3202,13 +3203,17 @@ void doHeatBedZCompensation( void )
     
     //VORSICHT: Die Messzellen könnten falsch verbaut sein, darum Digits immer positiv nutzen. Negative Digits würden sowieso in die falsche Richtung tunen. Ein kleiner Versatz der Nullposition wäre beim Druck egal.
     //long nNeededDigitZCompensationSteps = (long)(fabs(g_nDigitZCompensationDigits) * (float)Printer::axisStepsPerMM[Z_AXIS] * 0.00001f);
-    long nNeededDigitZCompensationSteps = abs((long)(g_nDigitZCompensationDigits * (float)Printer::axisStepsPerMM[Z_AXIS])); 
-    nNeededDigitZCompensationSteps >>= 17; // geteilt durch 131072 statt errechnet ca. 110000 .. wäre 18% überkompensiert aber verdammt schnell gerechnet. evtl. ist überkompensation nicht so schlecht... höhere digits höhere schwankungen, das ist sowieso nur eine ganz grob vermessene kompensation, etwas mehr platz kann für die digits eine dämpfende wirkung haben.
-    //sign-extension kann hier, da positiv kein problem sein.: unsigned(x) >> y
-    //g_nDigitZCompensationDigits -> max. 32768, axisStepsPerMM[Z_AXIS] -> ca. 2560, also passts in long. -> ca. max 640 steps.
-    nNeededDigitZCompensationSteps = constrain(nNeededDigitZCompensationSteps, 0, 600);
+    if(g_nDigitZCompensationDigits_active){
+        long nNeededDigitZCompensationSteps = abs((long)(g_nDigitZCompensationDigits * (float)Printer::axisStepsPerMM[Z_AXIS])); 
+        nNeededDigitZCompensationSteps >>= 17; // geteilt durch 131072 statt errechnet ca. 110000 .. wäre 18% überkompensiert aber verdammt schnell gerechnet. evtl. ist überkompensation nicht so schlecht... höhere digits höhere schwankungen, das ist sowieso nur eine ganz grob vermessene kompensation, etwas mehr platz kann für die digits eine dämpfende wirkung haben.
+        //sign-extension kann hier, da positiv kein problem sein.: unsigned(x) >> y
+        //g_nDigitZCompensationDigits -> max. 32768, axisStepsPerMM[Z_AXIS] -> ca. 2560, also passts in long. -> ca. max 640 steps.
+        nNeededDigitZCompensationSteps = constrain(nNeededDigitZCompensationSteps, 0, 600);
 
-    nNeededZCompensation += nNeededDigitZCompensationSteps;
+        nNeededZCompensation += nNeededDigitZCompensationSteps;
+    }else{
+        //wie bisher ohne additionszusatz
+    }
 #endif // FEATURE_DIGIT_Z_COMPENSATION
 
 
@@ -3330,9 +3335,13 @@ long getHeatBedOffset( void )
                   (nTempXBack - nTempXFront) * nDeltaY / nStepSizeY;
 
 #if FEATURE_DIGIT_Z_COMPENSATION //For Comments see doHeatBedZCompensation(){}
-    long nNeededDigitZCompensationSteps = abs((long)(g_nDigitZCompensationDigits * (float)Printer::axisStepsPerMM[Z_AXIS])); 
-    nNeededDigitZCompensationSteps >>= 17;
-    nOffset += constrain(nNeededDigitZCompensationSteps, 0, 600);
+    if(g_nDigitZCompensationDigits_active){
+        long nNeededDigitZCompensationSteps = abs((long)(g_nDigitZCompensationDigits * (float)Printer::axisStepsPerMM[Z_AXIS])); 
+        nNeededDigitZCompensationSteps >>= 17;
+        nOffset += constrain(nNeededDigitZCompensationSteps, 0, 600);
+    }else{
+        //wie bisher ohne addition
+    }
 #endif // FEATURE_DIGIT_Z_COMPENSATION
 
     return nOffset;
@@ -11140,7 +11149,6 @@ extern void processButton( int nAction )
             break;
         }
 #endif // FEATURE_PARK
-
     }
     return;
 

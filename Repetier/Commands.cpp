@@ -308,7 +308,7 @@ void Commands::printTemperatures(bool showRaw)
         Com::printF(Com::tF);
         Com::printF(Com::tColon,(int)g_nLastDigits); //Kraft
 #if FEATURE_ZERO_DIGITS
-        Com::printF(Com::tSpaceSlash,(int)Printer::g_pressure_offset); //Offset
+        Com::printF(Com::tSpaceSlash,(int)(Printer::g_pressure_offset_active ? Printer::g_pressure_offset : 0) ); //Offset
 #else
         Com::printF(Com::tSpaceSlash,0); //Offset 0
 #endif // FEATURE_ZERO_DIGITS

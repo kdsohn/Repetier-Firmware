@@ -199,7 +199,7 @@ char            Printer::enableFET3;
 #endif // FEATURE_24V_FET_OUTPUTS
 
 #if FEATURE_CASE_FAN
-bool    Printer::ignoreFanOn = false;
+bool            Printer::ignoreFanOn = false;
 unsigned long   Printer::prepareFanOff = 0;
 unsigned long   Printer::fanOffDelay = 0;
 #endif // FEATURE_CASE_FAN
@@ -216,6 +216,7 @@ unsigned char   Printer::g_unlock_movement = 0;
 uint8_t         Printer::motorCurrent[5] = {0,0,0,0,0};
 
 #if FEATURE_ZERO_DIGITS
+bool            Printer::g_pressure_offset_active = true;
 short           Printer::g_pressure_offset = 0;
 #endif // FEATURE_ZERO_DIGITS
 
@@ -1720,7 +1721,7 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
     
 #if FEATURE_ZERO_DIGITS
     short   nTempPressure = 0;
-    if(xaxis && yaxis && zaxis){ //only adjust pressure if you do a full homing.
+    if(Printer::g_pressure_offset_active && xaxis && yaxis && zaxis){ //only adjust pressure if you do a full homing.
         Printer::g_pressure_offset = 0; //prevent to messure already adjusted offset -> without = 0 this would only iterate some bad values.
         if( !readAveragePressure( &nTempPressure ) ){
             if(-5000 < nTempPressure && nTempPressure < 5000){
