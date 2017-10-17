@@ -706,6 +706,13 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
     HAL::eprSetByte( EPR_RF_MOTOR_CURRENT+E_AXIS+1, Printer::motorCurrent[E_AXIS+1] );
 #endif //NUM_EXTRUDER > 1
 
+#if FEATURE_ZERO_DIGITS
+    HAL::eprSetByte( EPR_RF_ZERO_DIGIT_STATE, (Printer::g_pressure_offset_active ? 1 : 2) ); //2 ist false, < 1 ist true
+#endif // FEATURE_ZERO_DIGITS
+#if FEATURE_DIGIT_Z_COMPENSATION
+    HAL::eprSetByte( EPR_RF_DIGIT_CMP_STATE, (g_nDigitZCompensationDigits_active ? 1 : 2) ); //2 ist false, < 1 ist true
+#endif // FEATURE_DIGIT_Z_COMPENSATION
+
     // Save version and build checksum
     HAL::eprSetByte(EPR_VERSION,EEPROM_PROTOCOL_VERSION);
     HAL::eprSetByte(EPR_INTEGRITY_BYTE,computeChecksum());
@@ -977,6 +984,13 @@ void EEPROM::readDataFromEEPROM()
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
     }
 #endif // FEATURE_EMERGENCY_STOP_ALL
+
+#if FEATURE_ZERO_DIGITS
+    Printer::g_pressure_offset_active = ( HAL::eprGetByte( EPR_RF_ZERO_DIGIT_STATE) > 1 ? false : true ); //2 ist false, < 1 ist true
+#endif // FEATURE_ZERO_DIGITS
+#if FEATURE_DIGIT_Z_COMPENSATION
+    g_nDigitZCompensationDigits_active = ( HAL::eprGetByte( EPR_RF_DIGIT_CMP_STATE) > 1 ? false : true ); //2 ist false, < 1 ist true
+#endif // FEATURE_DIGIT_Z_COMPENSATION
 
     const unsigned short    uMotorCurrentMax[] = MOTOR_CURRENT_MAX; //oberes Amperelimit
     const unsigned short    uMotorCurrentUse[] = MOTOR_CURRENT_NORMAL; //Standardwert
@@ -1264,6 +1278,13 @@ void EEPROM::writeSettings()
     writeInt( EPR_RF_CAL_STANDARD, Com::tEPRZCallStandard );
     writeByte( EPR_RF_CAL_ADJUST, Com::tEPRZCallAdjust );
 #endif //FEATURE_READ_CALIPER
+
+#if FEATURE_ZERO_DIGITS
+    writeByte( EPR_RF_ZERO_DIGIT_STATE, Com::tEPRZERO_DIGIT_STATE );
+#endif // FEATURE_ZERO_DIGITS
+#if FEATURE_DIGIT_Z_COMPENSATION
+    writeByte( EPR_RF_DIGIT_CMP_STATE, Com::tEPRZDIGIT_CMP_STATE );
+#endif // FEATURE_DIGIT_Z_COMPENSATION
 
 #if HAVE_HEATED_BED
     writeByte(EPR_BED_HEAT_MANAGER,Com::tEPRBedHeatManager);

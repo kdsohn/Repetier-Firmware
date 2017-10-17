@@ -943,19 +943,34 @@ void UIDisplay::parse(char *txt,bool ram)
                 break;
             }
 
-#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
             case 'F': // FAN speed
             {
-                if(c2=='s') addInt(Printer::getFanSpeed(true), 3);                                       // %Fs : Fan speed in Percent
-                if(c2=='h') addInt((1 << cooler_pwm_speed)*15, 3);                                       // %Fh : Fan frequency in Hz --> Wert passt grob, ist aber nicht exakt! F_CPU/3906/255*mode...
-                if(c2=='m'){                                                                             // %Fm : Fan modulation type PWM or PDM
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+                if(c2=='s') {                                                                           // %Fs : Fan speed in Percent
+                    addInt(Printer::getFanSpeed(true), 3); 
+                }
+                else if(c2=='h') {                                                                      // %Fh : Fan frequency in Hz --> Wert passt grob, ist aber nicht exakt! F_CPU/3906/255*mode...
+                    addInt((1 << cooler_pwm_speed)*15, 3); 
+                }
+                else if(c2=='m'){                                                                       // %Fm : Fan modulation type PWM or PDM
                     if(cooler_mode == COOLER_MODE_PDM) addStringP( PSTR("PDM") );
                     else                               addStringP( PSTR("PWM") );
                 }
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
+#if FEATURE_ZERO_DIGITS
+                if(c2=='H')                                                                             // %FH : Digit Homing to Zero ON/OFF
+                {
+                    addStringP(Printer::g_pressure_offset_active ? ui_text_on : ui_text_off);
+                }
+#endif // FEATURE_ZERO_DIGITS
+#if FEATURE_DIGIT_Z_COMPENSATION
+                if(c2=='C')                                                                             // %FC : Digits force-bend-hotend-down Compensation Z ON/OFF
+                {
+                    addStringP(g_nDigitZCompensationDigits_active ? ui_text_on : ui_text_off);
+                }
+#endif // FEATURE_DIGIT_Z_COMPENSATION
                 break;
             }
-#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
-
             case 'f':
             {
                 if(c2=='x') addFloat(Printer::maxFeedrate[X_AXIS],5,0);                                 // %fx : Max. feedrate x direction
@@ -5258,6 +5273,29 @@ void UIDisplay::executeAction(int action)
                 break;
             }
 #endif // DEBUG_PRINT
+
+    #if FEATURE_ZERO_DIGITS
+            case UI_ACTION_FEATURE_ZERO_DIGITS:
+            {
+                Printer::g_pressure_offset_active = (Printer::g_pressure_offset_active ? false : true);
+    #if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                HAL::eprSetByte( EPR_RF_ZERO_DIGIT_STATE, (Printer::g_pressure_offset_active ? 1 : 2) ); //2 ist false, < 1 ist true
+                EEPROM::updateChecksum();
+    #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+                break;
+            }
+    #endif // FEATURE_ZERO_DIGITS
+    #if FEATURE_DIGIT_Z_COMPENSATION
+            case UI_ACTION_DIGIT_COMPENSATION:
+            {
+                g_nDigitZCompensationDigits_active = (g_nDigitZCompensationDigits_active ? false : true);
+    #if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                HAL::eprSetByte( EPR_RF_DIGIT_CMP_STATE, (g_nDigitZCompensationDigits_active ? 1 : 2) ); //2 ist false, < 1 ist true
+                EEPROM::updateChecksum();
+    #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+                break;
+            }
+    #endif // FEATURE_DIGIT_Z_COMPENSATION
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
             case UI_ACTION_RF_DO_MHIER_BED_SCAN:

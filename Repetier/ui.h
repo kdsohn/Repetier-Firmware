@@ -189,6 +189,9 @@
 #define UI_ACTION_CAL_CORRECT               1697
 #define UI_ACTION_CAL_SET                   1698
 
+#define UI_ACTION_FEATURE_ZERO_DIGITS       1699
+#define UI_ACTION_DIGIT_COMPENSATION        1700
+
 #define UI_ACTION_FET1_OUTPUT               2001
 #define UI_ACTION_FET2_OUTPUT               2002
 

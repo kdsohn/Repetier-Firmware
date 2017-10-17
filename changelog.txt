@@ -1,6 +1,11 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37v8.Mod (2017-10-17)
+- Digit Compensation finally got its own Menu (Menu->Configuration->DMS Features) and EEPROM-Support for switching it on and off. Default: ON
+- Zero Digits after Homing finally got its own Menu (Menu->Configuration->DMS Features) and EEPROM-Support for switching it on and off. Default: ON
+- On-Off-Hysteresis for RF2000 seems to be < 0.01f -> new choice for hysteresis is 0.1f (was 0.2f) (AtlonXPs optical endstop On-Off hysteresis with selfprinted flag is ~ 0.06 at RF1000)
+
 V RF.01.37v7.Mod (2017-10-11)
 - patching in repetiers extruding-error-sum for correct math when using feed multiply setting within printer.
 - saving some ROM space by reusing debug text

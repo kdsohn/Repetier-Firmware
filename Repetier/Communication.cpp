@@ -79,6 +79,10 @@ FSTRINGVALUE(Com::tSlash,"/")
 FSTRINGVALUE(Com::tSpaceSlash," /")
 FSTRINGVALUE(Com::tSpeedMultiply,"SpeedMultiply:")
 FSTRINGVALUE(Com::tFlowMultiply,"FlowMultiply:")
+#if FEATURE_READ_CALIPER
+FSTRINGVALUE(Com::tEPRZCallStandard,"Messschieber: Filamentdicke in Slicer [um]")
+FSTRINGVALUE(Com::tEPRZCallAdjust,"Messschieber: Korrektur [um]")
+#endif //FEATURE_READ_CALIPER
 FSTRINGVALUE(Com::tPrintingIsInProcessError, "Error: printing is in progress")
 FSTRINGVALUE(Com::tFanspeed,"Fanspeed:")
 FSTRINGVALUE(Com::tPrintedFilament,"Printed filament:")
@@ -221,10 +225,6 @@ FSTRINGVALUE(Com::tEPRZTravelAcceleration,"Z-axis travel acceleration [mm/s^2]")
 #if FEATURE_MILLING_MODE
 FSTRINGVALUE(Com::tEPRZMillingAcceleration,"All axis milling acceleration [mm/s^2]")
 #endif //FEATURE_MILLING_MODE
-#if FEATURE_READ_CALIPER
-FSTRINGVALUE(Com::tEPRZCallStandard,"Messschieber: Filamentdicke in Slicer [um]")
-FSTRINGVALUE(Com::tEPRZCallAdjust,"Messschieber: Korrektur [um]")
-#endif //FEATURE_READ_CALIPER
 FSTRINGVALUE(Com::tEPRZOffset,"Z-Offset [um]")
 FSTRINGVALUE(Com::tEPRZMode,"Z Scale")
 FSTRINGVALUE(Com::tEPROPSMode,"OPS operation mode [0=Off,1=Classic,2=Fast]")
@@ -271,6 +271,9 @@ FSTRINGVALUE(Com::tEPRFET1Mode,"FET1 mode [0=off, 1=on]")
 FSTRINGVALUE(Com::tEPRFET2Mode,"FET2 mode [0=off, 1=on]")
 FSTRINGVALUE(Com::tEPRFET3Mode,"FET3 mode [0=off, 1=on]")
 
+#if FEATURE_ZERO_DIGITS
+FSTRINGVALUE(Com::tEPRZERO_DIGIT_STATE,"Digit Homing [1=ON/2=OFF]")
+#endif // FEATURE_ZERO_DIGITS
 FSTRINGVALUE(Com::tEPRPrinterZ_STEP_SIZE,"Height of Z-Button SingleSteps [steps]")
 FSTRINGVALUE(Com::tEPRPrinterMOD_ZOS_SCAN_POINT_X,"Z-Offset-Scan Position X [HBS-col]")
 FSTRINGVALUE(Com::tEPRPrinterMOD_ZOS_SCAN_POINT_Y,"Z-Offset-Scan Position Y [HBS-row]")
@@ -278,7 +281,6 @@ FSTRINGVALUE(Com::tEPRPrinterMOD_ZOS_SCAN_POINT_Y,"Z-Offset-Scan Position Y [HBS
 FSTRINGVALUE(Com::tEPRPrinterMOD_SENSEOFFSET_OFFSET_MAX,"SenseOffset max. Correction [um]")
 FSTRINGVALUE(Com::tEPRPrinterEPR_RF_MOD_SENSEOFFSET_DIGITS,"SenseOffset Digits Limit [1700/kg]")
 #endif //FEATURE_SENSIBLE_PRESSURE
-
 #if FEATURE_EMERGENCY_PAUSE
 FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyPauseDigitsMin,"EmergencyPauseDigitsMin (min+max 0=off) [1700/kg]")
 FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyPauseDigitsMax,"EmergencyPauseDigitsMax (min+max 0=off) [1700/kg]")
@@ -288,6 +290,9 @@ FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyPauseDigitsMax,"EmergencyPauseDigit
 FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyStopAllMin,"ZEmergencyStopAllMin [1700/kg]")
 FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyStopAllMax,"ZEmergencyStopAllMax [1700/kg]")
 #endif //FEATURE_EMERGENCY_STOP_ALL
+#if FEATURE_DIGIT_Z_COMPENSATION
+FSTRINGVALUE(Com::tEPRZDIGIT_CMP_STATE,"Digit Compensation [1=ON/2=OFF]")
+#endif // FEATURE_DIGIT_Z_COMPENSATION
 
 FSTRINGVALUE(Com::tEPRPrinter_STEPPER_X,"Stepper X Current [2A/126]")
 FSTRINGVALUE(Com::tEPRPrinter_STEPPER_Y,"Stepper Y Current [2A/126]")
