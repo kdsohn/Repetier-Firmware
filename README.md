@@ -28,6 +28,13 @@ Board: `Arduino Mega 2560 or Mega ADK`,
 Processor: `ATMega 2560 (Mega 2560)`,  
 Port: Your printers Port like `COM3`, if successfully connected.
 - **Check** and **Upload** the Firmware to your Printer.
+## If you upgrade to this Version from 1.37r or earlier please do a fresh M303 PID-Autotune on all heaters!  
+- RF2000/RF1000 extruder 1: `M303 P0 X0 S230 R10 J1`
+- RF2000 extruder 2: `M303 P1 X0 S230 R10 J1`
+- RF2000 heated bed: `M303 P2 X0 S70 R15 J3`
+- RF1000 heated bed: `M303 P1 X0 S70 R15 J3`  
+And start with EEPROM-values `PID drive min = 5` and `PID drive max = 100`  
+Or set #define PID_CONTROL_DRIVE_MIN_LIMIT_FACTOR to 10.0f in configuration.h to use the old version PID-control.
 
 ## Version RF.01.37mod 
 
@@ -68,9 +75,6 @@ M3902 Zn.n          - to add an Offset to the Matrix. n.n = {-0.2 .. 0.2} [mm]
 M3902 Z0            - to shift your active zOffset to the zMatrix. The M3006 zOffset will be zero afterwards. The zMatrix is altered within Ram and might be saved to EEPROM[n] with M3902 S[n] afterwards.  
 M3902 Sn            - to save the active Matrix to position n = {1..9}  
 M3902 Z0 S1         - to shift the zOffset to your zMatrix and save the Matrix at position 1. This is an example to show that the options of M3902 can be combined.  
-
-M3903 Pt Smin       - to configure a very slow and stepwise heat bed temperature decrease. One step lasts t seconds. The end temperature will be `min` °C  
-
 M3939 Fn St1 Pt2 Ex Iy Rm   - to messure a curve of your Filaments velocity over digits -> viscosity.  
 
 M3920 Sb - to go into or switch back from SilentMode (This will lower your steppers current to an alternative profile)  
@@ -80,6 +84,8 @@ Upgraded the Firmware to the latest RF.01.37 (2017-01-20)
 Activated the X35 Temperature-Sensor for RF2000.  
 Listed all spare pins for RF1000 or RF2000.  
 Fixed the RF2000's Status Message length to 20chars.  
+Fix for M3117
+Third Z-Scale Mode: G-Code @ Configuration->Z-Configuration->Z-Scale.
 
 _by Nibbels/Wessix_:  
 M3909 Pn Sm         - See "Nibbels/Wessix SenseOffset"  
@@ -152,16 +158,29 @@ Feature called "SensibleViscosity"
 
  Have fun finally seeing your Filaments behaviour over time, temp, nozzles ;)  
  
-## SilentMode   
-* M3920 Sb  
-S = {0,1} Switch to SilentMode or back to normal stepper current and unhome your printer.  
+## Configurable emergency zStop and emergency pause digits within menu and EEPROM  
+Menü -> Configuration -> General  
 
-This Feature might be handy if you want to predefine another set of stepper current, but you dont want to have this lower values all the time. 
+## Configurable motorcurrent within menu and EEPROM  
+You can easily change the printers stepper currents within menu for more silence. This features is a replacement to our old silence-feature by gcode. EEPROM support included. The settings are restored after a reboot.
+Menü -> Configuration -> Stepper  
 
-If you make your current too low you might risk "lost steps". The Motor cannot stand the applied force and you might get shifted Layers (X,Y). If that is the case you should lower your acceleration or rise up the current again.
+## Configurable frequency limit to shift to double stepping / quad stepping within menu and EEPROM  
+You can easily improve your printers speed when driving ~43mm/s till 80mm/s. We changed this setting from 12000 = 79mm/s to 6500 = 43mm/s to achive better performance and a more precise interrupt timing due to an earlier shift to doublesteps. We included the configuration option to give full controll to you. Double and Quadstepping works like gear shifting. Pulses are packed and sent in a row to save calculation power at high speeds. The frequency tells the printer when to shift up/down. Quad steps are sent when reaching two times the set frequency and higher speeds.
+See http://www.rf1000.de/viewtopic.php?f=70&t=1986 also for more details. EEPROM support included. The settings are restored after a reboot.  
+Menü -> Configuration -> Stepper :: DblFq = 6500 or {5000...12000}  
 
-If you can lower your current, you will have a huge improvement on stepper temperature and noise production as well. The tone of your steppers might sound deeper and will not be such a pain as the original (milling like-) configuration.
-You should not include M3920 when your z-Compensation is active. This MCode will shut down z-Compensation and unhome your Printer. You would have to re-home your axes and activate z-Compensation again. I put this code to the beginning of my startcodes.
+## Configurable temperature settings within menu and EEPROM  
+PID-Autotune, other controlparameters and the sensortype is adjustable within the menu.  
+Menü -> Configuration -> Temperatures -> Extruder0/Extruder1/Heizbett  
+
+## Dualhead Tip-Down Support (beta)
+* M3919 [S]mikrometer - Testfunction for Dip-Down-Hotend @ T1: T1 can now be springloaded and the bed will be adjusted "down" whenever T1 is selected. This is alike Ultimaker 3 does it with the right hotend.   
+Example: M3919 T1 Z-0.6 tells the Printer that the right hotend will reach 0.6mm more down than the left hotend. Test it :)
+* EEPROM Support for offset
+
+## Feature Digit-Z-Kompensation (beta)
+If you apply force to the DMS sensors the bed is adjusted (if Z-Compensation is active). This corrects the error which bending of the sensors apply to your layers. The physical change of the beds level is approximately +0,01mm for +1000 applied force (digits).
 
 ## RF2000: Additional Temperature Sensor
 This optional 3rd temperature T3 is automatically sent out with the other Temperatures and Digits.  
@@ -171,5 +190,24 @@ See RESERVE_ANALOG_INPUTS to find the involved code within the firmware.
 You will need to install and additional cable and a temperature sensor at X35 on your printers Board. Then you can wire your sensor to some place needed.  
 This sensor might keep track of your boards temperature or the air-temperature within your enclosure.  
 
+## Advanced profiles for PID Autotune
+
+Additions to GCode M303:
+[J0] Classic PID  
+[J1] Pessen Integral Rule (suggested for Hotend)  
+[J2] Some Overshoot  
+[J3] No Overshoot (suggested for Heated Bed)  
+[J4] until [J6] are PD, PI, P-Profiles for control experts and special cases.  
+[Rn] Configurable Autotune cycles  
+Easy autotune support via printers menu.  
+Siehe auch http://www.rf1000.de/viewtopic.php?f=7&t=1963  
+
+## advanced Pause while printing
+Temperature drop while paused.  
+Lower motor current on both extruders while paused to prevent unnecessary heat to the extruder and filament.  
+Manual extrusion when paused resets automatic retract for continue.
+
 ## Wessix`s help video:
 [![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)
+
+## !! 22.08.2017: Project is Work in Progress and untested changes are possible.

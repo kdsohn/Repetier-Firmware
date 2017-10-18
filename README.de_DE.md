@@ -28,6 +28,13 @@ Board: `Arduino Mega 2560 or Mega ADK`,
 Prozessor: `ATMega 2560 (Mega 2560)`,  
 Port: Der Port des Druckers, wie `COM3`, wenn er korrekt verbunden ist.
 - **Prüfen** and **Hochladen** der Firmware zum Drucker.
+## Wenn du von Version from 1.37r oder früher updatest, mache bitte einen neuen M303 PID-Autotune bei allen Heizelementen!  
+- RF2000/RF1000 Extruder 1: `M303 P0 X0 S230 R10 J1`
+- RF2000 Extruder 2: `M303 P1 X0 S230 R10 J1`
+- RF2000 Heizbett: `M303 P2 X0 S70 R15 J3`
+- RF1000 Heizbett: `M303 P1 X0 S70 R15 J3`  
+Starte mit EEPROM-Werten `PID drive min = 5` and `PID drive max = 100`  
+Oder setze #define PID_CONTROL_DRIVE_MIN_LIMIT_FACTOR zu 10.0f in der configuration.h um die alte Version des PID Reglers zu nutzen.
 
 ## Version RF 1.37mod - wichtige Threads im Forum
 
@@ -66,7 +73,6 @@ _von Nibbels_:
 **M3902 Z0** - Verschiebe das aktuell eingestellte Z-Offset in die zMatrix im RAM. Danach ist das Z-Offset=0.00 (Siehe M3006 / Z-Offset im Menü des Druckers), das tatsächliche Druck-Offset hat sich nicht geändert (+-0).
 **M3902 Z0 S1** - Kombinationsbefehl: Verschiebe das aktuell eingestellte Z-Offset in die zMatrix im RAM und speichere diese zMatrix an der Position 1 im EEPROM - Dies ist ein Beispiel um zu zeigen, dass die Optionen von M3902 kombiniert werden können.  
 **M3902 Sn** - Speichere die aktuell im RAM liegende zMatrix unter der Postion n = {1..9}  
-**M3903 Pt Smin** - um einen sehr langsamen und schrittweisen Abfall der Betttemperatur einzustellen. Ein Schritt dauert t Sekunden. Die Endtemperatur wird in °C angegeben und sollte niedriger liegen wie die Starttemperatur. Nach Erreichen der Endtemperatur deaktiviert sich der Effekt dieses Befehls automatisiert.
 **M3939 Fn St1 Pt2 Ex Iy Rm** - um ein Diagramm über die Filamentextrusionsgeschwindigkeit und die korrelierende Digit Zahl aufzuzeichnen -> ermöglicht Rückschlüsse zur Viskosität des Filaments. Siehe unten.
 **M3920 Sb** - Flüstermodus ein oder ausschalten. (Diese Funktion vermindert den Strom der Steppermotoren auf ein in der Firmware definiertes alternatives Strom-Profil MOTOR\_CURRENT\_SILENT = [110/110/90/90/90] ).  
 Es wurden **alle Compilerwarnungen und Compilerfehler eliminiert**.  
@@ -74,7 +80,9 @@ Weitere (passende) **Verbesserungen/Bugfixes/Commits der Entwickler der original
 Mit dem Stand vom 20.01.2017 wurde die Firmware auf den neuesten Firmwarestand der Original **RF.01.37** angehoben.  
 Der zusätzliche X35 Temperature-Sensor wurde für den RF2000 aktiviert.  
 In der pins.h wurden alle optionalen Pins für RF1000 und RF2000 aufgelistet.  
-Korrektur des RF2000 Statuszeilenlimits auf 20 Zeichen.  
+Korrektur des RF2000 Statuszeilenlimits auf 20 Zeichen.
+Korrektur des M3117
+Dritter Z-Scale Modus: G-Code unter Configuration->Z-Configuration->Z-Scale.
 
 _von Nibbels und Wessix entwickelt_:  
 **M3909 Pn Sm** - siehe unten "SenseOffset" (Kompensation der thermischen Nachdehnung)  
@@ -154,17 +162,30 @@ Der Sinn dieses Features ist, dass man Filamente und ihre Viskosität zu gegeben
  Das ist rotes PLA:
  ![ ](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/2a3253c930794afc81e4fa4d4b2a4261.png "PLA red")  
 
-## FlüsterModus = SilentMode
-* M3920 Sb
-**S** = {0,1} = Flüstermodus an und abschalten
+## Konfigurierbarer Z-Notaus- und Notpause-Digits in Menü und EEPROM  
+Menü -> Configuration -> General  
 
-Diese Funktion kann nützlich sein wenn man eine, zu den von Conrad vorgegebenen Motorströmen, abweichende Einstellung definieren wollen, aber dieses Motorstromprofil aus diversen Gründen an und abschaltbar sein soll.
+## Konfigurierbarer Motorstrom im Menü und EEPROM  
+Man kann alle Stepperströme im Menü am Drucker einstellen. Dieses Features ist ein ersatz für den alten Silent-Mode. Auch hier besteht EEPROM support, die Einstellungen werden beim nächsten Druckerstart automatisch geladen.
+Menü -> Configuration -> Stepper  
 
-**Warnung!** Werden zu niedrige Werte/Motorströme eingestellt, riskiert man Schrittverluste bei den Stepper-Motoren. Der Motor könnte in diesem Fall den Beschleunigungs-, Reibungs- und Fliehkräften nicht ausreichend Halte-Moment engegensetzen. Es werden und Pol-Schritte überspringen. Dies resultiert dann in (in X oder Y) verschobenen Layern. Tritt dieser Fehler auf, sollte man entweder die Beschleunigungen während des Druckens vermindern oder die Motorströme so weit anheben bis die Versetzungen verschwinden.
+## Konfigurierbare Double-/Quad-Step Freqenz im Menü und EEPROM  
+Damit kann man sehr einfach die Druckergeschwindigkeit im Bereich ~43mm/s bis 80mm/s optimieren bzw. die CPU für Kleinbewegungen entlasten. Wir haben die Umschaltfrequenz von 12000 = 79mm/s auf 6500 = 43mm/s heruntergesetzt, um eine bessere Performance und ein präziseres Timing bei der Ansteuerung zu erhalten - diese Umstellung aber auch für jeden selbst konfigurierbar gemacht.
+Double-/Quad-Stepping wirkt wie eine Gangschaltung. Die Pulse zum Motordriver werden gepackt in 2er oder 4er Pulspäckchen ausgegeben um Rechenleistung einzusparen. Die einstellbare Frequenz legt fest, wann auf Dual-Steps hochgeschaltet wird. Bei der doppelten Frequenz oder höher wird auf Quad-Steps umgeschaltet.
+Siehe http://www.rf1000.de/viewtopic.php?f=70&t=1986 für mehr Details.  
+Menü -> Configuration -> Stepper :: DblFq = 6500 oder {5000...12000}
 
-Eine Verringerung der Motorströme, senkt die Steppermotorentemperatur und die Lautstärke der Motoren. Auch die gefühlte Tonhöhe kann sich ändern und der Drucker insgesamt oder teilweise angenehmer klingen.
-Solange die Z-Kompensation aktiv ist, sollte der Flüstermodus nicht aktiviert werden, da M3920 die Stepper kurz abschaltet und der Drucker seine Nullpunktjustierung verliert.
-Anschließend müssen alle Achsenursprünge/Homing neu gesucht werden, dann Z-Kompensation danach wieder angeschaltet werden. Wir empfehlen diesen MCODE, wenn nötig, ganz am Anfang des Startcodes einzubauen, vor G28 / M3001.
+## Konfigurierbare Temperatureinstellungen im Menü und EEPROM  
+Der PID-Autotune, die weiteren Regelparameter und der Sensortyp sind im Menü einstellbar.  
+Menü -> Configuration -> Temperatures -> Extruder0/Extruder1/Heizbett  
+
+## Dual-Hotend TipDown Support (beta)
+* M3919 [S]mikrometer - Testfunktion für ein Herunterlass-Hotend beim rechten Hotend T1: Das rechte Hotend kann gefedert eingebaut werden. Wird das Hotend ausgewählt, wird das bett automatisch heruntergefahren, sodass es niedriger hängt wie das linke hotend, aber nicht mit dem Bett kollidiert. Der Ultimaker 3 macht das so beim rechten Hotend.
+Beispiel: M3919 T1 Z-0.6 sagt dem Drucker, dass das Rechte Hotend 0,6mm weiter herunterreichen kann, wie das linke.
+* EEPROM Support für Offset.
+
+## Feature Digit-Z-Kompensation (beta)
+Wenn auf die DMS gedrückt wird, wird das Bett in seiner Höhe korrigiert, wenn die Z-Kompensation arbeitet. Damit wird die Durchbiegung der DMS-Sensoren unter Last korrigiert. Die Änderungen bewegen sich in etwa im Bereich von +0,01mm wenn +1000 Digits Kraft auf die Sensoren aufgebracht werden.
 
 ## RF2000: Zusätzlicher Temperatursensor
 
@@ -175,5 +196,24 @@ Sucht man in der Firmware nach RESERVE_ANALOG_INPUTS sieht man weiteren nützlic
 Man muss, um den Temperatursensor zu nutzen, ein zusätzliches Kabel mit einem Temperatursensor am Port X35 an der Druckerplatine des RF2000-Druckers anschliessen. Anschließend kann der optionale Sensor an einem beliebigen Punkt im Drucker positioniert werden.
 Es könnte z.B. die Temperatur in der Nähe der Hauptplatine, die Hitzeentwicklung an einem Steppermotor oder die Temperatur im Druckraum gemessen werden.
 
+## Erweiterte Profile für PID Autotune
+
+Erweiterter GCode M303:
+[J0] Classic PID  
+[J1] Pessen Integral Rule (empfohlen für Hotend)  
+[J2] Some Overshoot  
+[J3] No Overshoot (empfohlen für Heizbett)  
+[J4] bis [J6] sind PD, PI, P-Profile for regelungstechnik experten bzw. spezielle Anwendungsfälle.  
+[Rn] Configurable Autotune cycles  
+Autotune support über das Druckermenü am Display.  
+Siehe auch http://www.rf1000.de/viewtopic.php?f=7&t=1963  
+
+## Pause Funktion 
+Mit Temperaturabsenkung für das aktive Hotend während der Pause.  
+Mit Motorstromabsenkung für beide Extruder-Motoren während der Pause, um eine unnötige Erwärmung des Filamentes zu verhindern.  
+Manuelles extrudieren während der Pause deaktiviert den automatischen Retract des Extruders beim Fortsetzen.
+
 ## Wessix's Hilfe-Video:
 [![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)
+
+## !! 22.08.2017: An diesem Projekt wird kontinuierlich weitergearbeitet, spontane Änderungen sind jederzeit möglich.

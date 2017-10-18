@@ -1,23 +1,404 @@
-HINWEIS: wir werden den shift bug in dieser version nicht mehr reparieren, nutzt bitte die development!
-NOTICE: we will not fix the doublestep shift bug within this version. Use development instead!
+TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
+TODO: Testing, testing ..
 
-V RF.01.37j.mod.6 (2017-09-20)
-- correctly send start and enter at boot time
-- do pwm init first at boottime
-- changed STEP_DOUBLER_FREQUENCY back to 10000 as a tradeoff not to stumble into shiftbug so easily. Shiftbug might occur if driving around than 66mm/s
-NOTICE: shiftbug is already fixed in development version.
+V RF.01.37v8.Mod (2017-10-17)
+- Digit Compensation finally got its own Menu (Menu->Configuration->DMS Features) and EEPROM-Support for switching it on and off. Default: ON
+- Zero Digits after Homing finally got its own Menu (Menu->Configuration->DMS Features) and EEPROM-Support for switching it on and off. Default: ON
+- On-Off-Hysteresis for RF2000 seems to be < 0.01f -> new choice for hysteresis is 0.1f (was 0.2f) (AtlonXPs optical endstop On-Off hysteresis with selfprinted flag is ~ 0.06 at RF1000)
 
-V RF.01.37j.mod.5 (2017-09-05)
-- Fix STEP_DOUBLER_FREQUENCY from 12000 to 7000 for RFx000 to avoid speed lag, menu speed lags and hangs between 46mm/s and 79mm/s (printing @32Microsteps/1.8°Steppers)
-Use branch development 1.37u+ for adjustable STEP_DOUBLER_FREQUENCY. This is just "another minimum patch" with maximum outcome for this stable release.
+V RF.01.37v7.Mod (2017-10-11)
+- patching in repetiers extruding-error-sum for correct math when using feed multiply setting within printer.
+- saving some ROM space by reusing debug text
 
-V RF.01.37j.mod.4 (2017-08-02)
-- Watchdog Timeout to 20000 which fixed crash with RF.01.37j.mod according to user zage
+V RF.01.37v6.Mod (2017-10-09)
+- introduced Z_ENDSTOP_DRIVE_OVER to have one value that describes the maximum drive over for the endstop. That is more accurate for our two Printer models (with different endstop types).
+   #define Z_ENDSTOP_DRIVE_OVER                 0.8f                              //mm RF1000
+   #define Z_ENDSTOP_DRIVE_OVER                 1.3f                              //mm RF2000
+- used that value for maximal HBS scan depth
+- degraded Z_OVERRIDE_MAX to a derived value of Z_ENDSTOP_DRIVE_OVER and removed unnecessary config option for feature FEATURE_ENABLE_Z_SAFETY to always on.
 
-V RF.01.37j.mod.3 (2017-07-30)
-- fix break-Bug
-- fix Overflow
-- fix 40/40-Bug
+V RF.01.37v5.Mod (2017-10-08)
+- finished plugin to read filament size with 8€ digital caliper: FEATURE_READ_CALIPER
+    Caution: You need self build hardware for this feature!
+    FEATURE_READ_CALIPER is a feature to connect some digital caliper which sends the filament size. Knowing the filaments size before print starts is very nice because we do not ever have to fill filament diameter into slicer profiles anymore. Just set 2.85mm everywhere within the profiles and set 2.85 as 100% within MENU -> Quick Settings -> Feature Caliper. Plug in filament, let the size flow into your printer and accept the measurement within MENU -> Quick Settings -> Feature Caliper.
+    Ready to Print.
+
+V RF.01.37v4.Mod (2017-10-07)
+- kleiner Config-Bug beim RF1000 PID-I-Drive-Max darf nicht "min" = 5 sein! Sondern irgendwas über 90..120 (Thx @AtlonXP)
+- Werden die EEPROM-Werte verworfen wird nun auch die Checksumme neu geschrieben. (Thx @AtlonXP)
+
+V RF.01.37v3.Mod (2017-10-03)
+- if you press PLAY ten times your display gets restarted. This is nice if your display blanks out and you cannot type M3200 P13 because you print from SD (...)
+- added menu and eeprom support for milling all axis acceleration
+   because high acceleration needs higher minimum speed which is bad when milling.
+   you now see and use a special acceleration in milling mode (~15 mm/s² -> which you can change now)
+- fix double defined HEAT_BED_SCAN_Z_START_uM which caused ZOS to start too high.
+- fix count main menu
+- resort fan settings to CONFIGURATION -> PART FAN -> 
+- resort DMS Digits limit options to CONFIGURATION -> DMS FEATURES
+- Fix scrolling after inserting SD within milling mode
+- minor cleanup
+
+V RF.01.37v2.Mod (2017-10-03)
+- Reduce Milling-Acceleration to #define MILLER_ACCELERATION 15 or as stated within RFx000.h to gain very small possible speeds.
+- remove milling acceleration menu when in milling-mode, show MILLER_ACCELERATION instead.
+- auto switch from normal accelerations to MILLER_ACCELERATION when switching printer mode to milling. this is reverted when switching operating mode back.
+TODO: Insert special acceleration var for milling into eeprom to change and dynamically handle the value within menu.
+
+V RF.01.37v.Mod (2017-09-28)
+- the fans operating modes ar now configurable within menu and eeprom (see Menu->Fan Speed)
+   Fan-Modes: PWM or PDM
+   PWM Frequencys: 15, 30, 60, 120, 240 Hz
+   PDM: Frequencys do not count here!
+- kickstart support for part fan
+- fixed fan code for old RF2000 config = 3
+- optimized code around rgb change time
+
+V RF.01.37u6.Mod (2017-09-28)
+- cleanup: Removed FEATURE_TEST_STRAIN_GAUGE
+- cleanup: some code prettify according repetier development
+- UI_SET_EXTRUDER_TEMP_UNMOUNT is now respected by UNMOUNT_FILAMENT_SCRIPT_WITH_HEATING
+- UI_SET_PRESET_EXTRUDER_TEMP_ABS is now respected by MOUNT_FILAMENT_SCRIPT_WITH_HEATING instead of 250°C
+- DOUBLE_STEP_DELAY is decreased to 0 (was 1) like repetier did when removing halfstepping (might speed up move interrupt a bit, but testing)
+- LOW_TICKS_PER_MOVE decreased to 250000 from 400000 because this as well is repetiers standard now
+- defined MAX_ZJERK to 0.28 in config (instead of 0.1) because 0.1 was too small according formula (velocity/acceleration)
+- introduced SCRIPT_RETRACT_MM instead of old Z_PAUSE_RETRACT_MM which is now used in several locations.
+- added retract to Output Object Script again using SCRIPT_RETRACT_MM. former problems should be gone now! (see https://gcc.gnu.org/onlinedocs/cpp/Stringizing.html#Stringizing )
+
+V RF.01.37u5.Mod (2017-09-28)
+- Finally killed Advance blobs caused by "wipe while retract". Bug was: we have two functions where repetier has one - tested within the wrong one but the fix was actually good.
+- Added alternative Jerk function
+- Added jerk test for minimalspeed and autoupgrade if jerk was set too low for acceleration and minspeed.
+- pulled some changes from repetier which targeted better inserted moves / synced prepareQueueMoves
+- tuned inline to INLINE -> __attribute__((always_inline)) like repetier did for more computation speed
+- quite a lot of little updates to reach more of repetier devs code and code style
+- lot of comments added around jerk code and path planning
+
+- prepared looking into https://github.com/repetier/Repetier-Firmware/commit/a63c660289b760faf033fdfd86bbc69c1050cfc9 as comment (found commit but it is not too easy to understand absolute safe without a good test.)
+
+V RF.01.37u4.Mod (2017-09-20)
+- Possibly removed shift-bug by removing Feature HalfStepping as repetier did 27 Apr 2015 @ https://github.com/repetier/Repetier-Firmware/commit/50af89fef714bc271ac98bba3153210a8a61b275
+- Getting move function closer to repetier development
+- moving Printer::stepNumber+=max_loops into "if acceleration block". It was not there until now! possible bugfix for anything?
+- pulling repetiers changes on spiInit and SDCard::initsd() to this mod (no negative impact seen so far)
+- removed some garbage like rest of babystepping which is something like directSteps or Z-Compensation for driving Z aside from queue.
+- PWM initialisation is now the first we do at Printer::setup() while booting. This as well is some pull from repetiers changes. (no negative impact seen so far)
+
+V RF.01.37u3.Mod (2017-09-19)
+- remove bug with sending rom data over serial before starting/booting up (since ~RF.01.37t6.Mod).
+- implemented FEATURE_USER_INT3 as a dummy feature to easily implement some users interrupt function to pin PD3 @RF1000 or RF2000
+- implemented FEATURE_READ_CALIPER to get the possibility to plug an digital caliper to reserve pins at RF2000 (or RF1000 with pinchanges)
+
+V RF.01.37u2.Mod (2017-09-10)
+- Milling: finally tested PAUSE with MOVE while Milling and it did not work as expected. Small bug which is now patched.
+- Milling: moved "Set XY Origin" to Menu "Position->" for manual positioning.
+- Milling: fix possible homing one axis allowes "set xy origin" which needs at least 2 or 3 axes.
+- Milling: fix "Find Z origin" automatic driveback 15mm https://github.com/RF1000community/Repetier-Firmware/issues/81
+- Menu count fixed in Configuration -> General
+
+V RF.01.37u.Mod (2017-09-05)
+- Changed STEP_DOUBLER_FREQUENCY to standard 6500 because of performance reasons
+- Added Menu-Support and EEPROM-Support to change STEP_DOUBLER_FREQUENCY onthefly.
+   These changes are awsome!! My Printer runs way better now, when going to 50..80mm/s. It has more calculating power leftover to care for fluent bufferuse.
+- minor tweaks.
+- resort stepper drivers config in order to build them in dynamically some day from now.
+
+V RF.01.37t6.Mod (2017-09-04)
+- call for possible twoway communication with host software
+    Com::printFLN( PSTR("RequestPause:") ); //repetier
+    Com::printFLN( PSTR( "// action:pause" ) ); //octoprint
+    Com::printFLN( PSTR("RequestContinue:") );  //repetier
+    Com::printFLN( PSTR( "// action:resume" ) ); //octoprint
+    Com::printFLN( PSTR("RequestStop:") );  //repetier
+    Com::printFLN( PSTR( "// action:disconnect" ) ); //octoprint
+      if paused or continued or stop print
+(still missing commands for S3D machine control and other software!)
+- more sync on messages when starting pause from GCode vs. Button
+- more distinct menu filter for SD-Print vs. Host-Print.
+- M3070 without S1|S2 now goes to "simple pause without move"
+
+V RF.01.37t5.Mod (2017-09-03)
+- Millingmode: Show X19 / 230V status instead of nothing in temperatures row at menu 0
+- Fixed Menu count within configuration -> z-configuration
+- fixed MENU_MODE_PRINTING which is recognized now when printing
+- Menu is restricted to specific actions if MENU_MODE_PRINTING while printing. (rightnow not yet when heating and homing)
+- Milling-Mode: Mod-Menu is not shown anymore
+- Milling-Mode: Temperatures Menu at level 0 is not shown anymore, instead X-Y-Z-Positions menu is shown again, which dropped out at implementing mod menu because dropping temperatures menu was a hardcoded tweak for milling mode.
+- removed z-positions menu from configuration - z-configuration menu.
+- some cleanup
+- fixed homing axes and "isprinting" flag to flag3 instead of flag2 to be in sync with original repetier.
+
+V RF.01.37t4.Mod (2017-09-03)
+- Fixed UI_Language 1 missing motor text and advance text
+- Forbid menu items when (paused and printing) [but printing over usb is not recognized as MENU_MODE_PRINTING yet!]
+ ... prevent menu retraction/extruding and crash throug menu. Button Extrusion within pause is still possible.
+- Continue within SD-Card menu now pushes back to menulevel 0
+- Display-Status "heating bed" and "heating extruder" is now shown while heating (not overridden by "printer ready")
+
+V RF.01.37t3.Mod (2017-08-16)
+- small cleanup
+- mhiers fix for home up while circuit mode @RF1000
+- mhiers fix for his compilers complaining about "not const" message strings
+
+V RF.01.37t2.Mod (2017-08-16)
+- Prevent continue while pause position is not reached. This might have resulted in neverending pause.
+- use of repetiers better INCREMENT_MIN_MAX definition. He sais: "// this version not have single byte variable rollover bug"
+
+V RF.01.37t.Mod (2017-08-15)
+- Pause now can lower Extruder Temps. Continue recovers temps and pushes re-retract afterwards.
+
+V RF.01.37s9.Mod (2017-08-12)
+- Z-Max Fix / Z-Override-Fix
+- Testfunction for stepper drivers stall detection -> I guess this hardware feature is not usefull att all.
+
+V RF.01.37s7.Mod (2017-08-10)
+- Optional Temperature Sensor on RF2000 now reports the Temperatures as Heated-Chamber Sensor. https://forum.repetier.com/discussion/4102/heated-chamber -> Letter C in printTemperatures. This is fun, because Repetier-Server 0.86.2 now has an extra temperatures diagram for this.
+Activate heated chamber temp diagramm in printer settings -> extruder -> heated chamber -> Yes. Of course RF2000 only has a sensor and no heater/control!
+
+V RF.01.37s6.Mod (2017-08-09)
+- found the double-pause-bug. It should be gone now. :D
+- change, sort and rewrote the pause functions
+- changed Emergency-Pause to double Pause.
+- removed warning when changed position 1mm/10mm/50mm multiple times and too fast.
+- cleaned up "StepperPositions"
+- added ADVANCE to DirectSteps
+- ADVANCE increment rises with high values
+
+V RF.01.37s5.Mod (2017-08-08)
+- When DirectDrive was activ in Z sometimes the last State of "unfinished direct-Z-driving" was still set. Then the Z-Compensation did not work. I am now trying to fix or override this.
+If you still experience problems with first layer tell me!
+- Increased ADVANCE factor L Limit to 100 within Menu (was 1..60). Btw: EEPROM-Support has no limit rightnow. And ADVANCE seems to be awsome :D
+
+V RF.01.37s4.Mod (2017-08-07)
+- Fixed E1 motor current menu
+- Removed Feature Emergency-Stop after 3x Pause
+
+V RF.01.37s3.Mod (2017-08-06)
+- Patched ADVANCE Feature to newest Repetier development version.
+
+V RF.01.37s2.Mod (2017-08-06)
+- Pulling Repetiers new Guardian-Patch for Timer1 from https://github.com/repetier/Repetier-Firmware/commit/9c2d7323f84f07b33450483b131f4b65d77eb2b7
+
+V RF.01.37s.Mod (2017-08-06)
+- Factor L for lineare advance-feature is now available within menu @Configuration->Stepper->Ex-Advance L:
+See also:
+https://github.com/repetier/Repetier-Firmware/wiki/Hardware-settings-and-print-quality
+http://www.dr-henschke.de/advance.html
+http://reprap.org/pipermail/reprap-dev/2011-May/003323.html
+- Sensortype 1 (Pico Hotend, Reprap style Thermistor) EPCOS NTC is now accessible through menu for all Extruders
+- Sensortype 4 is now available through menu for alternative Heated Bed Silicon-Heater. (> http://www.rf1000.de/viewtopic.php?f=29&t=1364&p=13632&hilit=Ceran+Eigenbau#p13632 )
+- Small cleanup on several locations
+
+V RF.01.37r9.Mod (2017-08-04)
+- Added Yes/No Question to restore configuration defaults menu
+- appended missing values to restore configuration function
+- Added Steps/mm to stepper menu
+- Finally fixed second Extruder "I-Drive MAX Configuration Bug" @RF2000
+
+V RF.01.37r8.Mod (2017-08-04)
+- Added Menu for Motor-Current Configuration
+- Added EEPROM_Support for EEPROM-Support
+- Added second Extruder to "Pause-Current-Support of Pause-Feature" (which did not work on RF2000 or Dual-RF1000)
+- Renamed MOTOR_CURRENT to MOTOR_CURRENT_MAX
+- Renamed MOTOR_CURRENT_SILENT to MOTOR_CURRENT_NORMAL
+- Increased standard motorcurrent for Z to 95 instead of 90
+- Depreached/Removed Mod-Feature Silent_Mode because the new settings are better.
+
+V RF.01.37r7.Mod (2017-08-03)
+- Added Menu for PID Autotune (possible for all Heaters) @Configuration->Temperatures->(T0 Tn Bed)->Method
+- Added Menu for changing "PID drive min" and "PID drive max" (possible for all Heaters) @Configuration->Temperatures->(T0 Tn Bed)
+- Added Menu for changing "PID max" (possible for all Heaters) @Configuration->Temperatures->(T0 Tn Bed)
+- Added Menu for changing "Sensortype" (possible for all Heaters) @Configuration->Temperatures->(T0 Tn Bed)
+- Renamed "PID drive min" max to "PID I-drive min" for better understanding
+- Renamed "PID drive max" max to "PID I-drive min" for better understanding
+- Renamed "PID max" to "Power Max" for better understanding and to prevent mixups with "PID drive max"
+- Tiny Fix for constrain at autotune by Gcode.
+
+V RF.01.37r6.Mod (2017-08-01)
+- Emergency-Stop for Z-Moves is now configurable within EEPROM and Printers Menu
+- Text for RGB-Light is now "Auto" instead Color anymore. 
+- Cleaned up EEPROM text for RGB-Light to get better Compatibility with Repetier-Server (Value is not hidden anymore)
+- New Standard PID-Parameters for V2 because the old ones are quite bad in context to the improved new PID control.
+
+V RF.01.37r5.Mod (2017-07-31)
+- "PID drive max = 40"-Fix.
+- Removed FEATURE_CONFIGURABLE_HOTEND because it was bogus on Dual and not really missed at RF1000 Single setup.
+- Extruder Sensor Type is now configurable within EEPROM
+- Cleanup, deleted unnecessary text and defines
+- Added Thermistor-Types description as Comment to RFx000.h configurations
+
+V RF.01.37r4.Mod (2017-07-29)
+- Bugfix for Z-Matrix-Invalidation
+- Extruder 2 Z-Offset got eeprom support
+- Cleanup
+
+V RF.01.37r3.Mod (2017-07-24)
+- Fix M3902 Z0 to update Z-Offset in Flash too.
+- Fix min-max-bug in Emergency-Pause Menu
+
+V RF.01.37r2.TDMod (2017-07-24)
+- Last SenseOffset Digits Limit is now stored in EEPROM. If you use a plain M3909 instead of M3909 Pxxxxx the last value is used from EEPROM automatically.
+- The Emergency-Pause limit values are now editable and stored in EEPROM. EEPROM values are loaded at the printers start and can be updated via M3075.
+- Emergency-Pause is now editable within Menu at Configuration->General (See at V 0.91.15 (2014-03-26) vor Details.)
+- Updated small things according to repetier/Repetier @output EEPROM and some cleanup.
+- Updated PID D-Gains temperature-diff to 1500ms timespan. This smoothes out the steering.
+
+V RF.01.37r.TDMod (2017-07-22)
+- Grouped my good old Auto-Matrix-Leveling to one Command: M3900 R1. This is available in Menu also. Configuration -> Z-Configuration -> "Auto-Matrix-Leveling"
+- Z-Step-Size which can be set in Positon-Menu is now saved within flash automatically.
+- Previous used maximal SenseOffset-Offsetlimit is now saved within flash automatically.
+- Previous Z-Offset-Scan testpoints (X/Y) are now saved within flash automatically.
+- Little Homing-Bug is gone (g_abortZScan might have been set to 1 if average digits read failed, which is problematic when using ZOffsetScan)
+
+V RF.01.37q6.TDMod (2017-07-21)
+- Testcase for possible endZCompensationStep-Bug in Z-Compensation.
+- Testcase for possible PrintLine::direct.isZMove()-NoReturn-Bug in Z-Compensation.
+
+V RF.01.37q5.TDMod (2017-07-17)
+- Added J6=P-control, J5=PI-control, J4=PD-control or testing purposes to the PID autotune settings.
+
+V RF.01.37q4.TDMod (2017-07-17)
+- Fixing PID autotune for "some overshoot" by factor 2.0 like https://en.wikipedia.org/wiki/Ziegler%E2%80%93Nichols_method says.
+- Added PID autotune ruleset called "Pessen Integral Rule" position J1 (See http://www.mstarlabs.com/control/znrule.html for tuning rulesets and description)
+
+V RF.01.37q3.TDMod (2017-07-17)
+- Upgrading PID Code support AutoTune with two additional presents: 3="No Overshoot" and 2="Some Overshoot". Use M303 with J[0..3]. Default is 0 and this means ClassicPID which was standard in all previous firmware versions.
+- I switched the calculation of PID drive min to Minus. This should finally enable the real PID control - fix it!
+- Speed-Mode for Menu-Klicking: Whenever you press some Button on the printer the Routine to answer is at 10ms clock instead of 100ms clock for 15 seconds. This enables us to navigate very fast now.
+
+V RF.01.37q2.TDMod (2017-07-16)
+- Upgrading PID Code to original repetier/Repetier :: added max-cycles
+- Removed debug-watchdog-time-counter
+
+V RF.01.37q.TDMod (2017-07-15)
+- Implemented "Feature Zero Digits". When you home all Axes, the digits are messured and written to the digits offset. Then we see very little digits while printing. That should make them more comparable.
+- Disabled FREE-RAM debugging (to not waste calculate power anymore on this)
+
+V RF.01.37p6.TDMod (2017-07-13)
+- Fixed Emergency-Stop to not make watchdog-reset
+- Added Auto-Reset when the printer shows Emergency-Stop (Z-Block) and you press OK or PLAY.
+- You cannot drive X- and Y-Axis out of bounds anymore using Menu "POSITION -> X/Y-Position -> ". This will now show an additional Warning if you aim out of bounds and the printer blocks it.
+- Closing down ZOS-Debugging: ZOS now starts at 1mm Height. (Formerly 0.5mm, but 1mm spacing seems rather ok. 5mm was too high and slow. Spacing <= +12mm technically works god as of 01.37p5)
+
+V RF.01.37p5.TDMod (2017-07-04)
+- Fixed theoretical ZOS error with g_abortZScan, because when it is set by function of ZOS the function of HBS will abort without being active.
+
+V RF.01.37p4.TDMod (2017-06-30)
+- Improved repeating messurements within ZOS when the digits get disturbed somehow (Filament, Vibrations,...). ZOS is now much more robust against moving idle pressures.
+- Test: Round Z-Slow-Steps to even Microsteps.
+
+V RF.01.37p3.TDMod (2017-06-30)
+- Tracing some ZOS-Bug with Filament
+- Cleanup
+- Fixed Bug in SchraubenJustierHelper: Da wurden bei der Abgrenzung mm mit Mikrometer verwechselt.
+
+V RF.01.37p2.TDMod (2017-06-27)
+- Fixed some details within ZOS-Scan
+- Screw-Offset-Helper is now displaying its suggestions to the Printers display
+
+V RF.01.37p.TDMod (2017-06-27)
+- homing is now split into 3 axes
+- homing Z only with Tipdown/Positive Matrix activated now might home Y first to avoid crash. This is experimental. This is not protecting the nozzle/bed very good.
+- Small Z-Compensation Fix for TipDown-Support
+- Tipdown for T1 is now adjustable within Menus Configuration -> Z-Configuration -> Extruder T1 TipDown -> +-
+- activating Z-Compensation with only one axis homed is impossible now.
+- whenever some axis is homed it is now shown with a * within menu.
+- small cleanup
+
+V RF.01.37o.TDMod (2017-06-20)
+- Third Z-Scale: G-Code.
+- Some small tweaks and comment updates to Tipdown-Support
+- Tweaks on Function-Timers in Commands::checkForPeriodicalActions()
+- Removed Feature FEATURE_BEDTEMP_DECREASE (My first thing, didnt ever use it again.)
+
+V RF.01.37n2.TDMod (2017-06-20)
+- Fanspeed of INT(1) is now 1% in Display (instead of 0%)
+- Fanspeed of INT(1) is now sent to Repetier-Server as INT(2) to produce 1% instead of 0%
+- printTemperature is now selfcontrolling the outputfrequency (<1Hz), this made some code smaller and easier.
+
+V RF.01.37n.TDMod (2017-06-18)
+- Faster Temperature Management for cleaner PID.
+- Autosend Temperature-Info 
+- major cleanup
+- still investigating for "the bug" -> I guess it is gone but I am still testing.
+
+V RF.01.37m5.TDMod (2017-06-18)
+- tempered a whole lot with interruptstuff and watchdog
+
+V RF.01.37m4.TDMod (2017-06-10)
+- removed some interrupt-blocking in order to accidently unblock them afterwards. there is some bug in this firmware somewhere after 01.37k4 I am now investigating closely.
+
+V RF.01.37m3.TDMod (2017-06-10)
+- did some cleanup
+- tested some stuff
+- changed autotunePID a bit, according to https://github.com/repetier/Repetier-Firmware/commit/241c550ac004023842d6886c6e0db15a1f6b56d7 . Temperatures not unmonitored/unprinted while testing anymore.
+
+V RF.01.37m2.TDMod (2017-05-19)
+- Tested and fixed some stuff: monitor temp possible overflow
+- changed UI_ACTION_TOPMENU to avoid mod menü when jumping back. commented UI_ACTION_TOPMENU at definition.
+- activated free ram debugging
+- removed Z_PAUSE_RETRACT_MM from Output-Object until I find out how to concat preprocessor strings, this doesnt really work as supposed since 1.37l2.
+- Killed SKIP_M109_IF_WITHIN and put TEMP_TOLERANCE in that place to standarize that. 
+
+V RF.01.37m.TDMod (2017-05-19)
+- Fix for MoveZ
+- Changed z-Compensation to respect positive matrix values
+- Changed ZOS and M3902 to accept positive matrix values
+- Changed limits for Z-Offset-Scan s Move-Z-Up/Down/Fast/Slow according to allowed positive matrix values.
+
+V RF.01.37l4.TDMod (2017-05-19)
+- cleanup
+- made the function for digits compensation faster and more accurate. The digits are now measured with a higher frequency.
+
+V RF.01.37l3.TDMod (2017-05-19)
+- fixed some details
+- cleanup
+- New FEATURE_UNLOCK_MOVEMENT : No G1/G0 Movement allowed until one Temperature is set, one homing or some printers button is pressed. This Feature makes the change of "V RF.01.37k3.TDMod (2017-05-16)" to a real feature and prevents some bug with the menu->Load Filament function. This function used internal G-Codes and therefore the load filament extrusion was not possible until this fix.
+
+
+V RF.01.37l2.TDMod (2017-05-18)
+- Pause continues without E if Extrude/Retract-Buttons are used manually. This should prevent those Emergency-Blocks @Coniniue()
+- Added a configuration #define Z_PAUSE_RETRACT_MM to have one place to specify the retraction mm of the firmwares functions
+- linked Pause and outputObject to the Z_PAUSE_RETRACT_MMs value
+
+V RF.01.37l.TDMod (2017-05-17)
+- Testversion for automatic digit-compensation. The more force on the extruder, the more it will decrease in Z. This ist approx. 0.01mm / 1000 digits.
+As we know the force on the extruder and the rate of decrease we compensate it within z-compensation. 
+See http://www.rf1000.de/viewtopic.php?f=72&t=1853 :D
+Maybe this is bogus -> if not it will increase the quality of thin layer prints or small nozzle prints. It might even increase the digits-stability
+
+V RF.01.37k4.TDMod (2017-05-16)
+- fixed missing translations
+- removed drive-free - i really dont want and need that!
+- replaced tabs with spaces
+
+V RF.01.37k3.TDMod (2017-05-16)
+- Prevent Move by GCODE (G0, G1, ...) if not homed in printer mode. This should prevent crashes when the printer resets with repetierhost still sending commands
+- Fixed M3117 by changing gcode.cpp to prevent parsing text based commands alike in parseASCII(*com)
+- changed standard thermistor setting back to type 3 (V2)
+- removed change function of the Tip-Down-Spring-Setting within menu CONFIGURATION - Z-Configuration to prevent some missunderstanding. Now the user gets an info message how to change.
+- implemented https://github.com/repetier/Repetier-Firmware/commit/371c1b709f0f3d7664e345813e84e27b591c58f4 
+- rewrote some GCODE parsing functions details according to original repetier/Repetier
+- changed Gcode buffer to 22 instead of 16 to test possible effects
+
+V RF.01.37k2.TDMod (2017-05-07)
+- Added better Thermistor-Comments in Extruder.cpp
+- Added Generic Thermistor-Table-Function from original repetier/Repetier (in testing)
+
+V RF.01.37k.TDMod (2017-05-07)
+- This is a Test-Mod to implement Ultimakers "Bed down" for a right nozzle which can move up and down.
+I made this mod to test some Tip-Down-Nozzle on T1.
+M3919 T1 Z-0.6 ;das rechte Hotend reicht wenn gedrückt 0.5mm weiter nach unten.
+Whenever T1 is selected the printer adds some special Z-Offset so the bed drives down a bit. This new T1-Z-Offset is respected by SenseOffset and the Z-Compensation and the Limits of the Z-Compensation as well.
+- When you use M3919 the new offset is activated whenever the next switch to T1 happens.
+- You can change the M3919 Z-Offset for T1 within Menu, but new values are not respected until the next Toolchange to T1 happens.
+
+CAUTION!
+This Mod is my personal Mod with my personal Settings!
+#############################################################
+Both Hotends are on Thermistor Type 8 = E3D Thermistor.
+There is only 1mm Retract predefined within OUTPUT_OBJECT_SCRIPT_PRINT, instead of 5mm
+#############################################################
 
 V RF.01.37j.mod (2017-04-24)
 - The SenseOffset will now show when it is ready to controll the nozzles height over bed. You see one character within line 3 of the Mod-Menu. Formerly there was a "@" in front of the digits limit. Now the @ will change to ^ when SenseOffset ist actively controlling within the low layers.
