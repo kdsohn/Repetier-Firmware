@@ -20,6 +20,11 @@
 #define REPETIER_H
 
 #include "Constants.h"
+
+//https://gcc.gnu.org/onlinedocs/cpp/Stringizing.html#Stringizing for using number-#defines in string-#defines
+#define xstr(a) str(a)
+#define str(a) #a
+
 #include "Configuration.h"
 
 
@@ -121,7 +126,7 @@ extern volatile uint8   osAnalogInputPos; // Current sampling position
 extern volatile uint    osAnalogInputValues[ANALOG_INPUTS];
 extern uint8_t          pwm_pos[NUM_EXTRUDER+3]; // 0-NUM_EXTRUDER = Heater 0-NUM_EXTRUDER of extruder, NUM_EXTRUDER = Heated bed, NUM_EXTRUDER+1 Board fan, NUM_EXTRUDER+2 = Fan
 
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
 extern int              maxadv;
 #endif // ENABLE_QUADRATIC_ADVANCE
@@ -166,13 +171,15 @@ extern volatile uint osAnalogInputValues[OS_ANALOG_INPUTS];
 
 #include "HAL.h"
 
-
-extern unsigned int         counterPeriodical;
-extern volatile uint8_t     executePeriodical;
-extern uint8_t              counter250ms;
-
+extern volatile uint8_t     execute100msPeriodical;
+extern volatile uint8_t     execute16msPeriodical;
+extern volatile uint8_t     execute10msPeriodical;
 
 extern void writeMonitor();
+
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+extern uint8_t fanKickstart;
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #if SDSUPPORT
 extern char                 tempLongFilename[LONG_FILENAME_LENGTH+1];

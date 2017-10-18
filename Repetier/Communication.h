@@ -60,6 +60,7 @@ public:
     FSTRINGVAR(tBrownOut)
     FSTRINGVAR(tWatchdog)
     FSTRINGVAR(tSoftwareReset)
+    FSTRINGVAR(tUnknownReset)
     FSTRINGVAR(tUnknownCommand)
     FSTRINGVAR(tFreeRAM)
     FSTRINGVAR(tXColon)
@@ -79,6 +80,7 @@ public:
     FSTRINGVAR(tColon)
     FSTRINGVAR(tSpeedMultiply)
     FSTRINGVAR(tFlowMultiply)
+    FSTRINGVAR(tPrintingIsInProcessError)
     FSTRINGVAR(tFanspeed)
     FSTRINGVAR(tPrintedFilament)
     FSTRINGVAR(tPrintingTime)
@@ -97,6 +99,8 @@ public:
     FSTRINGVAR(tMS1MS2Pins)
     FSTRINGVAR(tSetOutputSpace)
     FSTRINGVAR(tSpaceToSpace)
+    FSTRINGVAR(tSpaceChamber)
+    FSTRINGVAR(tSpaceCAtColon)
     FSTRINGVAR(tHSpace)
     FSTRINGVAR(tLSpace)
     FSTRINGVAR(tXMinColon)
@@ -113,6 +117,9 @@ public:
     FSTRINGVAR(tLinearLColon)
     FSTRINGVAR(tQuadraticKColon)
     FSTRINGVAR(tEEPROMUpdated)
+    FSTRINGVAR(tscanHeatBed)
+    FSTRINGVAR(tscanWorkPart)
+    FSTRINGVAR(tAutoMatrixLeveling)
 
 #if FEATURE_SERVICE_INTERVAL
     FSTRINGVAR(tPrintedFilamentService)
@@ -134,6 +141,12 @@ public:
     FSTRINGVAR(tAPIDKu)
     FSTRINGVAR(tAPIDTu)
     FSTRINGVAR(tAPIDClassic)
+    FSTRINGVAR(tAPIDPessen)
+    FSTRINGVAR(tAPIDSome)
+    FSTRINGVAR(tAPIDNone)
+    FSTRINGVAR(tAPIDsimplePD)
+    FSTRINGVAR(tAPIDsimplePI)
+    FSTRINGVAR(tAPIDsimpleP)
     FSTRINGVAR(tAPIDKp)
     FSTRINGVAR(tAPIDKi)
     FSTRINGVAR(tAPIDKd)
@@ -195,6 +208,19 @@ public:
     FSTRINGVAR(tEPRZBacklash)
     FSTRINGVAR(tEPRZAcceleration)
     FSTRINGVAR(tEPRZTravelAcceleration)
+#if FEATURE_MILLING_MODE
+    FSTRINGVAR(tEPRZMillingAcceleration)
+#endif //FEATURE_MILLING_MODE
+#if FEATURE_READ_CALIPER
+    FSTRINGVAR(tEPRZCallStandard)
+    FSTRINGVAR(tEPRZCallAdjust)
+#endif //FEATURE_READ_CALIPER
+#if FEATURE_ZERO_DIGITS
+    FSTRINGVAR(tEPRZERO_DIGIT_STATE)
+#endif // FEATURE_ZERO_DIGITS
+#if FEATURE_DIGIT_Z_COMPENSATION
+    FSTRINGVAR(tEPRZDIGIT_CMP_STATE)
+#endif // FEATURE_DIGIT_Z_COMPENSATION
     FSTRINGVAR(tEPRZStepsPerMM)
     FSTRINGVAR(tEPRZMaxFeedrate)
     FSTRINGVAR(tEPRZHomingFeedrate)
@@ -232,9 +258,12 @@ public:
     FSTRINGVAR(tEPRIGain)
     FSTRINGVAR(tEPRDGain)
     FSTRINGVAR(tEPRPIDMaxValue)
+    FSTRINGVAR(tEPRBedsensorType)
+    FSTRINGVAR(tEPRsensorType)
     FSTRINGVAR(tEPRXOffset)
     FSTRINGVAR(tEPRYOffset)
     FSTRINGVAR(tEPRZOffset)
+    FSTRINGVAR(tEPRZOffsetmm)
     FSTRINGVAR(tEPRZMode)
     FSTRINGVAR(tEPRStabilizeTime)
     FSTRINGVAR(tEPRRetractionWhenHeating)
@@ -244,15 +273,48 @@ public:
     FSTRINGVAR(tEPRAdvanceL)
     FSTRINGVAR(tEPRBeeperMode)
     FSTRINGVAR(tEPRCaseLightsMode)
-    FSTRINGVAR(tEPR230VOutputMode)
     FSTRINGVAR(tEPROperatingMode)
     FSTRINGVAR(tEPRZEndstopType)
-    FSTRINGVAR(tEPRHotendType)
     FSTRINGVAR(tEPRMillerType)
     FSTRINGVAR(tEPRRGBLightMode)
     FSTRINGVAR(tEPRFET1Mode)
     FSTRINGVAR(tEPRFET2Mode)
     FSTRINGVAR(tEPRFET3Mode)
+
+    FSTRINGVAR(tEPRPrinterZ_STEP_SIZE)
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+    FSTRINGVAR(tEPRPrinterMOD_ZOS_SCAN_POINT_X)
+    FSTRINGVAR(tEPRPrinterMOD_ZOS_SCAN_POINT_Y)
+#endif //FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_SENSIBLE_PRESSURE
+    FSTRINGVAR(tEPRPrinterMOD_SENSEOFFSET_OFFSET_MAX)
+    FSTRINGVAR(tEPRPrinterEPR_RF_MOD_SENSEOFFSET_DIGITS)
+#endif //FEATURE_SENSIBLE_PRESSURE
+
+#if FEATURE_EMERGENCY_PAUSE
+    FSTRINGVAR(tEPRPrinterEPR_RF_EmergencyPauseDigitsMin)
+    FSTRINGVAR(tEPRPrinterEPR_RF_EmergencyPauseDigitsMax)
+#endif //FEATURE_EMERGENCY_PAUSE
+
+#if FEATURE_EMERGENCY_STOP_ALL
+    FSTRINGVAR(tEPRPrinterEPR_RF_EmergencyStopAllMin)
+    FSTRINGVAR(tEPRPrinterEPR_RF_EmergencyStopAllMax)
+#endif //FEATURE_EMERGENCY_STOP_ALL
+
+    FSTRINGVAR(tEPRPrinter_STEPPER_X)
+    FSTRINGVAR(tEPRPrinter_STEPPER_Y)
+    FSTRINGVAR(tEPRPrinter_STEPPER_Z)
+    FSTRINGVAR(tEPRPrinter_STEPPER_E0)
+#if NUM_EXTRUDER > 1
+    FSTRINGVAR(tEPRPrinter_STEPPER_E1)
+#endif //NUM_EXTRUDER > 1
+    FSTRINGVAR(tEPRPrinter_FREQ_DBL)
+    
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+    FSTRINGVAR(tEPRPrinter_FAN_MODE)
+    FSTRINGVAR(tEPRPrinter_FAN_SPEED)
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
+
 #endif // EEPROM_MODE==0
 
 #if SDSUPPORT
@@ -289,10 +351,6 @@ public:
     FSTRINGVAR(tFindZOrigin)
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_TEST_STRAIN_GAUGE
-    FSTRINGVAR(tTestStrainGauge)
-#endif // FEATURE_TEST_STRAIN_GAUGE
-
     static void printNumber(uint32_t n);
     static void printWarningF(FSTRINGPARAM(text));
     static void printInfoF(FSTRINGPARAM(text));
@@ -301,7 +359,7 @@ public:
     static void printInfoFLN(FSTRINGPARAM(text));
     static void printErrorFLN(FSTRINGPARAM(text));
     static void printFLN(FSTRINGPARAM(text));
-    static void printF(FSTRINGPARAM(text));
+    static void printF(FSTRINGPARAM(ptr));
     static void printF(FSTRINGPARAM(text),int value);
     static void printF(FSTRINGPARAM(text),const char *msg);
     static void printF(FSTRINGPARAM(text),int32_t value);
@@ -313,7 +371,7 @@ public:
     static void printFLN(FSTRINGPARAM(text),const char *msg);
     static void printFLN(FSTRINGPARAM(text),float value,uint8_t digits=2,bool komma_as_dot=false);
     static void printArrayFLN(FSTRINGPARAM(text),float *arr,uint8_t n=4,uint8_t digits=2);
-    static void printArrayFLN(FSTRINGPARAM(text),long *arr,uint8_t n=4);
+    static void printArrayFLN(FSTRINGPARAM(text),int32_t *arr,uint8_t n=4);
     static void print(long value);
     static inline void print(uint32_t value) {printNumber(value);}
     static inline void print(int value) {print((int32_t)value);}

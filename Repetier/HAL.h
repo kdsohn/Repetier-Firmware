@@ -29,6 +29,8 @@
 #include <avr/io.h>
 #define prog_char   char
 
+#define INLINE __attribute__((always_inline))
+
 #define PACK
 
 #define FSTRINGVALUE(var,value) const char var[] PROGMEM = value;
@@ -56,15 +58,59 @@ All known arduino boards use 64. This value is needed for the extruder timing. *
 
 #include "fastio.h"
 
-
 #if FEATURE_WATCHDOG
-extern  unsigned char   g_bPingWatchdog;
+extern  unsigned char g_bPingWatchdog;
+extern  unsigned long g_uLastCommandLoop;
 #endif // FEATURE_WATCHDOG
 
+// > 4 should not happen, only if you change code or really want that. 
+// Never set this > 7!
+// Note that > 4 is highly experimental
+#define COOLER_MODE_MAX 4
 
-#define BEGIN_INTERRUPT_PROTECTED {uint8_t sreg=SREG;__asm volatile( "cli" ::: "memory" );
-#define END_INTERRUPT_PROTECTED SREG=sreg;}
-#define ESCAPE_INTERRUPT_PROTECTED SREG=sreg;
+#define COOLER_MODE_PWM 0
+#define COOLER_MODE_PDM 1
+extern  uint8_t cooler_pwm_speed;
+extern  uint8_t cooler_pwm_step;
+extern  uint8_t cooler_pwm_mask;
+extern  uint8_t cooler_mode;
+ 
+#if !defined(MAX_FAN_PWM) || MAX_FAN_PWM >= 255 || MAX_FAN_PWM <= 0
+#define TRIM_FAN_PWM(x) x
+#undef MAX_FAN_PWM
+#define MAX_FAN_PWM 255
+#else
+#define TRIM_FAN_PWM(x) static_cast<uint8_t>(static_cast<unsigned int>(x) * MAX_FAN_PWM / 255)
+#endif
+
+class InterruptProtectedBlock
+{
+private:
+    uint8_t sreg;
+public:
+    inline void protect(bool save = false)
+    {
+        if(save) sreg = SREG;
+        cli();
+    }
+
+    inline void unprotect()
+    {
+        SREG = sreg;
+    }
+
+    inline InterruptProtectedBlock(bool later = false)
+    {
+        sreg = SREG;
+        if(!later)
+            cli();
+    }
+
+    inline ~InterruptProtectedBlock()
+    {
+        SREG = sreg;
+    }
+};
 
 #define EEPROM_OFFSET               0
 #define SECONDS_TO_TICKS(s)         (unsigned long)(s*(float)F_CPU)
@@ -84,12 +130,39 @@ extern  unsigned char   g_bPingWatchdog;
 
 #define LIMIT_INTERVAL              ((F_CPU/40000)+1)
 
+#ifndef cbi
+  #define cbi(sfr, bit) (_SFR_BYTE(sfr) &= ~_BV(bit))
+#endif
+#ifndef sbi
+  #define sbi(sfr, bit) (_SFR_BYTE(sfr) |= _BV(bit))
+#endif
+
 typedef uint16_t    speed_t;
 typedef uint32_t    ticks_t;
 typedef uint32_t    millis_t;
 typedef uint8_t     flag8_t;
+typedef int8_t      fast8_t;
+typedef uint8_t     ufast8_t;
 
 #define FAST_INTEGER_SQRT
+
+#if FEATURE_USER_INT3
+extern volatile unsigned long g_uCOUNT_INT3; //dummy variable for dummy function!
+
+void USER_INTERRUPT3_HOOK(); //dummy function!
+#endif //FEATURE_USER_INT3
+
+#if FEATURE_READ_CALIPER
+extern volatile long caliper_um; //last valid readout
+
+//auswertevariablen:
+extern uint16_t caliper_filament_standard;
+extern uint32_t caliper_collect_um;
+extern uint32_t caliper_collect_count;
+extern int8_t   caliper_collect_adjust;
+
+void FEATURE_READ_CALIPER_HOOK(); //read in calipers 48bit protocol bitwise!
+#endif //FEATURE_READ_CALIPER
 
 #ifndef EXTERNALSERIAL
 // Implement serial communication for one stream only!
@@ -173,7 +246,7 @@ public:
 extern RFHardwareSerial RFSerial;
 #define RFSERIAL RFSerial
 #define WAIT_OUT_EMPTY while(tx_buffer.head != tx_buffer.tail) {}
-#else
+#else // EXTERNALSERIAL
 #define RFSERIAL Serial
 #endif // EXTERNALSERIAL
 
@@ -191,6 +264,7 @@ extern RFHardwareSerial RFSerial;
 #define OUT_ERROR_P_LN(p)   {Com::printErrorF(PSTR(p));Com::println();}
 #define OUT(v)              Com::print(v)
 #define OUT_LN              Com::println()
+
 
 
 class HAL
@@ -448,35 +522,14 @@ public:
 
     static int32_t CPUDivU2(unsigned int divisor);
 
-    static inline void delayMicroseconds(unsigned int delayUs)
+    static inline void delayMicroseconds(unsigned int delayUs) //see https://www.arduino.cc/en/Reference/AttachInterrupt for interrupt-warning.
     {
-        pingWatchdog();
         ::delayMicroseconds(delayUs);
-
     } // delayMicroseconds
 
     static inline void delayMilliseconds(unsigned int delayMs)
     {
-#if FEATURE_WATCHDOG
-        // external watchdog
-        unsigned int    doneMs = 0;
-        unsigned int    tempMs;
-
-        pingWatchdog();
-        while( doneMs < delayMs )
-        {
-            tempMs = delayMs - doneMs;
-            if( tempMs > WATCHDOG_TIMEOUT ) tempMs = WATCHDOG_TIMEOUT;
-
-            ::delay(tempMs);
-            doneMs += tempMs;
-            pingWatchdog();
-        }
-#else
-        // internal watchdog
         ::delay(delayMs);
-#endif // FEATURE_WATCHDOG
-
     } // delayMilliseconds
 
     static inline void tone(uint8_t pin,int duration)
@@ -493,80 +546,52 @@ public:
 
     static inline void eprSetByte(unsigned int pos,uint8_t value)
     {
-#if FEATURE_WATCHDOG
-        HAL::pingWatchdog();
-#endif // FEATURE_WATCHDOG
-
-        eeprom_write_byte((unsigned char *)(EEPROM_OFFSET+pos), value);
+        uint8_t oldval = eprGetByte(pos);
+        if(oldval != value) eeprom_write_byte((unsigned char *)(EEPROM_OFFSET+pos), value);
 
     } // eprSetByte
 
     static inline void eprSetInt16(unsigned int pos,int16_t value)
     {
-#if FEATURE_WATCHDOG
-        HAL::pingWatchdog();
-#endif // FEATURE_WATCHDOG
-
-        eeprom_write_word((unsigned int*)(EEPROM_OFFSET+pos),value);
+        int16_t oldval = eprGetInt16(pos);
+        if(oldval != value) eeprom_write_word((unsigned int*)(EEPROM_OFFSET+pos),value);
 
     } // eprSetInt16
 
     static inline void eprSetInt32(unsigned int pos,int32_t value)
     {
-#if FEATURE_WATCHDOG
-        HAL::pingWatchdog();
-#endif // FEATURE_WATCHDOG
-
-        eeprom_write_dword((uint32_t*)(EEPROM_OFFSET+pos),value);
+        int32_t oldval = eprGetInt32(pos);
+        if(oldval != value) eeprom_write_dword((uint32_t*)(EEPROM_OFFSET+pos),value);
 
     } // eprSetInt32
 
     static inline void eprSetFloat(unsigned int pos,float value)
     {
-#if FEATURE_WATCHDOG
-        HAL::pingWatchdog();
-#endif // FEATURE_WATCHDOG
-
-        eeprom_write_block(&value,(void*)(EEPROM_OFFSET+pos), 4);
+        float oldval = eprGetFloat(pos);
+        if(oldval != value) eeprom_write_block(&value,(void*)(EEPROM_OFFSET+pos), 4);
 
     } // eprSetFloat
 
     static inline uint8_t eprGetByte(unsigned int pos)
     {
-#if FEATURE_WATCHDOG
-        HAL::pingWatchdog();
-#endif // FEATURE_WATCHDOG
-
         return eeprom_read_byte ((unsigned char *)(EEPROM_OFFSET+pos));
 
     } // eprGetByte
 
     static inline int16_t eprGetInt16(unsigned int pos)
     {
-#if FEATURE_WATCHDOG
-        HAL::pingWatchdog();
-#endif // FEATURE_WATCHDOG
-
         return eeprom_read_word((uint16_t *)(EEPROM_OFFSET+pos));
 
     } // eprGetInt16
 
     static inline int32_t eprGetInt32(unsigned int pos)
     {
-#if FEATURE_WATCHDOG
-        HAL::pingWatchdog();
-#endif // FEATURE_WATCHDOG
-
         return eeprom_read_dword((uint32_t*)(EEPROM_OFFSET+pos));
 
     } // eprGetInt32
 
     static inline float eprGetFloat(unsigned int pos)
     {
-#if FEATURE_WATCHDOG
-        HAL::pingWatchdog();
-#endif // FEATURE_WATCHDOG
-
         float v;
         eeprom_read_block(&v,(void *)(EEPROM_OFFSET+pos),4); // newer gcc have eeprom_read_block but not arduino 22
         return v;
@@ -586,13 +611,11 @@ public:
     static inline unsigned long timeInMilliseconds()
     {
         return millis();
-
     } // timeInMilliseconds
 
     static inline unsigned long timeInMicroseconds()
     {
         return micros();
-
     } // timeInMicroseconds
 
     static inline char readFlashByte(PGM_P ptr)
@@ -659,9 +682,12 @@ public:
 
     } // spiBegin
 
-    static inline void spiInit(uint8_t spiRate)
+    static inline void spiInit(uint8_t spiRate) //TODO ?? : see https://github.com/repetier/Repetier-Firmware/commit/5c139806139d738419e666147c28b51971e1bab5 ??
     {
-        spiRate = spiRate > 12 ? 6 : spiRate/2;
+        //spiRate = spiRate > 12 ? 6 : spiRate/2;
+        uint8_t r = 0;
+        for (uint8_t b = 2; spiRate > b && r < 6; b <<= 1, r++);
+
         SET_OUTPUT(SS);
         WRITE(SS,HIGH);
         SET_OUTPUT(SCK);
@@ -675,9 +701,11 @@ public:
 #endif // PRR
 
         // See avr processor documentation
-        SPCR = (1 << SPE) | (1 << MSTR) | (spiRate >> 1);
-        SPSR = spiRate & 1 || spiRate == 6 ? 0 : 1 << SPI2X;
+        //SPCR = (1 << SPE) | (1 << MSTR) | (spiRate >> 1);
+        //SPSR = spiRate & 1 || spiRate == 6 ? 0 : 1 << SPI2X;
 
+        SPCR = (1 << SPE) | (1 << MSTR) | (r >> 1);
+        SPSR = (r & 1 || r == 6 ? 0 : 1) << SPI2X;
     } // spiInit
 
     static inline uint8_t spiReceive(uint8_t send=0xff)
@@ -749,9 +777,12 @@ public:
     static unsigned char i2cStart(unsigned char address);
     static void i2cStartWait(unsigned char address);
     static void i2cStop(void);
-    static unsigned char i2cWrite( unsigned char data );
+    static void i2cWrite( unsigned char data );
     static unsigned char i2cReadAck(void);
     static unsigned char i2cReadNak(void);
+
+    //Nibbels: Use watchdog to trigger external watchdog with constant time function according to command loop.
+    static void WDT_Init(void);
 
     // Watchdog support
     inline static void startWatchdog()
@@ -759,29 +790,36 @@ public:
 #if FEATURE_WATCHDOG && WATCHDOG_PIN>-1
         // external watchdog
         SET_OUTPUT(WATCHDOG_PIN);
-        pingWatchdog();
-#else
-        // internal watchdog
-        //wdt_enable(WDTO_1S);
+        g_bPingWatchdog = 1; //allow pinging
+        tellWatchdogOk(); //Nibbels: Init für g_nCommandloop
+        pingWatchdog(); //Nibbels: Hier macht der mehr sinn!        
 #endif // FEATURE_WATCHDOG && WATCHDOG_PIN>-1
 
-        g_bPingWatchdog = 1;
-
+        HAL::WDT_Init(); //Nibbels: use watchdogtimer to test var and trigger
     } // startWatchdog
 
     inline static void stopWatchdog()
     {
-        g_bPingWatchdog = 0;
+        g_bPingWatchdog = 0; //disallow pinging
 
 #if FEATURE_WATCHDOG && WATCHDOG_PIN>-1
         // external watchdog
+        WRITE(WATCHDOG_PIN,LOW); //Nibbels: In case you stop the watchdog it has to be set floating. thatwhy disable internal pullup as this will make the state like OUTPUT-high. This is not really needed as this function does not do anything when starting the arduino. rightnow at start it sets a pin to input which is already input.
         SET_INPUT(WATCHDOG_PIN);
 #else
         // internal watchdog
         //wdt_disable();
 #endif // FEATURE_WATCHDOG && WATCHDOG_PIN>-1
-
     } // stopWatchdog
+
+    inline static void tellWatchdogOk()
+    {
+#if FEATURE_WATCHDOG && WATCHDOG_PIN>-1
+        g_uLastCommandLoop = HAL::timeInMilliseconds();    
+#else
+
+#endif // FEATURE_WATCHDOG && WATCHDOG_PIN>-1
+    } // pingWatchdog
 
     inline static void pingWatchdog()
     {
@@ -790,10 +828,13 @@ public:
             // do not trigger the watchdog in case it is not enabled
             return;
         }
-
 #if FEATURE_WATCHDOG && WATCHDOG_PIN>-1
         // external watchdog
-        WRITE(WATCHDOG_PIN,READ(WATCHDOG_PIN) ? 0 : 1);
+        if( (HAL::timeInMilliseconds() - g_uLastCommandLoop) < WATCHDOG_MAIN_LOOP_TIMEOUT )
+        {
+            // ping the watchdog only in case the mainloop is still being called
+            WRITE(WATCHDOG_PIN,READ(WATCHDOG_PIN) ? 0 : 1);
+        }
 #else
         // internal watchdog
         //wdt_reset();
@@ -804,13 +845,14 @@ public:
     inline static void testWatchdog()
     {
         // start the watchdog
-        startWatchdog();
+        //startWatchdog();
 
         // force the watchdog to fire
-        HAL::forbidInterrupts();
+        //InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
         while( 1 )
         {
         }
+        //noInts.unprotect(); //Davor ist ende bin mir aber wegen destruct nicht ganz sicher und optimierungen.
 
     } // testWatchdog
 
@@ -826,6 +868,9 @@ public:
 #endif // FEATURE_SERVO && MOTHERBOARD == DEVICE_TYPE_RF1000
 
     static void analogStart();
+#if USE_ADVANCE
+    static void resetExtruderDirection();
+#endif // USE_ADVANCE
 protected:
 private:
 };

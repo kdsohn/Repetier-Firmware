@@ -1931,7 +1931,7 @@ class SdBaseFile {
   /** \return The first cluster number for a file or directory. */
   uint32_t firstCluster() const {return firstCluster_;}
   bool getFilename(char* name);
-  uint8_t lfn_checksum(const unsigned char *pFCBName);
+  uint8_t lfn_checksum(const uint8_t *pFCBName);
   bool openParentReturnFile(SdBaseFile* dirFile, const char* path, uint8_t *dname, SdBaseFile *newParent, boolean bMakeDirs);
 
   

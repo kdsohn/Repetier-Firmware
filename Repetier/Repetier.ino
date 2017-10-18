@@ -113,7 +113,6 @@ Custom M Codes
 #include <SPI.h>
 #include <Wire.h>
 
-
 void setup()
 {
     Printer::setup();

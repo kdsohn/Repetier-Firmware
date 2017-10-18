@@ -18,7 +18,7 @@
 
 #include "Repetier.h"
 
-FSTRINGVALUE(Com::tFirmware,"FIRMWARE_NAME:Repetier_" REPETIER_VERSION " FIRMWARE_URL:https://github.com/RF1000/Repetier-Firmware/ PROTOCOL_VERSION:1.0 MACHINE_TYPE:Mendel EXTRUDER_COUNT:" XSTR(NUM_EXTRUDER) " REPETIER_PROTOCOL:2")
+FSTRINGVALUE(Com::tFirmware,"FIRMWARE_NAME:Repetier_" REPETIER_VERSION " FIRMWARE_URL:https://github.com/RF1000community/Repetier-Firmware PROTOCOL_VERSION:1.0 MACHINE_TYPE:Mendel EXTRUDER_COUNT:" XSTR(NUM_EXTRUDER) " REPETIER_PROTOCOL:2")
 
 FSTRINGVALUE(Com::tDebug,"Debug:")
 FSTRINGVALUE(Com::tOk,"ok")
@@ -57,6 +57,7 @@ FSTRINGVALUE(Com::tExternalReset,"External Reset")
 FSTRINGVALUE(Com::tBrownOut,"Brown out Reset")
 FSTRINGVALUE(Com::tWatchdog,"Watchdog Reset")
 FSTRINGVALUE(Com::tSoftwareReset,"Software Reset")
+FSTRINGVALUE(Com::tUnknownReset,"Unknown Reset")
 FSTRINGVALUE(Com::tUnknownCommand,"Unknown command:")
 FSTRINGVALUE(Com::tFreeRAM,"Free RAM:")
 FSTRINGVALUE(Com::tXColon,"X:")
@@ -68,6 +69,8 @@ FSTRINGVALUE(Com::tTColon,"T:")
 FSTRINGVALUE(Com::tSpaceBColon," B:")
 FSTRINGVALUE(Com::tSpaceAtColon," @:")
 FSTRINGVALUE(Com::tSpaceT," T")
+FSTRINGVALUE(Com::tSpaceChamber," C")
+FSTRINGVALUE(Com::tSpaceCAtColon," C@:")
 FSTRINGVALUE(Com::tSpaceAt," @")
 FSTRINGVALUE(Com::tSpaceBAtColon," B@:")
 FSTRINGVALUE(Com::tSpaceRaw," RAW")
@@ -76,6 +79,11 @@ FSTRINGVALUE(Com::tSlash,"/")
 FSTRINGVALUE(Com::tSpaceSlash," /")
 FSTRINGVALUE(Com::tSpeedMultiply,"SpeedMultiply:")
 FSTRINGVALUE(Com::tFlowMultiply,"FlowMultiply:")
+#if FEATURE_READ_CALIPER
+FSTRINGVALUE(Com::tEPRZCallStandard,"Messschieber: Filamentdicke in Slicer [um]")
+FSTRINGVALUE(Com::tEPRZCallAdjust,"Messschieber: Korrektur [um]")
+#endif //FEATURE_READ_CALIPER
+FSTRINGVALUE(Com::tPrintingIsInProcessError, "Error: printing is in progress")
 FSTRINGVALUE(Com::tFanspeed,"Fanspeed:")
 FSTRINGVALUE(Com::tPrintedFilament,"Printed filament:")
 FSTRINGVALUE(Com::tPrintingTime,"Printing time:")
@@ -110,7 +118,9 @@ FSTRINGVALUE(Com::tCommaSpeedEqual,", speed=")
 FSTRINGVALUE(Com::tEEPROMUpdated,"EEPROM updated")
 FSTRINGVALUE(Com::tLinearLColon,"linear L:")
 FSTRINGVALUE(Com::tQuadraticKColon," quadratic K:")
-
+FSTRINGVALUE(Com::tscanHeatBed,"scanHeatBed(): ")
+FSTRINGVALUE(Com::tscanWorkPart,"scanWorkPart(): ")
+FSTRINGVALUE(Com::tAutoMatrixLeveling,"Auto-Matrix-Leveling @X:")
 #if FEATURE_SERVICE_INTERVAL
 FSTRINGVALUE(Com::tPrintedFilamentService,"Printed filament since last Service:")
 FSTRINGVALUE(Com::tPrintingTimeService,"Printing time since last Service:")
@@ -130,7 +140,13 @@ FSTRINGVALUE(Com::tAPIDMin," min: ")
 FSTRINGVALUE(Com::tAPIDMax," max: ")
 FSTRINGVALUE(Com::tAPIDKu," Ku: ")
 FSTRINGVALUE(Com::tAPIDTu," Tu: ")
-FSTRINGVALUE(Com::tAPIDClassic," Classic PID")
+FSTRINGVALUE(Com::tAPIDClassic," Classic Ziegler-Nichols PID")
+FSTRINGVALUE(Com::tAPIDPessen," Pessen Integral Rule PID")
+FSTRINGVALUE(Com::tAPIDSome," Some-Overshoot PID")
+FSTRINGVALUE(Com::tAPIDNone," No-Overshoot PID")
+FSTRINGVALUE(Com::tAPIDsimplePD," PD")
+FSTRINGVALUE(Com::tAPIDsimplePI," PI")
+FSTRINGVALUE(Com::tAPIDsimpleP," P")
 FSTRINGVALUE(Com::tAPIDKp," Kp: ")
 FSTRINGVALUE(Com::tAPIDKi," Ki: ")
 FSTRINGVALUE(Com::tAPIDKd," Kd: ")
@@ -206,6 +222,9 @@ FSTRINGVALUE(Com::tEPRZAcceleration,"Z-axis acceleration [mm/s^2]")
 FSTRINGVALUE(Com::tEPRXTravelAcceleration,"X-axis travel acceleration [mm/s^2]")
 FSTRINGVALUE(Com::tEPRYTravelAcceleration,"Y-axis travel acceleration [mm/s^2]")
 FSTRINGVALUE(Com::tEPRZTravelAcceleration,"Z-axis travel acceleration [mm/s^2]")
+#if FEATURE_MILLING_MODE
+FSTRINGVALUE(Com::tEPRZMillingAcceleration,"All axis milling acceleration [mm/s^2]")
+#endif //FEATURE_MILLING_MODE
 FSTRINGVALUE(Com::tEPRZOffset,"Z-Offset [um]")
 FSTRINGVALUE(Com::tEPRZMode,"Z Scale")
 FSTRINGVALUE(Com::tEPROPSMode,"OPS operation mode [0=Off,1=Classic,2=Fast]")
@@ -214,25 +233,28 @@ FSTRINGVALUE(Com::tEPROPSMinDistance,"OPS min. distance for fil. retraction [mm]
 FSTRINGVALUE(Com::tEPROPSRetractionLength,"OPS retraction length [mm]")
 FSTRINGVALUE(Com::tEPROPSRetractionBacklash,"OPS retraction backlash [mm]")
 FSTRINGVALUE(Com::tEPRBedHeatManager,"Bed Heat Manager [0-3]")
-FSTRINGVALUE(Com::tEPRBedPIDDriveMax,"Bed PID drive max")
-FSTRINGVALUE(Com::tEPRBedPIDDriveMin,"Bed PID drive min")
+FSTRINGVALUE(Com::tEPRBedPIDDriveMax,"Bed PID I-drive max")
+FSTRINGVALUE(Com::tEPRBedPIDDriveMin,"Bed PID I-drive min")
 FSTRINGVALUE(Com::tEPRBedPGain,"Bed PID P-gain")
 FSTRINGVALUE(Com::tEPRBedIGain,"Bed PID I-gain")
 FSTRINGVALUE(Com::tEPRBedDGain,"Bed PID D-gain")
-FSTRINGVALUE(Com::tEPRBedPISMaxValue,"Bed PID max value [0-255]")
+FSTRINGVALUE(Com::tEPRBedPISMaxValue,"Bed max power value [0-255]")
 FSTRINGVALUE(Com::tEPRStepsPerMM,"steps per mm")
 FSTRINGVALUE(Com::tEPRMaxFeedrate,"max. feedrate [mm/s]")
 FSTRINGVALUE(Com::tEPRStartFeedrate,"start feedrate [mm/s]")
 FSTRINGVALUE(Com::tEPRAcceleration,"acceleration [mm/s^2]")
 FSTRINGVALUE(Com::tEPRHeatManager,"heat manager [0-3]")
-FSTRINGVALUE(Com::tEPRDriveMax,"PID drive max")
-FSTRINGVALUE(Com::tEPRDriveMin,"PID drive min")
+FSTRINGVALUE(Com::tEPRDriveMax,"PID I-drive max")
+FSTRINGVALUE(Com::tEPRDriveMin,"PID I-drive min")
 FSTRINGVALUE(Com::tEPRPGain,"PID P-gain/dead-time")
 FSTRINGVALUE(Com::tEPRIGain,"PID I-gain")
 FSTRINGVALUE(Com::tEPRDGain,"PID D-gain")
-FSTRINGVALUE(Com::tEPRPIDMaxValue,"PID max value [0-255]")
+FSTRINGVALUE(Com::tEPRPIDMaxValue,"max power value [0-255]")
+FSTRINGVALUE(Com::tEPRBedsensorType,"Bed Temp. SensorType [0=Cfg,3=Conrad,..]")
+FSTRINGVALUE(Com::tEPRsensorType,"Temp. SensorType [0=Cfg,3=V2,8=E3D,..]")
 FSTRINGVALUE(Com::tEPRXOffset,"X-offset [mm]")
 FSTRINGVALUE(Com::tEPRYOffset,"Y-offset [mm]")
+FSTRINGVALUE(Com::tEPRZOffsetmm,"Z-offset [mm]")
 FSTRINGVALUE(Com::tEPRStabilizeTime,"temp. stabilize time [s]")
 FSTRINGVALUE(Com::tEPRRetractionWhenHeating,"temp. for retraction when heating [C]")
 FSTRINGVALUE(Com::tEPRDistanceRetractHeating,"distance to retract when heating [mm]")
@@ -241,15 +263,51 @@ FSTRINGVALUE(Com::tEPRAdvanceK,"advance K [0=off]")
 FSTRINGVALUE(Com::tEPRAdvanceL,"advance L [0=off]")
 FSTRINGVALUE(Com::tEPRBeeperMode,"beeper mode [0=off]")
 FSTRINGVALUE(Com::tEPRCaseLightsMode,"case lights mode [0=off, 1=on]")
-FSTRINGVALUE(Com::tEPR230VOutputMode,"230V output mode [0=off, 1=on]")
 FSTRINGVALUE(Com::tEPROperatingMode,"operating mode [1=print, 2=mill]")
 FSTRINGVALUE(Com::tEPRZEndstopType,"Z endstop type [1=single, 2=circuit]")
-FSTRINGVALUE(Com::tEPRHotendType,"Hotend type [2=V1, 3=V2 single, 4=V2 dual]")
-FSTRINGVALUE(Com::tEPRMillerType,"Miller type [1=one track, 2=two tracks]")
-FSTRINGVALUE(Com::tEPRRGBLightMode,"RGB Light mode [0=off, 1=white, 2=color, 3=manual]")
+FSTRINGVALUE(Com::tEPRMillerType,"Miller type [tracks]")
+FSTRINGVALUE(Com::tEPRRGBLightMode,"RGB Light mode [0..3 off/ws/aut/man]")
 FSTRINGVALUE(Com::tEPRFET1Mode,"FET1 mode [0=off, 1=on]")
 FSTRINGVALUE(Com::tEPRFET2Mode,"FET2 mode [0=off, 1=on]")
 FSTRINGVALUE(Com::tEPRFET3Mode,"FET3 mode [0=off, 1=on]")
+
+#if FEATURE_ZERO_DIGITS
+FSTRINGVALUE(Com::tEPRZERO_DIGIT_STATE,"Digit Homing [1=ON/2=OFF]")
+#endif // FEATURE_ZERO_DIGITS
+FSTRINGVALUE(Com::tEPRPrinterZ_STEP_SIZE,"Height of Z-Button SingleSteps [steps]")
+FSTRINGVALUE(Com::tEPRPrinterMOD_ZOS_SCAN_POINT_X,"Z-Offset-Scan Position X [HBS-col]")
+FSTRINGVALUE(Com::tEPRPrinterMOD_ZOS_SCAN_POINT_Y,"Z-Offset-Scan Position Y [HBS-row]")
+#if FEATURE_SENSIBLE_PRESSURE
+FSTRINGVALUE(Com::tEPRPrinterMOD_SENSEOFFSET_OFFSET_MAX,"SenseOffset max. Correction [um]")
+FSTRINGVALUE(Com::tEPRPrinterEPR_RF_MOD_SENSEOFFSET_DIGITS,"SenseOffset Digits Limit [1700/kg]")
+#endif //FEATURE_SENSIBLE_PRESSURE
+#if FEATURE_EMERGENCY_PAUSE
+FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyPauseDigitsMin,"EmergencyPauseDigitsMin (min+max 0=off) [1700/kg]")
+FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyPauseDigitsMax,"EmergencyPauseDigitsMax (min+max 0=off) [1700/kg]")
+#endif //FEATURE_EMERGENCY_PAUSE
+
+#if FEATURE_EMERGENCY_STOP_ALL
+FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyStopAllMin,"ZEmergencyStopAllMin [1700/kg]")
+FSTRINGVALUE(Com::tEPRPrinterEPR_RF_EmergencyStopAllMax,"ZEmergencyStopAllMax [1700/kg]")
+#endif //FEATURE_EMERGENCY_STOP_ALL
+#if FEATURE_DIGIT_Z_COMPENSATION
+FSTRINGVALUE(Com::tEPRZDIGIT_CMP_STATE,"Digit Compensation [1=ON/2=OFF]")
+#endif // FEATURE_DIGIT_Z_COMPENSATION
+
+FSTRINGVALUE(Com::tEPRPrinter_STEPPER_X,"Stepper X Current [2A/126]")
+FSTRINGVALUE(Com::tEPRPrinter_STEPPER_Y,"Stepper Y Current [2A/126]")
+FSTRINGVALUE(Com::tEPRPrinter_STEPPER_Z,"Stepper Z Current [2A/126]")
+FSTRINGVALUE(Com::tEPRPrinter_STEPPER_E0,"Stepper E0 Current [2A/126]")
+#if NUM_EXTRUDER > 1
+FSTRINGVALUE(Com::tEPRPrinter_STEPPER_E1,"Stepper E1 Current [2A/126]")
+#endif //NUM_EXTRUDER > 1
+FSTRINGVALUE(Com::tEPRPrinter_FREQ_DBL,"Step Double Frequency [1/s]")
+
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+FSTRINGVALUE(Com::tEPRPrinter_FAN_MODE,"Fan Modulation [0=PWM/1=PDM]")
+FSTRINGVALUE(Com::tEPRPrinter_FAN_SPEED,"Fan PWM Mode (15.3..245Hz) [15.3*2^x Hz]")
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
+
 #endif // EEPROM_MODE
 
 #if SDSUPPORT
@@ -288,11 +346,6 @@ FSTRINGVALUE(Com::tMountFilamentWithoutHeating,MOUNT_FILAMENT_SCRIPT_WITHOUT_HEA
 #if FEATURE_FIND_Z_ORIGIN
 FSTRINGVALUE(Com::tFindZOrigin,FIND_Z_ORIGIN_SCRIPT)
 #endif // FEATURE_FIND_Z_ORIGIN
-
-#if FEATURE_TEST_STRAIN_GAUGE
-FSTRINGVALUE(Com::tTestStrainGauge,TEST_STRAIN_GAUGE_SCRIPT)
-#endif // FEATURE_TEST_STRAIN_GAUGE
-
 
 void Com::printWarningF(FSTRINGPARAM(text))
 {
@@ -434,7 +487,7 @@ void Com::print(const char *text)
 } // print
 
 
-void Com::print(long value)
+void Com::print(int32_t value)
 {
     if(value<0)
     {

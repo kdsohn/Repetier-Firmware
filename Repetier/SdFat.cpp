@@ -1095,7 +1095,7 @@ bool SdBaseFile::open(SdBaseFile* dirFile, const char* path, uint8_t oflag)
 }
 
 
-uint8_t SdBaseFile::lfn_checksum(const unsigned char *pFCBName)
+uint8_t SdBaseFile::lfn_checksum(const uint8_t *pFCBName)
 {
    int i;
    unsigned char sum = 0;

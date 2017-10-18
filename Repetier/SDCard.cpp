@@ -17,7 +17,6 @@
 
 
 #include "Repetier.h"
-#include "ui.h"
 
 #if SDSUPPORT
 
@@ -100,6 +99,10 @@ void SDCard::initsd()
         return;
 #endif // defined(SDCARDDETECT) && SDCARDDETECT>-1
 
+    //fix in https://github.com/repetier/Repetier-Firmware/commit/d4e396d0f4d1b81cc4d388360be461f11ceb9edd ??
+    fat.begin(SDSS, SPI_FULL_SPEED);  // dummy init of SD_CARD
+    HAL::delayMilliseconds(50);       // wait for init end
+
     if(!fat.begin(SDSS,SPI_FULL_SPEED))
     {
         if( Printer::debugErrors() )
@@ -110,11 +113,13 @@ void SDCard::initsd()
     }
     sdactive = true;
 
+    /* Das kann gar nicht mehr stimmen...
     if( uid.menuPos[uid.menuLevel] == 9 && uid.menuLevel == 2 )
     {
         // we are within the SD card menu at the moment - after the successful mounting, the menu shall point to the "print"/"mill" item and not to the "delete" item
         uid.menuPos[uid.menuLevel] = 0;
     }
+    */
 
     Printer::setMenuMode(MENU_MODE_SD_MOUNTED,true);
 
@@ -142,7 +147,7 @@ void SDCard::unmount()
     sdactive = false;
     savetosd = false;
     Printer::setAutomount(false);
-    Printer::setMenuMode(MENU_MODE_SD_MOUNTED+MENU_MODE_SD_PAUSED+MENU_MODE_SD_PRINTING,false);
+    Printer::setMenuMode(MENU_MODE_SD_MOUNTED+MENU_MODE_PAUSED+MENU_MODE_SD_PRINTING,false);
 
 #if UI_DISPLAY_TYPE!=0
     uid.cwd[0]='/';
@@ -158,7 +163,8 @@ void SDCard::startPrint()
     if(!sdactive) return;
     sdmode = true;
     Printer::setMenuMode(MENU_MODE_SD_PRINTING,true);
-    Printer::setMenuMode(MENU_MODE_SD_PAUSED,false);
+    Printer::setMenuMode(MENU_MODE_PAUSED,false);
+    Printer::setMenuMode(MENU_MODE_PRINTING,false);
 
 } // startPrint
 
@@ -170,7 +176,7 @@ void SDCard::abortPrint()
         return;
     }
     Printer::setMenuMode(MENU_MODE_SD_PRINTING,false);
-    Printer::setMenuMode(MENU_MODE_SD_PAUSED,false);
+    Printer::setMenuMode(MENU_MODE_PAUSED,false);
     
     if( Printer::debugInfo() )
     {
@@ -181,7 +187,7 @@ void SDCard::abortPrint()
 
     HAL::delayMilliseconds( 250 );
 
-    HAL::forbidInterrupts();
+    InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
 
     sdmode   = false;
     sdpos    = 0;
@@ -216,13 +222,7 @@ void SDCard::abortPrint()
     Printer::queuePositionLastSteps[Z_AXIS] = Printer::queuePositionCurrentSteps[Z_AXIS];
     Printer::updateCurrentPosition( true );
 
-//  g_debugInt32 = 0;
-/*  g_debugCounter[0] = 0;
-    g_debugCounter[1] = 0;
-    g_debugCounter[2] = 0;
-    g_debugCounter[3] = 0;
-    g_debugCounter[4] = 0;
-*/  HAL::allowInterrupts();
+    noInts.unprotect();
 
     BEEP_ABORT_PRINTING
 
@@ -230,7 +230,7 @@ void SDCard::abortPrint()
     if( g_pauseStatus != PAUSE_STATUS_NONE )
     {
         // the printing is paused at the moment
-        HAL::forbidInterrupts();
+        noInts.protect();
 
         g_uPauseTime  = 0;
         g_pauseStatus = PAUSE_STATUS_NONE;
@@ -241,7 +241,7 @@ void SDCard::abortPrint()
         g_nContinueSteps[Z_AXIS] = 0;
         g_nContinueSteps[E_AXIS] = 0;
 
-        HAL::allowInterrupts();
+        noInts.unprotect();
     }
 #endif // FEATURE_PAUSE_PRINTING
 

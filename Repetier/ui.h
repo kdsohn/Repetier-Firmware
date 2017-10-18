@@ -30,6 +30,7 @@
 // Add UI_ACTION_TOPMENU to show a menu as top menu
 // ----------------------------------------------------------------------------
 
+//Vorsicht: Hier beim Topmenü wird extra das Bit abgefragt: Kein anderer Befehl sollte 2^13 drin haben, sonst siehe ui.cpp :: case UI_ACTION_TOPMENU -> Rückfall ins Hauptmenü.
 #define UI_ACTION_TOPMENU                   8192
 
 #define UI_ACTION_NEXT                         1
@@ -146,10 +147,50 @@
 #define UI_ACTION_RIGHT                     1129
 #define UI_ACTION_ZMODE                     1130
 
+#define UI_ACTION_EXTRUDER_OFFSET_Z         1136
+
 //Nibbels : nicht in processbutton sondern in executeaction!
-#define UI_ACTION_RF_DO_MHIER_BED_SCAN      1666 
-#define UI_ACTION_CONFIG_SINGLE_STEPS		1667 
+#define UI_ACTION_RF_DO_MHIER_BED_SCAN      1666
+#define UI_ACTION_CONFIG_SINGLE_STEPS       1667
 #define UI_ACTION_RF_DO_SAVE_ACTIVE_ZMATRIX 1668
+#define UI_ACTION_RF_DO_MHIER_AUTO_MATRIX_LEVELING 1669
+
+#define UI_ACTION_EMERGENCY_PAUSE_MIN       1670
+#define UI_ACTION_EMERGENCY_PAUSE_MAX       1671
+#define UI_ACTION_EMERGENCY_ZSTOP_MIN       1672
+#define UI_ACTION_EMERGENCY_ZSTOP_MAX       1673
+
+#define UI_ACTION_CHOOSE_CLASSICPID         1674
+#define UI_ACTION_CHOOSE_LESSERINTEGRAL     1675
+#define UI_ACTION_CHOOSE_SOME               1676
+#define UI_ACTION_CHOOSE_NO                 1677
+#define UI_ACTION_CHOOSE_DMIN               1678
+#define UI_ACTION_CHOOSE_DMAX               1679
+#define UI_ACTION_CHOOSE_PIDMAX             1680
+#define UI_ACTION_CHOOSE_SENSOR             1681
+#define UI_ACTION_CHOOSE_MOTOR_X            1682
+#define UI_ACTION_CHOOSE_MOTOR_Y            1683
+#define UI_ACTION_CHOOSE_MOTOR_Z            1684
+#define UI_ACTION_CHOOSE_MOTOR_E0           1685
+#define UI_ACTION_CHOOSE_MOTOR_E1           1686
+#define UI_ACTION_EXTR_STEPS_E0             1687
+#define UI_ACTION_EXTR_STEPS_E1             1688
+#define UI_ACTION_ADVANCE_L_E0              1689
+#define UI_ACTION_ADVANCE_L_E1              1690
+#define UI_ACTION_FREQ_DBL                  1691
+
+#define UI_ACTION_FAN_HZ                    1692
+#define UI_ACTION_FAN_MODE                  1693
+
+#define UI_ACTION_MILL_ACCELERATION         1694
+
+#define UI_ACTION_CAL_RESET                 1695
+#define UI_ACTION_CAL_STANDARD              1696
+#define UI_ACTION_CAL_CORRECT               1697
+#define UI_ACTION_CAL_SET                   1698
+
+#define UI_ACTION_FEATURE_ZERO_DIGITS       1699
+#define UI_ACTION_DIGIT_COMPENSATION        1700
 
 #define UI_ACTION_FET1_OUTPUT               2001
 #define UI_ACTION_FET2_OUTPUT               2002
@@ -211,6 +252,11 @@ typedef struct
 
 
 extern const int8_t encoder_table[16] PROGMEM;
+
+#if UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER
+extern millis_t g_nAutoReturnTime;
+extern bool     g_nAutoReturnMessage;
+#endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER
 
 extern  char    g_nYesNo;
 extern volatile char    g_nContinueButtonPressed;
@@ -327,7 +373,7 @@ extern  char    g_nPrinterReady;
 #define UI_MENU_FILESELECT(name,items,itemsCnt)                         const UIMenuEntry * const name ## _entries[] PROGMEM = items;const UIMenu name PROGMEM = {1,0,itemsCnt,name ## _entries};
 
 // Maximum size of a row - if row is larger, text gets scrolled
-#define MAX_COLS                        20 		// check UI_COLS when changed this was 28 in Conrad Firmware.
+#define MAX_COLS                        28 //Anzahl Speicherplätze für Bytes in Display-Zeile, wenn mehr als Display, dann Scrolling. Kann gleich oder größer Displayzeilenlänge sein.
 
 #define UI_FLAG_FAST_KEY_ACTION         1
 #define UI_FLAG_SLOW_KEY_ACTION         2
@@ -348,10 +394,10 @@ public:
     uint8_t             menuTop[MAX_MENU_LEVELS];   // Top row in menu
     int8_t              shift;                      // Display shift for scrolling text
     int                 pageDelay;                  // Counter. If 0 page is refreshed if menuLevel is 0.
-    void*               messageLine1;
-    void*               messageLine2;
-    void*               messageLine3;
-    void*               messageLine4;
+    const void*         messageLine1;
+    const void*         messageLine2;
+    const void*         messageLine3;
+    const void*         messageLine4;
     int         activeAction;               // action for ok/next/previous
     int         lastAction;
     millis_t            lastSwitch;                 // Last time display switched pages
@@ -432,7 +478,7 @@ void initializeLCD();
 #define UI_HAS_BACK_KEY                   1
 #define UI_DISPLAY_TYPE                   1     // 1 = LCD Display with 4 bit data bus
 //#define UI_DISPLAY_CHARSET                  1
-#define UI_COLS                          16		//check MAX_COLS when changed
+#define UI_COLS                          16        //check MAX_COLS when changed
 #define UI_ROWS                           4
 #define UI_DELAYPERCHAR                 320
 #define UI_INVERT_MENU_DIRECTION        false
@@ -491,7 +537,7 @@ void ui_check_slow_keys(int &action) {
 #define UI_HAS_BACK_KEY                   1
 #define UI_DISPLAY_TYPE                   1     // 1 = LCD Display with 4 bit data bus
 //#define UI_DISPLAY_CHARSET                  1
-#define UI_COLS                          20		//check MAX_COLS when changed
+#define UI_COLS                          20        //check MAX_COLS when changed
 #define UI_ROWS                           4
 #define UI_DELAYPERCHAR                 320
 #define UI_INVERT_MENU_DIRECTION        false

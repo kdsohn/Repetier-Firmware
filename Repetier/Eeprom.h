@@ -86,7 +86,7 @@ have problems with other modules using the eeprom */
 #define EPR_Y_HOMING_FEEDRATE_MILL      1008
 #define EPR_Z_HOMING_FEEDRATE_MILL      1012
 #define EPR_RF_Z_ENDSTOP_TYPE           1016
-#define EPR_RF_HOTEND_TYPE              1017
+#define EPR_RF_HOTEND_TYPE              1017 //depreached 30 07 2017 Nibbels : Die Funktion war nur für RF1000, nur Single, in der Falschen Klasse, wenn nötig, dann in Class Extruder einbauen. Hat beim RF2000 keiner vermisst: Ersatz ist EPR_EXTRUDER_SENSOR_TYPE
 #define EPR_RF_MILLER_TYPE              1018
 #define EPR_RF_RGB_LIGHT_MODE           1019
 #define EPR_RF_FET1_MODE                1020
@@ -111,7 +111,40 @@ have problems with other modules using the eeprom */
 #define EPR_RF_MOVE_MODE_X              1042
 #define EPR_RF_MOVE_MODE_Y              1043
 #define EPR_RF_MOVE_MODE_Z              1044
-#define EPR_RF_Z_MODE                   1045
+#define EPR_RF_Z_MODE                   1045 //das ist byte, 1046 wäre frei.
+
+//vorsicht bei mehrbytigen Variablen, dann freilassen.
+
+#define EPR_RF_MOD_Z_STEP_SIZE            1900 //+1901+1902+1903 g_nManualSteps[Z_AXIS] [4byte unsigned long]
+
+#define EPR_RF_MOD_ZOS_SCAN_POINT_X       1904 //g_ZOSTestPoint[0] [1byte unsigned char]
+#define EPR_RF_MOD_ZOS_SCAN_POINT_Y       1905 //g_ZOSTestPoint[1] [1byte unsigned char]
+
+#define EPR_RF_MOD_SENSEOFFSET_OFFSET_MAX 1906 //+1907 g_nSensiblePressureOffsetMax [2byte short]
+#define EPR_RF_MOD_SENSEOFFSET_DIGITS     1908 //+1909 g_nSensiblePressureDigits [2byte short]
+
+#define EPR_RF_EMERGENCYPAUSEDIGITSMIN    1910 //+1911+1912+1913 g_nEmergencyPauseDigitsMin [4byte long]
+#define EPR_RF_EMERGENCYPAUSEDIGITSMAX    1914 //+1915+1916+1917 g_nEmergencyPauseDigitsMax [4byte long]
+
+#define EPR_RF_EMERGENCYZSTOPDIGITSMIN    1918 //+1919 g_nZEmergencyStopAllMin [2byte short]
+#define EPR_RF_EMERGENCYZSTOPDIGITSMAX    1920 //+1921 g_nZEmergencyStopAllMax [2byte short]
+
+#define EPR_RF_HEATED_BED_SENSOR_TYPE     1922 //[1byte]
+
+#define EPR_RF_MOTOR_CURRENT              1923 //1924+1925+1926+1927 [5byte für 5 Motorstrombytes]
+
+#define EPR_RF_FREQ_DBL                   1928 //1929 2byte für uint16 -> frequenz double grenze
+#define EPR_RF_FAN_MODE                   1930 //[1byte]
+#define EPR_RF_FAN_SPEED                  1931 //[1byte]
+
+#define EPR_RF_MILL_ACCELERATION          1932 //+1933 u short
+#define EPR_RF_CAL_STANDARD               1934 //+1935 u short
+#define EPR_RF_CAL_ADJUST                 1936 //[1byte]
+#define EPR_RF_ZERO_DIGIT_STATE           1937 //[1byte]
+#define EPR_RF_DIGIT_CMP_STATE            1938 //[1byte]
+
+
+//Nibbels: Computechecksum geht bis 2047
 
 #define EEPROM_EXTRUDER_OFFSET          200
 
@@ -141,8 +174,9 @@ have problems with other modules using the eeprom */
 #define EPR_EXTRUDER_ADVANCE_L          46
 #define EPR_EXTRUDER_WAIT_RETRACT_TEMP  50
 #define EPR_EXTRUDER_WAIT_RETRACT_UNITS 52
-#define EPR_EXTRUDER_COOLER_SPEED       54
-
+#define EPR_EXTRUDER_COOLER_SPEED       54 //byte
+#define EPR_EXTRUDER_SENSOR_TYPE        94 //uint8 
+#define EPR_EXTRUDER_Z_OFFSET           95 //int32_t -> +96+97+98
 
 class EEPROM
 {

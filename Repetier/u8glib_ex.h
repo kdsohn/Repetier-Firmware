@@ -5721,7 +5721,8 @@ void u8g_10MicroDelay(void)
 void u8g_Delay(uint16_t val)
 {
 #if defined(__arm__)
-    delayMicroseconds((uint32_t)val*(uint32_t)1000);
+    //delayMicroseconds((uint32_t)val*(uint32_t)1000); -> falls benutzt hier doof, nibbels
+    HAL::delayMilliseconds(val);
 #else
     delay(val);
 #endif

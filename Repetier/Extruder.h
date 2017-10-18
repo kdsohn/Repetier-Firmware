@@ -51,7 +51,6 @@ public:
     uint32_t    lastTemperatureUpdate;  ///< Time in millis of the last temperature update.
     int8_t      heatManager;            ///< How is temperature controled. 0 = on/off, 1 = PID-Control, 3 = dead time control
 
-#ifdef TEMP_PID
     float       tempIState;             ///< Temp. var. for PID computation.
     uint8_t     pidDriveMax;            ///< Used for windup in PID calculation.
     uint8_t     pidDriveMin;            ///< Used for windup in PID calculation.
@@ -62,8 +61,7 @@ public:
     float       tempIStateLimitMax;
     float       tempIStateLimitMin;
     uint8_t     tempPointer;
-    float       tempArray[4];
-#endif // TEMP_PID
+    float       tempArray[16];
 
     uint8_t     flags;
 
@@ -72,11 +70,8 @@ public:
     void updateTempControlVars();
     inline bool isAlarm() {return flags & TEMPERATURE_CONTROLLER_FLAG_ALARM;}
     inline void setAlarm(bool on) {if(on) flags |= TEMPERATURE_CONTROLLER_FLAG_ALARM; else flags &= ~TEMPERATURE_CONTROLLER_FLAG_ALARM;}
-
-#ifdef TEMP_PID
-    void autotunePID(float temp,uint8_t controllerId,bool storeResult);
-#endif // TEMP_PID
-
+    void waitForTargetTemperature();
+    void autotunePID(float temp, uint8_t controllerId, int maxCycles, bool storeResult, int method);
 }; // TemperatureController
 
 
@@ -100,6 +95,7 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
     uint8_t     id;
     int32_t     xOffset;
     int32_t     yOffset;
+    int32_t     zOffset;
     float       stepsPerMM;                 ///< Steps per mm.
     int8_t      enablePin;                  ///< Pin to enable extruder stepper motor.
     uint8_t     enableOn;
@@ -112,7 +108,7 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
     int16_t     waitRetractUnits;           ///< Units to retract the filament when waiting for heatup
     volatile int8_t stepperDirection;
 
-#ifdef USE_ADVANCE
+#if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
     float       advanceK;                   ///< Koefficient for advance algorithm. 0 = off
 #endif // ENABLE_QUADRATIC_ADVANCE
@@ -130,7 +126,11 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
 #if STEPPER_ON_DELAY
     char        enabled;
 #endif // STEPPER_ON_DELAY
-    
+
+#if FEATURE_PAUSE_PRINTING
+    uint8_t     paused;
+#endif // FEATURE_PAUSE_PRINTING
+
     /** \brief Sends the high-signal to the stepper for next extruder step.
     Call this function only, if interrupts are disabled.
     */
@@ -400,12 +400,6 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
 #endif // STEPPER_ON_DELAY
 
     } // enable
-#if  FEATURE_BEDTEMP_DECREASE
-  static uint8_t decreaseHeatedBedInterval;  ///< Current Decrease Interval (0..255s)
-  static uint32_t decreaseHeatedBedTimeStamp;   ///< Current Decrease last Timestamp
-  static float decreaseHeatedBedMinimum;   ///< Minimal Temp
-#endif // FEATURE_BEDTEMP_DECREASE
-
     static void manageTemperatures();
     static void disableCurrentExtruderMotor();
     static void disableAllExtruders();
@@ -414,9 +408,6 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
     static void initExtruder();
     static void initHeatedBed();
     static void setHeatedBedTemperature(float temp_celsius,bool beep = false);
-#if FEATURE_BEDTEMP_DECREASE
-    static void decreaseHeatedBedTemperature(float min_temperatureInCelsius);
-#endif // FEATURE_BEDTEMP_DECREASE
     static float getHeatedBedTemperature();
     static void setTemperatureForExtruder(float temp_celsius,uint8_t extr,bool beep = false);
 
@@ -433,7 +424,6 @@ extern TemperatureController heatedBedController;
 #if RESERVE_ANALOG_INPUTS
 extern TemperatureController optTempController;
 #endif // RESERVE_ANALOG_INPUTS
-
 
 
 #define TEMP_INT_TO_FLOAT(temp)     ((float)(temp)/(float)(1<<CELSIUS_EXTRA_BITS))

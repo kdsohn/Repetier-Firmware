@@ -526,7 +526,6 @@ extern const char   ui_text_delete_file[]           PROGMEM;
 extern const char   ui_text_z_compensation[]        PROGMEM;
 extern const char   ui_text_change_mode[]           PROGMEM;
 extern const char   ui_text_change_z_type[]         PROGMEM;
-extern const char   ui_text_change_hotend_type[]    PROGMEM;
 extern const char   ui_text_change_miller_type[]    PROGMEM;
 extern const char   ui_text_x_axis[]                PROGMEM;
 extern const char   ui_text_y_axis[]                PROGMEM;
@@ -554,7 +553,7 @@ extern const char   ui_text_saving_success[]        PROGMEM;
 #define COMPENSATION_MATRIX_MAX_X           long((X_MAX_LENGTH_PRINT - HEAT_BED_SCAN_X_START_MM - HEAT_BED_SCAN_X_END_MM) / HEAT_BED_SCAN_X_STEP_SIZE_MIN_MM + 4)
 #define COMPENSATION_MATRIX_MAX_Y           long((Y_MAX_LENGTH       - HEAT_BED_SCAN_Y_START_MM - HEAT_BED_SCAN_Y_END_MM) / HEAT_BED_SCAN_Y_STEP_SIZE_MIN_MM + 4)
 
-#define COMPENSATION_MATRIX_SIZE            long(COMPENSATION_MATRIX_MAX_X * COMPENSATION_MATRIX_MAX_Y * 2 + EEPROM_OFFSET_MAXTRIX_START)   // [bytes]
+#define COMPENSATION_MATRIX_SIZE            long(COMPENSATION_MATRIX_MAX_X * COMPENSATION_MATRIX_MAX_Y * 2 + EEPROM_OFFSET_MATRIX_START)   // [bytes]
 
 #elif FEATURE_WORK_PART_Z_COMPENSATION
 
@@ -562,14 +561,10 @@ extern const char   ui_text_saving_success[]        PROGMEM;
 #define COMPENSATION_MATRIX_MAX_X           long((X_MAX_LENGTH_MILL - WORK_PART_SCAN_X_START_MM - WORK_PART_SCAN_X_END_MM) / WORK_PART_SCAN_X_STEP_SIZE_MIN_MM + 4)
 #define COMPENSATION_MATRIX_MAX_Y           long((Y_MAX_LENGTH      - WORK_PART_SCAN_Y_START_MM - WORK_PART_SCAN_Y_END_MM) / WORK_PART_SCAN_Y_STEP_SIZE_MIN_MM + 4)
 
-#define COMPENSATION_MATRIX_SIZE            long(COMPENSATION_MATRIX_MAX_X * COMPENSATION_MATRIX_MAX_Y * 2 + EEPROM_OFFSET_MAXTRIX_START)   // [bytes]
+#define COMPENSATION_MATRIX_SIZE            long(COMPENSATION_MATRIX_MAX_X * COMPENSATION_MATRIX_MAX_Y * 2 + EEPROM_OFFSET_MATRIX_START)   // [bytes]
 
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION && FEATURE_WORK_PART_Z_COMPENSATION
 
-extern  unsigned long   g_uLastCommandLoop;
-extern  unsigned long   g_uStartOfIdle;
-
-extern  unsigned long   g_uLastCommandLoop;
 extern  unsigned long   g_uStartOfIdle;
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
@@ -581,17 +576,14 @@ extern  volatile unsigned char  g_nHeatBedScanStatus;
 extern  char            g_nActiveHeatBed;
 //ZOS:
 extern  volatile unsigned char  g_ZOSScanStatus;
-extern  long            g_ZOSTestPoint[2];
+extern  unsigned char            g_ZOSTestPoint[2];
 extern  float           g_ZOSlearningRate;
 extern  float           g_ZOSlearningGradient;
 extern  long            g_min_nZScanZPosition;
+extern  unsigned char   g_ZOS_Auto_Matrix_Leveling_State;
 //Matrix speichern über Menü: Sinnmarker
 extern  volatile unsigned char  g_ZMatrixChangedInRam;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
-
-#if FEATURE_SILENT_MODE
-extern  char            g_nSilentMode;
-#endif // FEATURE_SILENT_MODE
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
 extern  char            g_nWorkPartScanStatus;
@@ -638,7 +630,7 @@ extern  unsigned long   g_nManualSteps[4];
 
 
 #if FEATURE_PAUSE_PRINTING
-extern  volatile long	g_nPauseSteps[4];
+extern  volatile long    g_nPauseSteps[4];
 extern  volatile long   g_nContinueSteps[4];
 extern  volatile char   g_pauseStatus;
 extern  volatile char   g_pauseMode;
@@ -646,28 +638,37 @@ extern  volatile unsigned long  g_uPauseTime;
 extern  volatile char   g_pauseBeepDone;
 #endif // FEATURE_PAUSE_PRINTING
 
+#if FEATURE_EMERGENCY_PAUSE
+extern long             g_nEmergencyPauseDigitsMin;  //short reicht eigentlich
+extern long             g_nEmergencyPauseDigitsMax;  //short reicht eigentlich
+#endif // FEATURE_EMERGENCY_PAUSE
+
+#if FEATURE_EMERGENCY_STOP_ALL
+extern short             g_nZEmergencyStopAllMin;
+extern short             g_nZEmergencyStopAllMax;
+#endif //FEATURE_EMERGENCY_STOP_ALL
+
 #if FEATURE_SENSIBLE_PRESSURE
-/* brief: This is for correcting too close Z at first layer, see SENSIBLE_PRESSURE_DIGIT_CHECKS // Idee Wessix, coded by Nibbels  */
-extern long             g_nSensiblePressureSum;
-extern char             g_nSensiblePressureChecks;
+/* brief: This is for correcting too close Z at first layer, see FEATURE_SENSIBLE_PRESSURE // Idee Wessix, coded by Nibbels  */
+extern long             nSensiblePressureSum;
+extern char             nSensiblePressureChecks;
 extern short            g_nSensiblePressureDigits;
 extern short            g_nSensiblePressureOffsetMax;
 extern short            g_nSensiblePressureOffset;
-extern short            g_nSensibleLastPressure;
 extern char             g_nSensiblePressure1stMarke; //sagt, ob regelung aktiv oder inaktiv, wegen Z-Limits
 #endif // FEATURE_SENSIBLE_PRESSURE
+
+extern short            g_nLastDigits;
+#if FEATURE_DIGIT_Z_COMPENSATION
+extern float            g_nDigitZCompensationDigits;
+extern bool             g_nDigitZCompensationDigits_active;
+#endif // FEATURE_DIGIT_Z_COMPENSATION
 
 #if FEATURE_FIND_Z_ORIGIN
 extern  volatile char   g_nFindZOriginStatus;
 extern  long            g_nZOriginPosition[3];
 extern  int             g_nZOriginSet;
 #endif // FEATURE_FIND_Z_ORIGIN
-
-
-#if FEATURE_TEST_STRAIN_GAUGE
-extern  volatile char   g_nTestStrainGaugeStatus;
-#endif // FEATURE_TEST_STRAIN_GAUGE
-
 
 #if DEBUG_HEAT_BED_Z_COMPENSATION || DEBUG_WORK_PART_Z_COMPENSATION
 extern  volatile long   g_nLastZCompensationPositionSteps[3];
@@ -730,9 +731,15 @@ extern void startHeatBedScan( void );
 extern void scanHeatBed( void );
 
 // searchZOScan()
-extern void startZOScan( void );
+extern void startZOScan( bool automatrixleveling = false );
 extern void searchZOScan( void );
-extern bool calculateZScrewTempLenght( void );
+
+//Z-Schrauben Helper
+extern float g_ZSchraubenSollDrehungenWarm_U;
+extern float g_ZSchraubenSollKorrekturWarm_mm;
+extern char g_ZSchraubeOk;
+
+extern bool calculateZScrewCorrection( void );
 
 //Menüumschalter für Z-Step-Höhe
 extern void configureMANUAL_STEPS_Z( int8_t increment );
@@ -800,12 +807,6 @@ extern short moveZDownFast( bool execRunStandardTasks=true );
 // moveZ()
 extern int moveZ( int nSteps );
 
-// freeZ()
-void freeZ( int nSteps );
-
-// moveExtruder()
-extern int moveExtruder( int nSteps );
-
 // restoreDefaultScanParameters()
 extern void restoreDefaultScanParameters( void );
 
@@ -872,13 +873,17 @@ extern void outputObject( void );
 extern void parkPrinter( void );
 #endif // FEATURE_PARK
 
+#if FEATURE_PAUSE_PRINTING
+
+extern bool processingDirectMove();
+extern void checkPauseStatus_fromTask();
+extern void waitforPauseStatus_fromButton();
 // pausePrint()
 extern void pausePrint( void );
 
 // continuePrint()
 extern void continuePrint( void );
 
-#if FEATURE_PAUSE_PRINTING
 // determinePausePosition()
 extern void determinePausePosition( void );
 
@@ -893,7 +898,7 @@ extern void waitUntilContinue( void );
 #endif // FEATURE_PAUSE_PRINTING
 
 // setExtruderCurrent()
-extern void setExtruderCurrent( unsigned short level );
+extern void setExtruderCurrent( uint8_t nr, uint8_t current );
 
 // processCommand()
 extern void processCommand( GCode* pCommand );
@@ -919,10 +924,11 @@ extern void nextPreviousZAction( int8_t increment );
 
 #if STEPPER_CURRENT_CONTROL==CURRENT_CONTROL_DRV8711
 // setMotorCurrent()
-extern void setMotorCurrent( unsigned char driver, unsigned short level );
+extern void setMotorCurrent( unsigned char driver, uint8_t level );
 
 // motorCurrentControlInit()
 extern void motorCurrentControlInit( void );
+extern unsigned short readMotorStatus( unsigned char driver );
 #endif // CURRENT_CONTROL_DRV8711
 
 
@@ -949,15 +955,6 @@ extern void startFindZOrigin( void );
 // findZOrigin()
 extern void findZOrigin( void );
 #endif // FEATURE_FIND_Z_ORIGIN
-
-
-#if FEATURE_TEST_STRAIN_GAUGE
-// startTestStrainGauge()
-extern void startTestStrainGauge( void );
-
-// testStrainGauge()
-extern void testStrainGauge( void );
-#endif // FEATURE_TEST_STRAIN_GAUGE
 
 
 #if FEATURE_MILLING_MODE
@@ -1038,16 +1035,16 @@ extern void notifyAboutWrongHardwareType( unsigned char guessedHardwareType );
 extern void showIdle( void );
 
 // showError()
-extern void showError( void* line2, void* line3 = NULL, void* line4 = NULL );
+extern void showError( const void* line2, const void* line3 = NULL, const void* line4 = NULL );
 
 // showWarning()
-extern void showWarning( void* line2, void* line3 = NULL, void* line4 = NULL );
+extern void showWarning( const void* line2, const void* line3 = NULL, const void* line4 = NULL );
 
 // showInformation()
-extern void showInformation( void* line2, void* line3 = NULL, void* line4 = NULL );
+extern void showInformation( const void* line2, const void* line3 = NULL, const void* line4 = NULL );
 
 // showMyPage()
-extern void showMyPage( void* line1, void* line2 = NULL, void* line3 = NULL, void* line4 = NULL );
+extern void showMyPage( const void* line1, const void* line2 = NULL, const void* line3 = NULL, const void* line4 = NULL );
 
 // dump()
 extern void dump( char type, char from = 0 );
