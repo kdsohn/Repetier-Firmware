@@ -662,6 +662,12 @@ extern short            g_nLastDigits;
 #if FEATURE_DIGIT_Z_COMPENSATION
 extern float            g_nDigitZCompensationDigits;
 extern bool             g_nDigitZCompensationDigits_active;
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+ extern int8_t           g_nDigitFlowCompensation_intense;
+ extern short            g_nDigitFlowCompensation_Fmin;
+ extern short            g_nDigitFlowCompensation_Fmax;
+ extern float            g_nDigitFlowCompensation_flowmulti;
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
 #endif // FEATURE_DIGIT_Z_COMPENSATION
 
 #if FEATURE_FIND_Z_ORIGIN

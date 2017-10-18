@@ -1264,7 +1264,11 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 if(c2=='f')                                                                             // %of : flow multiplier
                 {
-                    addInt(Printer::extrudeMultiply,3);
+                    addInt(Printer::extrudeMultiply
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_flowmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+                    ,3);
                     break;
                 }
                 if(c2=='m')                                                                             // %om : Speed multiplier

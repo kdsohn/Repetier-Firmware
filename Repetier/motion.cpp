@@ -164,7 +164,11 @@ void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize)
         p->delta[axis] = Printer::queuePositionTargetSteps[axis] - Printer::queuePositionLastSteps[axis];
         if(axis == E_AXIS)
         {
-            Printer::extrudeMultiplyError += (static_cast<float>(p->delta[E_AXIS]) * Printer::extrusionFactor);
+            Printer::extrudeMultiplyError += (static_cast<float>(p->delta[E_AXIS]) * Printer::extrusionFactor
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_flowmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+               );
             p->delta[E_AXIS] = static_cast<int32_t>(Printer::extrudeMultiplyError);
             Printer::extrudeMultiplyError -= p->delta[E_AXIS];
             Printer::filamentPrinted += p->delta[E_AXIS] * Printer::invAxisStepsPerMM[axis];
@@ -274,7 +278,11 @@ void PrintLine::prepareDirectMove(void)
         p->delta[axis] = Printer::directPositionTargetSteps[axis] - Printer::directPositionCurrentSteps[axis];
         if(axis == E_AXIS)
         {
-            Printer::extrudeMultiplyError += (static_cast<float>(p->delta[E_AXIS]) * Printer::extrusionFactor);
+            Printer::extrudeMultiplyError += (static_cast<float>(p->delta[E_AXIS]) * Printer::extrusionFactor
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_flowmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+               );
             p->delta[E_AXIS] = static_cast<int32_t>(Printer::extrudeMultiplyError);
             Printer::extrudeMultiplyError -= p->delta[E_AXIS];
             Printer::filamentPrinted += p->delta[E_AXIS] * Printer::invAxisStepsPerMM[axis];

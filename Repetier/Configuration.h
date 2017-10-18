@@ -106,6 +106,7 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 /** \brief Specifies the number of pressure values which shall be averaged for inprint live z-adjustment */
 #if FEATURE_HEAT_BED_Z_COMPENSATION
   #define FEATURE_DIGIT_Z_COMPENSATION           1                                               // 1 = on, 0 = off
+  #define FEATURE_DIGIT_FLOW_COMPENSATION        1                                               // 1 = on, 0 = off
   #define FEATURE_SENSIBLE_PRESSURE              1                                               // 1 = on, 0 = off
   #if FEATURE_SENSIBLE_PRESSURE
     // mittels SENSIBLE_PRESSURE soll im grunde ausschließlich die wärmeausdehnung in einem perfekt kalibrierten system (HBS,mhier) kompensiert werden:

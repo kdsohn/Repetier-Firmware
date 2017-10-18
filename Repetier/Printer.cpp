@@ -612,7 +612,11 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
                 Extruder::current->tempControl.currentTemperatureC < MIN_EXTRUDER_TEMP ||
 #endif // MIN_EXTRUDER_TEMP > 30
 
-                fabs(com->E) * extrusionFactor > EXTRUDE_MAXLENGTH)
+                fabs(com->E) * extrusionFactor
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_flowmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+                > EXTRUDE_MAXLENGTH)
                     {
                         p = 0;
                     }
@@ -625,7 +629,11 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
 #if MIN_EXTRUDER_TEMP > 30
                 Extruder::current->tempControl.currentTemperatureC < MIN_EXTRUDER_TEMP ||
 #endif // MIN_EXTRUDER_TEMP > 30
-                fabs(p - queuePositionLastSteps[E_AXIS]) * extrusionFactor > EXTRUDE_MAXLENGTH * axisStepsPerMM[E_AXIS])
+                fabs(p - queuePositionLastSteps[E_AXIS]) * extrusionFactor
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_flowmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+                > EXTRUDE_MAXLENGTH * axisStepsPerMM[E_AXIS])
                     {
                         queuePositionLastSteps[E_AXIS] = p;
                     }

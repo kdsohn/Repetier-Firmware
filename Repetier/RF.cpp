@@ -204,6 +204,12 @@ short           g_nLastDigits = 0;
 #if FEATURE_DIGIT_Z_COMPENSATION
 float           g_nDigitZCompensationDigits = 0.0f;
 bool            g_nDigitZCompensationDigits_active = true;
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+ int8_t           g_nDigitFlowCompensation_intense = 0; // +- %
+ short            g_nDigitFlowCompensation_Fmin = 5000;  //mögliche Standardwerte
+ short            g_nDigitFlowCompensation_Fmax = 12000; //mögliche Standardwerte
+ float            g_nDigitFlowCompensation_flowmulti = 1.0f;
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
 #endif // FEATURE_DIGIT_Z_COMPENSATION
 
 #if FEATURE_EMERGENCY_STOP_ALL
@@ -358,7 +364,36 @@ short readStrainGauge( unsigned char uAddress ) //readStrainGauge dauert etwas u
             noInts.unprotect();
             nSensibleCompensationSum = (long)g_nDigitZCompensationDigits * 3; //(nSensibleCompensationSum >> 1) + (nSensibleCompensationSum >> 2);--> sign-extension?? //nSensibleCompensationSum*0.75 
             nSensibleCompensationChecks -= 1; //*=0.75 bei 4 ist 3
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+            if(g_nDigitFlowCompensation_intense != 0){
+                short active_summed_digits = abs(static_cast<short>(g_nDigitZCompensationDigits));
+                /*
+                unter unterem digits limit: flow = 1.000
+                zwischen beiden limits    : flow = 1.000 + anteil an maximaler auslenkung
+                über oberem   digits limit: flow = 1.000 + maximale auslenkung plus oder minus
+                */
+                if(active_summed_digits <= g_nDigitFlowCompensation_Fmin){
+                    g_nDigitFlowCompensation_flowmulti = 1.0f;
+                }else if(active_summed_digits >= g_nDigitFlowCompensation_Fmax){
+                    if( Printer::queuePositionCurrentSteps[Z_AXIS] > g_minZCompensationSteps - Extruder::current->zOffset ) 
+                        g_nDigitFlowCompensation_flowmulti = 1.0f + 0.01f * g_nDigitFlowCompensation_intense;
+                    else g_nDigitFlowCompensation_flowmulti = 1.0f;
+                }else{
+                    if( Printer::queuePositionCurrentSteps[Z_AXIS] > g_minZCompensationSteps - Extruder::current->zOffset ) 
+                        g_nDigitFlowCompensation_flowmulti = 1.0f + 0.01f * g_nDigitFlowCompensation_intense
+                                                                             *(active_summed_digits - g_nDigitFlowCompensation_Fmin)
+                                                                             /(g_nDigitFlowCompensation_Fmax - g_nDigitFlowCompensation_Fmin);
+                    else g_nDigitFlowCompensation_flowmulti = 1.0f;
+                }
+            }else{
+                g_nDigitFlowCompensation_flowmulti = 1.0f;
+            }
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+ 
         }else{
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+            g_nDigitFlowCompensation_flowmulti = 1.0f;
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
             InterruptProtectedBlock noInts;
             g_nDigitZCompensationDigits = (float)Result; //startwert / failwert
             noInts.unprotect();
@@ -6434,7 +6469,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                     nSensiblePressureChecks = 0;
                 }
                 //offset muss bleiben! g_nSensiblePressureOffset != 0
-            }               
+            }
         }
     }
 #endif // FEATURE_SENSIBLE_PRESSURE
@@ -10413,8 +10448,7 @@ void processCommand( GCode* pCommand )
                     {
                         Com::printFLN( PSTR( "M3900/M3901: ERROR Matrix Initialisation Error!" ) );
                         Com::printFLN( PSTR( "M3900/M3901: INFO Die Z-Matrix konnte nicht aus dem EEPROM gelesen werden." ) );
-                        Com::printFLN( PSTR( "M3900/M3901: INFO Sieht man diesen Fehler, hat der Drucker vermutlich noch nie einen Heat-Bed-Scan gemacht." ) );
-                        Com::printFLN( PSTR( "M3900/M3901: INFO Man sieht diesen Fehler nach dem Löschen des EEPROMS mit Code M3091 -> neuer HBS erforderlich!" ) );
+                        Com::printFLN( PSTR( "M3900/M3901: INFO Vermutlich noch nie einen Heat-Bed-Scan gemacht." ) );
                     }
                 }
                 break;
@@ -10423,7 +10457,7 @@ void processCommand( GCode* pCommand )
             case 3900: // M3900 search for the heat bed and set the Z offset appropriately
             case 3901: // 3901 [X] [Y] - configure the Matrix-Position to Scan, [S] confugure learningrate, [P] configure dist weight || by Nibbels
             {
-                Com::printFLN( PSTR( "M3900/M3901 are disabled : inactive Feature FEATURE_HEAT_BED_Z_COMPENSATION" ) );
+                Com::printFLN( PSTR( "M3900/M3901 inactive Feature FEATURE_HEAT_BED_Z_COMPENSATION" ) );
                 break;
             }
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION   
@@ -10522,7 +10556,7 @@ void processCommand( GCode* pCommand )
                                     Com::printFLN( PSTR( "M3901: WARNING::positive Matrix::Please fix Z-Screw" ) );
                                 }
                                 if(overH){
-                                    Com::printFLN( PSTR( "M3901: ERROR::Very positive Matrix::ReLoading zMatrix from EEPROM to RAM" ) );
+                                    Com::printFLN( PSTR( "M3901: ERROR::sehr positive Matrix::ReLoading zMatrix from EEPROM to RAM" ) );
                                     loadCompensationMatrix( (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveHeatBed) );
                                 }else if(overflow){
                                     Com::printFLN( PSTR( "M3901: ERROR::Overflow in Matrix::ReLoading zMatrix from EEPROM to RAM" ) );
@@ -10550,8 +10584,7 @@ void processCommand( GCode* pCommand )
                         }else{
                             Com::printFLN( PSTR( "M3902: ERROR::Matrix Initialisation Error!" ) );
                             Com::printFLN( PSTR( "M3902: INFO Die Z-Matrix konnte nicht aus dem EEPROM gelesen werden." ) );
-                            Com::printFLN( PSTR( "M3902: INFO Sieht man diesen Fehler, hat der Drucker vermutlich noch nie einen Heat-Bed-Scan gemacht." ) );
-                            Com::printFLN( PSTR( "M3902: INFO Man sieht diesen Fehler nach dem Löschen des EEPROMS mit Code M3091/M3011 -> neuer HBS erforderlich!" ) );
+                            Com::printFLN( PSTR( "M3902: INFO Vermutlich nie einen Heat-Bed-Scan gemacht." ) );
                         }   
                     }
                     
@@ -10570,7 +10603,7 @@ void processCommand( GCode* pCommand )
                             else
                             {
                                 //retcode 0
-                                Com::printFLN( PSTR( "M3902: Save the Matrix::OK::the heat bed compensation matrix has been saved" ) );
+                                Com::printFLN( PSTR( "M3902: Save the Matrix::OK" ) );
                             }
                         }else{
                             Com::printFLN( PSTR( "M3902: Save the Matrix::ERROR::invalid savepoint, invalid active heatbedmatrix" ) );
@@ -10583,7 +10616,7 @@ void processCommand( GCode* pCommand )
 #else
             case 3902: // M3902 Nibbels Matrix Manipulations "NMM"
             {
-                Com::printFLN( PSTR( "M3902 is disabled : inactive Feature FEATURE_HEAT_BED_Z_COMPENSATION" ) );
+                Com::printFLN( PSTR( "M3902 inactive Feature" ) );
                 break;
             }
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
@@ -10639,9 +10672,9 @@ void processCommand( GCode* pCommand )
                             }
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
                         }else{
-                            Com::printFLN( PSTR( "M3909: ERROR::never set offset bigger than 0.3mm=S300. This function is ment only to compensate minimal amounts of too close distance.") );
-                            Com::printFLN( PSTR( "M3909: ERROR::Versuche nicht das automatische Offset größer als 0.3mm=S300 einzustellen. Diese Funktion soll nur minimal justieren.") );
-                            Com::printFLN( PSTR( "M3909: INFO::If you have to auto-compensate your offset to high, the extruder-distance cannot be your real problem. Clean your nozzle, rise your temp, lower your speed.") );
+                            Com::printFLN( PSTR( "M3909: ERROR::>0.3mm=S300 - This function is ment to compensate minimal amounts of too close distance.") );
+                            Com::printFLN( PSTR( "M3909: ERROR::>0.3mm=S300 - Diese Funktion soll nur minimal justieren.") );
+                            Com::printFLN( PSTR( "M3909: INFO::If you have to auto-compensate your offset to high, clean your nozzle, rise your temp, lower your speed.") );
                             Com::printFLN( PSTR( "M3909: INFO::This function should lower the chance of an accidential emergency block on the first layer. It cannot help you to avoid calibration!") );
                         }
                     }
@@ -10657,7 +10690,7 @@ void processCommand( GCode* pCommand )
                         Com::printF( PSTR( "M3909: INFO SensiblePressures [S]max. offset is "), g_nSensiblePressureOffsetMax );   
                         Com::printFLN( PSTR( " [um] (Standard: 180um)") );      
                     }
-                    if (!pCommand->hasS() && !pCommand->hasP()) Com::printFLN( PSTR( "M3909: INFO Example: M3909 P8000 S180 for activation at 8000digits and additional offset limited to 0,18mm.") );
+                    if (!pCommand->hasS() && !pCommand->hasP()) Com::printFLN( PSTR( "M3909: INFO Example: M3909 P8000 S180 (8000digits and offset limited to 0,18mm)") );
                 }
                 break;
             }
@@ -10669,20 +10702,35 @@ void processCommand( GCode* pCommand )
             }
 #endif // FEATURE_SENSIBLE_PRESSURE
 
-            case 3910: // 3910 [S]Inc/Dec - Testfunction for decreasing or increasing the Step-Size-Micrometer for `single` Z-Steps
-            //See ACCEPTABLE_STEP_SIZE_TABLE and NUM_ACCEPTABLE_STEP_SIZE_TABLE for predefined "good and wanted" stepsizes.
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+            case 3911: // 3911 [S]Inc/Dec - Testfunction for AtlonXP's DigitFlowCompensation
             {
-                if (pCommand->hasS() ){
-                    if(pCommand->S >= 0){
-                        configureMANUAL_STEPS_Z( 1 );
-                    }else{
-                        configureMANUAL_STEPS_Z( -1 );
+                if ( pCommand->hasS() && pCommand->hasP() ){
+                    short min = abs( static_cast<short>(pCommand->S) );
+                    short max = abs( static_cast<short>(pCommand->P) );
+                    if(min > max) {
+                        min = abs( static_cast<short>(pCommand->P) );
+                        max = abs( static_cast<short>(pCommand->S) );
                     }
-                }else{
-                    Com::printFLN( PSTR( "M3910 Help: Write M3910 S1 or M3910 S-1" ) );
+                    if(min < 500) min = 500; //weniger ist in jedem fall sinnfrei, selbst mit ninjaflex und digit homing
+                    if(max < min) max = min; //geht: flowsprung.
+                    g_nDigitFlowCompensation_Fmin = min;
+                    g_nDigitFlowCompensation_Fmax = max;
                 }
+
+                if ( pCommand->hasE() ){
+                    int8_t e = static_cast<int8_t>(pCommand->E);
+                    if(e > 99) e = 99;
+                    if(e < -99) e = -99;
+                    g_nDigitFlowCompensation_intense = e;
+                }
+
+                Com::printFLN( PSTR( "[S|P] Flow CMP min: " ), g_nDigitFlowCompensation_Fmin);
+                Com::printFLN( PSTR( "[S|P] Flow CMP max: " ), g_nDigitFlowCompensation_Fmax);
+                Com::printFLN( PSTR( "[E]   Flow CMP max Prozente: " ), g_nDigitFlowCompensation_intense);
                 break;
             }
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
 
             case 3919: // 3919 [S]mikrometer - Testfunction for Dip-Down-Hotend beim T1: Einstellen des extruderspezifischen Z-Offsets
             {
