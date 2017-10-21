@@ -1331,6 +1331,11 @@ long PrintLine::performPauseCheck(){
             return true;
         }
 #endif //FEATURE_PAUSE_PRINTING
+        // Pause a bit, if z-compensation is way out of line: this is usefull when starting prints using very deep bed-leveling and custom z-endstop switches which can override a lot.
+        if( abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ ) > ZAXIS_STEPS_PER_MM / 2 && Printer::compensatedPositionTargetStepsZ ){
+            HAL::forbidInterrupts();
+            return true;
+        }
     }
     return false; //ignore this.
 }

@@ -1,7 +1,21 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
-V RF.01.37v8.Mod (2017-10-17)
+V RF.01.37v9.Mod (2017-10-20)
+- added more temperature tolerance when unpausing print to start faster.
+- #define MIN_EXTRUDER_TEMP 80 as discussed in Neuenstadt
+- fit adjustment of offset within mod-menu to up-down-rule outside of mod-menu. Switch of direction for RF-Z-UP and RF-Z-DOWN within mod-menu. (Thx AtlonXP)
+- Implemented new G-Code M3911 S[F-Min] P[F-Max] E[extrusion decrease -99..0 / increase 0..99] to have unwanted high digits influencing extrusion percentage.
+  This is AtlonXPs "linear digit flow compensation"
+  which might get handy having slight overextrusion on solid parts 
+  or to secure flex-prints. (It will not work within long straight lines, because move-cache will delay its effect)
+- Test for very deep z-matrices: when z-compensation has to do more work than 0.5mm wait!
+- tell repetier and octoprint to stop the print in case of temperature sensor error
+- FEATURE_VISCOSITY_TEST has now to be enabled in configuration.h to safe eeprom space. Normal users dont need it.
+- FEATURE_READ_STEPPER_STATUS has now to be enabled in configuration.h to safe eeprom space. Normal users dont need it.
+- Removed leftovers (depreached text message) from SilentMode M3920 to save EEPROM space
+
+V RF.01.37v8.Mod (2017-10-17 -> Stable)
 - Digit Compensation finally got its own Menu (Menu->Configuration->DMS Features) and EEPROM-Support for switching it on and off. Default: ON
 - Zero Digits after Homing finally got its own Menu (Menu->Configuration->DMS Features) and EEPROM-Support for switching it on and off. Default: ON
 - On-Off-Hysteresis for RF2000 seems to be < 0.01f -> new choice for hysteresis is 0.1f (was 0.2f) (AtlonXPs optical endstop On-Off hysteresis with selfprinted flag is ~ 0.06 at RF1000)

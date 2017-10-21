@@ -934,7 +934,9 @@ extern void setMotorCurrent( unsigned char driver, uint8_t level );
 
 // motorCurrentControlInit()
 extern void motorCurrentControlInit( void );
+#if FEATURE_READ_STEPPER_STATUS
 extern unsigned short readMotorStatus( unsigned char driver );
+#endif //FEATURE_READ_STEPPER_STATUS
 #endif // CURRENT_CONTROL_DRV8711
 
 

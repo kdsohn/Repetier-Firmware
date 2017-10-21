@@ -2730,7 +2730,7 @@ void setMatrixNull( void )
 
 
 /**************************************************************************************************************************************/
-
+#if FEATURE_VISCOSITY_TEST
 void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float incrementfeedrate = 0.05f, short StartTemp = 0, short EndTemp = 0, int refill_digit_limit = 800 )
 {   
     Com::printFLN( PSTR( "startViscosityTest(): started" ) );       
@@ -2920,7 +2920,7 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
     UI_STATUS_UPD( UI_TEXT_TEST_STRAIN_GAUGE_DONE ); //gives "Test Completed"
     return;
 } // startViscosityTest()
-
+#endif //FEATURE_VISCOSITY_TEST
 /**************************************************************************************************************************************/
 
 
@@ -7082,7 +7082,7 @@ void continuePrint( void )
             }
             if(wait){
                 for(uint8_t i = 0; i < NUM_EXTRUDER; i++) {
-                    extruder[i].tempControl.waitForTargetTemperature();
+                    extruder[i].tempControl.waitForTargetTemperature(ADD_CONTINUE_AFTER_PAUSE_TEMP_TOLERANCE);
                 }
             }
 #endif //NUM_EXTRUDER > 0
@@ -10759,12 +10759,7 @@ void processCommand( GCode* pCommand )
                 break;
             }
 
-            case 3920: // 3920 Old G-Code for SilentMode
-            {
-                Com::printFLN(PSTR("M3920 SilentMode DEPREACHED. Configure motor current within EEPROM or Printers Menu") );
-                break;
-            }
-
+#if FEATURE_VISCOSITY_TEST
             case 3939: // 3939 startViscosityTest - Testfunction to determine the digits over extrusion speed || by Nibbels
             {
                 Com::printFLN( PSTR( "M3939 ViscosityTest starting ..." ) );
@@ -10818,6 +10813,7 @@ void processCommand( GCode* pCommand )
                 Com::printFLN( PSTR( "M3939 Ended!" ) );
                 break;
             }
+#endif // FEATURE_VISCOSITY_TEST
 
 #if RESERVE_ANALOG_INPUTS
             case 3941: // 3941 reading optional temperature port X35 - Testfunction || by Nibbels
@@ -10831,6 +10827,7 @@ void processCommand( GCode* pCommand )
             }
 #endif // RESERVE_ANALOG_INPUTS
 
+#if FEATURE_READ_STEPPER_STATUS
             case 3987: // M3987 reading motor driver and stall pins - Testfunction || by Nibbels
             {
                 Com::printFLN( PSTR( "M3987 MotorStatus X-Y-Z-E0-E1 ..." ) );
@@ -10839,12 +10836,7 @@ void processCommand( GCode* pCommand )
                 }
                 break;
             }
-            case 3988: // M3988 Stop message for Repetier-Server/-Host - Testfunction || by Nibbels
-            {
-                Com::printFLN( PSTR( "RequestStop:" ) );
-                Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
-                break;
-            }
+#endif //FEATURE_READ_STEPPER_STATUS
 
 #if FEATURE_USER_INT3
             case 3989: // M3989 : proof that dummy function/additional hardware button works! || by Nibbels
@@ -10913,47 +10905,6 @@ extern void processButton( int nAction )
             if( uid.menuLevel == 0 && uid.menuPos[0] == 1 ){ //wenn im Mod-Menü für Z-Offset/Matrix Sense-Offset/Limiter, dann anders!
                 beep(1,4);
                 // show that we are active
-                previousMillisCmd = HAL::timeInMilliseconds();
-            
-                long nTemp = Printer::ZOffset; //um --> mm*1000 
-                nTemp += Z_OFFSET_BUTTON_STEPS;
-                //beim Überschreiten von 0, soll 0 erreicht werden, sodass man nicht mit krummen Zahlen rumhantieren muss.
-                if(nTemp < Z_OFFSET_BUTTON_STEPS && nTemp > 0) nTemp = 0;
-                if( nTemp < -(HEAT_BED_Z_COMPENSATION_MAX_MM * 1000) ) nTemp = -(HEAT_BED_Z_COMPENSATION_MAX_MM * 1000);
-                if( nTemp > (HEAT_BED_Z_COMPENSATION_MAX_MM * 1000) ) nTemp = (HEAT_BED_Z_COMPENSATION_MAX_MM * 1000);
-                Printer::ZOffset = nTemp;
-        #if FEATURE_SENSIBLE_PRESSURE
-                g_staticZSteps = long(( (Printer::ZOffset+g_nSensiblePressureOffset) * Printer::axisStepsPerMM[Z_AXIS] ) / 1000);
-        #else
-                g_staticZSteps = long(( Printer::ZOffset * Printer::axisStepsPerMM[Z_AXIS] ) / 1000);
-        #endif //FEATURE_SENSIBLE_PRESSURE
-                if( Printer::debugInfo() )
-                {
-                    Com::printF( PSTR( "ModMenue: new static z-offset: " ), Printer::ZOffset );
-                    Com::printF( PSTR( " [um]" ) );
-                    Com::printF( PSTR( " / " ), g_staticZSteps );
-                    Com::printFLN( PSTR( " [steps]" ) );
-                }
-            #if FEATURE_AUTOMATIC_EEPROM_UPDATE
-                if( HAL::eprGetInt32( EPR_RF_Z_OFFSET ) != Printer::ZOffset )
-                {
-                    HAL::eprSetInt32( EPR_RF_Z_OFFSET, Printer::ZOffset );
-                    EEPROM::updateChecksum();
-                }
-            #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-            } //ELSE DO MOVE Z: 
-            else
-            {
-                nextPreviousZAction( -1 );
-            }
-            break;
-        }
-        case UI_ACTION_RF_HEAT_BED_DOWN:
-        {            
-            //DO NOT MOVE Z: ALTER Z-OFFSET
-            if( uid.menuLevel == 0 && uid.menuPos[0] == 1 ){ //wenn im Mod-Menü für Z-Offset/Matrix Sense-Offset/Limiter, dann anders!
-                beep(1,4);
-                // show that we are active
                 previousMillisCmd = HAL::timeInMilliseconds();            
                 long nTemp = Printer::ZOffset; //um --> mm*1000 
                 nTemp -= Z_OFFSET_BUTTON_STEPS;
@@ -10982,13 +10933,40 @@ extern void processButton( int nAction )
         #else
                 g_staticZSteps = long(( Printer::ZOffset * Printer::axisStepsPerMM[Z_AXIS] ) / 1000);
         #endif //FEATURE_SENSIBLE_PRESSURE
-                if( Printer::debugInfo() )
+            #if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                if( HAL::eprGetInt32( EPR_RF_Z_OFFSET ) != Printer::ZOffset )
                 {
-                    Com::printF( PSTR( "ModMenue: new static z-offset: " ), Printer::ZOffset );
-                    Com::printF( PSTR( " [um]" ) );
-                    Com::printF( PSTR( " / " ), g_staticZSteps );
-                    Com::printFLN( PSTR( " [steps]" ) );
+                    HAL::eprSetInt32( EPR_RF_Z_OFFSET, Printer::ZOffset );
+                    EEPROM::updateChecksum();
                 }
+            #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            } //ELSE DO MOVE Z: 
+            else
+            {
+                nextPreviousZAction( -1 );
+            }
+            break;
+        }
+        case UI_ACTION_RF_HEAT_BED_DOWN:
+        {            
+            //DO NOT MOVE Z: ALTER Z-OFFSET
+            if( uid.menuLevel == 0 && uid.menuPos[0] == 1 ){ //wenn im Mod-Menü für Z-Offset/Matrix Z-Offset/Matrix Sense-Offset/Limiter, dann anders!
+                beep(1,4);
+                // show that we are active
+                previousMillisCmd = HAL::timeInMilliseconds();
+            
+                long nTemp = Printer::ZOffset; //um --> mm*1000 
+                nTemp += Z_OFFSET_BUTTON_STEPS;
+                //beim Überschreiten von 0, soll 0 erreicht werden, sodass man nicht mit krummen Zahlen rumhantieren muss.
+                if(nTemp < Z_OFFSET_BUTTON_STEPS && nTemp > 0) nTemp = 0;
+                if( nTemp < -(HEAT_BED_Z_COMPENSATION_MAX_MM * 1000) ) nTemp = -(HEAT_BED_Z_COMPENSATION_MAX_MM * 1000);
+                if( nTemp > (HEAT_BED_Z_COMPENSATION_MAX_MM * 1000) ) nTemp = (HEAT_BED_Z_COMPENSATION_MAX_MM * 1000);
+                Printer::ZOffset = nTemp;
+        #if FEATURE_SENSIBLE_PRESSURE
+                g_staticZSteps = long(( (Printer::ZOffset+g_nSensiblePressureOffset) * Printer::axisStepsPerMM[Z_AXIS] ) / 1000);
+        #else
+                g_staticZSteps = long(( Printer::ZOffset * Printer::axisStepsPerMM[Z_AXIS] ) / 1000);
+        #endif //FEATURE_SENSIBLE_PRESSURE
             #if FEATURE_AUTOMATIC_EEPROM_UPDATE
                 if( HAL::eprGetInt32( EPR_RF_Z_OFFSET ) != Printer::ZOffset )
                 {
@@ -12121,7 +12099,7 @@ void motorCurrentControlInit( void )
     }
 } // motorCurrentControlInit
 
-
+#if FEATURE_READ_STEPPER_STATUS
 unsigned short readMotorStatus( unsigned char driver )
 {
     //driver:
@@ -12206,6 +12184,7 @@ Write a 0 to this bit to clear the fault and resume operation
  Com::printFLN( PSTR( "Stall Pin: " ), !bit );
  return ( status & (bit << 8) );
 } // readMotorStatus
+#endif // FEATURE_READ_STEPPER_STATUS
 
 #endif // CURRENT_CONTROL_DRV8711
 
