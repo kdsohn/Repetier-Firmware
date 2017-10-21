@@ -959,7 +959,7 @@ it 0 as default. */
 #if EXTRUDER_ALLOW_COLD_MOVE
 #define MIN_EXTRUDER_TEMP                   0
 #else
-#define MIN_EXTRUDER_TEMP                   120
+#define MIN_EXTRUDER_TEMP                   80
 #endif
 /** \brief Enable advance algorithm.
 Without a correct adjusted advance algorithm, you get blobs at points, where acceleration changes. The

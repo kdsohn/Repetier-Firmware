@@ -106,6 +106,7 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 /** \brief Specifies the number of pressure values which shall be averaged for inprint live z-adjustment */
 #if FEATURE_HEAT_BED_Z_COMPENSATION
   #define FEATURE_DIGIT_Z_COMPENSATION           1                                               // 1 = on, 0 = off
+  #define FEATURE_DIGIT_FLOW_COMPENSATION        1                                               // 1 = on, 0 = off
   #define FEATURE_SENSIBLE_PRESSURE              1                                               // 1 = on, 0 = off
   #if FEATURE_SENSIBLE_PRESSURE
     // mittels SENSIBLE_PRESSURE soll im grunde ausschließlich die wärmeausdehnung in einem perfekt kalibrierten system (HBS,mhier) kompensiert werden:
@@ -383,8 +384,8 @@ With RF1.37r2.Mod the Emergency-Pause-Features limits can be changed in EEPROM a
 With RF1.37r6.Mod the Emergency-ZStop-Features limits can be changed in EEPROM and Printers Menu. Here are the absolute maximum limits:
 Do not set them to Zero.
 */
-#define EMERGENCY_STOP_DIGITS_MIN           -14000
-#define EMERGENCY_STOP_DIGITS_MAX           14000
+#define EMERGENCY_STOP_DIGITS_MIN           -10000
+#define EMERGENCY_STOP_DIGITS_MAX           10000
 
 /** \brief Specifies the interval at which the pressure check shall be performed, in [ms] */
 #define EMERGENCY_STOP_INTERVAL             10
@@ -855,6 +856,9 @@ If your EXT0_PID_MAX is low, you should prefer the second method. */
 Uncomment define to force the temperature into the range for given watchperiod. */
 #define TEMP_TOLERANCE                      2.0f                                               // [°C]
 
+/** \brief Additional special temperature tolerance range when unpausing print. Faster start is better here, because reaching pause position might take a while - for a bit less oozing */
+#define ADD_CONTINUE_AFTER_PAUSE_TEMP_TOLERANCE         4                                      // [°C]
+
 /** \brief Bits of the ADC converter */
 #define ANALOG_INPUT_BITS                   10
 
@@ -952,5 +956,11 @@ You can activate this to 1 and connect some Button. If you connect ground to pul
 #if FEATURE_READ_CALIPER && FEATURE_USER_INT3
  #error You cannot use FEATURE_READ_CALIPER and FEATURE_USER_INT3 at the same time with stock programming. Please change pins/etc. and remove this errorcheck
 #endif
+
+/** \brief This feature allows you to extrude into thin air to messure the filaments viscosity value using dms sensors */
+#define FEATURE_VISCOSITY_TEST              0
+
+/** \brief This is some testing function for reading the stepper drivers status bits while operation */
+#define FEATURE_READ_STEPPER_STATUS         0
 
 #endif // CONFIGURATION_H

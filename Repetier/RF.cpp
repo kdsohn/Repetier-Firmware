@@ -204,6 +204,12 @@ short           g_nLastDigits = 0;
 #if FEATURE_DIGIT_Z_COMPENSATION
 float           g_nDigitZCompensationDigits = 0.0f;
 bool            g_nDigitZCompensationDigits_active = true;
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+ int8_t           g_nDigitFlowCompensation_intense = 0; // +- %
+ short            g_nDigitFlowCompensation_Fmin = 5000;  //mögliche Standardwerte
+ short            g_nDigitFlowCompensation_Fmax = 12000; //mögliche Standardwerte
+ float            g_nDigitFlowCompensation_flowmulti = 1.0f;
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
 #endif // FEATURE_DIGIT_Z_COMPENSATION
 
 #if FEATURE_EMERGENCY_STOP_ALL
@@ -358,7 +364,36 @@ short readStrainGauge( unsigned char uAddress ) //readStrainGauge dauert etwas u
             noInts.unprotect();
             nSensibleCompensationSum = (long)g_nDigitZCompensationDigits * 3; //(nSensibleCompensationSum >> 1) + (nSensibleCompensationSum >> 2);--> sign-extension?? //nSensibleCompensationSum*0.75 
             nSensibleCompensationChecks -= 1; //*=0.75 bei 4 ist 3
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+            if(g_nDigitFlowCompensation_intense != 0){
+                short active_summed_digits = abs(static_cast<short>(g_nDigitZCompensationDigits));
+                /*
+                unter unterem digits limit: flow = 1.000
+                zwischen beiden limits    : flow = 1.000 + anteil an maximaler auslenkung
+                über oberem   digits limit: flow = 1.000 + maximale auslenkung plus oder minus
+                */
+                if(active_summed_digits <= g_nDigitFlowCompensation_Fmin){
+                    g_nDigitFlowCompensation_flowmulti = 1.0f;
+                }else if(active_summed_digits >= g_nDigitFlowCompensation_Fmax){
+                    if( Printer::queuePositionCurrentSteps[Z_AXIS] > g_minZCompensationSteps - Extruder::current->zOffset ) 
+                        g_nDigitFlowCompensation_flowmulti = 1.0f + 0.01f * g_nDigitFlowCompensation_intense;
+                    else g_nDigitFlowCompensation_flowmulti = 1.0f;
+                }else{
+                    if( Printer::queuePositionCurrentSteps[Z_AXIS] > g_minZCompensationSteps - Extruder::current->zOffset ) 
+                        g_nDigitFlowCompensation_flowmulti = 1.0f + 0.01f * g_nDigitFlowCompensation_intense
+                                                                             *(active_summed_digits - g_nDigitFlowCompensation_Fmin)
+                                                                             /(g_nDigitFlowCompensation_Fmax - g_nDigitFlowCompensation_Fmin);
+                    else g_nDigitFlowCompensation_flowmulti = 1.0f;
+                }
+            }else{
+                g_nDigitFlowCompensation_flowmulti = 1.0f;
+            }
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+ 
         }else{
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+            g_nDigitFlowCompensation_flowmulti = 1.0f;
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
             InterruptProtectedBlock noInts;
             g_nDigitZCompensationDigits = (float)Result; //startwert / failwert
             noInts.unprotect();
@@ -1878,7 +1913,11 @@ void scanHeatBed( void )
 
 void startZOScan( bool automatrixleveling )
 {
-    if(g_nHeatBedScanStatus || g_nWorkPartScanStatus) return;
+    if(g_nHeatBedScanStatus 
+#if FEATURE_WORK_PART_Z_COMPENSATION
+        || g_nWorkPartScanStatus
+#endif // FEATURE_WORK_PART_Z_COMPENSATION
+        ) return;
     if( g_ZOSScanStatus )
     {
         // abort the heat bed scan
@@ -1927,7 +1966,11 @@ void startZOScan( bool automatrixleveling )
 void searchZOScan( void )
 {
     if(g_ZOSScanStatus == 0) return;
-    if(g_nHeatBedScanStatus || g_nWorkPartScanStatus){
+    if(g_nHeatBedScanStatus 
+#if FEATURE_WORK_PART_Z_COMPENSATION
+        || g_nWorkPartScanStatus
+#endif // FEATURE_WORK_PART_Z_COMPENSATION
+        ){
       g_ZOSScanStatus = 0;
       g_ZOS_Auto_Matrix_Leveling_State = 0;
       return;
@@ -2695,7 +2738,7 @@ void setMatrixNull( void )
 
 
 /**************************************************************************************************************************************/
-
+#if FEATURE_VISCOSITY_TEST
 void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float incrementfeedrate = 0.05f, short StartTemp = 0, short EndTemp = 0, int refill_digit_limit = 800 )
 {   
     Com::printFLN( PSTR( "startViscosityTest(): started" ) );       
@@ -2885,7 +2928,7 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
     UI_STATUS_UPD( UI_TEXT_TEST_STRAIN_GAUGE_DONE ); //gives "Test Completed"
     return;
 } // startViscosityTest()
-
+#endif //FEATURE_VISCOSITY_TEST
 /**************************************************************************************************************************************/
 
 
@@ -6434,7 +6477,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                     nSensiblePressureChecks = 0;
                 }
                 //offset muss bleiben! g_nSensiblePressureOffset != 0
-            }               
+            }
         }
     }
 #endif // FEATURE_SENSIBLE_PRESSURE
@@ -7047,7 +7090,7 @@ void continuePrint( void )
             }
             if(wait){
                 for(uint8_t i = 0; i < NUM_EXTRUDER; i++) {
-                    extruder[i].tempControl.waitForTargetTemperature();
+                    extruder[i].tempControl.waitForTargetTemperature(ADD_CONTINUE_AFTER_PAUSE_TEMP_TOLERANCE);
                 }
             }
 #endif //NUM_EXTRUDER > 0
@@ -10413,8 +10456,7 @@ void processCommand( GCode* pCommand )
                     {
                         Com::printFLN( PSTR( "M3900/M3901: ERROR Matrix Initialisation Error!" ) );
                         Com::printFLN( PSTR( "M3900/M3901: INFO Die Z-Matrix konnte nicht aus dem EEPROM gelesen werden." ) );
-                        Com::printFLN( PSTR( "M3900/M3901: INFO Sieht man diesen Fehler, hat der Drucker vermutlich noch nie einen Heat-Bed-Scan gemacht." ) );
-                        Com::printFLN( PSTR( "M3900/M3901: INFO Man sieht diesen Fehler nach dem Löschen des EEPROMS mit Code M3091 -> neuer HBS erforderlich!" ) );
+                        Com::printFLN( PSTR( "M3900/M3901: INFO Vermutlich noch nie einen Heat-Bed-Scan gemacht." ) );
                     }
                 }
                 break;
@@ -10423,7 +10465,7 @@ void processCommand( GCode* pCommand )
             case 3900: // M3900 search for the heat bed and set the Z offset appropriately
             case 3901: // 3901 [X] [Y] - configure the Matrix-Position to Scan, [S] confugure learningrate, [P] configure dist weight || by Nibbels
             {
-                Com::printFLN( PSTR( "M3900/M3901 are disabled : inactive Feature FEATURE_HEAT_BED_Z_COMPENSATION" ) );
+                Com::printFLN( PSTR( "M3900/M3901 inactive Feature FEATURE_HEAT_BED_Z_COMPENSATION" ) );
                 break;
             }
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION   
@@ -10522,7 +10564,7 @@ void processCommand( GCode* pCommand )
                                     Com::printFLN( PSTR( "M3901: WARNING::positive Matrix::Please fix Z-Screw" ) );
                                 }
                                 if(overH){
-                                    Com::printFLN( PSTR( "M3901: ERROR::Very positive Matrix::ReLoading zMatrix from EEPROM to RAM" ) );
+                                    Com::printFLN( PSTR( "M3901: ERROR::sehr positive Matrix::ReLoading zMatrix from EEPROM to RAM" ) );
                                     loadCompensationMatrix( (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveHeatBed) );
                                 }else if(overflow){
                                     Com::printFLN( PSTR( "M3901: ERROR::Overflow in Matrix::ReLoading zMatrix from EEPROM to RAM" ) );
@@ -10550,8 +10592,7 @@ void processCommand( GCode* pCommand )
                         }else{
                             Com::printFLN( PSTR( "M3902: ERROR::Matrix Initialisation Error!" ) );
                             Com::printFLN( PSTR( "M3902: INFO Die Z-Matrix konnte nicht aus dem EEPROM gelesen werden." ) );
-                            Com::printFLN( PSTR( "M3902: INFO Sieht man diesen Fehler, hat der Drucker vermutlich noch nie einen Heat-Bed-Scan gemacht." ) );
-                            Com::printFLN( PSTR( "M3902: INFO Man sieht diesen Fehler nach dem Löschen des EEPROMS mit Code M3091/M3011 -> neuer HBS erforderlich!" ) );
+                            Com::printFLN( PSTR( "M3902: INFO Vermutlich nie einen Heat-Bed-Scan gemacht." ) );
                         }   
                     }
                     
@@ -10570,7 +10611,7 @@ void processCommand( GCode* pCommand )
                             else
                             {
                                 //retcode 0
-                                Com::printFLN( PSTR( "M3902: Save the Matrix::OK::the heat bed compensation matrix has been saved" ) );
+                                Com::printFLN( PSTR( "M3902: Save the Matrix::OK" ) );
                             }
                         }else{
                             Com::printFLN( PSTR( "M3902: Save the Matrix::ERROR::invalid savepoint, invalid active heatbedmatrix" ) );
@@ -10583,7 +10624,7 @@ void processCommand( GCode* pCommand )
 #else
             case 3902: // M3902 Nibbels Matrix Manipulations "NMM"
             {
-                Com::printFLN( PSTR( "M3902 is disabled : inactive Feature FEATURE_HEAT_BED_Z_COMPENSATION" ) );
+                Com::printFLN( PSTR( "M3902 inactive Feature" ) );
                 break;
             }
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
@@ -10639,9 +10680,9 @@ void processCommand( GCode* pCommand )
                             }
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
                         }else{
-                            Com::printFLN( PSTR( "M3909: ERROR::never set offset bigger than 0.3mm=S300. This function is ment only to compensate minimal amounts of too close distance.") );
-                            Com::printFLN( PSTR( "M3909: ERROR::Versuche nicht das automatische Offset größer als 0.3mm=S300 einzustellen. Diese Funktion soll nur minimal justieren.") );
-                            Com::printFLN( PSTR( "M3909: INFO::If you have to auto-compensate your offset to high, the extruder-distance cannot be your real problem. Clean your nozzle, rise your temp, lower your speed.") );
+                            Com::printFLN( PSTR( "M3909: ERROR::>0.3mm=S300 - This function is ment to compensate minimal amounts of too close distance.") );
+                            Com::printFLN( PSTR( "M3909: ERROR::>0.3mm=S300 - Diese Funktion soll nur minimal justieren.") );
+                            Com::printFLN( PSTR( "M3909: INFO::If you have to auto-compensate your offset to high, clean your nozzle, rise your temp, lower your speed.") );
                             Com::printFLN( PSTR( "M3909: INFO::This function should lower the chance of an accidential emergency block on the first layer. It cannot help you to avoid calibration!") );
                         }
                     }
@@ -10657,7 +10698,7 @@ void processCommand( GCode* pCommand )
                         Com::printF( PSTR( "M3909: INFO SensiblePressures [S]max. offset is "), g_nSensiblePressureOffsetMax );   
                         Com::printFLN( PSTR( " [um] (Standard: 180um)") );      
                     }
-                    if (!pCommand->hasS() && !pCommand->hasP()) Com::printFLN( PSTR( "M3909: INFO Example: M3909 P8000 S180 for activation at 8000digits and additional offset limited to 0,18mm.") );
+                    if (!pCommand->hasS() && !pCommand->hasP()) Com::printFLN( PSTR( "M3909: INFO Example: M3909 P8000 S180 (8000digits and offset limited to 0,18mm)") );
                 }
                 break;
             }
@@ -10669,20 +10710,35 @@ void processCommand( GCode* pCommand )
             }
 #endif // FEATURE_SENSIBLE_PRESSURE
 
-            case 3910: // 3910 [S]Inc/Dec - Testfunction for decreasing or increasing the Step-Size-Micrometer for `single` Z-Steps
-            //See ACCEPTABLE_STEP_SIZE_TABLE and NUM_ACCEPTABLE_STEP_SIZE_TABLE for predefined "good and wanted" stepsizes.
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+            case 3911: // 3911 [S]Inc/Dec - Testfunction for AtlonXP's DigitFlowCompensation
             {
-                if (pCommand->hasS() ){
-                    if(pCommand->S >= 0){
-                        configureMANUAL_STEPS_Z( 1 );
-                    }else{
-                        configureMANUAL_STEPS_Z( -1 );
+                if ( pCommand->hasS() && pCommand->hasP() ){
+                    short min = abs( static_cast<short>(pCommand->S) );
+                    short max = abs( static_cast<short>(pCommand->P) );
+                    if(min > max) {
+                        min = abs( static_cast<short>(pCommand->P) );
+                        max = abs( static_cast<short>(pCommand->S) );
                     }
-                }else{
-                    Com::printFLN( PSTR( "M3910 Help: Write M3910 S1 or M3910 S-1" ) );
+                    if(min < 500) min = 500; //weniger ist in jedem fall sinnfrei, selbst mit ninjaflex und digit homing
+                    if(max < min) max = min; //geht: flowsprung.
+                    g_nDigitFlowCompensation_Fmin = min;
+                    g_nDigitFlowCompensation_Fmax = max;
                 }
+
+                if ( pCommand->hasE() ){
+                    int8_t e = static_cast<int8_t>(pCommand->E);
+                    if(e > 99) e = 99;
+                    if(e < -99) e = -99;
+                    g_nDigitFlowCompensation_intense = e;
+                }
+
+                Com::printFLN( PSTR( "[S|P] Flow CMP min: " ), g_nDigitFlowCompensation_Fmin);
+                Com::printFLN( PSTR( "[S|P] Flow CMP max: " ), g_nDigitFlowCompensation_Fmax);
+                Com::printFLN( PSTR( "[E]   Flow CMP max Prozente: " ), g_nDigitFlowCompensation_intense);
                 break;
             }
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
 
             case 3919: // 3919 [S]mikrometer - Testfunction for Dip-Down-Hotend beim T1: Einstellen des extruderspezifischen Z-Offsets
             {
@@ -10711,12 +10767,7 @@ void processCommand( GCode* pCommand )
                 break;
             }
 
-            case 3920: // 3920 Old G-Code for SilentMode
-            {
-                Com::printFLN(PSTR("M3920 SilentMode DEPREACHED. Configure motor current within EEPROM or Printers Menu") );
-                break;
-            }
-
+#if FEATURE_VISCOSITY_TEST
             case 3939: // 3939 startViscosityTest - Testfunction to determine the digits over extrusion speed || by Nibbels
             {
                 Com::printFLN( PSTR( "M3939 ViscosityTest starting ..." ) );
@@ -10770,6 +10821,7 @@ void processCommand( GCode* pCommand )
                 Com::printFLN( PSTR( "M3939 Ended!" ) );
                 break;
             }
+#endif // FEATURE_VISCOSITY_TEST
 
 #if RESERVE_ANALOG_INPUTS
             case 3941: // 3941 reading optional temperature port X35 - Testfunction || by Nibbels
@@ -10783,6 +10835,7 @@ void processCommand( GCode* pCommand )
             }
 #endif // RESERVE_ANALOG_INPUTS
 
+#if FEATURE_READ_STEPPER_STATUS
             case 3987: // M3987 reading motor driver and stall pins - Testfunction || by Nibbels
             {
                 Com::printFLN( PSTR( "M3987 MotorStatus X-Y-Z-E0-E1 ..." ) );
@@ -10791,12 +10844,7 @@ void processCommand( GCode* pCommand )
                 }
                 break;
             }
-            case 3988: // M3988 Stop message for Repetier-Server/-Host - Testfunction || by Nibbels
-            {
-                Com::printFLN( PSTR( "RequestStop:" ) );
-                Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
-                break;
-            }
+#endif //FEATURE_READ_STEPPER_STATUS
 
 #if FEATURE_USER_INT3
             case 3989: // M3989 : proof that dummy function/additional hardware button works! || by Nibbels
@@ -10865,47 +10913,6 @@ extern void processButton( int nAction )
             if( uid.menuLevel == 0 && uid.menuPos[0] == 1 ){ //wenn im Mod-Menü für Z-Offset/Matrix Sense-Offset/Limiter, dann anders!
                 beep(1,4);
                 // show that we are active
-                previousMillisCmd = HAL::timeInMilliseconds();
-            
-                long nTemp = Printer::ZOffset; //um --> mm*1000 
-                nTemp += Z_OFFSET_BUTTON_STEPS;
-                //beim Überschreiten von 0, soll 0 erreicht werden, sodass man nicht mit krummen Zahlen rumhantieren muss.
-                if(nTemp < Z_OFFSET_BUTTON_STEPS && nTemp > 0) nTemp = 0;
-                if( nTemp < -(HEAT_BED_Z_COMPENSATION_MAX_MM * 1000) ) nTemp = -(HEAT_BED_Z_COMPENSATION_MAX_MM * 1000);
-                if( nTemp > (HEAT_BED_Z_COMPENSATION_MAX_MM * 1000) ) nTemp = (HEAT_BED_Z_COMPENSATION_MAX_MM * 1000);
-                Printer::ZOffset = nTemp;
-        #if FEATURE_SENSIBLE_PRESSURE
-                g_staticZSteps = long(( (Printer::ZOffset+g_nSensiblePressureOffset) * Printer::axisStepsPerMM[Z_AXIS] ) / 1000);
-        #else
-                g_staticZSteps = long(( Printer::ZOffset * Printer::axisStepsPerMM[Z_AXIS] ) / 1000);
-        #endif //FEATURE_SENSIBLE_PRESSURE
-                if( Printer::debugInfo() )
-                {
-                    Com::printF( PSTR( "ModMenue: new static z-offset: " ), Printer::ZOffset );
-                    Com::printF( PSTR( " [um]" ) );
-                    Com::printF( PSTR( " / " ), g_staticZSteps );
-                    Com::printFLN( PSTR( " [steps]" ) );
-                }
-            #if FEATURE_AUTOMATIC_EEPROM_UPDATE
-                if( HAL::eprGetInt32( EPR_RF_Z_OFFSET ) != Printer::ZOffset )
-                {
-                    HAL::eprSetInt32( EPR_RF_Z_OFFSET, Printer::ZOffset );
-                    EEPROM::updateChecksum();
-                }
-            #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-            } //ELSE DO MOVE Z: 
-            else
-            {
-                nextPreviousZAction( -1 );
-            }
-            break;
-        }
-        case UI_ACTION_RF_HEAT_BED_DOWN:
-        {            
-            //DO NOT MOVE Z: ALTER Z-OFFSET
-            if( uid.menuLevel == 0 && uid.menuPos[0] == 1 ){ //wenn im Mod-Menü für Z-Offset/Matrix Sense-Offset/Limiter, dann anders!
-                beep(1,4);
-                // show that we are active
                 previousMillisCmd = HAL::timeInMilliseconds();            
                 long nTemp = Printer::ZOffset; //um --> mm*1000 
                 nTemp -= Z_OFFSET_BUTTON_STEPS;
@@ -10934,13 +10941,40 @@ extern void processButton( int nAction )
         #else
                 g_staticZSteps = long(( Printer::ZOffset * Printer::axisStepsPerMM[Z_AXIS] ) / 1000);
         #endif //FEATURE_SENSIBLE_PRESSURE
-                if( Printer::debugInfo() )
+            #if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                if( HAL::eprGetInt32( EPR_RF_Z_OFFSET ) != Printer::ZOffset )
                 {
-                    Com::printF( PSTR( "ModMenue: new static z-offset: " ), Printer::ZOffset );
-                    Com::printF( PSTR( " [um]" ) );
-                    Com::printF( PSTR( " / " ), g_staticZSteps );
-                    Com::printFLN( PSTR( " [steps]" ) );
+                    HAL::eprSetInt32( EPR_RF_Z_OFFSET, Printer::ZOffset );
+                    EEPROM::updateChecksum();
                 }
+            #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            } //ELSE DO MOVE Z: 
+            else
+            {
+                nextPreviousZAction( -1 );
+            }
+            break;
+        }
+        case UI_ACTION_RF_HEAT_BED_DOWN:
+        {            
+            //DO NOT MOVE Z: ALTER Z-OFFSET
+            if( uid.menuLevel == 0 && uid.menuPos[0] == 1 ){ //wenn im Mod-Menü für Z-Offset/Matrix Z-Offset/Matrix Sense-Offset/Limiter, dann anders!
+                beep(1,4);
+                // show that we are active
+                previousMillisCmd = HAL::timeInMilliseconds();
+            
+                long nTemp = Printer::ZOffset; //um --> mm*1000 
+                nTemp += Z_OFFSET_BUTTON_STEPS;
+                //beim Überschreiten von 0, soll 0 erreicht werden, sodass man nicht mit krummen Zahlen rumhantieren muss.
+                if(nTemp < Z_OFFSET_BUTTON_STEPS && nTemp > 0) nTemp = 0;
+                if( nTemp < -(HEAT_BED_Z_COMPENSATION_MAX_MM * 1000) ) nTemp = -(HEAT_BED_Z_COMPENSATION_MAX_MM * 1000);
+                if( nTemp > (HEAT_BED_Z_COMPENSATION_MAX_MM * 1000) ) nTemp = (HEAT_BED_Z_COMPENSATION_MAX_MM * 1000);
+                Printer::ZOffset = nTemp;
+        #if FEATURE_SENSIBLE_PRESSURE
+                g_staticZSteps = long(( (Printer::ZOffset+g_nSensiblePressureOffset) * Printer::axisStepsPerMM[Z_AXIS] ) / 1000);
+        #else
+                g_staticZSteps = long(( Printer::ZOffset * Printer::axisStepsPerMM[Z_AXIS] ) / 1000);
+        #endif //FEATURE_SENSIBLE_PRESSURE
             #if FEATURE_AUTOMATIC_EEPROM_UPDATE
                 if( HAL::eprGetInt32( EPR_RF_Z_OFFSET ) != Printer::ZOffset )
                 {
@@ -11713,17 +11747,21 @@ void nextPreviousZAction( int8_t increment )
             Com::printFLN( PSTR( "increment: " ) , (1.0f-currentZmm) * increment , 3 );
             
             if(Printer::isAxisHomed(Z_AXIS) && increment < 0 && currentZmm < 1.0f){
+#if FEATURE_MILLING_MODE
                 if( Printer::operatingMode == OPERATING_MODE_PRINT )
                 {
+#endif // FEATURE_MILLING_MODE
                     //Nur so weit runterfahren, wie man über 0 ist. Denn da ist beim Printermode homed der Endschalter.
                     if(currentZmm > 0) Printer::setDestinationStepsFromMenu( 0, 0, currentZmm * increment );
                     else Printer::setDestinationStepsFromMenu( 0, 0, g_nManualSteps[Z_AXIS]*Printer::invAxisStepsPerMM[Z_AXIS] * increment );
+#if FEATURE_MILLING_MODE
                 }
                 else
                 {
                     //Beim Milling ist Z=0 das obere des Bauteils. Dann geht Z - ins Bauteil rein. Daher ist überfahren ok.
                     Printer::setDestinationStepsFromMenu( 0, 0, 1 * increment );    
                 }
+#endif // FEATURE_MILLING_MODE
             }else{
                 Printer::setDestinationStepsFromMenu( 0, 0, 1 * increment );                
             }
@@ -11745,17 +11783,21 @@ void nextPreviousZAction( int8_t increment )
             }
             float currentZmm = (float)Printer::currentZPositionSteps() * Printer::invAxisStepsPerMM[Z_AXIS] ; //z achse bezogen auf Z-Schalter. Scale Z-Min
             if(Printer::isAxisHomed(Z_AXIS) && increment < 0 && currentZmm < 10.0f){
+#if FEATURE_MILLING_MODE
                 if( Printer::operatingMode == OPERATING_MODE_PRINT )
                 {
+#endif // FEATURE_MILLING_MODE
                     //Nur so weit runterfahren, wie man über 0 ist. Denn da ist beim Printermode homed der Endschalter.
                     if(currentZmm > 0) Printer::setDestinationStepsFromMenu( 0, 0, currentZmm * increment );
                     else Printer::setDestinationStepsFromMenu( 0, 0, g_nManualSteps[Z_AXIS]*Printer::invAxisStepsPerMM[Z_AXIS] * increment );
+#if FEATURE_MILLING_MODE
                 }
                 else
                 {
                     //Beim Milling ist Z=0 das obere des Bauteils. Dann geht Z - ins Bauteil rein. Daher ist überfahren ok.
                     Printer::setDestinationStepsFromMenu( 0, 0, 10 * increment );    
                 }
+#endif // FEATURE_MILLING_MODE
             }else{
                 Printer::setDestinationStepsFromMenu( 0, 0, 10 * increment );                
             }
@@ -11776,17 +11818,21 @@ void nextPreviousZAction( int8_t increment )
             }
             float currentZmm = (float)Printer::currentZPositionSteps() * Printer::invAxisStepsPerMM[Z_AXIS] ; //z achse bezogen auf Z-Schalter. Scale Z-Min
             if(Printer::isAxisHomed(Z_AXIS) && increment < 0 && currentZmm < 50.0f){
+#if FEATURE_MILLING_MODE
                 if( Printer::operatingMode == OPERATING_MODE_PRINT )
                 {
+#endif // FEATURE_MILLING_MODE
                     //Nur so weit runterfahren, wie man über 0 ist. Denn da ist beim Printermode homed der Endschalter.
                     if(currentZmm > 0) Printer::setDestinationStepsFromMenu( 0, 0, currentZmm * increment );
                     else Printer::setDestinationStepsFromMenu( 0, 0, g_nManualSteps[Z_AXIS]*Printer::invAxisStepsPerMM[Z_AXIS] * increment );
+#if FEATURE_MILLING_MODE
                 }
                 else
                 {
                     //Beim Milling ist Z=0 das obere des Bauteils. Dann geht Z - ins Bauteil rein. Daher ist überfahren ok.
                     Printer::setDestinationStepsFromMenu( 0, 0, 50 * increment );    
                 }
+#endif // FEATURE_MILLING_MODE
             }else{
                 Printer::setDestinationStepsFromMenu( 0, 0, 50 * increment );                
             }
@@ -12073,7 +12119,7 @@ void motorCurrentControlInit( void )
     }
 } // motorCurrentControlInit
 
-
+#if FEATURE_READ_STEPPER_STATUS
 unsigned short readMotorStatus( unsigned char driver )
 {
     //driver:
@@ -12158,6 +12204,7 @@ Write a 0 to this bit to clear the fault and resume operation
  Com::printFLN( PSTR( "Stall Pin: " ), !bit );
  return ( status & (bit << 8) );
 } // readMotorStatus
+#endif // FEATURE_READ_STEPPER_STATUS
 
 #endif // CURRENT_CONTROL_DRV8711
 
@@ -13385,7 +13432,11 @@ unsigned char isSupportedMCommand( unsigned int currentMCode, char neededMode, c
 unsigned char isMovingAllowed( const char* pszCommand, char outputLog )
 {
 #if FEATURE_UNLOCK_MOVEMENT
-    if( Printer::operatingMode == OPERATING_MODE_PRINT && !Printer::g_unlock_movement ) //!Printer::isHomed()
+    if( 
+#if FEATURE_MILLING_MODE
+        Printer::operatingMode == OPERATING_MODE_PRINT && 
+#endif // FEATURE_MILLING_MODE
+        !Printer::g_unlock_movement ) //!Printer::isHomed()
     {
         // do not allow to move in case the printer just started and has no homing
         // this is a temporary fix to the wall-crashes when the printer resets

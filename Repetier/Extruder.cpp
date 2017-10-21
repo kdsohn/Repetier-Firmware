@@ -103,6 +103,9 @@ void Extruder::manageTemperatures()
                 Printer::flag0 |= PRINTER_FLAG0_TEMPSENSOR_DEFECT;
                 reportTempsensorError();
 
+                Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetier-host / server to stop printing
+                Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
+                
                 showError( (void*)ui_text_temperature_manager, (void*)ui_text_sensor_error );
             }
         }
@@ -1295,7 +1298,7 @@ void Extruder::disableAllHeater()
 
 } // disableAllHeater
 
-void TemperatureController::waitForTargetTemperature() {
+void TemperatureController::waitForTargetTemperature(uint8_t plus_temp_tolerance) {
     if(targetTemperatureC < 30) return;
     if(Printer::debugDryrun()) return;
     g_uStartOfIdle = 0;
@@ -1308,7 +1311,7 @@ void TemperatureController::waitForTargetTemperature() {
         Commands::printTemperatures();
         Commands::checkForPeriodicalActions();
         GCode::keepAlive(WaitHeater);
-        if( fabs(targetTemperatureC - currentTemperatureC) <= TEMP_TOLERANCE ) {
+        if( fabs(targetTemperatureC - currentTemperatureC) <= TEMP_TOLERANCE + plus_temp_tolerance ) {
             return;
         }
     }
