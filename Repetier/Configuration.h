@@ -384,8 +384,8 @@ With RF1.37r2.Mod the Emergency-Pause-Features limits can be changed in EEPROM a
 With RF1.37r6.Mod the Emergency-ZStop-Features limits can be changed in EEPROM and Printers Menu. Here are the absolute maximum limits:
 Do not set them to Zero.
 */
-#define EMERGENCY_STOP_DIGITS_MIN           -14000
-#define EMERGENCY_STOP_DIGITS_MAX           14000
+#define EMERGENCY_STOP_DIGITS_MIN           -10000
+#define EMERGENCY_STOP_DIGITS_MAX           10000
 
 /** \brief Specifies the interval at which the pressure check shall be performed, in [ms] */
 #define EMERGENCY_STOP_INTERVAL             10
