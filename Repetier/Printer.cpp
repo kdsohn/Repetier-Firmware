@@ -551,7 +551,7 @@ void Printer::updateCurrentPosition(bool copyLastCmd)
 */
 uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
 {
-    register long   p;
+    register int32_t p;
     float           x, y, z;
 
     if(!relativeCoordinateMode)
@@ -604,27 +604,29 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
 
     if(com->hasE() && !Printer::debugDryrun())
     {
-        p = convertToMM(com->E * axisStepsPerMM[E_AXIS]);
         if(relativeCoordinateMode || relativeExtruderCoordinateMode)
         {
             if(
 #if MIN_EXTRUDER_TEMP > 30
                 Extruder::current->tempControl.currentTemperatureC < MIN_EXTRUDER_TEMP ||
 #endif // MIN_EXTRUDER_TEMP > 30
-
                 fabs(com->E) * extrusionFactor
  #if FEATURE_DIGIT_FLOW_COMPENSATION
                             * g_nDigitFlowCompensation_flowmulti
  #endif // FEATURE_DIGIT_FLOW_COMPENSATION
                 > EXTRUDE_MAXLENGTH)
-                    {
-                        p = 0;
-                    }
-            queuePositionTargetSteps[E_AXIS] = queuePositionLastSteps[E_AXIS] + p;
-            
+            {
+                queuePositionTargetSteps[E_AXIS] = queuePositionLastSteps[E_AXIS]; //p = 0;
+            }else{
+                Printer::extrudeMultiplyError += convertToMM(com->E * axisStepsPerMM[E_AXIS]);
+                p = static_cast<int32_t>(Printer::extrudeMultiplyError);
+                Printer::extrudeMultiplyError -= p;
+                queuePositionTargetSteps[E_AXIS] = queuePositionLastSteps[E_AXIS] + p;
+            }
         }
         else
         {
+            p = convertToMM(com->E * axisStepsPerMM[E_AXIS]);
             if(
 #if MIN_EXTRUDER_TEMP > 30
                 Extruder::current->tempControl.currentTemperatureC < MIN_EXTRUDER_TEMP ||
