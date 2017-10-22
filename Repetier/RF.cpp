@@ -11015,7 +11015,7 @@ extern void processButton( int nAction )
                 // show that we are active
                 previousMillisCmd = HAL::timeInMilliseconds();
 
-                if( true )
+                if( (unsigned long)abs(Printer::directPositionTargetSteps[E_AXIS] - Printer::directPositionCurrentSteps[E_AXIS]) <= g_nManualSteps[E_AXIS] )
                 {
                     // we are printing at the moment - use direct steps
                     if( Printer::debugInfo() )
@@ -11066,7 +11066,7 @@ extern void processButton( int nAction )
                 // show that we are active
                 previousMillisCmd = HAL::timeInMilliseconds();
 
-                if( true )
+                if( (unsigned long)abs(Printer::directPositionTargetSteps[E_AXIS] - Printer::directPositionCurrentSteps[E_AXIS]) <= g_nManualSteps[E_AXIS] )
                 {
                     // we are printing at the moment - use direct steps
                     if( Printer::debugInfo() )

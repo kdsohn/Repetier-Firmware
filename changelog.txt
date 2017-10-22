@@ -1,6 +1,10 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37w2.Mod (2017-10-22)
+- fix follow-up flow when you press RF Button Extrude or RF Button Retract long
+- fix long running z-homing when homing with large ENDSTOP_Z_BACK_MOVE because of large Z_ENDSTOP_DRIVE_OVER.
+
 V RF.01.37w.Mod (2017-10-21)
 - make #define FEATURE_MILLING_MODE 0 work again to save eeprom space / possibility to exclude millingmode from firmware
 - set standard emergency-block back to 10000. this is configurable within menu and eeprom afterwards
