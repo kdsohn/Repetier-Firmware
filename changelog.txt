@@ -1,6 +1,10 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37w2.Mod (2017-10-22)
+- fix follow-up flow when you press RF Button Extrude or RF Button Retract long
+- fix long running z-homing when homing with large ENDSTOP_Z_BACK_MOVE because of large Z_ENDSTOP_DRIVE_OVER.
+
 V RF.01.37w.Mod (2017-10-21)
 - make #define FEATURE_MILLING_MODE 0 work again to save eeprom space / possibility to exclude millingmode from firmware
 - set standard emergency-block back to 10000. this is configurable within menu and eeprom afterwards
@@ -15,7 +19,6 @@ V RF.01.37v9.Mod (2017-10-20)
   or to secure flex-prints. (It will not work within long straight lines, because move-cache will delay its effect)
 - Test for very deep z-matrices: when z-compensation has to do more work than 0.5mm wait!
 - tell repetier and octoprint to stop the print in case of temperature sensor error
-- FEATURE_VISCOSITY_TEST has now to be enabled in configuration.h to safe eeprom space. Normal users dont need it.
 - FEATURE_READ_STEPPER_STATUS has now to be enabled in configuration.h to safe eeprom space. Normal users dont need it.
 - Removed leftovers (depreached text message) from SilentMode M3920 to save EEPROM space
 

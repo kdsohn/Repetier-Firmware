@@ -316,8 +316,8 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 #if FEATURE_OUTPUT_FINISHED_OBJECT
 
 /** \brief The following script allows to configure the exact behavior of the automatic object output */
-#define OUTPUT_OBJECT_SCRIPT_PRINT          "G21\nG91\nG1 E-" xstr(SCRIPT_RETRACT_MM) "\nG1 Z210 F5000\nG1 Y250 F7500"
-#define OUTPUT_OBJECT_SCRIPT_MILL           "G28 Z0\nG21\nG91\nG1 Y250 F7500"
+#define OUTPUT_OBJECT_SCRIPT_PRINT          "G21\nG91\nG1 E-" xstr(SCRIPT_RETRACT_MM) "\nG1 Z200 F5000\nG1 Y245 F7500"
+#define OUTPUT_OBJECT_SCRIPT_MILL           "G28 Z0\nG21\nG91\nG1 Y245 F7500"
 
 #endif // FEATURE_OUTPUT_FINISHED_OBJECT
 
@@ -958,7 +958,7 @@ You can activate this to 1 and connect some Button. If you connect ground to pul
 #endif
 
 /** \brief This feature allows you to extrude into thin air to messure the filaments viscosity value using dms sensors */
-#define FEATURE_VISCOSITY_TEST              0
+#define FEATURE_VISCOSITY_TEST              1
 
 /** \brief This is some testing function for reading the stepper drivers status bits while operation */
 #define FEATURE_READ_STEPPER_STATUS         0

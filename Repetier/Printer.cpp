@@ -551,7 +551,7 @@ void Printer::updateCurrentPosition(bool copyLastCmd)
 */
 uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
 {
-    register long   p;
+    register int32_t p;
     float           x, y, z;
 
     if(!relativeCoordinateMode)
@@ -604,27 +604,29 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
 
     if(com->hasE() && !Printer::debugDryrun())
     {
-        p = convertToMM(com->E * axisStepsPerMM[E_AXIS]);
         if(relativeCoordinateMode || relativeExtruderCoordinateMode)
         {
             if(
 #if MIN_EXTRUDER_TEMP > 30
                 Extruder::current->tempControl.currentTemperatureC < MIN_EXTRUDER_TEMP ||
 #endif // MIN_EXTRUDER_TEMP > 30
-
                 fabs(com->E) * extrusionFactor
  #if FEATURE_DIGIT_FLOW_COMPENSATION
                             * g_nDigitFlowCompensation_flowmulti
  #endif // FEATURE_DIGIT_FLOW_COMPENSATION
                 > EXTRUDE_MAXLENGTH)
-                    {
-                        p = 0;
-                    }
-            queuePositionTargetSteps[E_AXIS] = queuePositionLastSteps[E_AXIS] + p;
-            
+            {
+                queuePositionTargetSteps[E_AXIS] = queuePositionLastSteps[E_AXIS]; //p = 0;
+            }else{
+                Printer::extrudeMultiplyError += convertToMM(com->E * axisStepsPerMM[E_AXIS]);
+                p = static_cast<int32_t>(Printer::extrudeMultiplyError);
+                Printer::extrudeMultiplyError -= p;
+                queuePositionTargetSteps[E_AXIS] = queuePositionLastSteps[E_AXIS] + p;
+            }
         }
         else
         {
+            p = convertToMM(com->E * axisStepsPerMM[E_AXIS]);
             if(
 #if MIN_EXTRUDER_TEMP > 30
                 Extruder::current->tempControl.currentTemperatureC < MIN_EXTRUDER_TEMP ||
@@ -1571,9 +1573,23 @@ void Printer::homeZAxis()
         PrintLine::moveRelativeDistanceInSteps(0,0,2*steps,0,homingFeedrate[Z_AXIS],true,true);
         setHoming(false);
         queuePositionLastSteps[Z_AXIS] = (nHomeDir == -1) ? minSteps[Z_AXIS] : maxSteps[Z_AXIS];
-        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * -1 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
+        //ENDSTOP_Z_BACK_MOVE größer als 32768+wenig ist eigentlich nicht möglich, nicht sinnvoll und würde, da das überfahren bei 32microsteps von der z-matrix >-12,7mm abhängig ist verboten sein.
+        //darum ist uint16_t ok.
+        for(uint16_t step = 0; step < axisStepsPerMM[Z_AXIS] * ENDSTOP_Z_BACK_MOVE; step += 0.1f * axisStepsPerMM[Z_AXIS]){
+            //faktor *2 und *5 : doppelt/5x so schnell beim zurücksetzen als nachher beim hinfahren.
+            if(Printer::isZMinEndstopHit()){
+                //schalter noch gedrückt, wir müssen weiter zurück, aber keinesfalls mehr als ENDSTOP_Z_BACK_MOVE
+                PrintLine::moveRelativeDistanceInSteps(0,0, 0.1f*axisStepsPerMM[Z_AXIS] * -1 * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR * 5,true,false);
+            }else{ //wir sind aus dem schalterbereich raus, müssten also nicht weiter zurücksetzen:
+                //rest drüberfahren, der über die schalterüberfahrung drübersteht: dann ende der for{}
+                PrintLine::moveRelativeDistanceInSteps(0,0, axisStepsPerMM[Z_AXIS] * (ENDSTOP_Z_BACK_MOVE - Z_ENDSTOP_DRIVE_OVER)* -1 * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR * 2,true,false);
+                break; 
+            }
+        }
+        //PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * -1 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR*2,true,false);
         setHoming(true);
-        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * 2 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,true);
+        //der fährt nur bis zum schalter, aber ENDSTOP_Z_BACK_MOVE + wenig ist maximum.
+        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * (0.1f + ENDSTOP_Z_BACK_MOVE) * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,true);
         setHoming(false);
 
 #if FEATURE_MILLING_MODE
