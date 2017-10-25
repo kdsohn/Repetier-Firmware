@@ -2846,9 +2846,9 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
     //REFILL EXTRUDER
     Com::printFLN( PSTR( "Replenish Hotend..." ), extrudedigits );
     for(float e=0.1; e<=maxfeedrate; e+=0.05) { //iterate to fill extruder with filament.
-        PrintLine::moveRelativeDistanceInSteps( 0, 0, 0 , (long)( 1.0f * Printer::axisStepsPerMM[E_AXIS] )* e , e, true, true ); //extrude slow until reaction.         
+        PrintLine::moveRelativeDistanceInSteps( 0, 0, 0 , (long)( 1.0f * Printer::axisStepsPerMM[E_AXIS] )* e , e, true, true ); //extrude slow until reaction.
         extrudedigits = (int)readStrainGauge( ACTIVE_STRAIN_GAUGE );
-        PrintLine::moveRelativeDistanceInSteps( 0, 0, 0 , (long)( 1.0f * Printer::axisStepsPerMM[E_AXIS] )* e , e, true, true ); //extrude slow until reaction.         
+        PrintLine::moveRelativeDistanceInSteps( 0, 0, 0 , (long)( 1.0f * Printer::axisStepsPerMM[E_AXIS] )* e , e, true, true ); //extrude slow until reaction.
         extrudedigits = (int)readStrainGauge( ACTIVE_STRAIN_GAUGE );
         extrudedigits *= 0.5;
         
@@ -2866,7 +2866,7 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
     Com::printF( PSTR( ";Idle Digits = ;" ), g_nCurrentIdlePressure );
     //TEST EXTRUDER
     Com::printFLN( PSTR( ";Testing Filament..." ) );
-    Com::printFLN( PSTR( ";Extruder Temperature [°C];e [mm/s];digits [1];digits-idle [1]" ) );
+    Com::printFLN( PSTR( ";Temperature [°C];e [mm/s];digits [1];digits-idle [1]" ) );
     
     for(float T = (float)StartTemp; T <= EndTemp; ){
         //@Init the Temp is reached by preheat!
@@ -2924,7 +2924,6 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
     Com::printFLN( PSTR( "CSV-Logfile:ENDE" ) );
     Com::printFLN( PSTR( "Copy and save this Log to *.csv-File for Excel." ) );
     if(StartTemp > 0) Extruder::setTemperatureForExtruder( 0, Extruder::current->id, true ); //wir schalten aus, aber auch wieder an.
-    Com::printFLN( PSTR( "startViscosityTest(): finished" ) );
     UI_STATUS_UPD( UI_TEXT_TEST_STRAIN_GAUGE_DONE ); //gives "Test Completed"
     return;
 } // startViscosityTest()
@@ -2938,8 +2937,7 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
 /* Noch ist das statisch über eine Tabelle, aber man könnte das später auch berechnen */
 
 void configureMANUAL_STEPS_Z( int8_t increment )
-{   
-    Com::printFLN( PSTR( "configureMANUAL_STEPS_Z():" ) );           
+{
     //könnte evtl. auch unsigned short sein, aber das wird evtl. in g_nManualSteps geschrieben...
     const unsigned long stepsize_table[NUM_ACCEPTABLE_STEP_SIZE_TABLE] PROGMEM = ACCEPTABLE_STEP_SIZE_TABLE;
         
@@ -2964,11 +2962,6 @@ void configureMANUAL_STEPS_Z( int8_t increment )
         EEPROM::updateChecksum(); //deshalb die prüfung
     }
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-
-    Com::printF( PSTR( "Z-Single-Step changed to " ), (float)((float)g_nManualSteps[Z_AXIS]* Printer::invAxisStepsPerMM[Z_AXIS] * 1000.0f ) , 0 );
-    Com::printF( PSTR( " [um] / " ), (uint32_t)g_nManualSteps[Z_AXIS] );
-    Com::printFLN( PSTR( " [microSteps]." ));
-        
     return;
 } // configureMANUAL_STEPS_Z()
 /**************************************************************************************************************************************/
@@ -2984,7 +2977,7 @@ short testExtruderTemperature( void )
             // wait until the extruder has reached its target temperature
             if( Printer::debugInfo() )
             {
-                Com::printF( PSTR( "testExtruderTemperature(): heating: " ), Extruder::current->tempControl.currentTemperatureC, 1 );
+                Com::printF( PSTR( "heating: " ), Extruder::current->tempControl.currentTemperatureC, 1 );
                 Com::printF( PSTR( " C / " ), Extruder::current->tempControl.targetTemperatureC, 1 );
                 Com::printFLN( PSTR( " C" ) );
             }
@@ -2997,7 +2990,7 @@ short testExtruderTemperature( void )
             // wait until the extruder has reached its target temperature
             if( Printer::debugInfo() )
             {
-                Com::printF( PSTR( "testExtruderTemperature(): cooling: " ), Extruder::current->tempControl.currentTemperatureC, 1 );
+                Com::printF( PSTR( "cooling: " ), Extruder::current->tempControl.currentTemperatureC, 1 );
                 Com::printF( PSTR( " C / " ), Extruder::current->tempControl.targetTemperatureC, 1 );
                 Com::printFLN( PSTR( " C" ) );
             }
@@ -3014,7 +3007,7 @@ short testExtruderTemperature( void )
             // wait until the extruder has reached its target temperature
             if( Printer::debugInfo() )
             {
-                Com::printF( PSTR( "testExtruderTemperature(): cooling: " ),Extruder::current->tempControl.currentTemperatureC, 1 );
+                Com::printF( PSTR( "cooling: " ),Extruder::current->tempControl.currentTemperatureC, 1 );
                 Com::printFLN( PSTR( " C" ) );
             }
 
