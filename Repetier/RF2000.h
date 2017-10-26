@@ -632,6 +632,14 @@ A good start is 30 lower then the optimal value. You need to leave room for cool
 // ##########################################################################################
 
 /** \brief Specifies the maximal drive over millimeters which the z-endstop can bear without getting damaged or degraded */
+/*
+Known Limits for Z_ENDSTOP_DRIVE_OVER to avoid when extending value:
+Z-EndStop button crash RF1000: ~ >0.8f
+Z-EndStop optical button crash RF2000: ~ >1.3f
+Crash with Einhausung/Plexiglas backside RFx000: ~ >5.0 .. 6.0f
+Crash with backside metal RFx000: ~ >10.0..12.0f
+Overflow in Z-Matrix: >12.7f 
+*/
 #define Z_ENDSTOP_DRIVE_OVER                 1.3f                              //mm
 
 /** \brief Specifies the maximal steps which can be moved into z-direction after the z-endstop has been reached */

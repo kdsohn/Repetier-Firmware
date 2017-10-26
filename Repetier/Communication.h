@@ -26,6 +26,7 @@ public:
     FSTRINGVAR(tFirmware)
     FSTRINGVAR(tOk)
     FSTRINGVAR(tNewline)
+    FSTRINGVAR(tSemiColon)
     FSTRINGVAR(tNAN)
     FSTRINGVAR(tINF)
     FSTRINGVAR(tError)

@@ -2056,7 +2056,7 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
         if(Printer::vMaxReached > move->vMax) Printer::vMaxReached = move->vMax;
         unsigned int v = Printer::updateStepsPerTimerCall(Printer::vMaxReached);
         Printer::interval = HAL::CPUDivU2(v);
-        if(Printer::maxInterval < Printer::interval) // fix timing for very slow speeds
+        if(Printer::maxInterval < Printer::interval && move->isXYZMove()) // fix timing for very slow speeds
             Printer::interval = Printer::maxInterval;
         Printer::timer+=Printer::interval;
 #if USE_ADVANCE
@@ -2079,7 +2079,7 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
 #endif // USE_ADVANCE
         v = Printer::updateStepsPerTimerCall(v);
         Printer::interval = HAL::CPUDivU2(v);
-        if(Printer::maxInterval < Printer::interval) // fix timing for very slow speeds
+        if(Printer::maxInterval < Printer::interval && move->isXYZMove()) // fix timing for very slow speeds
              Printer::interval = Printer::maxInterval;
         Printer::timer += Printer::interval;
     }

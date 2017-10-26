@@ -1279,9 +1279,9 @@ void UIDisplay::parse(char *txt,bool ram)
                 if(c2=='p')                                                                             // %op : Is single double or quadstepping?
                 {
                     switch(Printer::stepsPerTimerCall){
-                        case 1: addStringP( PSTR(" Sgl") ); break; //kein double oder quadstepping
-                        case 2: addStringP( PSTR(" Dbl") ); break; //kein double oder quadstepping
-                        case 4: addStringP( PSTR(" Qud") ); break; //kein double oder quadstepping
+                        case 1: addStringP( PSTR(" Sgl") ); break; //Single Stepping aktiv
+                        case 2: addStringP( PSTR(" Dbl") ); break; //Double Stepping aktiv
+                        case 4: addStringP( PSTR(" Qud") ); break; //Quad Stepping aktiv
                     }
                     break;
                 }

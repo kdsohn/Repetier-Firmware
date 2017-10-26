@@ -4379,6 +4379,70 @@ void SdFile::writeln_P(FSTRINGPARAM(str)) {
   write_P(Com::tNewline);
 }
 
+void SdFile::printNumber(uint32_t n)
+{
+    char buf[11]; // Assumes 8-bit chars plus zero byte.
+    char *str = &buf[10];
+
+    *str = '\0';
+    do
+    {
+        unsigned long m = n;
+        n /= 10;
+        *--str = '0'+(m - 10 * n);
+    }while(n);
+
+    write(str);
+} // printNumber
+
+void SdFile::writeFloat(float number, uint8_t digits, bool komma_as_dot)
+{
+    if (isnan(number))
+    {
+        write_P(Com::tNAN);
+        return;
+    }
+    if (isinf(number))
+    {
+        write_P(Com::tINF);
+        return;
+    }
+
+    // Handle negative numbers
+    if (number < 0.0)
+    {
+        write((uint8_t)'-');
+        number = -number;
+    }
+
+    // Round correctly so that print(1.999, 2) prints as "2.00"
+    float rounding = 0.5;
+    for (uint8_t i=0; i<digits; ++i)
+        rounding /= 10.0;
+
+    number += rounding;
+
+    // Extract the integer part of the number and print it
+    unsigned long   int_part  = (unsigned long)number;
+    float           remainder = number - (float)int_part;
+  
+    
+    printNumber(int_part);
+
+    // Print the decimal point, but only if there are digits beyond
+    if (digits > 0 && komma_as_dot) write((uint8_t)',');
+    if (digits > 0 && !komma_as_dot) write((uint8_t)'.');
+
+    // Extract digits from the remainder one at a time
+    while (digits-- > 0)
+    {
+        remainder *= 10.0;
+        uint8_t toPrint = (uint8_t)remainder;
+        write((uint8_t)('0'+toPrint));
+        remainder -= toPrint;
+    }
+} // printFloat
+
 // ================ SdFatUtil.cpp ===================
 
 //------------------------------------------------------------------------------
