@@ -1048,11 +1048,11 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( PSTR( "nX;" ), nX );
-                    Com::printF( PSTR( ";" ), (float)nX / Printer::axisStepsPerMM[X_AXIS] );
+                    Com::printF( Com::tSemiColon, (float)nX / Printer::axisStepsPerMM[X_AXIS] );
                     Com::printF( PSTR( ";nY;" ), nY );
-                    Com::printF( PSTR( ";" ), (float)nY / Printer::axisStepsPerMM[Y_AXIS] );
+                    Com::printF( Com::tSemiColon, (float)nY / Printer::axisStepsPerMM[Y_AXIS] );
                     Com::printF( PSTR( ";nZ;" ), nZ );
-                    Com::printF( PSTR( ";" ), (float)nZ / Printer::axisStepsPerMM[Z_AXIS] );
+                    Com::printF( Com::tSemiColon, (float)nZ / Printer::axisStepsPerMM[Z_AXIS] );
                     Com::printF( PSTR( ";Pressure;" ), nContactPressure );
 
                     Com::printF( PSTR( ";nIndexX;" ), (int)nIndexX );
@@ -1060,9 +1060,9 @@ void scanHeatBed( void )
 
 /*                  // output the non compensated position values
                     Com::printF( PSTR( ";;" ), Printer::queuePositionCurrentSteps[X_AXIS] );
-                    Com::printF( PSTR( ";" ), Printer::queuePositionCurrentSteps[Y_AXIS] );
-                    Com::printF( PSTR( ";" ), Printer::queuePositionCurrentSteps[Z_AXIS] );
-                    Com::printF( PSTR( ";" ), Printer::compensatedPositionCurrentStepsZ );
+                    Com::printF( Com::tSemiColon, Printer::queuePositionCurrentSteps[Y_AXIS] );
+                    Com::printF( Com::tSemiColon, Printer::queuePositionCurrentSteps[Z_AXIS] );
+                    Com::printF( Com::tSemiColon, Printer::compensatedPositionCurrentStepsZ );
 */
                     Com::printFLN( PSTR( " " ) );
                 }
@@ -2688,10 +2688,10 @@ void fixKeramikLochInMatrix( void )
         if(peak_hole > 100 && peak_x > 0 && peak_y > 0){
             //loch groß genug
             g_ZCompensationMatrix[peak_x][peak_y] += peak_hole;
-            Com::printF( PSTR( "fixKeramikLochInMatrix(): STEP 4 Update, fixed: g_ZCompensationMatrix[peak_x,peak_y]=" ), g_ZCompensationMatrix[peak_x][peak_y] );
+            Com::printF( PSTR( "Fixed: [peak_x,peak_y]=" ), g_ZCompensationMatrix[peak_x][peak_y] );
             g_ZMatrixChangedInRam = 1;
         }else{
-            Com::printF( PSTR( "fixKeramikLochInMatrix(): STEP 4 Cancel, no need to fix. dh<100 dh=" ), peak_hole );            
+            Com::printF( PSTR( "Fix not needed dh<100 dh=" ), peak_hole );            
         }
         
     }else{
@@ -2726,7 +2726,7 @@ void setMatrixNull( void )
           }
         }
         g_ZMatrixChangedInRam = 1; //man kan die matrix mit diesem marker nun sichern.
-        Com::printFLN( PSTR( "setMatrixNull(): Done!" ) );
+        Com::printFLN( PSTR( "Matrix set to 0!" ) );
     }else{
       Com::printFLN( Com::tError );
     }
@@ -2740,57 +2740,51 @@ void setMatrixNull( void )
 /**************************************************************************************************************************************/
 #if FEATURE_VISCOSITY_TEST
 void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float incrementfeedrate = 0.05f, short StartTemp = 0, short EndTemp = 0, int refill_digit_limit = 800 )
-{   
-    Com::printFLN( PSTR( "startViscosityTest(): started" ) );       
-    
-    if(refill_digit_limit > (int)(g_nEmergencyPauseDigitsMax*0.8) ) refill_digit_limit = (int)(g_nEmergencyPauseDigitsMax*0.2);
-    if(refill_digit_limit < 50) refill_digit_limit = 50;        
-    Com::printFLN( PSTR( "Config: Refill NozzleDigitsDelta = " ) , refill_digit_limit );
-    
-    if(maxdigits > (int)(g_nEmergencyPauseDigitsMax*0.8) ) maxdigits = (int)(g_nEmergencyPauseDigitsMax*0.8);
-    if(maxdigits < 1000) maxdigits = 1000;  
-    Com::printFLN( PSTR( "Config: Test DigitsMax = " ) , maxdigits );   
-    
+{
+    Com::printFLN( PSTR( "startViscosityTest(): started" ) );
+
+    if(refill_digit_limit > (int)(g_nZEmergencyStopAllMax*0.8) ) refill_digit_limit = (int)(g_nZEmergencyStopAllMax*0.2);
+    if(refill_digit_limit < 50) refill_digit_limit = 50;
+    Com::printFLN( PSTR( "Refill NozzleDigitsDelta = " ) , refill_digit_limit );
+
+    if(maxdigits > (int)(g_nZEmergencyStopAllMax*0.8) ) maxdigits = (int)(g_nZEmergencyStopAllMax*0.8);
+    if(maxdigits < 1000) maxdigits = 1000;
+    Com::printFLN( PSTR( "Test DigitsMax = " ) , maxdigits );   
+
     if(maxfeedrate > Extruder::current->maxStartFeedrate) maxfeedrate = Extruder::current->maxStartFeedrate;
-    if(maxfeedrate < 0.05) maxfeedrate = 0.05;  
-    Com::printFLN( PSTR( "Config: Test FeedrateMax = " ) , maxfeedrate , 1);    
-    
+    if(maxfeedrate < 0.05) maxfeedrate = 0.05;
+    Com::printFLN( PSTR( "Test FeedrateMax = " ) , maxfeedrate , 1);
+
     if(StartTemp > UI_SET_MAX_EXTRUDER_TEMP) StartTemp = UI_SET_MAX_EXTRUDER_TEMP;
     if(StartTemp < UI_SET_MIN_EXTRUDER_TEMP && StartTemp != 0) StartTemp = UI_SET_MIN_EXTRUDER_TEMP;
     if(EndTemp > UI_SET_MAX_EXTRUDER_TEMP) EndTemp = UI_SET_MAX_EXTRUDER_TEMP;
     if(EndTemp < UI_SET_MIN_EXTRUDER_TEMP && EndTemp != 0) EndTemp = UI_SET_MIN_EXTRUDER_TEMP;
     if(EndTemp < StartTemp || StartTemp == 0) EndTemp = StartTemp; //even if starttemp has some number and endtemp is 0, then one cycle is driven.
-        
-    if(EndTemp > StartTemp){        
-        Com::printFLN( PSTR( "Config: Multitest StartTemp = " ) , StartTemp );  
-        Com::printFLN( PSTR( "Config: Multitest EndTemp = " ) , EndTemp );
+
+    if(EndTemp > StartTemp){
+        Com::printFLN( PSTR( "Multitest StartTemp = " ) , StartTemp );
+        Com::printFLN( PSTR( "Multitest EndTemp = " ) , EndTemp );
     }else if(EndTemp == StartTemp){
-        Com::printFLN( PSTR( "Config: SingleTest Temperature = " ) , StartTemp );   
+        Com::printFLN( PSTR( "SingleTest Temperature = " ) , StartTemp );
     }else if(StartTemp == 0 || EndTemp == 0){
-        Com::printFLN( PSTR( "Config: SingleTest Temperature = No Adjustment!" ) ); 
+        Com::printFLN( PSTR( "SingleTest Temperature = No Adjustment!" ) );
     }
-    
+
     if(incrementfeedrate > 0.4) incrementfeedrate = 0.4;
-    if(incrementfeedrate < 0.02) incrementfeedrate = 0.02;  
-    Com::printFLN( PSTR( "Config: Test FeedrateIncrement = " ) , incrementfeedrate , 2 );
+    if(incrementfeedrate < 0.02) incrementfeedrate = 0.02;
+    Com::printFLN( PSTR( "FeedrateIncrement = " ) , incrementfeedrate , 2 );
     
     previousMillisCmd = HAL::timeInMilliseconds();
-           
+
     if( !Printer::areAxisHomed() )
     {
-        Com::printFLN( PSTR( "ERROR::need Home" ) );
-        return;
+        Printer::homeAxis(true,true,true);
     }
-    if( !Printer::doHeatBedZCompensation )
-    {
-        Com::printFLN( PSTR( "ERROR::need Z-Comp" ) );
-        return;
-    }   
-    
+
     //if [S,P] "go to temp" then do so...
     if(StartTemp > 0){
         Extruder::setTemperatureForExtruder((float)StartTemp,Extruder::current->id,true);
-        bool allReached = false;        
+        bool allReached = false;
         while(!allReached)
         {
             allReached = true;
@@ -2806,37 +2800,31 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
                     allReached = false;
                 }
             }
-        }       
+        }
     }
-        
+
     if( Extruder::current->tempControl.currentTemperatureC < (float)UI_SET_MIN_EXTRUDER_TEMP){      
         Com::printF( PSTR( "ERROR::Temperature:OFF or lower " ), (float)UI_SET_MIN_EXTRUDER_TEMP );
         Com::printFLN( PSTR( ".0°C = " ), Extruder::current->tempControl.currentTemperatureC );
         return;
     }
-    
-    //drive up the Bed ~3mm*10 -> if to low then filament will pile up to fast on the z-plattform
-    float z_spacing = g_maxZCompensationSteps*Printer::invAxisStepsPerMM[Z_AXIS]*30;
-    Printer::moveToReal( IGNORE_COORDINATE, IGNORE_COORDINATE, z_spacing , IGNORE_COORDINATE, Printer::homingFeedrate[Z_AXIS]);
+
+    //drive up the Bed 100mm -> if to low then filament will pile up to fast on the z-plattform
+    Printer::moveToReal( IGNORE_COORDINATE, IGNORE_COORDINATE, 100 , IGNORE_COORDINATE, Printer::homingFeedrate[Z_AXIS]);
+    Printer::moveToReal( 0, 0, IGNORE_COORDINATE , IGNORE_COORDINATE, Printer::homingFeedrate[Z_AXIS]);
     Commands::waitUntilEndOfAllMoves();
-    
-    //move to (x,y) = (0,0)
-    Printer::moveToReal( 0, 0, IGNORE_COORDINATE, IGNORE_COORDINATE, Printer::homingFeedrate[X_AXIS]);
-    Commands::waitUntilEndOfAllMoves();
-                
-    previousMillisCmd = HAL::timeInMilliseconds();          
 
     //wait and test idle pressure
     HAL::delayMilliseconds( HEAT_BED_SCAN_DELAY );
     int err = readIdlePressure( &g_nCurrentIdlePressure );
     if( err != 0 ) {
         HAL::delayMilliseconds( HEAT_BED_SCAN_DELAY );
-        err = readIdlePressure( &g_nCurrentIdlePressure );      
+        err = readIdlePressure( &g_nCurrentIdlePressure );
         if( err != 0 ) {
             HAL::delayMilliseconds( HEAT_BED_SCAN_DELAY );
-            err = readIdlePressure( &g_nCurrentIdlePressure );      
+            err = readIdlePressure( &g_nCurrentIdlePressure );
             if( err != 0 ) {
-                Com::printFLN( PSTR( "VT(): the idle pressure could not be determined" ) );
+                Com::printFLN( PSTR( "error idle pressure" ) );
                 return;
             }
         }
@@ -2851,26 +2839,42 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
         PrintLine::moveRelativeDistanceInSteps( 0, 0, 0 , (long)( 1.0f * Printer::axisStepsPerMM[E_AXIS] )* e , e, true, true ); //extrude slow until reaction.
         extrudedigits = (int)readStrainGauge( ACTIVE_STRAIN_GAUGE );
         extrudedigits *= 0.5;
-        
-        Com::printFLN( PSTR( "force = " ), extrudedigits ); 
+
+        Com::printFLN( PSTR( "force = " ), extrudedigits );
         Commands::printTemperatures();
         
         //refill_digit_limit = n guter Wert fürs Füllen des Hotends nach nem Retract. Zu wenig = noch Luft in Nozzle, zu viel = materialverschwendung bei sehr viskosen materialien.
         if(extrudedigits < g_nCurrentIdlePressure - refill_digit_limit || extrudedigits > g_nCurrentIdlePressure + refill_digit_limit) {  
-            Com::printFLN( PSTR( "nozzle should be filled to capacity" ) ); 
             break;
         }
     }
-    
+
+    if(sd.sdactive){
+        char filename[] = "Visco000.csv"; //000 wird überschrieben mit zahl
+        for(uint8_t z = 0; z < 255; z++){
+            char *str = &filename[8];
+            uint8_t n = z;            
+            do
+            {
+                uint8_t m = n;
+                n /= 10;
+                *--str = '0'+(m - 10 * n);
+            }while(n);
+            if(!sd.fat.exists(filename)){
+                break;
+            }
+        }
+        sd.startWrite(filename);
+    }
+
     Com::printFLN( PSTR( "CSV-Logfile:START" ) );
-    Com::printF( PSTR( ";Idle Digits = ;" ), g_nCurrentIdlePressure );
-    //TEST EXTRUDER
+
     Com::printFLN( PSTR( ";Testing Filament..." ) );
-    Com::printFLN( PSTR( ";Temperature [°C];e [mm/s];digits [1];digits-idle [1]" ) );
-    
+    Com::printFLN( PSTR( ";Temperature [°C];e [mm/s];digits [1]" ) );
+    if(sd.savetosd) sd.file.writeln_P( PSTR( ";Temperature [°C];e [mm/s];digits [1]" ) );
+
     for(float T = (float)StartTemp; T <= EndTemp; ){
         //@Init the Temp is reached by preheat!
-        
         for(float e=0.05; e<=maxfeedrate; e+=incrementfeedrate) { //iterate all points  
             //test extrusion speed and get average digits:
             PrintLine::moveRelativeDistanceInSteps( 0, 0, 0 , (long)( 1.0f * Printer::axisStepsPerMM[E_AXIS] )* e , e, true, true ); //extrude only. time should be constant!
@@ -2882,22 +2886,31 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
             PrintLine::moveRelativeDistanceInSteps( 0, 0, 0 , (long)( 1.0f * Printer::axisStepsPerMM[E_AXIS] )* e , e, true, true ); //extrude only. time should be constant!
             extrudedigits += (int)readStrainGauge( ACTIVE_STRAIN_GAUGE );
             extrudedigits *= 0.25;
-                    
-            Com::printF( PSTR( ";" ), Extruder::current->tempControl.currentTemperatureC, 1 ,true );    //true = dezimalkomma, nicht punkt. Wegen Excel.
-            Com::printF( PSTR( ";" ), e, 3 , true );    //true = dezimalkomma, nicht punkt. Wegen Excel.
-            Com::printF( PSTR( ";" ), extrudedigits );
-            Com::printFLN( PSTR( ";" ), extrudedigits-g_nCurrentIdlePressure );
-            
-            previousMillisCmd = HAL::timeInMilliseconds();          
-            
+
+            Com::printF( Com::tSemiColon, Extruder::current->tempControl.currentTemperatureC, 1 ,true ); //true = dezimalkomma, nicht punkt. Wegen Excel.
+            Com::printF( Com::tSemiColon, e, 3 , true ); //true = dezimalkomma, nicht punkt. Wegen Excel.
+            Com::printFLN( Com::tSemiColon, extrudedigits );
+
+            if(sd.savetosd){
+                sd.file.write((uint8_t)';');
+                sd.file.writeFloat(Extruder::current->tempControl.currentTemperatureC, 2, true);
+                sd.file.write((uint8_t)';');
+                sd.file.writeFloat(e, 3, true);
+                sd.file.write((uint8_t)';');
+                sd.file.writeFloat(extrudedigits, 0, true);
+                sd.file.write_P(Com::tNewline);
+            }
+
+            previousMillisCmd = HAL::timeInMilliseconds();
+
             if(extrudedigits < g_nCurrentIdlePressure - maxdigits || extrudedigits > g_nCurrentIdlePressure + maxdigits || extrudedigits < -maxdigits || extrudedigits > maxdigits) {
                 PrintLine::moveRelativeDistanceInSteps( 0, 0, 0 , (long)( -0.5 * Printer::axisStepsPerMM[E_AXIS] ), 10, true, true ); //loose some force on dms
                 break;
             }
         }
-        
+
         //Now we did reach Max-Digits, go one Tempstep higher and retest.
-        T += 5;     
+        T += 5;
         if(T <= EndTemp){ //nur erhöhen wenn sinnvoll, nicht wenn abbruch.
             Extruder::setTemperatureForExtruder( T, Extruder::current->id, true );
             //Wait until all the Temperatures are reached and stable.
@@ -2920,9 +2933,12 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
             }
         }
     }
-    
+
     Com::printFLN( PSTR( "CSV-Logfile:ENDE" ) );
     Com::printFLN( PSTR( "Copy and save this Log to *.csv-File for Excel." ) );
+
+    sd.finishWrite();
+
     if(StartTemp > 0) Extruder::setTemperatureForExtruder( 0, Extruder::current->id, true ); //wir schalten aus, aber auch wieder an.
     UI_STATUS_UPD( UI_TEXT_TEST_STRAIN_GAUGE_DONE ); //gives "Test Completed"
     return;
@@ -4044,11 +4060,11 @@ void scanWorkPart( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( PSTR( "nX;" ), nX );
-                    Com::printF( PSTR( ";" ), (float)nX / Printer::axisStepsPerMM[X_AXIS] );
+                    Com::printF( Com::tSemiColon, (float)nX / Printer::axisStepsPerMM[X_AXIS] );
                     Com::printF( PSTR( ";nY;" ), nY );
-                    Com::printF( PSTR( ";" ), (float)nY / Printer::axisStepsPerMM[Y_AXIS] );
+                    Com::printF( Com::tSemiColon, (float)nY / Printer::axisStepsPerMM[Y_AXIS] );
                     Com::printF( PSTR( ";nZ;" ), nZ );
-                    Com::printF( PSTR( ";" ), (float)nZ / Printer::axisStepsPerMM[Z_AXIS] );
+                    Com::printF( Com::tSemiColon, (float)nZ / Printer::axisStepsPerMM[Z_AXIS] );
                     Com::printF( PSTR( ";Pressure;" ), nContactPressure );
 
                     Com::printF( PSTR( ";nIndexX;" ), (int)nIndexX );
@@ -4056,9 +4072,9 @@ void scanWorkPart( void )
 
 /*                  // output the non compensated position values
                     Com::printF( PSTR( ";;" ), Printer::queuePositionCurrentSteps[X_AXIS] );
-                    Com::printF( PSTR( ";" ), Printer::queuePositionCurrentSteps[Y_AXIS] );
-                    Com::printF( PSTR( ";" ), Printer::queuePositionCurrentSteps[Z_AXIS] );
-                    Com::printF( PSTR( ";" ), Printer::compensatedPositionCurrentStepsZ );
+                    Com::printF( Com::tSemiColon, Printer::queuePositionCurrentSteps[Y_AXIS] );
+                    Com::printF( Com::tSemiColon, Printer::queuePositionCurrentSteps[Z_AXIS] );
+                    Com::printF( Com::tSemiColon, Printer::compensatedPositionCurrentStepsZ );
 */
                     Com::printFLN( PSTR( " " ) );
                 }
@@ -4592,11 +4608,11 @@ long getWorkPartOffset( void )
                   (nTempXBack - nTempXFront) * nDeltaY / nStepSizeY;
 
 /*  Com::printF( PSTR( "getWorkPartOffset();" ), nXLeftIndex );
-    Com::printF( PSTR( ";" ), nXRightIndex );
-    Com::printF( PSTR( ";" ), nYFrontIndex );
-    Com::printF( PSTR( ";" ), nYBackIndex );
-    Com::printF( PSTR( ";" ), nOffset );
-    Com::printF( PSTR( ";" ), Printer::staticCompensationZ );
+    Com::printF( Com::tSemiColon, nXRightIndex );
+    Com::printF( Com::tSemiColon, nYFrontIndex );
+    Com::printF( Com::tSemiColon, nYBackIndex );
+    Com::printF( Com::tSemiColon, nOffset );
+    Com::printF( Com::tSemiColon, Printer::staticCompensationZ );
     Com::printFLN( PSTR( "" ) );
 */
 #if FEATURE_FIND_Z_ORIGIN
@@ -5381,19 +5397,19 @@ void outputCompensationMatrix( char format )
             {
                 if( x == 0 || y == 0 )
                 {
-                    Com::printF( PSTR( ";" ), g_ZCompensationMatrix[x][y] );
+                    Com::printF( Com::tSemiColon, g_ZCompensationMatrix[x][y] );
                 }
                 else
                 {
                     if( format )
                     {
                         // output in [mm]
-                        Com::printF( PSTR( ";" ), g_ZCompensationMatrix[x][y] / Printer::axisStepsPerMM[Z_AXIS] );
+                        Com::printF( Com::tSemiColon, g_ZCompensationMatrix[x][y] / Printer::axisStepsPerMM[Z_AXIS] );
                     }
                     else
                     {
                         // output in [steps]
-                        Com::printF( PSTR( ";" ), g_ZCompensationMatrix[x][y] );
+                        Com::printF( Com::tSemiColon, g_ZCompensationMatrix[x][y] );
                     }
                 }
             }
@@ -6033,7 +6049,7 @@ void outputPressureMatrix( void )
         {
             for( j=0; j<COMPENSATION_MATRIX_MAX_X; j++ )
             {
-                Com::printF( PSTR( ";" ), g_ScanPressure[j][i] );
+                Com::printF( Com::tSemiColon, g_ScanPressure[j][i] );
             }
             Com::printFLN( PSTR( " " ) );
         }
@@ -9403,12 +9419,12 @@ void processCommand( GCode* pCommand )
                         case 6:
                         {
                             Com::printF( PSTR( "nCPS X;" ),   Printer::queuePositionCurrentSteps[X_AXIS] );
-                            Com::printF( PSTR( ";" ),         Printer::queuePositionCurrentSteps[X_AXIS] / Printer::axisStepsPerMM[X_AXIS] );
+                            Com::printF( Com::tSemiColon,         Printer::queuePositionCurrentSteps[X_AXIS] / Printer::axisStepsPerMM[X_AXIS] );
                             Com::printF( PSTR( "; nCPS Y;" ), Printer::queuePositionCurrentSteps[Y_AXIS] );
-                            Com::printFLN( PSTR( ";" ),       Printer::queuePositionCurrentSteps[Y_AXIS] / Printer::axisStepsPerMM[Y_AXIS] );
+                            Com::printFLN( Com::tSemiColon,       Printer::queuePositionCurrentSteps[Y_AXIS] / Printer::axisStepsPerMM[Y_AXIS] );
 
                             Com::printF( PSTR( "; nCPS Z;" ), Printer::queuePositionCurrentSteps[Z_AXIS] );
-                            Com::printF( PSTR( ";" ),         Printer::queuePositionCurrentSteps[Z_AXIS] / Printer::axisStepsPerMM[Z_AXIS] );
+                            Com::printF( Com::tSemiColon,         Printer::queuePositionCurrentSteps[Z_AXIS] / Printer::axisStepsPerMM[Z_AXIS] );
                             Com::printF( PSTR( "; qTS;" ),    Printer::queuePositionTargetSteps[Z_AXIS] );
                             Com::printFLN( PSTR( "; qLS;" ),  Printer::queuePositionLastSteps[Z_AXIS] );
 							
@@ -9469,11 +9485,11 @@ void processCommand( GCode* pCommand )
                         case 7:
                         {
                             Com::printF( PSTR( "Z-Origin;X;" ), g_nZOriginPosition[X_AXIS] );
-                            Com::printF( PSTR( ";" ), (float)g_nZOriginPosition[X_AXIS] / Printer::axisStepsPerMM[X_AXIS] );
+                            Com::printF( Com::tSemiColon, (float)g_nZOriginPosition[X_AXIS] / Printer::axisStepsPerMM[X_AXIS] );
                             Com::printF( PSTR( ";Y;" ), g_nZOriginPosition[Y_AXIS] );
-                            Com::printF( PSTR( ";" ), (float)g_nZOriginPosition[Y_AXIS] / Printer::axisStepsPerMM[Y_AXIS] );
+                            Com::printF( Com::tSemiColon, (float)g_nZOriginPosition[Y_AXIS] / Printer::axisStepsPerMM[Y_AXIS] );
                             Com::printF( PSTR( ";Z;" ), Printer::staticCompensationZ );
-                            Com::printFLN( PSTR( ";" ), (float)Printer::staticCompensationZ / Printer::axisStepsPerMM[Z_AXIS] );
+                            Com::printFLN( Com::tSemiColon, (float)Printer::staticCompensationZ / Printer::axisStepsPerMM[Z_AXIS] );
                             break;
                         }
 #endif // FEATURE_FIND_Z_ORIGIN
@@ -9545,11 +9561,6 @@ void processCommand( GCode* pCommand )
                         }
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
-                        case 15:
-                        {
-                            dump( 1 );
-                            break;
-                        }
                         case 16:
                         {
                             Com::printF( PSTR( "stepperDirection=" ), Printer::stepperDirection[X_AXIS] );
@@ -9625,7 +9636,7 @@ void processCommand( GCode* pCommand )
                             Com::printF( PSTR( "Z;" ), Printer::currentZSteps );
 #endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 
-                            Com::printFLN( PSTR( ";" ), Printer::currentZPositionSteps() );
+                            Com::printFLN( Com::tSemiColon, Printer::currentZPositionSteps() );
                             break;
                         }
                     }
@@ -10810,7 +10821,7 @@ void processCommand( GCode* pCommand )
                 Com::printFLN( PSTR( "M3939 If [S] and [P] = 0, then no temperature is set." ) );
                 */
                 startViscosityTest( maxD, maxE, Inc, StartTemp, EndTemp, maxRFill ); //E ist float, constraint in funktion!
-                
+
                 Com::printFLN( PSTR( "M3939 Ended!" ) );
                 break;
             }
@@ -10846,6 +10857,28 @@ void processCommand( GCode* pCommand )
                 break;
             }
 #endif //FEATURE_USER_INT3
+
+            case 3998: // M3999 : proof that dummy function/additional hardware button works! || by Nibbels
+            {
+                Com::printF( PSTR( "File Write: " ) );
+                char filename[] = "SVDat___.csv";
+                
+                sd.startWrite(filename);
+                if(sd.savetosd){
+                    sd.file.writeln_P(PSTR( "[um]" ));
+                    sd.file.write_P(Com::tNewline);
+                    sd.file.write_P(Com::tNewline);
+                    sd.file.writeln_P(PSTR( "AM" ));
+                    sd.file.writeFloat(1.98765f, 3, true);
+                    sd.file.write_P(Com::tNewline);
+                    sd.file.writeFloat((float)234000, 0, true);
+                }else{
+                    Com::printFLN( PSTR( "Write Error" ) );
+                }
+                sd.finishWrite();
+                Com::printFLN( PSTR( "END" ) );
+                break;
+            }
 
 #if FEATURE_READ_CALIPER
             case 3999: // M3999 : proof that dummy function/additional hardware button works! || by Nibbels
@@ -13942,38 +13975,6 @@ void showMyPage( const void* line1, const void* line2, const void* line3, const 
     return;
 
 } // showMyPage
-
-void dump( char type, char from )
-{
-    if( from )
-    {
-        Com::printF( PSTR( "" ), from );
-        Com::printF( PSTR( ";" ) );
-    }
-
-    switch( type )
-    {
-        case 1:
-        {
-            Com::printF( PSTR( "qPCS X;" ), Printer::queuePositionCurrentSteps[X_AXIS] );
-            Com::printF( PSTR( ";Y;" ), Printer::queuePositionCurrentSteps[Y_AXIS] );
-            Com::printF( PSTR( ";Z;" ), Printer::queuePositionCurrentSteps[Z_AXIS] );
-            Com::printF( PSTR( ";qPTS X;" ), Printer::queuePositionTargetSteps[X_AXIS] );
-            Com::printF( PSTR( ";Y;" ), Printer::queuePositionTargetSteps[Y_AXIS] );
-            Com::printF( PSTR( ";Z;" ), Printer::queuePositionTargetSteps[Z_AXIS] );
-            Com::printF( PSTR( ";dPCS X;" ), Printer::directPositionCurrentSteps[X_AXIS] );
-            Com::printF( PSTR( ";Y;" ), Printer::directPositionCurrentSteps[Y_AXIS] );
-            Com::printF( PSTR( ";Z;" ), Printer::directPositionCurrentSteps[Z_AXIS] );
-            Com::printF( PSTR( ";dPTS X;" ), Printer::directPositionTargetSteps[X_AXIS] );
-            Com::printF( PSTR( ";Y;" ), Printer::directPositionTargetSteps[Y_AXIS] );
-            Com::printF( PSTR( ";Z;" ), Printer::directPositionTargetSteps[Z_AXIS] );
-            Com::printFLN( PSTR( "" ) );
-            break;
-        }
-    }
-
-} // dump
-
 
 void doEmergencyStop( char reason )
 {

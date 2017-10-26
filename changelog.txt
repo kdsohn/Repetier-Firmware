@@ -1,9 +1,10 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
-V RF.01.37w3.Mod (2017-10-22)
-- fix: do not correct timing for extrusion moves without x,y,z
-- removed some text to save eeprom space
+V RF.01.37w3.Mod (2017-10-26)
+- fix: do not "correct" timing for extrusion moves without x,y,z. This let SensibleViscosity Feature fail since 1.37s3 and later. 
+- upgrade and cleanup of sensible viscosity feature: It now saves new files to SD for every extrusion test you do
+- removed some text and garbage functions to save eeprom space
 
 V RF.01.37w2.Mod (2017-10-22)
 - fix follow-up flow when you press RF Button Extrude or RF Button Retract long

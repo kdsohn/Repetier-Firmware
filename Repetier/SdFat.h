@@ -2227,6 +2227,8 @@ class SdFile : public SdBaseFile {
   int write(const void* buf, size_t nbyte);
   void write_P(FSTRINGPARAM(str));
   void writeln_P(FSTRINGPARAM(str));
+  void printNumber(uint32_t n);
+  void writeFloat(float number, uint8_t digits, bool komma_as_dot);
 };
 /** Store and print a string in flash memory.*/
 #define PgmPrint(x) SerialPrint_P(PSTR(x))

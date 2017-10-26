@@ -1054,9 +1054,6 @@ extern void showInformation( const void* line2, const void* line3 = NULL, const 
 // showMyPage()
 extern void showMyPage( const void* line1, const void* line2 = NULL, const void* line3 = NULL, const void* line4 = NULL );
 
-// dump()
-extern void dump( char type, char from = 0 );
-
 // doEmergencyStop()
 void doEmergencyStop( char reason );
 
