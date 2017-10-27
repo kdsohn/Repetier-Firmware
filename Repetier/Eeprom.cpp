@@ -826,8 +826,18 @@ void EEPROM::readDataFromEEPROM()
         e->tempControl.pidDriveMin = HAL::eprGetByte(o+EPR_EXTRUDER_DRIVE_MIN);
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
         if(e->tempControl.pidDriveMin == 40 && e->tempControl.pidDriveMax == 40){
-            e->tempControl.pidDriveMin = (i==0 ? EXT0_PID_INTEGRAL_DRIVE_MIN : (i==1 ? EXT1_PID_INTEGRAL_DRIVE_MIN : HT3_PID_INTEGRAL_DRIVE_MIN));
-            e->tempControl.pidDriveMax = (i==0 ? EXT0_PID_INTEGRAL_DRIVE_MAX : (i==1 ? EXT1_PID_INTEGRAL_DRIVE_MAX : HT3_PID_INTEGRAL_DRIVE_MAX));
+            e->tempControl.pidDriveMin = 
+#if NUM_EXTRUDER >= 2
+                    (i==0 ? EXT0_PID_INTEGRAL_DRIVE_MIN : (i==1 ? EXT1_PID_INTEGRAL_DRIVE_MIN : HT3_PID_INTEGRAL_DRIVE_MIN));
+#else
+                    EXT0_PID_INTEGRAL_DRIVE_MIN;
+#endif
+            e->tempControl.pidDriveMax = 
+#if NUM_EXTRUDER >= 2
+                    (i==0 ? EXT0_PID_INTEGRAL_DRIVE_MAX : (i==1 ? EXT1_PID_INTEGRAL_DRIVE_MAX : HT3_PID_INTEGRAL_DRIVE_MAX));
+#else
+                    EXT0_PID_INTEGRAL_DRIVE_MAX;
+#endif
             HAL::eprSetByte(o+EPR_EXTRUDER_DRIVE_MIN,e->tempControl.pidDriveMin);
             HAL::eprSetByte(o+EPR_EXTRUDER_DRIVE_MAX,e->tempControl.pidDriveMax);
             change = true; //update checksum later in this function
