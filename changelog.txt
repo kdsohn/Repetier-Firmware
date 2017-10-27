@@ -1,6 +1,10 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37w5.Mod (2017-10-27)
+- fix for Case Fan ON-ON-Off-exploit
+- fix for possibility to disable X45 auto management through temperaturesetting (Off for now: M3121 / Always off: M3121 P1 / On: M3120)
+
 V RF.01.37w4.Mod (2017-10-26)
 - autofix 40-40 PID bug from 1.37- original firmware when reading pid-I-drive-min = 40 and pid-I-drive-max = 40 in eeprom
 

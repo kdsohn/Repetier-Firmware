@@ -466,18 +466,18 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
     }
 
     bool alloffs = true;
-    for(uint8_t i=0; i<NUM_EXTRUDER; i++)
-        if(tempController[i]->targetTemperatureC>15) alloffs = false;
+    for(uint8_t i=0; i < NUM_EXTRUDER; i++)
+        if(tempController[i]->targetTemperatureC > 15) alloffs = false;
 
 #ifdef EXTRUDER_MAX_TEMP
     if(temperatureInCelsius>EXTRUDER_MAX_TEMP) temperatureInCelsius = EXTRUDER_MAX_TEMP;
 #endif // EXTRUDER_MAX_TEMP
 
-    if(temperatureInCelsius<0) temperatureInCelsius=0;
+    if(temperatureInCelsius < 0) temperatureInCelsius=0;
     TemperatureController *tc = tempController[extr];
     tc->setTargetTemperature(temperatureInCelsius,0);
     tc->updateTempControlVars();
-    if(beep && temperatureInCelsius>30)
+    if(beep && temperatureInCelsius > 30)
         tc->setAlarm(true);
     if(temperatureInCelsius>=EXTRUDER_FAN_COOL_TEMP) extruder[extr].coolerPWM = extruder[extr].coolerSpeed;
 
@@ -488,34 +488,36 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
     }
 
 #if FEATURE_CASE_FAN && !CASE_FAN_ALWAYS_ON
-    if( temperatureInCelsius >= CASE_FAN_ON_TEMPERATURE )
-    {
-        if(Printer::ignoreFanOn){
-            //ignore the case fan whenever there is another cooling solution available // Nibbels
-            //the fan should still be connected within the rf2000 but might be avoided to suppress noise.
-            //the ignore-flag has to be set at runtime to prevent unlearned persons to risk overheat having the wrong startcode.
-            //enable and disable the fan with M3120 or M3121 or M3300 P3 S{1,0}
-            Printer::prepareFanOff = 0;
-            Printer::fanOffDelay = 0;
-        }else{
-            // enable the case fan in case the extruder is turned on
-            Printer::prepareFanOff = 0;
-            WRITE(CASE_FAN_PIN, 1);         
-        }
-    }
-    else
-    {
-        // disable the case fan in case the extruder is turned off
-        if( Printer::fanOffDelay )
+    if(Printer::ignoreFanOn){
+        //ignore the case fan whenever there is another cooling solution available // Nibbels
+        //the fan should still be connected within the rf2000 but might be avoided to suppress noise.
+        //the ignore-flag has to be set at runtime to prevent unlearned persons to risk overheat having the wrong startcode.
+        //enable and disable the fan with M3120 or M3121 or M3300 P3 S{1,0}
+        Printer::prepareFanOff = 0;
+        Printer::fanOffDelay = 0;
+    }else{
+        bool isheating = false;
+        for(uint8_t i=0; i < NUM_EXTRUDER; i++) if(tempController[i]->targetTemperatureC > CASE_FAN_ON_TEMPERATURE) isheating = true;
+        if( isheating )
         {
-            // we are going to disable the case fan after the delay
-            Printer::prepareFanOff = HAL::timeInMilliseconds();
+            // enable the case fan in case any extruder is turned on
+            Printer::prepareFanOff = 0;
+            WRITE(CASE_FAN_PIN, 1);
         }
         else
         {
-            // we are going to disable the case fan now
-            Printer::prepareFanOff = 0;
-            WRITE(CASE_FAN_PIN, 0);
+            // disable the case fan in case the extruder is turned off
+            if( Printer::fanOffDelay )
+            {
+                // we are going to disable the case fan after the delay
+                Printer::prepareFanOff = HAL::timeInMilliseconds();
+            }
+            else
+            {
+                // we are going to disable the case fan now
+                Printer::prepareFanOff = 0;
+                WRITE(CASE_FAN_PIN, 0);
+            }
         }
     }
 #endif // FEATURE_CASE_FAN && !CASE_FAN_ALWAYS_ON
@@ -526,13 +528,13 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
         TemperatureController *tc2 = tempController[1];
         tc2->setTargetTemperature(temperatureInCelsius,0);
         tc2->updateTempControlVars();
-        if(temperatureInCelsius>=EXTRUDER_FAN_COOL_TEMP) extruder[1].coolerPWM = extruder[1].coolerSpeed;
+        if(temperatureInCelsius >= EXTRUDER_FAN_COOL_TEMP) extruder[1].coolerPWM = extruder[1].coolerSpeed;
     }
 #endif // FEATURE_DITTO_PRINTING
 
     bool alloff = true;
-    for(uint8_t i=0; i<NUM_EXTRUDER; i++)
-        if(tempController[i]->targetTemperatureC>15) alloff = false;
+    for(uint8_t i=0; i < NUM_EXTRUDER; i++)
+        if(tempController[i]->targetTemperatureC > 15) alloff = false;
 
 #if EEPROM_MODE != 0
     if(alloff && !alloffs) // All heaters are now switched off?
