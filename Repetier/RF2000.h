@@ -148,7 +148,7 @@ Overridden if EEPROM activated.*/
 /** \brief The maximum value, I-gain can contribute to the output. */
 #define HT2_PID_INTEGRAL_DRIVE_MAX          130
 /** \brief lower value for integral part. */
-#define HT2_PID_INTEGRAL_DRIVE_MIN          5
+#define HT2_PID_INTEGRAL_DRIVE_MIN          30
 /** \brief P-gain. */
 #define HT2_PID_P                           37.52
 /** \brief I-gain. */
@@ -163,7 +163,7 @@ Overridden if EEPROM activated.*/
 /** \brief The maximum value, I-gain can contribute to the output. */
 #define HT3_PID_INTEGRAL_DRIVE_MAX          120
 /** \brief lower value for integral part. */
-#define HT3_PID_INTEGRAL_DRIVE_MIN          5
+#define HT3_PID_INTEGRAL_DRIVE_MIN          30
 /** \brief P-gain. */
 #define HT3_PID_P                           12.5
 /** \brief I-gain. */

@@ -130,14 +130,17 @@ void Extruder::manageTemperatures()
             if( act->targetTemperatureC < 20.0f )
             {
                 output = 0; // off is off, even if damping term wants a heat peak!
+                act->tempIState = 0;
             } 
             else if( error > PID_CONTROL_RANGE )
             {
                 output = act->pidMax;
+                act->tempIState = 0;
             }
             else if( error < -PID_CONTROL_RANGE )
             {
                 output = 0;
+                act->tempIState = 0;
             }
             else
             {
