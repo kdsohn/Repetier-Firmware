@@ -6217,7 +6217,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
         {
             // it is time to turn the case fan off
             Printer::prepareFanOff = 0;
-            WRITE( CASE_FAN_PIN, 0 );
+            if( !Printer::ignoreFanOn ) WRITE( CASE_FAN_PIN, 0 );
         }
     }
 #endif // FEATURE_CASE_FAN && !CASE_FAN_ALWAYS_ON
