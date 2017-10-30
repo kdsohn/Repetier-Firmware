@@ -2,7 +2,7 @@ TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has th
 TODO: Testing, testing ..
 
 V RF.01.37w8.Mod (2017-10-30)
-- Included PID autotune method Tyreus-Lyben
+- Included PID autotune method Tyreus-Lyben (Hinweis/Anstoß von hal4822) -> possible best method for PID autotuning 220V Heated Bed
 - fixed readme
 
 V RF.01.37w7.Mod (2017-10-30)
