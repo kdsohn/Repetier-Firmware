@@ -1,6 +1,13 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37w8.Mod (2017-10-30)
+- Included PID autotune method Tyreus-Lyben (Hinweis/Anstoß von hal4822) -> possible best method for PID autotuning 220V Heated Bed
+- fixed readme
+
+V RF.01.37w7.Mod (2017-10-30)
+- Fix GT-2 (Sensor 8 / E3D) Temptable 222 -> 244
+
 V RF.01.37w6.Mod (2017-10-29)
 - PeterKa PID Temperatur tuning (Result of EXTRx_PID_IDRIVE_MIN discussion http://www.rf1000.de/viewtopic.php?f=23&t=2054)
 

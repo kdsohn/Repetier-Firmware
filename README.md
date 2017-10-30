@@ -29,11 +29,11 @@ Processor: `ATMega 2560 (Mega 2560)`,
 Port: Your printers Port like `COM3`, if successfully connected.
 - **Check** and **Upload** the Firmware to your Printer.
 ## If you upgrade to this Version from 1.37r or earlier please do a fresh M303 PID-Autotune on all heaters!  
-- RF2000/RF1000 extruder 1: `M303 P0 X0 S230 R10 J1`
-- RF2000 extruder 2: `M303 P1 X0 S230 R10 J1`
-- RF2000 heated bed: `M303 P2 X0 S70 R15 J3`
-- RF1000 heated bed: `M303 P1 X0 S70 R15 J3`  
-And start with EEPROM-values `PID drive min = 5` and `PID drive max = 100`  
+- RF2000/RF1000 extruder 1: `M303 P0 X0 S230 R10 J1`  
+- RF2000 extruder 2: `M303 P1 X0 S230 R10 J1`  
+- RF2000 heated bed: `M303 P2 X0 S70 R15 J4`  
+- RF1000 heated bed: `M303 P1 X0 S70 R15 J4`  
+And start with EEPROM-values `PID I drive min = 30` and `PID I drive max = 120`  
 Or set #define PID_CONTROL_DRIVE_MIN_LIMIT_FACTOR to 10.0f in configuration.h to use the old version PID-control.
 
 ## Version RF.01.37mod 
@@ -197,7 +197,8 @@ Additions to GCode M303:
 [J1] Pessen Integral Rule (suggested for Hotend)  
 [J2] Some Overshoot  
 [J3] No Overshoot (suggested for Heated Bed)  
-[J4] until [J6] are PD, PI, P-Profiles for control experts and special cases.  
+[J4] Tyreus-Luyben (suggested for Heated Bed)  
+[J5] until [J7] are PD, PI, P-Profiles for control experts and special cases.  
 [Rn] Configurable Autotune cycles  
 Easy autotune support via printers menu.  
 Siehe auch http://www.rf1000.de/viewtopic.php?f=7&t=1963  

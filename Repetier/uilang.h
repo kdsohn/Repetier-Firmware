@@ -385,6 +385,7 @@
 #define UI_ACTION_TEXT_PESSEN "PID Pessen-Rule"
 #define UI_ACTION_TEXT_SOME "PID Some-Overshoot"
 #define UI_ACTION_TEXT_NO "PID No-Overshoot"
+#define UI_ACTION_TEXT_TYREUS_LYBEN "PID Tyreus-Lyben"
 
 #define UI_TEXT_MOTOR_X                "I_x: %MX"
 #define UI_TEXT_MOTOR_Y                "I_y: %MY"
@@ -745,6 +746,7 @@
 #define UI_ACTION_TEXT_PESSEN "PID Pessen-Rule"
 #define UI_ACTION_TEXT_SOME "PID Some-Overshoot"
 #define UI_ACTION_TEXT_NO "PID No-Overshoot"
+#define UI_ACTION_TEXT_TYREUS_LYBEN "PID Tyreus-Lyben"
 
 #define UI_TEXT_MOTOR_X                "I_x: %MX"
 #define UI_TEXT_MOTOR_Y                "I_y: %MY"

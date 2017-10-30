@@ -145,6 +145,7 @@ public:
     FSTRINGVAR(tAPIDPessen)
     FSTRINGVAR(tAPIDSome)
     FSTRINGVAR(tAPIDNone)
+    FSTRINGVAR(tAPIDTyreusLyben)
     FSTRINGVAR(tAPIDsimplePD)
     FSTRINGVAR(tAPIDsimplePI)
     FSTRINGVAR(tAPIDsimpleP)

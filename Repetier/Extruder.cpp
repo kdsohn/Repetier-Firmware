@@ -698,7 +698,7 @@ const short temptable_4[NUMTEMPS_4][2] PROGMEM =
 #define NUMTEMPS_8 34 
 const short temptable_8[NUMTEMPS_8][2] PROGMEM =
 {
-    {0,8000},{69,2400},{79,2320},{92,2240},{107,2160},{125,2080},{146,2000},{172,1920},{204,1840},{222,1760},{291,1680},{350,1600},
+    {0,8000},{69,2400},{79,2320},{92,2240},{107,2160},{125,2080},{146,2000},{172,1920},{204,1840},{244,1760},{291,1680},{350,1600},
     {422,1520},{511,1440},{621,1360},{755,1280},{918,1200},{1114,1120},{1344,1040},{1608,960},{1902,880},{2216,800},{2539,720},
     {2851,640},{3137,560},{3385,480},{3588,400},{3746,320},{3863,240},{3945,160},{4002,80},{4038,0},{4061,-80},{4075,-160}
 };
@@ -1347,14 +1347,17 @@ void TemperatureController::autotunePID(float temp, uint8_t controllerId, int ma
     Com::printInfoFLN(Com::tPIDAutotuneStart);
     Com::printF( PSTR("Ruleset: "), (int)method );
     switch(method){
-        case 6: //P
+        case 7: //P
             Com::printFLN(Com::tAPIDsimpleP);
         break;
-        case 5: //PI
+        case 6: //PI
             Com::printFLN(Com::tAPIDsimplePI);
         break;
-        case 4: //PD
+        case 5: //PD
             Com::printFLN(Com::tAPIDsimplePD);
+        break;
+        case 4: //Tyreus-Lyben
+            Com::printFLN(Com::tAPIDTyreusLyben);
         break;
         case 3: //PID no overshoot
             Com::printFLN(Com::tAPIDNone);
@@ -1438,24 +1441,29 @@ KP = Ku * Maßzahl lt. Tabelle
 see also: http://www.mstarlabs.com/control/znrule.html
 */
                         switch(method){
-                            case 6: //P
+                            case 7: //P
                                Kp = 0.5f*Ku;          //0.5 KRkrit
                                Ki = 0;
                                Kd = 0;
                                Com::printFLN(Com::tAPIDsimpleP);
                             break;
-                            case 5: //PI
+                            case 6: //PI
                                Kp = 0.45f*Ku;          //0.45 KRkrit
                                Ki = 1.2f*Kp/Tu;       //0.833 Tkrit
                                Kd = 0;
                                Com::printFLN(Com::tAPIDsimplePI);
                             break;
-                            case 4: //PD
+                            case 5: //PD
                                Kp = 0.8f*Ku;          //0.8 KRkrit
                                Ki = 0;
                                Kd = Kp*Tu/8.0f;       //0.125 Tkrit
                                Com::printFLN(Com::tAPIDsimplePD);
-                            break;
+                            break;                            
+                            case 4: //Tyreus-Lyben
+                                Kp = 0.4545f*Ku;      //1/2.2 KRkrit
+                                Ki = Kp/Tu/2.2f;        //2.2 Tkrit
+                                Kd = Kp*Tu/6.3f;      //1/6.3 Tkrit[/code]
+                                Com::printFLN(Com::tAPIDTyreusLyben);
                             case 3: //PID no overshoot
                                Kp = 0.2f*Ku;          //0.2 KRkrit
                                Ki = 2.0f*Kp/Tu;       //0.5 Tkrit
