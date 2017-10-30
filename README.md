@@ -28,6 +28,14 @@ Board: `Arduino Mega 2560 or Mega ADK`,
 Processor: `ATMega 2560 (Mega 2560)`,  
 Port: Your printers Port like `COM3`, if successfully connected.
 - **Check** and **Upload** the Firmware to your Printer.
+
+## compiled Hex-Files / automatic build system
+
+You want to get precompiled firmware images with stock settings? Visit this website https://jenkins.beta-centauri.de/view/Repetier/ . You will find two versions, one is "stable" the other one is marked as "development".
+Find more information and discussion here: http://www.rf1000.de/viewtopic.php?f=7&t=2057
+Using linux you can flash the .hex-files to your printer with this command:
+```avrdude -patmega2560 -cwiring -P/dev/ttyUSB0 -b115200 -D -Uflash:w:Repetier.hex:i``` 
+
 ## If you upgrade to this Version from 1.37r or earlier please do a fresh M303 PID-Autotune on all heaters!  
 - RF2000/RF1000 extruder 1: `M303 P0 X0 S230 R10 J1`  
 - RF2000 extruder 2: `M303 P1 X0 S230 R10 J1`  

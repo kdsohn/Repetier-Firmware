@@ -28,6 +28,15 @@ Board: `Arduino Mega 2560 or Mega ADK`,
 Prozessor: `ATMega 2560 (Mega 2560)`,  
 Port: Der Port des Druckers, wie `COM3`, wenn er korrekt verbunden ist.
 - **Prüfen** and **Hochladen** der Firmware zum Drucker.
+
+## Vorbereitete Hex-Files / automatisches Build-System
+
+Wer mit den Standard-Konfigurationen zufrieden ist, kann auf der Seite https://jenkins.beta-centauri.de/view/Repetier/ fertig compilierte Hex-Files dieser Firmware herunterladen. Dort sind zwei Versionen zu finden, eine "stable" und eine "development".
+Siehe auch http://www.rf1000.de/viewtopic.php?f=7&t=2057
+Unter Linux kann man diese Firmwares mit 
+```avrdude -patmega2560 -cwiring -P/dev/ttyUSB0 -b115200 -D -Uflash:w:Repetier.hex:i``` 
+in die Drucker einspielen.
+
 ## Wenn du von Version from 1.37r oder früher updatest, mache bitte einen neuen M303 PID-Autotune bei allen Heizelementen!  
 - RF2000/RF1000 Extruder 1: `M303 P0 X0 S230 R10 J1`  
 - RF2000 Extruder 2: `M303 P1 X0 S230 R10 J1`  
