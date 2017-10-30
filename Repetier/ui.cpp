@@ -3908,11 +3908,13 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
         case UI_ACTION_RF_RESET_ACK:
-        {
-            INCREMENT_MIN_MAX(g_nYesNo,1,0,1);
-            break;
-        }
         case UI_ACTION_SD_STOP_ACK:
+        case UI_ACTION_RESTORE_DEFAULTS:
+        case UI_ACTION_CHOOSE_CLASSICPID:
+        case UI_ACTION_CHOOSE_LESSERINTEGRAL:
+        case UI_ACTION_CHOOSE_SOME:
+        case UI_ACTION_CHOOSE_NO:
+        case UI_ACTION_CHOOSE_TYREUS_LYBEN:
         {
             INCREMENT_MIN_MAX(g_nYesNo,1,0,1);
             break;
@@ -3960,20 +3962,6 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
 #endif //FEATURE_EMERGENCY_STOP_ALL
 
-        case UI_ACTION_RESTORE_DEFAULTS:
-        {
-            INCREMENT_MIN_MAX(g_nYesNo,1,0,1);
-            break;
-        }
-
-        case UI_ACTION_CHOOSE_CLASSICPID:
-        case UI_ACTION_CHOOSE_LESSERINTEGRAL:
-        case UI_ACTION_CHOOSE_SOME:
-        case UI_ACTION_CHOOSE_NO:
-        {
-            INCREMENT_MIN_MAX(g_nYesNo,1,0,1);
-            break;
-        }
         case UI_ACTION_CHOOSE_DMIN:
         {
             if(uid.menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
@@ -4217,6 +4205,7 @@ void UIDisplay::finishAction(int action)
         case UI_ACTION_CHOOSE_LESSERINTEGRAL:
         case UI_ACTION_CHOOSE_SOME:
         case UI_ACTION_CHOOSE_NO:
+        case UI_ACTION_CHOOSE_TYREUS_LYBEN:
         {
             if( g_nYesNo != 1 )
             {
