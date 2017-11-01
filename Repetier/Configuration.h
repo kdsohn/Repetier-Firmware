@@ -401,6 +401,9 @@ Do not set them to Zero.
 // ##########################################################################################
 
 #if FEATURE_SERVICE_INTERVAL
+/** \brief Wie setzte ich den Interval wieder zurück, ohne die Firmware neu aufzuspielen? 
+Um diese Meldung zurück zu setzen muss man den RFx000 ausschalten, die Knöpfe "links", "rauf" und "runter" drücken (und alle drei gedrückt halten), den RFx000 einschalten und die Knöpfe ca. 5-10 Sekunden danach loslassen.
+Damit werden die Service-Zähler wieder auf 0 zurück gestellt. */
 
 /** \brief Specifies the max printed hours [h] */
 #define HOURS_PRINTED_UNTIL_SERVICE         100
