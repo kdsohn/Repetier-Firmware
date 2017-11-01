@@ -211,7 +211,7 @@ See "configuration of the speed vs. cpu usage" within RF1000.h / RF2000.h
 // ##########################################################################################
 
 /** \brief Enables debug outputs which are used mainly for the development */
-#define DEBUG_SHOW_DEVELOPMENT_LOGS         1                                                   // 1 = on, 0 = off
+#define DEBUG_SHOW_DEVELOPMENT_LOGS         0                                                   // 1 = on, 0 = off
 
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION 

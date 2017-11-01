@@ -173,15 +173,13 @@ void SDCard::abortPrint()
 {
     if( !sd.sdactive )
     {
-        return;
-    }
-    Printer::setMenuMode(MENU_MODE_SD_PRINTING,false);
-    Printer::setMenuMode(MENU_MODE_PAUSED,false);
-    
-    if( Printer::debugInfo() )
-    {
+        Printer::setMenuMode(MENU_MODE_PRINTING,false);
+        //return;
+    }else{
         Com::printFLN(PSTR("SD print aborted."));
+        Printer::setMenuMode(MENU_MODE_SD_PRINTING,false);
     }
+    Printer::setMenuMode(MENU_MODE_PAUSED,false);
 
     g_uBlockSDCommands = 1;
 
