@@ -914,7 +914,7 @@ void scanHeatBed( void )
             }
             case 45: //case kommt beim HBS nicht vor??? doch, als retryStatus von 49 aus.
             {
-                while( Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit() )
+                while( Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit() ) //sollte inzwischen egal (??) sein, wir fahren immer automatisch per homing aus dem endstop heraus.
                 {
                     // ensure that there is no z endstop hit before we perform the z-axis homing
                     moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *2) );
@@ -1378,7 +1378,7 @@ void scanHeatBed( void )
             }
             case 105:  //retryStatus von 100 aus.
             {
-                while( Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit() )
+                while( Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit() ) //sollte inzwischen egal (??) sein, wir fahren immer automatisch per homing aus dem endstop heraus.
                 {
                     // ensure that there is no z endstop hit before we perform the z-axis homing
                     moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *2) );
@@ -1572,28 +1572,56 @@ void scanHeatBed( void )
                 nZ                = 0;
 
                 g_lastScanTime       = HAL::timeInMilliseconds();
+                g_nHeatBedScanStatus = 133;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+                if( Printer::debugInfo() )
+                {
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "132 -> 133" ) );
+                }
+#endif // DEBUG_HEAT_BED_SCAN == 2
+                break;
+            }
+            case 133:
+            {
+                // move the heat bed 5mm down
+                g_nZScanZPosition += moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
+                g_lastScanTime       = HAL::timeInMilliseconds();
+                g_nHeatBedScanStatus = 134;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+                if( Printer::debugInfo() )
+                {
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "133 -> 134" ) );
+                }
+#endif // DEBUG_HEAT_BED_SCAN == 2
+                break;
+            }
+            case 134:
+            {
+                // move the heat bed 5mm down
+                g_nZScanZPosition += moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
+                g_lastScanTime       = HAL::timeInMilliseconds();
                 g_nHeatBedScanStatus = 135;
 
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "132 -> 135" ) );
+                    Com::printFLN( PSTR( "134 -> 135" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
             }
             case 135:
             {
-                // move the heat bed 10mm down
-                g_nZScanZPosition += moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *10) );
-
                 // at this point we are homed and we are above the x/y position at which we shall perform the measurement of the z-offset with the hot extruder(s)
 #if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( g_nHeatBedScanMode == HEAT_BED_SCAN_MODE_PLA )
                 {
                     Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA, 0, false);
-
 #if NUM_EXTRUDER == 2
                     Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA, 1, false);
 #endif // NUM_EXTRUDER == 2
@@ -1601,7 +1629,6 @@ void scanHeatBed( void )
                 else if ( g_nHeatBedScanMode == HEAT_BED_SCAN_MODE_ABS )
                 {
                     Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS, 0, false);
-
 #if NUM_EXTRUDER == 2
                     Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS, 1, false);
 #endif // NUM_EXTRUDER == 2
@@ -1684,7 +1711,7 @@ void scanHeatBed( void )
             }
             case 139:   //retryStatus von 137 aus.
             {
-                while( Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit() )
+                while( Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit() ) //sollte inzwischen egal (??) sein, wir fahren immer automatisch per homing aus dem endstop heraus.
                 {
                     // ensure that there is no z endstop hit before we perform the z-axis homing
                     moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *2) );
@@ -5057,7 +5084,6 @@ short moveZDownFast( bool execRunStandardTasks )
     short   nTempPressure;
     short   nZ = 0;
     short   nSteps;
-
 
     // move the heat bed down so that we won't hit it when we move to the next position
     g_nLastZScanZPosition = g_nZScanZPosition;
