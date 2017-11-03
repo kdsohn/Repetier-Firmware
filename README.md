@@ -42,11 +42,10 @@ Using linux you can flash the .hex-files to your printer with this command:
 - RF2000 heated bed: `M303 P2 X0 S70 R15 J4`  
 - RF1000 heated bed: `M303 P1 X0 S70 R15 J4`  
 And start with EEPROM-values `PID I drive min = 30` and `PID I drive max = 120`  
-Or set #define PID_CONTROL_DRIVE_MIN_LIMIT_FACTOR to 10.0f in configuration.h to use the old version PID-control.
 
 ## Version RF.01.37mod 
 
-See:  
+http://www.rf1000.de/viewtopic.php?f=67&t=2043 (Thread to Stable 1.37v8 / 18.10.2017)
 http://www.rf1000.de/viewtopic.php?f=74&t=1674 (Nibbels/Wessix SenseOffset-Thread)  
 http://www.rf1000.de/viewtopic.php?f=7&t=1504#p14882 (mhier Mod)  
 http://www.rf1000.de/viewtopic.php?f=7&t=1504&start=60#p16397 (added feature)  
@@ -83,6 +82,7 @@ M3902 Zn.n          - to add an Offset to the Matrix. n.n = {-0.2 .. 0.2} [mm]
 M3902 Z0            - to shift your active zOffset to the zMatrix. The M3006 zOffset will be zero afterwards. The zMatrix is altered within Ram and might be saved to EEPROM[n] with M3902 S[n] afterwards.  
 M3902 Sn            - to save the active Matrix to position n = {1..9}  
 M3902 Z0 S1         - to shift the zOffset to your zMatrix and save the Matrix at position 1. This is an example to show that the options of M3902 can be combined.  
+M3911 S6000 P9000 E-30 - to limit extrusion when getting high digits because of overextrusion (Example: -10% per 1000 digits starting from 6000 digits)  
 M3939 Fn St1 Pt2 Ex Iy Rm   - to messure a curve of your Filaments velocity over digits -> viscosity.  
 
 M3920 Sb - to go into or switch back from SilentMode (This will lower your steppers current to an alternative profile)  
@@ -94,6 +94,7 @@ Listed all spare pins for RF1000 or RF2000.
 Fixed the RF2000's Status Message length to 20chars.  
 Fix for M3117
 Third Z-Scale Mode: G-Code @ Configuration->Z-Configuration->Z-Scale.
+(+ massive bug elimination on several places within the firmwares code)
 
 _by Nibbels/Wessix_:  
 M3909 Pn Sm         - See "Nibbels/Wessix SenseOffset"  
@@ -206,7 +207,6 @@ Additions to GCode M303:
 [J2] Some Overshoot  
 [J3] No Overshoot (suggested for Heated Bed)  
 [J4] Tyreus-Luyben (suggested for Heated Bed)  
-[J5] until [J7] are PD, PI, P-Profiles for control experts and special cases.  
 [Rn] Configurable Autotune cycles  
 Easy autotune support via printers menu.  
 Siehe auch http://www.rf1000.de/viewtopic.php?f=7&t=1963  

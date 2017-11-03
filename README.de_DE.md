@@ -43,10 +43,10 @@ in die Drucker einspielen.
 - RF2000 Heizbett: `M303 P2 X0 S70 R15 J4`  
 - RF1000 Heizbett: `M303 P1 X0 S70 R15 J4`  
 Starte mit EEPROM-Werten `PID I drive min = 30` and `PID I drive max = 100`  
-Oder setze #define PID_CONTROL_DRIVE_MIN_LIMIT_FACTOR zu 10.0f in der configuration.h um die alte Version des PID Reglers zu nutzen.
 
 ## Version RF 1.37mod - wichtige Threads im Forum
 
+http://www.rf1000.de/viewtopic.php?f=67&t=2043 (Thread to Stable 1.37v8 / 18.10.2017)
 http://www.rf1000.de/viewtopic.php?f=74&t=1674 (Nibbels/Wessix SenseOffset-Thread)  
 http://www.rf1000.de/viewtopic.php?f=7&t=1504#p14882 (mhier Mod)  
 http://www.rf1000.de/viewtopic.php?f=7&t=1504&start=60#p16397 (added feature)  
@@ -82,6 +82,7 @@ _von Nibbels_:
 **M3902 Z0** - Verschiebe das aktuell eingestellte Z-Offset in die zMatrix im RAM. Danach ist das Z-Offset=0.00 (Siehe M3006 / Z-Offset im Menü des Druckers), das tatsächliche Druck-Offset hat sich nicht geändert (+-0).
 **M3902 Z0 S1** - Kombinationsbefehl: Verschiebe das aktuell eingestellte Z-Offset in die zMatrix im RAM und speichere diese zMatrix an der Position 1 im EEPROM - Dies ist ein Beispiel um zu zeigen, dass die Optionen von M3902 kombiniert werden können.  
 **M3902 Sn** - Speichere die aktuell im RAM liegende zMatrix unter der Postion n = {1..9}  
+**M3911 S6000 P9000 E-30 - Bei hohen Kraftwerten wegen Überextrusion wird die Filamentförderung zurückgefahren (-10% pro 1000 digits, beginnend bei 6000 digits)  
 **M3939 Fn St1 Pt2 Ex Iy Rm** - um ein Diagramm über die Filamentextrusionsgeschwindigkeit und die korrelierende Digit Zahl aufzuzeichnen -> ermöglicht Rückschlüsse zur Viskosität des Filaments. Siehe unten.
 **M3920 Sb** - Flüstermodus ein oder ausschalten. (Diese Funktion vermindert den Strom der Steppermotoren auf ein in der Firmware definiertes alternatives Strom-Profil MOTOR\_CURRENT\_SILENT = [110/110/90/90/90] ).  
 Es wurden **alle Compilerwarnungen und Compilerfehler eliminiert**.  
@@ -92,6 +93,7 @@ In der pins.h wurden alle optionalen Pins für RF1000 und RF2000 aufgelistet.
 Korrektur des RF2000 Statuszeilenlimits auf 20 Zeichen.
 Korrektur des M3117
 Dritter Z-Scale Modus: G-Code unter Configuration->Z-Configuration->Z-Scale.
+(+ Massive Bug-Elimination überall im Code)
 
 _von Nibbels und Wessix entwickelt_:  
 **M3909 Pn Sm** - siehe unten "SenseOffset" (Kompensation der thermischen Nachdehnung)  
@@ -213,7 +215,6 @@ Erweiterter GCode M303:
 [J2] Some Overshoot  
 [J3] No Overshoot (empfohlen für Heizbett)  
 [J4] Tyreus-Luyben (empfohlen für Heizbett)  
-[J5] bis [J7] sind PD, PI, P-Profile for regelungstechnik experten bzw. spezielle Anwendungsfälle.  
 [Rn] Configurable Autotune cycles  
 Autotune support über das Druckermenü am Display.  
 Siehe auch http://www.rf1000.de/viewtopic.php?f=7&t=1963  

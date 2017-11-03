@@ -5124,6 +5124,13 @@ short moveZDownFast( bool execRunStandardTasks )
 
 int moveZ( int nSteps )
 {
+    /*
+    Warning 03.11.2017 : Do not try to make more steps than < 10mm in one row. Some printers will get a watchdog reset.
+    When choosing 10mm one printer crashed while others still worked.
+    We changed Scan PLA/ABS to 2x 5mm and it worked.
+    Reason is because we removed watchdog-ping from HAL::delayMicroseconds (which was good!)
+    */
+    
     int     i;
     int     nMaxLoops;
     char    bBreak;
@@ -11247,20 +11254,12 @@ void nextPreviousXAction( int8_t increment )
 
     if( PrintLine::direct.stepsRemaining )
     {
-        // we are moving already, there is nothing more to do
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousXAction(): moving x aborted (busy)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         return;
     }
 
     if( Printer::processAsDirectSteps() )
     {
         // this operation is not allowed while a printing/milling is in progress
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousXAction(): moving x aborted (not allowed)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
         //wenn man schnell den knopf klickt, soll man nicht im showerror landen, das nervt. Man sieht das ja, was der verfährt.
         //showError( (void*)ui_text_x_axis, (void*)ui_text_operation_denied );
         return;
@@ -11270,10 +11269,6 @@ void nextPreviousXAction( int8_t increment )
     if(!Printer::isAxisHomed(X_AXIS))
     {
         // we do not allow unknown positions and the printer is not homed, thus we do not move
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousXAction(): moving x aborted (not homed)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         showError( (void*)ui_text_x_axis, (void*)ui_text_home_unknown );
         return;
     }
@@ -11282,10 +11277,6 @@ void nextPreviousXAction( int8_t increment )
     if(increment<0 && Printer::isXMinEndstopHit())
     {
         // we shall move to the left but the x-min-endstop is hit already, so we do nothing
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousXAction(): moving x aborted (min reached)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         showError( (void*)ui_text_x_axis, (void*)ui_text_min_reached );
         return;
     }
@@ -11293,10 +11284,6 @@ void nextPreviousXAction( int8_t increment )
     if(increment>0 && (Printer::lengthMM[X_AXIS] - Printer::targetXPosition()) < 0.1)
     {
         // we shall move to the right but the end of the x-axis has been reached already, so we do nothing
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousXAction(): moving x aborted (max reached)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         showError( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
         return;
     }
@@ -11355,9 +11342,6 @@ void nextPreviousXAction( int8_t increment )
             if( PrintLine::direct.stepsRemaining )
             {
                 // we are moving already, there is nothing more to do
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-                Com::printFLN( PSTR( "nextPreviousXAction(): moving x aborted (busy)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
                 return;
             }
 
@@ -11415,10 +11399,6 @@ void nextPreviousYAction( int8_t increment )
     if( PrintLine::direct.stepsRemaining )
     {
         // we are moving already, there is nothing more to do
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousYAction(): moving y aborted (busy)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         return;
     }
 
@@ -11451,10 +11431,6 @@ void nextPreviousYAction( int8_t increment )
     if(increment<0 && Printer::isYMinEndstopHit())
     {
         // we shall move to the back but the y-min-endstop is hit already, so we do nothing
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousYAction(): moving y aborted (min reached)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         showError( (void*)ui_text_y_axis, (void*)ui_text_min_reached );
         return;
     }
@@ -11462,10 +11438,6 @@ void nextPreviousYAction( int8_t increment )
     if(increment>0 && (Printer::lengthMM[Y_AXIS] - Printer::targetYPosition()) < 0.1)
     {
         // we shall move to the front but the end of the y-axis has been reached already, so we do nothing
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousYAction(): moving y aborted (max reached)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         showError( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
         return;
     }
@@ -11524,9 +11496,6 @@ void nextPreviousYAction( int8_t increment )
             if( PrintLine::direct.stepsRemaining )
             {
                 // we are moving already, there is nothing more to do
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-                Com::printFLN( PSTR( "nextPreviousYAction(): moving y aborted (busy)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
                 return;
             }
 
@@ -11585,10 +11554,6 @@ void nextPreviousZAction( int8_t increment )
     if( PrintLine::direct.stepsRemaining )
     {
         // we are moving already, there is nothing more to do
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (busy)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         return;
     }
 
@@ -11750,9 +11715,6 @@ void nextPreviousZAction( int8_t increment )
             if( PrintLine::direct.stepsRemaining )
             {
                 // we are moving already, there is nothing more to do
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-                Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (busy)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
                 return;
             }
 

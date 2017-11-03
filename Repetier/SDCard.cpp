@@ -191,21 +191,9 @@ void SDCard::abortPrint()
     sdpos    = 0;
     filesize = 0;
 
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-    Com::printFLN(PSTR("G-Code buffer reset"));
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
     GCode::resetBuffer();
 
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-    Com::printFLN(PSTR("Path planner reset"));
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
     PrintLine::resetPathPlanner();
-
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-    Com::printFLN(PSTR("Line buffer reset"));
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
 
     PrintLine::resetLineBuffer();
 
