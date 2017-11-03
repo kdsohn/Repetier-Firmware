@@ -914,7 +914,7 @@ void scanHeatBed( void )
             }
             case 45: //case kommt beim HBS nicht vor??? doch, als retryStatus von 49 aus.
             {
-                while( Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit() )
+                while( Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit() ) //sollte inzwischen egal (??) sein, wir fahren immer automatisch per homing aus dem endstop heraus.
                 {
                     // ensure that there is no z endstop hit before we perform the z-axis homing
                     moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *2) );
@@ -1378,7 +1378,7 @@ void scanHeatBed( void )
             }
             case 105:  //retryStatus von 100 aus.
             {
-                while( Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit() )
+                while( Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit() ) //sollte inzwischen egal (??) sein, wir fahren immer automatisch per homing aus dem endstop heraus.
                 {
                     // ensure that there is no z endstop hit before we perform the z-axis homing
                     moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *2) );
@@ -1572,28 +1572,56 @@ void scanHeatBed( void )
                 nZ                = 0;
 
                 g_lastScanTime       = HAL::timeInMilliseconds();
+                g_nHeatBedScanStatus = 133;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+                if( Printer::debugInfo() )
+                {
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "132 -> 133" ) );
+                }
+#endif // DEBUG_HEAT_BED_SCAN == 2
+                break;
+            }
+            case 133:
+            {
+                // move the heat bed 5mm down
+                g_nZScanZPosition += moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
+                g_lastScanTime       = HAL::timeInMilliseconds();
+                g_nHeatBedScanStatus = 134;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+                if( Printer::debugInfo() )
+                {
+                    Com::printF( Com::tscanHeatBed );
+                    Com::printFLN( PSTR( "133 -> 134" ) );
+                }
+#endif // DEBUG_HEAT_BED_SCAN == 2
+                break;
+            }
+            case 134:
+            {
+                // move the heat bed 5mm down
+                g_nZScanZPosition += moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
+                g_lastScanTime       = HAL::timeInMilliseconds();
                 g_nHeatBedScanStatus = 135;
 
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "132 -> 135" ) );
+                    Com::printFLN( PSTR( "134 -> 135" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
             }
             case 135:
             {
-                // move the heat bed 10mm down
-                g_nZScanZPosition += moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *10) );
-
                 // at this point we are homed and we are above the x/y position at which we shall perform the measurement of the z-offset with the hot extruder(s)
 #if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( g_nHeatBedScanMode == HEAT_BED_SCAN_MODE_PLA )
                 {
                     Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA, 0, false);
-
 #if NUM_EXTRUDER == 2
                     Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA, 1, false);
 #endif // NUM_EXTRUDER == 2
@@ -1601,7 +1629,6 @@ void scanHeatBed( void )
                 else if ( g_nHeatBedScanMode == HEAT_BED_SCAN_MODE_ABS )
                 {
                     Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS, 0, false);
-
 #if NUM_EXTRUDER == 2
                     Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS, 1, false);
 #endif // NUM_EXTRUDER == 2
@@ -1684,7 +1711,7 @@ void scanHeatBed( void )
             }
             case 139:   //retryStatus von 137 aus.
             {
-                while( Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit() )
+                while( Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit() ) //sollte inzwischen egal (??) sein, wir fahren immer automatisch per homing aus dem endstop heraus.
                 {
                     // ensure that there is no z endstop hit before we perform the z-axis homing
                     moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *2) );
@@ -5058,7 +5085,6 @@ short moveZDownFast( bool execRunStandardTasks )
     short   nZ = 0;
     short   nSteps;
 
-
     // move the heat bed down so that we won't hit it when we move to the next position
     g_nLastZScanZPosition = g_nZScanZPosition;
     HAL::delayMilliseconds( g_nScanFastStepDelay );
@@ -5098,6 +5124,13 @@ short moveZDownFast( bool execRunStandardTasks )
 
 int moveZ( int nSteps )
 {
+    /*
+    Warning 03.11.2017 : Do not try to make more steps than < 10mm in one row. Some printers will get a watchdog reset.
+    When choosing 10mm one printer crashed while others still worked.
+    We changed Scan PLA/ABS to 2x 5mm and it worked.
+    Reason is because we removed watchdog-ping from HAL::delayMicroseconds (which was good!)
+    */
+    
     int     i;
     int     nMaxLoops;
     char    bBreak;
@@ -11221,20 +11254,12 @@ void nextPreviousXAction( int8_t increment )
 
     if( PrintLine::direct.stepsRemaining )
     {
-        // we are moving already, there is nothing more to do
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousXAction(): moving x aborted (busy)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         return;
     }
 
     if( Printer::processAsDirectSteps() )
     {
         // this operation is not allowed while a printing/milling is in progress
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousXAction(): moving x aborted (not allowed)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
         //wenn man schnell den knopf klickt, soll man nicht im showerror landen, das nervt. Man sieht das ja, was der verfährt.
         //showError( (void*)ui_text_x_axis, (void*)ui_text_operation_denied );
         return;
@@ -11244,10 +11269,6 @@ void nextPreviousXAction( int8_t increment )
     if(!Printer::isAxisHomed(X_AXIS))
     {
         // we do not allow unknown positions and the printer is not homed, thus we do not move
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousXAction(): moving x aborted (not homed)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         showError( (void*)ui_text_x_axis, (void*)ui_text_home_unknown );
         return;
     }
@@ -11256,10 +11277,6 @@ void nextPreviousXAction( int8_t increment )
     if(increment<0 && Printer::isXMinEndstopHit())
     {
         // we shall move to the left but the x-min-endstop is hit already, so we do nothing
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousXAction(): moving x aborted (min reached)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         showError( (void*)ui_text_x_axis, (void*)ui_text_min_reached );
         return;
     }
@@ -11267,10 +11284,6 @@ void nextPreviousXAction( int8_t increment )
     if(increment>0 && (Printer::lengthMM[X_AXIS] - Printer::targetXPosition()) < 0.1)
     {
         // we shall move to the right but the end of the x-axis has been reached already, so we do nothing
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousXAction(): moving x aborted (max reached)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         showError( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
         return;
     }
@@ -11329,9 +11342,6 @@ void nextPreviousXAction( int8_t increment )
             if( PrintLine::direct.stepsRemaining )
             {
                 // we are moving already, there is nothing more to do
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-                Com::printFLN( PSTR( "nextPreviousXAction(): moving x aborted (busy)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
                 return;
             }
 
@@ -11389,10 +11399,6 @@ void nextPreviousYAction( int8_t increment )
     if( PrintLine::direct.stepsRemaining )
     {
         // we are moving already, there is nothing more to do
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousYAction(): moving y aborted (busy)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         return;
     }
 
@@ -11425,10 +11431,6 @@ void nextPreviousYAction( int8_t increment )
     if(increment<0 && Printer::isYMinEndstopHit())
     {
         // we shall move to the back but the y-min-endstop is hit already, so we do nothing
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousYAction(): moving y aborted (min reached)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         showError( (void*)ui_text_y_axis, (void*)ui_text_min_reached );
         return;
     }
@@ -11436,10 +11438,6 @@ void nextPreviousYAction( int8_t increment )
     if(increment>0 && (Printer::lengthMM[Y_AXIS] - Printer::targetYPosition()) < 0.1)
     {
         // we shall move to the front but the end of the y-axis has been reached already, so we do nothing
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousYAction(): moving y aborted (max reached)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         showError( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
         return;
     }
@@ -11498,9 +11496,6 @@ void nextPreviousYAction( int8_t increment )
             if( PrintLine::direct.stepsRemaining )
             {
                 // we are moving already, there is nothing more to do
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-                Com::printFLN( PSTR( "nextPreviousYAction(): moving y aborted (busy)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
                 return;
             }
 
@@ -11559,10 +11554,6 @@ void nextPreviousZAction( int8_t increment )
     if( PrintLine::direct.stepsRemaining )
     {
         // we are moving already, there is nothing more to do
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-        Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (busy)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
         return;
     }
 
@@ -11724,9 +11715,6 @@ void nextPreviousZAction( int8_t increment )
             if( PrintLine::direct.stepsRemaining )
             {
                 // we are moving already, there is nothing more to do
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-                Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (busy)" ) );
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
                 return;
             }
 
