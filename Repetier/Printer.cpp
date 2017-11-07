@@ -43,7 +43,6 @@ short           Printer::max_milling_all_axis_acceleration = MILLER_ACCELERATION
 unsigned long   Printer::maxPrintAccelerationStepsPerSquareSecond[4];
 /** Acceleration in steps/s^2 in movement mode.*/
 unsigned long   Printer::maxTravelAccelerationStepsPerSquareSecond[4];
-uint32_t        Printer::maxInterval;
 #endif // RAMP_ACCELERATION
 
 uint8_t         Printer::relativeCoordinateMode = false;                ///< Determines absolute (false) or relative Coordinates (true).
@@ -333,8 +332,15 @@ void Printer::updateDerivedParameter()
         }
 #endif  // FEATURE_MILLING_MODE
 #endif // RAMP_ACCELERATION
-    } 
-    
+    }
+
+    // 07 11 2017 https://github.com/repetier/Repetier-Firmware/commit/e76875ec2d04bd0dbfdd9a157270ee03f4731d5f#diff-dbe11559ff43e09563388a4968911e40L1973
+    // For numeric stability we need to start accelerations at a minimum speed and hence ensure that the
+    // jerk is at least 2 * minimum speed.
+
+    // For xy moves the minimum speed is multiplied with 1.41 to enforce the condition also for diagonals since the
+    // driving axis is the problematic speed.
+
     float accel;
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
@@ -348,14 +354,28 @@ void Printer::updateDerivedParameter()
     }
 #endif  // FEATURE_MILLING_MODE
     
-    float minimumSpeed = accel * sqrt(2.0f / (axisStepsPerMM[X_AXIS] * accel));
+    float minimumSpeed = 1.41 * accel * sqrt(2.0f / (axisStepsPerMM[X_AXIS] * accel));
+#if FEATURE_MILLING_MODE
+    if( Printer::operatingMode == OPERATING_MODE_PRINT )
+    {
+#endif // FEATURE_MILLING_MODE
+      accel = RMath::max(maxAccelerationMMPerSquareSecond[Y_AXIS], maxTravelAccelerationMMPerSquareSecond[Y_AXIS]);
+#if FEATURE_MILLING_MODE
+    }
+    else{
+      accel = MILLER_ACCELERATION;
+    }
+#endif  // FEATURE_MILLING_MODE    
+    float minimumSpeed2 = 1.41 * accel * sqrt(2.0f / (axisStepsPerMM[Y_AXIS] * accel));
+        if(minimumSpeed2 > minimumSpeed) {
+            minimumSpeed = minimumSpeed2;
+        }
+
     if(maxJerk < 2 * minimumSpeed) {// Enforce minimum start speed if target is faster and jerk too low
         maxJerk = 2 * minimumSpeed;
         Com::printFLN(PSTR("XY jerk was too low, setting to "), maxJerk);
     }
-    
-    
-    
+
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
@@ -369,17 +389,8 @@ void Printer::updateDerivedParameter()
         maxZJerk = 2 * minimumZSpeed;
         Com::printFLN(PSTR("Z jerk was too low, setting to "), maxZJerk);
     }
-    
-    maxInterval = F_CPU / (minimumSpeed * axisStepsPerMM[X_AXIS]);
-    uint32_t tmp = F_CPU / (minimumSpeed * axisStepsPerMM[Y_AXIS]);
-    if(tmp < maxInterval)
-        maxInterval = tmp;
-    tmp = F_CPU / (minimumZSpeed * axisStepsPerMM[Z_AXIS]);
-    if(tmp < maxInterval) 
-        maxInterval = tmp;
 
     Printer::updateAdvanceFlags();
-
 } // updateDerivedParameter
 
 

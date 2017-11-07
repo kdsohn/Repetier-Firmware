@@ -476,11 +476,11 @@ public:
     } // startYStep
 
     void updateStepsParameter();
-    inline float safeSpeed();
-    void calculateQueueMove(float axis_diff[],uint8_t pathOptimize);
+    inline float safeSpeed(fast8_t drivingAxis);
+    void calculateQueueMove(float axis_diff[],uint8_t pathOptimize, fast8_t drivingAxis);
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-    void calculateDirectMove(float axis_diff[],uint8_t pathOptimize);
+    void calculateDirectMove(float axis_diff[],uint8_t pathOptimize, fast8_t drivingAxis);
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
     INLINE long getWaitTicks()
