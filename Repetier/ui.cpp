@@ -1924,6 +1924,20 @@ void UIDisplay::parse(char *txt,bool ram)
                         addInt(100,3);
                     }
                 }
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+                else if(c2=='U')                                                                        // %CU : digit flow lower limit
+                {
+                    addInt((int)g_nDigitFlowCompensation_Fmin,6);
+                }
+                else if(c2=='O')                                                                        // %CO : digit flow higher limit
+                {
+                    addInt((int)g_nDigitFlowCompensation_Fmax,6);
+                }
+                else if(c2=='F')                                                                        // %CF : digit flow flowrate
+                {
+                    addInt((int)g_nDigitFlowCompensation_intense,3);
+                }
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
                 break;
             }
 #endif //FEATURE_READ_CALIPER
@@ -4104,6 +4118,25 @@ void UIDisplay::nextPreviousAction(int8_t next)
             }
             break;
         }
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+        case UI_ACTION_FLOW_MIN:
+        {
+            INCREMENT_MIN_MAX(g_nDigitFlowCompensation_Fmin,200,0,g_nDigitFlowCompensation_Fmax);
+            break;
+        }
+        case UI_ACTION_FLOW_MAX:
+        {
+            short max = (g_nEmergencyPauseDigitsMax ? abs(g_nEmergencyPauseDigitsMax) : abs(EMERGENCY_PAUSE_DIGITS_MAX));
+            INCREMENT_MIN_MAX(g_nDigitFlowCompensation_Fmax,200,g_nDigitFlowCompensation_Fmin,max);
+            break;
+        }
+        case UI_ACTION_FLOW_DF:
+        {
+            INCREMENT_MIN_MAX(g_nDigitFlowCompensation_intense,1,-99,99);
+            //flowmulti wird zur laufzeit geändert, anhand von steigung intense
+            break;
+        }
+#endif //FEATURE_DIGIT_FLOW_COMPENSATION
         case UI_ACTION_FREQ_DBL:
         {
             INCREMENT_MIN_MAX(Printer::stepsDoublerFrequency,500,5000,12000);
