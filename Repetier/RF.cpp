@@ -205,10 +205,10 @@ short           g_nLastDigits = 0;
 float           g_nDigitZCompensationDigits = 0.0f;
 bool            g_nDigitZCompensationDigits_active = true;
  #if FEATURE_DIGIT_FLOW_COMPENSATION
- int8_t           g_nDigitFlowCompensation_intense = 0; // +- %
- short            g_nDigitFlowCompensation_Fmin = 5000;  //mögliche Standardwerte
- short            g_nDigitFlowCompensation_Fmax = 12000; //mögliche Standardwerte
- float            g_nDigitFlowCompensation_flowmulti = 1.0f;
+ int8_t         g_nDigitFlowCompensation_intense = 0; // +- % Standard 0 heißt flowmulti wird zu 1.0f
+ short          g_nDigitFlowCompensation_Fmin = short(abs(EMERGENCY_PAUSE_DIGITS_MAX)*0.7);  //mögliche Standardwerte
+ short          g_nDigitFlowCompensation_Fmax = short(abs(EMERGENCY_PAUSE_DIGITS_MAX)); //mögliche Standardwerte -> z.b. gut wenn das die pause-digits sind.
+ float          g_nDigitFlowCompensation_flowmulti = 1.0f; //standard aus: faktor 1.0
  #endif // FEATURE_DIGIT_FLOW_COMPENSATION
 #endif // FEATURE_DIGIT_Z_COMPENSATION
 
@@ -5634,14 +5634,6 @@ char prepareCompensationMatrix( void )
         // we have one y column more now
         g_uZMatrixMax[Y_AXIS] ++;
     }
-    else
-    {
-        // there is nothing else to do here
-/*      if( Printer::debugInfo() )
-        {
-            Com::printFLN( PSTR( "prepareCompensationMatrix(): y[g_uZMatrixMax[Y_AXIS]-1] = Printer::lengthMM[Y_AXIS]" ) );
-        }
-*/  }
 
     // determine the minimal distance between extruder and heat bed
     determineCompensationOffsetZ();
@@ -7965,7 +7957,7 @@ void processCommand( GCode* pCommand )
                         // test and take over the specified value
                         nTemp = pCommand->S;
                         if( nTemp < 5 )                     nTemp = 5;
-                        if( nTemp > (Y_MAX_LENGTH -5 ) )    nTemp = Y_MAX_LENGTH -5;
+                        if( nTemp > (Printer::lengthMM[Y_AXIS] - 5 ) )    nTemp = Printer::lengthMM[Y_AXIS] - 5;
 
                         g_nScanYStartSteps = (long)((float)nTemp * Printer::axisStepsPerMM[Y_AXIS]);
                         if( Printer::debugInfo() )
@@ -8076,7 +8068,7 @@ void processCommand( GCode* pCommand )
                         // test and take over the specified value
                         nTemp = pCommand->S;
                         if( nTemp < 5 )                     nTemp = 5;
-                        if( nTemp > (Y_MAX_LENGTH -5 ) )    nTemp = Y_MAX_LENGTH -5;
+                        if( nTemp > (Printer::lengthMM[Y_AXIS] - 5 ) )    nTemp = Printer::lengthMM[Y_AXIS] - 5;
 
                         g_nScanYEndSteps = (long)((float)nTemp * Printer::axisStepsPerMM[Y_AXIS]);
                         if( Printer::debugInfo() )
@@ -8086,7 +8078,7 @@ void processCommand( GCode* pCommand )
                             Com::printFLN( PSTR( " [steps]" ) );
                         }
 
-                        g_nScanYMaxPositionSteps = long(Y_MAX_LENGTH * Printer::axisStepsPerMM[Y_AXIS] - g_nScanYEndSteps);
+                        g_nScanYMaxPositionSteps = long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS] - g_nScanYEndSteps);
                         if( Printer::debugInfo() )
                         {
                             Com::printF( PSTR( "M3025: new y max position: " ), (int)g_nScanYMaxPositionSteps );
@@ -8707,8 +8699,8 @@ void processCommand( GCode* pCommand )
                     {
                         // test and take over the specified value
                         nTemp = pCommand->Y;
-                        if( nTemp < -Y_MAX_LENGTH )     nTemp = -Y_MAX_LENGTH;
-                        if( nTemp > Y_MAX_LENGTH )      nTemp = Y_MAX_LENGTH;
+                        if( nTemp < -Printer::lengthMM[Y_AXIS] )     nTemp = -Printer::lengthMM[Y_AXIS];
+                        if( nTemp > Printer::lengthMM[Y_AXIS] )      nTemp = Printer::lengthMM[Y_AXIS];
 
                         g_nPauseSteps[Y_AXIS] = (long)((float)nTemp * Printer::axisStepsPerMM[Y_AXIS]);
                         if( Printer::debugInfo() )
@@ -8722,7 +8714,7 @@ void processCommand( GCode* pCommand )
                         // test and take over the specified value
                         nTemp = pCommand->Z;
                         if( nTemp < 0 )                 nTemp = 0;
-                        if( nTemp > Z_MAX_LENGTH )      nTemp = Z_MAX_LENGTH;
+                        if( nTemp > Printer::lengthMM[Z_AXIS] )      nTemp = Printer::lengthMM[Z_AXIS];
 
                         g_nPauseSteps[Z_AXIS] = (long)((float)nTemp * Printer::axisStepsPerMM[Z_AXIS]);
                         if( Printer::debugInfo() )
@@ -8778,7 +8770,7 @@ void processCommand( GCode* pCommand )
                         // test and take over the specified value
                         nTemp = pCommand->Y;
                         if( nTemp < 0 )             nTemp = 0;
-                        if( nTemp > Y_MAX_LENGTH )  nTemp = Y_MAX_LENGTH;
+                        if( nTemp > Printer::lengthMM[Y_AXIS] )  nTemp = Printer::lengthMM[Y_AXIS];
 
                         g_nParkPosition[Y_AXIS] = nTemp;
                         if( Printer::debugInfo() )
@@ -8792,7 +8784,7 @@ void processCommand( GCode* pCommand )
                         // test and take over the specified value
                         nTemp = pCommand->Z;
                         if( nTemp < 0 )             nTemp = 0;
-                        if( nTemp > Z_MAX_LENGTH )  nTemp = Z_MAX_LENGTH;
+                        if( nTemp > Printer::lengthMM[Z_AXIS] )  nTemp = Printer::lengthMM[Z_AXIS];
 
                         g_nParkPosition[Z_AXIS] = nTemp;
                         if( Printer::debugInfo() )
@@ -9245,7 +9237,7 @@ void processCommand( GCode* pCommand )
                         // test and take over the specified value
                         nTemp = pCommand->S;
                         if( nTemp < 5 )                     nTemp = 5;
-                        if( nTemp > (Y_MAX_LENGTH -5 ) )    nTemp = Y_MAX_LENGTH -5;
+                        if( nTemp > (Printer::lengthMM[Y_AXIS] - 5 ) )    nTemp = Printer::lengthMM[Y_AXIS] - 5;
 
                         g_nScanYStartSteps = (long)((float)nTemp * Printer::axisStepsPerMM[Y_AXIS]);
                         if( Printer::debugInfo() )
@@ -9358,7 +9350,7 @@ void processCommand( GCode* pCommand )
                         // test and take over the specified value
                         nTemp = pCommand->S;
                         if( nTemp < 5 )                     nTemp = 5;
-                        if( nTemp > (Y_MAX_LENGTH -5 ) )    nTemp = Y_MAX_LENGTH -5;
+                        if( nTemp > (Printer::lengthMM[Y_AXIS] - 5 ) )    nTemp = Printer::lengthMM[Y_AXIS] - 5;
 
                         g_nScanYEndSteps = (long)((float)nTemp * Printer::axisStepsPerMM[Y_AXIS]);
                         if( Printer::debugInfo() )
@@ -9368,7 +9360,7 @@ void processCommand( GCode* pCommand )
                             Com::printFLN( PSTR( " [steps]" ) );
                         }
 
-                        g_nScanYMaxPositionSteps = long(Y_MAX_LENGTH * Printer::axisStepsPerMM[Y_AXIS] - g_nScanYEndSteps);
+                        g_nScanYMaxPositionSteps = long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS] - g_nScanYEndSteps);
                         if( Printer::debugInfo() )
                         {
                             Com::printF( PSTR( "M3165: new y max position: " ), (int)g_nScanYMaxPositionSteps );
