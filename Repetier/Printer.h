@@ -65,7 +65,6 @@ public:
     static float            invAxisStepsPerMM[];
     static float            maxFeedrate[];
     static float            homingFeedrate[];
-    static uint32_t         maxInterval; // slowest allowed interval
     static float            maxAccelerationMMPerSquareSecond[];
     static float            maxTravelAccelerationMMPerSquareSecond[];
 #if FEATURE_MILLING_MODE
