@@ -6884,7 +6884,7 @@ void parkPrinter( void )
 
     Printer::homeAxis( true, true, true );
 
-    Printer::moveToReal( g_nParkPosition[X_AXIS], g_nParkPosition[Y_AXIS], g_nParkPosition[Z_AXIS], IGNORE_COORDINATE, Printer::homingFeedrate[0]);
+    Printer::moveToReal( g_nParkPosition[X_AXIS], g_nParkPosition[Y_AXIS], g_nParkPosition[Z_AXIS], IGNORE_COORDINATE, Printer::homingFeedrate[X_AXIS]);
 
 } // parkPrinter
 #endif // FEATURE_PARK
