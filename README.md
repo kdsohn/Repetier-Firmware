@@ -16,7 +16,7 @@ https://github.com/RF1000/Repetier-Firmware (see branch development)
 ## HowTo Install
 
 - Download the Firmware `Branch: community_development` and unzip all the files.  
-- Install Arduino.cc 1.6.5 or 1.8.4 and later if it is not installed on your computer already.  
+- Install Arduino.cc 1.6.5 or 1.8.5 and later if it is not installed on your computer already.  
 - Edit and save Configuration.h @Line46 and 47 according to your printers model. You have to remove the two **//** in front of the printers name you wish to activate:  
 `#define MOTHERBOARD                         DEVICE_TYPE_RF1000` or  
 `#define MOTHERBOARD                         DEVICE_TYPE_RF2000`
@@ -181,7 +181,8 @@ Menü -> Configuration -> Stepper :: DblFq = 6500 or {5000...12000}
 
 ## Configurable temperature settings within menu and EEPROM  
 PID-Autotune, other controlparameters and the sensortype is adjustable within the menu.  
-Menü -> Configuration -> Temperatures -> Extruder0/Extruder1/Heizbett  
+Menü -> Configuration -> Temperatures -> Extruder0/Extruder1/Heizbett -> Sensortype: {1=Pico/Reprap, 3=EPCOS G550, 8=104-GT2, 14=3950-100k}  
+In case you need other sensor types see RF1000.h / RF2000.h and edit it within EEPROM.
 
 ## Dualhead Tip-Down Support (beta)
 * M3919 [S]mikrometer - Testfunction for Dip-Down-Hotend @ T1: T1 can now be springloaded and the bed will be adjusted "down" whenever T1 is selected. This is alike Ultimaker 3 does it with the right hotend.   
@@ -191,9 +192,9 @@ Example: M3919 T1 Z-0.6 tells the Printer that the right hotend will reach 0.6mm
 ## Feature Digit-Z-Kompensation (beta)
 If you apply force to the DMS sensors the bed is adjusted (if Z-Compensation is active). This corrects the error which bending of the sensors apply to your layers. The physical change of the beds level is approximately +0,01mm for +1000 applied force (digits).
 
-## RF2000: Additional Temperature Sensor
-This optional 3rd temperature T3 is automatically sent out with the other Temperatures and Digits.  
-``` 15:16:14.637: T:204.67 /205 B:28.60 /20 B@:0 @:143 T0:28.60 /0 @0:0 T1:204.67 /205 @1:143 T3:28.23 F:322 ```
+## RF2000: Additional Temperature Sensor for heated chamger  
+This optional 3rd temperature C is automatically sent out with the other Temperatures and Digits.  
+Example: ``` 22:09:24.271: T:21.7 /0 @:0 B:20.6 /0 B@:0 T0:21.7 /0 @0:0 T1:23.2 /0 @1:0 C:21.5 /0 C@:0 F:-173 /0 @:0 ```  
 See RESERVE_ANALOG_SENSOR_TYPE in RF2000.h for configuration options.  
 See RESERVE_ANALOG_INPUTS to find the involved code within the firmware.  
 You will need to install and additional cable and a temperature sensor at X35 on your printers Board. Then you can wire your sensor to some place needed.  
@@ -219,4 +220,4 @@ Manual extrusion when paused resets automatic retract for continue.
 ## Wessix`s help video:
 [![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)
 
-## !! 22.08.2017: Project is Work in Progress and untested changes are possible.
+## !! 12.11.2017: Project is Work in Progress and untested changes are possible.
