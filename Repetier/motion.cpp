@@ -345,8 +345,11 @@ void PrintLine::stopDirectMove( void ) //Funktion ist bereits zur ausführzeit v
 void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, fast8_t drivingAxis)
 {
     long    axisInterval[4];
-    //float   timeForMove = (float)(F_CPU)*distance / (isXOrYMove() ? RMath::max(Printer::minimumSpeed,Printer::feedrate) : Printer::feedrate);   // time is in ticks
-    float timeForMove = (float)(F_CPU) * distance / Printer::feedrate; // time is in ticks
+    float timeForMove = (float)(F_CPU) * distance / Printer::feedrate
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+                                                                      / g_nDigitFlowCompensation_feedmulti
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
+    ; // time is in ticks
     
     if(linesCount < MOVE_CACHE_LOW && timeForMove < LOW_TICKS_PER_MOVE)   // Limit speed to keep cache full.
     {
@@ -444,8 +447,17 @@ void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, 
     fAcceleration = 262144.0*(float)accelerationPrim / F_CPU; // will overflow without float!
     accelerationDistance2 = 2.0 * distance * slowestAxisPlateauTimeRepro * fullSpeed / ((float)F_CPU);  // mm^2/s^2
     startSpeed = endSpeed = minSpeed = safeSpeed(drivingAxis);
-    if(startSpeed > Printer::feedrate)
-        startSpeed = endSpeed = minSpeed = Printer::feedrate;
+    if(startSpeed > Printer::feedrate
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+                                      * g_nDigitFlowCompensation_feedmulti
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
+    ){
+        startSpeed = endSpeed = minSpeed = Printer::feedrate
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+                                      * g_nDigitFlowCompensation_feedmulti
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
+        ;
+    }
     // Can accelerate to full speed within the line
     if (startSpeed * startSpeed + accelerationDistance2 >= fullSpeed * fullSpeed)
         setNominalMove();
@@ -631,8 +643,17 @@ void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize,
     fAcceleration = 262144.0*(float)accelerationPrim/F_CPU;                                         // will overflow without float!
     accelerationDistance2 = 2.0*distance*slowestAxisPlateauTimeRepro*fullSpeed/((float)F_CPU);  // mm^2/s^2
     startSpeed = endSpeed = minSpeed = safeSpeed(drivingAxis);
-    if(startSpeed > Printer::feedrate)
-        startSpeed = endSpeed = minSpeed = Printer::feedrate;
+    if(startSpeed > Printer::feedrate
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+                                      * g_nDigitFlowCompensation_feedmulti
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
+    ){
+        startSpeed = endSpeed = minSpeed = Printer::feedrate
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+                                      * g_nDigitFlowCompensation_feedmulti
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
+        ;
+    }
     // Can accelerate to full speed within the line
     if (startSpeed * startSpeed + accelerationDistance2 >= fullSpeed * fullSpeed)
         setNominalMove();

@@ -1273,7 +1273,11 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 if(c2=='m')                                                                             // %om : Speed multiplier
                 {
-                    addInt(Printer::feedrateMultiply,3);
+                    addInt(Printer::feedrateMultiply
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_feedmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+                    ,3);
                     break;
                 }
                 if(c2=='p')                                                                             // %op : Is single double or quadstepping?
@@ -1935,7 +1939,11 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 else if(c2=='F')                                                                        // %CF : digit flow flowrate
                 {
-                    addInt((int)g_nDigitFlowCompensation_intense,3);
+                    addInt((int)g_nDigitFlowCompensation_intense,3); //eigentlcih sollten wir F und E hier tauschen... egal.
+                }
+                else if(c2=='E')                                                                        // %CE : digit flow feedrate
+                {
+                    addInt((int)g_nDigitFlowCompensation_speed_intense,3);
                 }
 #endif // FEATURE_DIGIT_FLOW_COMPENSATION
                 break;
@@ -4133,7 +4141,13 @@ void UIDisplay::nextPreviousAction(int8_t next)
         case UI_ACTION_FLOW_DF:
         {
             INCREMENT_MIN_MAX(g_nDigitFlowCompensation_intense,1,-99,99);
-            //flowmulti wird zur laufzeit geändert, anhand von steigung intense
+            //flowmulti wird zur laufzeit geändert, anhand von steigung intense -> aber je nach cache erst sehr spät.
+            break;
+        }
+        case UI_ACTION_FLOW_DV:
+        {
+            INCREMENT_MIN_MAX(g_nDigitFlowCompensation_speed_intense,1,-99,99);
+            //feedmulti wird zur laufzeit geändert, anhand von steigung intense
             break;
         }
 #endif //FEATURE_DIGIT_FLOW_COMPENSATION

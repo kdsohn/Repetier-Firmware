@@ -181,6 +181,7 @@ List of placeholder:
 %CU : digit flow lower limit
 %CO : digit flow higher limit
 %CF : digit flow flowrate
+%CE : digit flow feedrate
 
 %FH : Digit Homing to Zero ON/OFF
 %FC : Digits force-bend-hotend-down Compensation Z ON/OFF
@@ -906,9 +907,10 @@ UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_digits_cmp,UI_TEXT_DO_DIGIT_COMPENSATION,UI
  UI_MENU_CHANGEACTION( ui_menu_flow_min, UI_TEXT_FLOW_MIN, UI_ACTION_FLOW_MIN)
  UI_MENU_CHANGEACTION( ui_menu_flow_max, UI_TEXT_FLOW_MAX, UI_ACTION_FLOW_MAX)
  UI_MENU_CHANGEACTION( ui_menu_flow_df,  UI_TEXT_FLOW_DF,  UI_ACTION_FLOW_DF)
+ UI_MENU_CHANGEACTION( ui_menu_flow_dv,  UI_TEXT_FLOW_DV,  UI_ACTION_FLOW_DV)
 
- #define UI_MENU_CONF_FLOW_COMPENSATION {UI_MENU_ADDCONDBACK &ui_menu_flow_min, &ui_menu_flow_max, &ui_menu_flow_df}
- UI_MENU(ui_menu_settings_flow,UI_MENU_CONF_FLOW_COMPENSATION,UI_MENU_BACKCNT+3)
+ #define UI_MENU_CONF_FLOW_COMPENSATION {UI_MENU_ADDCONDBACK &ui_menu_flow_min, &ui_menu_flow_max, &ui_menu_flow_df, &ui_menu_flow_dv}
+ UI_MENU(ui_menu_settings_flow,UI_MENU_CONF_FLOW_COMPENSATION,UI_MENU_BACKCNT+4)
 
  UI_MENU_SUBMENU_FILTER(ui_menu_conf_flow, UI_TEXT_FLOW_MENU, ui_menu_settings_flow, MENU_MODE_PRINTER,0)
  #define UI_MENU_CONFIGURATION_FLOW_COMPENSATION_COND &ui_menu_conf_flow, 

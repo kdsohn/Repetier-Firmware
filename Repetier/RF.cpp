@@ -206,9 +206,11 @@ float           g_nDigitZCompensationDigits = 0.0f;
 bool            g_nDigitZCompensationDigits_active = true;
  #if FEATURE_DIGIT_FLOW_COMPENSATION
  int8_t         g_nDigitFlowCompensation_intense = 0; // +- % Standard 0 heißt flowmulti wird zu 1.0f
+ int8_t         g_nDigitFlowCompensation_speed_intense = 0; // +- % Standard 0 heißt feedmulti wird zu 1.0f
  short          g_nDigitFlowCompensation_Fmin = short(abs(EMERGENCY_PAUSE_DIGITS_MAX)*0.7);  //mögliche Standardwerte
  short          g_nDigitFlowCompensation_Fmax = short(abs(EMERGENCY_PAUSE_DIGITS_MAX)); //mögliche Standardwerte -> z.b. gut wenn das die pause-digits sind.
  float          g_nDigitFlowCompensation_flowmulti = 1.0f; //standard aus: faktor 1.0
+ float          g_nDigitFlowCompensation_feedmulti = 1.0f; //standard aus: faktor 1.0
  #endif // FEATURE_DIGIT_FLOW_COMPENSATION
 #endif // FEATURE_DIGIT_Z_COMPENSATION
 
@@ -388,11 +390,35 @@ short readStrainGauge( unsigned char uAddress ) //readStrainGauge dauert etwas u
             }else{
                 g_nDigitFlowCompensation_flowmulti = 1.0f;
             }
+            if(g_nDigitFlowCompensation_speed_intense != 0){
+                short active_summed_digits = abs(static_cast<short>(g_nDigitZCompensationDigits));
+                /*
+                unter unterem digits limit: flow = 1.000
+                zwischen beiden limits    : flow = 1.000 + anteil an maximaler auslenkung
+                über oberem   digits limit: flow = 1.000 + maximale auslenkung plus oder minus
+                */
+                if(active_summed_digits <= g_nDigitFlowCompensation_Fmin){
+                    g_nDigitFlowCompensation_feedmulti = 1.0f;
+                }else if(active_summed_digits >= g_nDigitFlowCompensation_Fmax){
+                    if( Printer::queuePositionCurrentSteps[Z_AXIS] > g_minZCompensationSteps - Extruder::current->zOffset ) 
+                        g_nDigitFlowCompensation_feedmulti = 1.0f + 0.01f * g_nDigitFlowCompensation_speed_intense;
+                    else g_nDigitFlowCompensation_feedmulti = 1.0f;
+                }else{
+                    if( Printer::queuePositionCurrentSteps[Z_AXIS] > g_minZCompensationSteps - Extruder::current->zOffset ) 
+                        g_nDigitFlowCompensation_feedmulti = 1.0f + 0.01f * g_nDigitFlowCompensation_speed_intense
+                                                                             *(active_summed_digits - g_nDigitFlowCompensation_Fmin)
+                                                                             /(g_nDigitFlowCompensation_Fmax - g_nDigitFlowCompensation_Fmin);
+                    else g_nDigitFlowCompensation_feedmulti = 1.0f;
+                }
+            }else{
+                g_nDigitFlowCompensation_feedmulti = 1.0f;
+            }
  #endif // FEATURE_DIGIT_FLOW_COMPENSATION
  
         }else{
 #if FEATURE_DIGIT_FLOW_COMPENSATION
             g_nDigitFlowCompensation_flowmulti = 1.0f;
+            g_nDigitFlowCompensation_feedmulti = 1.0f;
  #endif // FEATURE_DIGIT_FLOW_COMPENSATION
             InterruptProtectedBlock noInts;
             g_nDigitZCompensationDigits = (float)Result; //startwert / failwert
@@ -10762,9 +10788,17 @@ void processCommand( GCode* pCommand )
                     g_nDigitFlowCompensation_intense = e;
                 }
 
+                if ( pCommand->hasF() ){
+                    int8_t f = static_cast<int8_t>(pCommand->F);
+                    if(f > 99) f = 99;
+                    if(f < -99) f = -99;
+                    g_nDigitFlowCompensation_speed_intense = f;
+                }
+
                 Com::printFLN( PSTR( "[S|P] Flow CMP min: " ), g_nDigitFlowCompensation_Fmin);
                 Com::printFLN( PSTR( "[S|P] Flow CMP max: " ), g_nDigitFlowCompensation_Fmax);
-                Com::printFLN( PSTR( "[E]   Flow CMP max Prozente: " ), g_nDigitFlowCompensation_intense);
+                Com::printFLN( PSTR( "[E]   Flow CMP %: " ), g_nDigitFlowCompensation_intense);
+                Com::printFLN( PSTR( "[F]   Feed CMP %: " ), g_nDigitFlowCompensation_speed_intense);
                 break;
             }
 #endif // FEATURE_DIGIT_FLOW_COMPENSATION

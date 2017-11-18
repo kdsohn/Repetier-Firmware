@@ -1,6 +1,10 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37x3.Mod (2017-11-18)
+- added dSpeed to digit flow compensation
+Warning: This is some experimental link from Digits to Printing-Speed. You can decrease printing speed when having high digits. But we still miss some sort of trajectory splitting when having long path pieces in move cache. This is a problem: actual digits influence the 16th next move. Not the active one! -> Deadtime.. Swing... Use very low dV on a high range of digits to have it stable!
+
 V RF.01.37x2.Mod (2017-11-12)
 - insert missing temperature sensor menu again. It got lost at the end of the menu list when inserting tyreus lyben pid autotune
 - minor fix
