@@ -790,15 +790,15 @@ void PrintLine::updateTrapezoids()
     previousPlannerIndex(previousIndex);
     PrintLine *previous = &lines[previousIndex];
 
-    // filters z-move<->not z-move
-    /*if((previous->primaryAxis == Z_AXIS && act->primaryAxis != Z_AXIS) || (previous->primaryAxis != Z_AXIS && act->primaryAxis == Z_AXIS))
+    // filters z-move<->not z-move //Nibbels: Test if this is better with our type of Z-Comp because of bad edges? See https://github.com/repetier/Repetier-Firmware/commit/5fbe3748a0ca55386d5315d5b44c4209bec62fc2#diff-593812a66d7348c87b711b15b1ad5195L696
+    if((previous->primaryAxis == Z_AXIS && act->primaryAxis != Z_AXIS) || (previous->primaryAxis != Z_AXIS && act->primaryAxis == Z_AXIS))
     {
         previous->setEndSpeedFixed(true);
         act->setStartSpeedFixed(true);
         act->updateStepsParameter();
         firstLine->unblock();
         return;
-    }*/
+    }
 
     if( previous->isEOnlyMove() != act->isEOnlyMove() )
     {

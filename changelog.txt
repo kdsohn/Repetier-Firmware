@@ -1,6 +1,11 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37x4.Mod (2017-11-18)
+- dSpeed @ digit flow comp REV2 .. smoothed control. Still not perfect but usable.
+- test if slowdown at z-change by gcode is better in our case. See https://github.com/repetier/Repetier-Firmware/commit/5fbe3748a0ca55386d5315d5b44c4209bec62fc2#diff-593812a66d7348c87b711b15b1ad5195L696
+- had to save some eeprom-space -> shortened texts.
+
 V RF.01.37x3.Mod (2017-11-18)
 - added dSpeed to digit flow compensation
 Warning: This is some experimental link from Digits to Printing-Speed. You can decrease printing speed when having high digits. But we still miss some sort of trajectory splitting when having long path pieces in move cache. This is a problem: actual digits influence the 16th next move. Not the active one! -> Deadtime.. Swing... Use very low dV on a high range of digits to have it stable!

@@ -393,23 +393,25 @@ short readStrainGauge( unsigned char uAddress ) //readStrainGauge dauert etwas u
             if(g_nDigitFlowCompensation_speed_intense != 0){
                 short active_summed_digits = abs(static_cast<short>(g_nDigitZCompensationDigits));
                 /*
-                unter unterem digits limit: flow = 1.000
-                zwischen beiden limits    : flow = 1.000 + anteil an maximaler auslenkung
-                über oberem   digits limit: flow = 1.000 + maximale auslenkung plus oder minus
+                unter unterem digits limit: feed = 1.000
+                zwischen beiden limits    : feed = 1.000 + anteil an maximaler auslenkung
+                über oberem   digits limit: feed = 1.000 + maximale auslenkung plus oder minus
                 */
+                float goal = 1.0f;
                 if(active_summed_digits <= g_nDigitFlowCompensation_Fmin){
-                    g_nDigitFlowCompensation_feedmulti = 1.0f;
+                        goal = 1.0f;
                 }else if(active_summed_digits >= g_nDigitFlowCompensation_Fmax){
                     if( Printer::queuePositionCurrentSteps[Z_AXIS] > g_minZCompensationSteps - Extruder::current->zOffset ) 
-                        g_nDigitFlowCompensation_feedmulti = 1.0f + 0.01f * g_nDigitFlowCompensation_speed_intense;
-                    else g_nDigitFlowCompensation_feedmulti = 1.0f;
+                        goal = 1.0f + 0.01f * g_nDigitFlowCompensation_speed_intense;
                 }else{
                     if( Printer::queuePositionCurrentSteps[Z_AXIS] > g_minZCompensationSteps - Extruder::current->zOffset ) 
-                        g_nDigitFlowCompensation_feedmulti = 1.0f + 0.01f * g_nDigitFlowCompensation_speed_intense
+                        goal = 1.0f + 0.01f * g_nDigitFlowCompensation_speed_intense
                                                                              *(active_summed_digits - g_nDigitFlowCompensation_Fmin)
-                                                                             /(g_nDigitFlowCompensation_Fmax - g_nDigitFlowCompensation_Fmin);
-                    else g_nDigitFlowCompensation_feedmulti = 1.0f;
+                                                                             /(g_nDigitFlowCompensation_Fmax - g_nDigitFlowCompensation_Fmin);                    
                 }
+                g_nDigitFlowCompensation_feedmulti += (goal == g_nDigitFlowCompensation_feedmulti ? 0.0f : 
+                                                       (goal > g_nDigitFlowCompensation_feedmulti ? 0.001f : -0.001f)
+                                                       );
             }else{
                 g_nDigitFlowCompensation_feedmulti = 1.0f;
             }
@@ -439,7 +441,7 @@ void startHeatBedScan( void )
         // abort the heat bed scan
         if( Printer::debugInfo() )
         {
-            Com::printFLN( PSTR( "startHeatBedScan(): the scan has been cancelled" ) );
+            Com::printFLN( PSTR( "HBS: cancelled" ) );
         }
         g_abortZScan = 1;
     }
@@ -450,7 +452,7 @@ void startHeatBedScan( void )
             // there is some printing in progress at the moment - do not start the heat bed scan in this case
             if( Printer::debugErrors() )
             {
-                Com::printFLN( PSTR( "startHeatBedScan(): the scan can not be started while the printing is in progress" ) );
+                Com::printFLN( PSTR( "HBS: error printing in progress" ) );
             }
 
             showError( (void*)ui_text_heat_bed_scan, (void*)ui_text_operation_denied );
@@ -466,7 +468,7 @@ void startHeatBedScan( void )
             {
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "startHeatBedScan(): the z compensation has been disabled" ) );
+                    Com::printFLN( PSTR( "HBS: z comp disabled" ) );
                 }
                 resetZCompensation();
             }
@@ -530,7 +532,7 @@ void scanHeatBed( void )
         if( Printer::debugInfo() )
         {
             Com::printF( Com::tscanHeatBed );
-            Com::printFLN( PSTR( "the scan has been aborted" ) );
+            Com::printFLN( PSTR( "scan aborted" ) );
         }
 
         UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_ABORTED );
@@ -598,7 +600,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "the scan has been started" ) );
+                    Com::printFLN( PSTR( "scan started" ) );
                 }
 
                 // clear all fields of the heat bed compensation matrix
@@ -616,7 +618,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "1 -> 10" ) );
+                    Com::printFLN( PSTR( "1->10" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -653,7 +655,7 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "scanHeatBed(): 10 -> 15" ) );
+                    Com::printFLN( PSTR( "scanHeatBed(): 10->15" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -679,7 +681,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "15 -> 20" ) );
+                    Com::printFLN( PSTR( "15->20" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -716,7 +718,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "20 -> 22" ) );
+                    Com::printFLN( PSTR( "20->22" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -757,7 +759,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "22 -> 25" ) );
+                    Com::printFLN( PSTR( "22->25" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -775,7 +777,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "25 -> 30" ) );
+                    Com::printFLN( PSTR( "25->30" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -801,7 +803,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "30 -> 35" ) );
+                    Com::printFLN( PSTR( "30->35" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -836,7 +838,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "35 -> 40" ) );
+                    Com::printFLN( PSTR( "35->40" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -853,7 +855,7 @@ void scanHeatBed( void )
                     if( Printer::debugInfo() )
                     {
                         Com::printF( Com::tscanHeatBed );
-                        Com::printFLN( PSTR( "39 -> 60" ) );
+                        Com::printFLN( PSTR( "39->60" ) );
                     }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                     break;
@@ -896,7 +898,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "39 -> 40" ) );
+                    Com::printFLN( PSTR( "39->40" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -920,7 +922,7 @@ void scanHeatBed( void )
                     if( Printer::debugInfo() )
                     {
                         Com::printF( Com::tscanHeatBed );
-                        Com::printFLN( PSTR( "40 -> 49" ) );
+                        Com::printFLN( PSTR( "40->49" ) );
                     }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                     break;
@@ -933,7 +935,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "40 -> 60" ) );
+                    Com::printFLN( PSTR( "40->60" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -959,7 +961,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "45 -> 50" ) );
+                    Com::printFLN( PSTR( "45->50" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -974,7 +976,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "49 -> 50" ) );
+                    Com::printFLN( PSTR( "49->50" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1009,7 +1011,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "50 -> 51" ) );
+                    Com::printFLN( PSTR( "50->51" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1026,7 +1028,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "51 -> 52" ) );
+                    Com::printFLN( PSTR( "51->52" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1043,7 +1045,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "52 -> 53" ) );
+                    Com::printFLN( PSTR( "52->53" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1063,7 +1065,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "53 -> 54" ) );
+                    Com::printFLN( PSTR( "53->54" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1120,7 +1122,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "54 -> 55" ) );
+                    Com::printFLN( PSTR( "54->55" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1144,7 +1146,7 @@ void scanHeatBed( void )
                         if( Printer::debugInfo() )
                         {
                             Com::printF( Com::tscanHeatBed );
-                            Com::printFLN( PSTR( "55 -> 39" ) );
+                            Com::printFLN( PSTR( "55->39" ) );
                         }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                         break;
@@ -1163,7 +1165,7 @@ void scanHeatBed( void )
                         if( Printer::debugInfo() )
                         {
                             Com::printF( Com::tscanHeatBed );
-                            Com::printFLN( PSTR( "55 -> 39" ) );
+                            Com::printFLN( PSTR( "55->39" ) );
                         }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                         break;
@@ -1195,7 +1197,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "55 -> 49" ) );
+                    Com::printFLN( PSTR( "55->49" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1236,7 +1238,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "60 -> 65" ) );
+                    Com::printFLN( PSTR( "60->65" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1258,7 +1260,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "65 -> 70" ) );
+                    Com::printFLN( PSTR( "65->70" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1274,7 +1276,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "70 -> 75" ) );
+                    Com::printFLN( PSTR( "70->75" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1316,7 +1318,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "75 -> 80" ) );
+                    Com::printFLN( PSTR( "75->80" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2              
                 break;
@@ -1348,7 +1350,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "80 -> 100" ) );
+                    Com::printFLN( PSTR( "80->100" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2              
 #else
@@ -1362,7 +1364,7 @@ void scanHeatBed( void )
                     if( Printer::debugInfo() )
                     {
                         Com::printF( Com::tscanHeatBed );
-                        Com::printFLN( PSTR( "80 -> 130" ) );
+                        Com::printFLN( PSTR( "80->130" ) );
                     }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 }
@@ -1376,7 +1378,7 @@ void scanHeatBed( void )
                     if( Printer::debugInfo() )
                     {
                         Com::printF( Com::tscanHeatBed );
-                        Com::printFLN( PSTR( "80 -> 150" ) );
+                        Com::printFLN( PSTR( "80->150" ) );
                     }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 }
@@ -1397,7 +1399,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "100 -> 110" ) );
+                    Com::printFLN( PSTR( "100->110" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1423,7 +1425,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "105 -> 110" ) );
+                    Com::printFLN( PSTR( "105->110" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1458,7 +1460,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "110 -> 120" ) );
+                    Com::printFLN( PSTR( "110->120" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1475,7 +1477,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "120 -> 121" ) );
+                    Com::printFLN( PSTR( "120->121" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1495,7 +1497,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "121 -> 122" ) );
+                    Com::printFLN( PSTR( "121->122" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1512,7 +1514,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "122 -> 123" ) );
+                    Com::printFLN( PSTR( "122->123" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1530,7 +1532,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "123 -> 125" ) );
+                    Com::printFLN( PSTR( "123->125" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1553,7 +1555,7 @@ void scanHeatBed( void )
                     if( Printer::debugInfo() )
                     {
                         Com::printF( Com::tscanHeatBed );
-                        Com::printFLN( PSTR( "125 -> 132" ) );
+                        Com::printFLN( PSTR( "125->132" ) );
                     }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 }
@@ -1567,7 +1569,7 @@ void scanHeatBed( void )
                     if( Printer::debugInfo() )
                     {
                         Com::printF( Com::tscanHeatBed );
-                        Com::printFLN( PSTR( "125 -> 145" ) );
+                        Com::printFLN( PSTR( "125->145" ) );
                     }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 }
@@ -1585,7 +1587,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "130 -> 135" ) );
+                    Com::printFLN( PSTR( "130->135" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1604,7 +1606,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "132 -> 133" ) );
+                    Com::printFLN( PSTR( "132->133" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1620,7 +1622,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "133 -> 134" ) );
+                    Com::printFLN( PSTR( "133->134" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1636,7 +1638,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "134 -> 135" ) );
+                    Com::printFLN( PSTR( "134->135" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1667,7 +1669,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "135 -> 136" ) );
+                    Com::printFLN( PSTR( "135->136" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1694,7 +1696,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "136 -> 137" ) );
+                    Com::printFLN( PSTR( "136->137" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
 
@@ -1730,7 +1732,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "137 -> 140" ) );
+                    Com::printFLN( PSTR( "137->140" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1756,7 +1758,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "139 -> 140" ) );
+                    Com::printFLN( PSTR( "139->140" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1791,7 +1793,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "140 -> 141" ) );
+                    Com::printFLN( PSTR( "140->141" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1808,7 +1810,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "141 -> 142" ) );
+                    Com::printFLN( PSTR( "141->142" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1828,7 +1830,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "142 -> 143" ) );
+                    Com::printFLN( PSTR( "142->143" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1845,7 +1847,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "143 -> 144" ) );
+                    Com::printFLN( PSTR( "143->144" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1869,7 +1871,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "144 -> 145" ) );
+                    Com::printFLN( PSTR( "144->145" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1890,7 +1892,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "145 -> 150" ) );
+                    Com::printFLN( PSTR( "145->150" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1915,7 +1917,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "150 -> 160" ) );
+                    Com::printFLN( PSTR( "150->160" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1950,7 +1952,7 @@ void scanHeatBed( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "160 -> 0" ) );
+                    Com::printFLN( PSTR( "160->0" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -2044,7 +2046,7 @@ void searchZOScan( void )
             case 2:
             {
 #if DEBUG_HEAT_BED_SCAN == 2
-                Com::printFLN( PSTR( "ZOS(): STEP 1 : Home" ) );
+                Com::printFLN( PSTR( "ZOS(): 1 : Home" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
 
                 //bissel übertrieben, sollte aber jede eventualität abfangen: Wir brauchen die maximale Matrix-Dimension auch schon hier (ganz grob) und wollen nicht so lange warten.
@@ -2166,7 +2168,7 @@ void searchZOScan( void )
             case 3:
             {
 #if DEBUG_HEAT_BED_SCAN == 2
-                Com::printF( PSTR( "ZOS(): STEP 2 : Spacing Z" ),HEAT_BED_SCAN_Z_START_STEPS );
+                Com::printF( PSTR( "ZOS(): 2 : Spacing Z" ),HEAT_BED_SCAN_Z_START_STEPS );
                 Com::printFLN( PSTR( " [Steps]" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
 
@@ -2182,7 +2184,7 @@ void searchZOScan( void )
             case 4:
             {
 #if DEBUG_HEAT_BED_SCAN == 2
-                Com::printFLN( PSTR( "ZOS(): STEP 3 : Load Matrix" ) );
+                Com::printFLN( PSTR( "ZOS(): 3 : Load Matrix" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 // load the unaltered compensation matrix from the EEPROM
                 if(g_ZCompensationMatrix[0][0] != EEPROM_FORMAT || g_ZOSlearningRate == 1.0){
@@ -2215,7 +2217,7 @@ void searchZOScan( void )
                 long xScanPosition = (long)((float)g_ZCompensationMatrix[g_ZOSTestPoint[X_AXIS]][0] * Printer::axisStepsPerMM[X_AXIS]); // + g_nScanXStartSteps; <-- NEIN! Man muss nur die jeweils erste und letzte Matrix-Zeile meiden, ausser HEAT_BED_SCAN_X_START_MM ist 0 oder HEAT_BED_SCAN_Y_START_MM ist 0
                 long yScanPosition = (long)((float)g_ZCompensationMatrix[0][g_ZOSTestPoint[Y_AXIS]] * Printer::axisStepsPerMM[Y_AXIS]); // + g_nScanYStartSteps; <-- NEIN!
 #if DEBUG_HEAT_BED_SCAN == 2
-                Com::printF( PSTR( "ZOS(): STEP 4 : Scan Position X+Y" ) );
+                Com::printF( PSTR( "ZOS(): 4 : Scan Position X+Y" ) );
                 Com::printF( PSTR( "= (" ), xScanPosition );
                 Com::printF( PSTR( ", " ), yScanPosition );
                 Com::printFLN( PSTR( ") [(x,y) Steps]" ) );
@@ -2243,7 +2245,7 @@ void searchZOScan( void )
             case 9:
             {
 #if DEBUG_HEAT_BED_SCAN == 2
-                Com::printFLN( PSTR( "ZOS(): STEP 5 : Idle Pressure" ) );
+                Com::printFLN( PSTR( "ZOS(): 5 : Idle Pressure" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 if( readIdlePressure( &g_nCurrentIdlePressure ) ) {
                   //Problem mit Digits, die wackeln:
@@ -2281,7 +2283,7 @@ void searchZOScan( void )
             case 10:
             {
 #if DEBUG_HEAT_BED_SCAN == 2
-                Com::printFLN( PSTR( "ZOS(): STEP 6 : Approaching HeatBed" ) );
+                Com::printFLN( PSTR( "ZOS(): 6 : Approaching HeatBed" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2          
                 // move to the surface
                 moveZUpFast(false); // without runStandardTasks() inside to prevent an endless loop
@@ -2332,7 +2334,7 @@ void searchZOScan( void )
             case 20:
             {   
 #if DEBUG_HEAT_BED_SCAN == 2
-                Com::printFLN( PSTR( "ZOS(): STEP 7 : Testing Surface " ));
+                Com::printFLN( PSTR( "ZOS(): 7 : Testing Surface " ));
 #endif // DEBUG_HEAT_BED_SCAN
                 bool prebreak = false;
                 // we have roughly found the surface, now we perform the precise slow scan SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS times  
@@ -2386,7 +2388,7 @@ void searchZOScan( void )
                 long nZ = g_min_nZScanZPosition - g_ZCompensationMatrix[g_ZOSTestPoint[X_AXIS]][g_ZOSTestPoint[Y_AXIS]];
                             
 #if DEBUG_HEAT_BED_SCAN == 2
-                Com::printFLN( PSTR( "ZOS(): STEP 8 : " ) );
+                Com::printFLN( PSTR( "ZOS(): 8 : " ) );
                 Com::printFLN( PSTR( "ZOS(): Matrix-Wert Z = " ), g_ZCompensationMatrix[g_ZOSTestPoint[X_AXIS]][g_ZOSTestPoint[Y_AXIS]] );
 #endif // DEBUG_HEAT_BED_SCAN
                 Com::printF( PSTR( "ZOS(): Minimum Z = " ), g_min_nZScanZPosition );
@@ -2521,7 +2523,7 @@ void searchZOScan( void )
                 }
 
 #if DEBUG_HEAT_BED_SCAN == 2
-                Com::printFLN( PSTR( "ZOS(): STEP 9 : GOTO z=0" ) );
+                Com::printFLN( PSTR( "ZOS(): 9 : GOTO z=0" ) );
 #endif // DEBUG_HEAT_BED_SCAN
                 g_nZScanZPosition += moveZ( Printer::axisStepsPerMM[Z_AXIS] );
                 long yScanPosition = (long)(g_ZCompensationMatrix[0][g_ZOSTestPoint[Y_AXIS]]* Printer::axisStepsPerMM[Y_AXIS]); // + g_nScanYStartSteps; <-- NEIN!
@@ -2686,7 +2688,7 @@ bool calculateZScrewCorrection( void )
 
 void fixKeramikLochInMatrix( void )
 {   
-    //Com::printFLN( PSTR( "fixKeramikLochInMatrix(): STEP 1 Init" ) );
+    //Com::printFLN( PSTR( "fixKeramikLochInMatrix(): 1 Init" ) );
     
     if( g_ZCompensationMatrix[0][0] != EEPROM_FORMAT )
     {
@@ -2732,7 +2734,7 @@ void fixKeramikLochInMatrix( void )
           }
         }
 
-        //Com::printFLN( PSTR( "fixKeramikLochInMatrix(): STEP 3 Extremwert" ) );
+        //Com::printFLN( PSTR( "fixKeramikLochInMatrix(): 3 Extremwert" ) );
         //Com::printF( PSTR( "peak_x = " ), peak_x );
         //Com::printF( PSTR( "; peak_y = " ), peak_y );
         //Com::printF( PSTR( "; peak_hole = " ), peak_hole );
@@ -7446,7 +7448,7 @@ void processCommand( GCode* pCommand )
                     {
                         if( Printer::debugInfo() )
                         {
-                            Com::printFLN( PSTR( "M3001: the z compensation is enabled already" ) );
+                            Com::printFLN( PSTR( "M3001: z compensation is enabled already" ) );
                         }
                         break;
                     }
@@ -7474,7 +7476,7 @@ void processCommand( GCode* pCommand )
                         {
                             if( Printer::debugErrors() )
                             {
-                                Com::printF( PSTR( "M3001: the z compensation can not be enabled because the heat bed compensation matrix is not valid ( " ), g_ZCompensationMatrix[0][0] );
+                                Com::printF( PSTR( "M3001: z compensation can not be enabled. Heat bed compensation matrix not valid ( " ), g_ZCompensationMatrix[0][0] );
                                 Com::printF( PSTR( " / " ), EEPROM_FORMAT );
                                 Com::printFLN( PSTR( " )" ) );
                             }
@@ -7486,7 +7488,7 @@ void processCommand( GCode* pCommand )
                     {
                         if( Printer::debugErrors() )
                         {
-                            Com::printFLN( PSTR( "M3001: the z compensation can not be enabled because the home position is unknown" ) );
+                            Com::printFLN( PSTR( "M3001: z compensation can not be enabled. Home position is unknown" ) );
                         }
 
                         showError( (void*)ui_text_z_compensation, (void*)ui_text_home_unknown );
@@ -7770,7 +7772,7 @@ void processCommand( GCode* pCommand )
                         // do not allow to change the current heat bed z-compensation matrix while the z-compensation is active
                         if( Printer::debugErrors() )
                         {
-                            Com::printFLN( PSTR( "M3009: the heat bed z matrix can not be changed while the z-compensation is active" ) );
+                            Com::printFLN( PSTR( "M3009: heat bed z matrix can not be changed while z-compensation is active" ) );
                         }
 
                         showError( (void*)ui_text_z_compensation, (void*)ui_text_operation_denied );
@@ -10333,7 +10335,7 @@ void processCommand( GCode* pCommand )
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
             case 3901: // 3901 [X] [Y] - configure the Matrix-Position to Scan, [S] confugure learningrate, [P] configure dist weight || by Nibbels
-            case 3900: // 3900 direct preconfig, no break; -> next is M3900.
+            case 3900: // 3900 direct preconfig, no break;->next is M3900.
             {
                 if( isSupportedMCommand( pCommand->M, OPERATING_MODE_PRINT ) )
                 {
@@ -10540,7 +10542,7 @@ void processCommand( GCode* pCommand )
 
                     if ( pCommand->hasE() ) 
                     {
-                        //completly wipe the matrix-data to zero -> flatten the matrix to nothing.
+                        //completly wipe the matrix-data to zero->flatten the matrix to nothing.
                         setMatrixNull();
                     }
                     //NMM Funktion 2 - Z=Offset manuell nachstellen
@@ -12484,7 +12486,7 @@ void startFindZOrigin( void )
         {
             if( Printer::debugInfo() )
             {
-                Com::printFLN( PSTR( "startFindZOrigin(): the z compensation has been disabled" ) );
+                Com::printFLN( PSTR( "FindZOrigin: z comp disabled" ) );
             }
             resetZCompensation();
         }
@@ -12496,7 +12498,7 @@ void startFindZOrigin( void )
         {
             if( Printer::debugInfo() )
             {
-                Com::printFLN( PSTR( "startFindZOrigin(): the z compensation has been disabled" ) );
+                Com::printFLN( PSTR( "FindZOrigin(): z comp disabled" ) );
             }
             resetZCompensation();
         }
@@ -12529,7 +12531,7 @@ void findZOrigin( void )
 
         if( Printer::debugInfo() )
         {
-            Com::printFLN( PSTR( "findZOrigin(): the search has been aborted" ) );
+            Com::printFLN( PSTR( "findZOrigin(): aborted" ) );
         }
 
         UI_STATUS_UPD( UI_TEXT_FIND_Z_ORIGIN_ABORTED );
@@ -12555,7 +12557,7 @@ void findZOrigin( void )
 
                 if( Printer::debugInfo() )
                 {
-                    Com::printFLN( PSTR( "findZOrigin(): the search has been started" ) );
+                    Com::printFLN( PSTR( "findZOrigin(): started" ) );
                 }
 
                 if( readAveragePressure( &nCurrentPressure ) )
@@ -12563,7 +12565,7 @@ void findZOrigin( void )
                     // some error has occurred
                     if( Printer::debugErrors() )
                     {
-                        Com::printFLN( PSTR( "findZOrigin(): the start pressure could not be determined" ) );
+                        Com::printFLN( PSTR( "findZOrigin(): start pressure not determined" ) );
                     }
                     g_abortSearch = 1;
                     return;
@@ -12589,7 +12591,7 @@ void findZOrigin( void )
                 g_nFindZOriginStatus = 10;
 
 #if DEBUG_FIND_Z_ORIGIN
-                Com::printFLN( PSTR( "findZOrigin(): 1 -> 10" ) );
+                Com::printFLN( PSTR( "findZOrigin(): 1->10" ) );
 #endif // DEBUG_FIND_Z_ORIGIN
                 break;
             }
@@ -12607,7 +12609,7 @@ void findZOrigin( void )
                         g_nFindZOriginStatus = 20;
 
 #if DEBUG_FIND_Z_ORIGIN
-                        Com::printFLN( PSTR( "findZOrigin(): 10 -> 20" ) );
+                        Com::printFLN( PSTR( "findZOrigin(): 10->20" ) );
 #endif // DEBUG_FIND_Z_ORIGIN
                         return;
                     }
