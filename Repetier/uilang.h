@@ -405,6 +405,7 @@
 #define UI_TEXT_FLOW_MIN               "Digit Min:%CU"
 #define UI_TEXT_FLOW_MAX               "Digit Max:%CO"
 #define UI_TEXT_FLOW_DF                "dFlow:   :%CF%%%"
+#define UI_TEXT_FLOW_DV                "dFeed:   :%CE%%%"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%%op"
@@ -769,6 +770,7 @@
 #define UI_TEXT_FLOW_MIN               "Digit Min:%CU"
 #define UI_TEXT_FLOW_MAX               "Digit Max:%CO"
 #define UI_TEXT_FLOW_DF                "dFlow:   :%CF%%%"
+#define UI_TEXT_FLOW_DV                "dFeed:   :%CE%%%"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000
 

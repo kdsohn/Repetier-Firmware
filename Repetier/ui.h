@@ -197,6 +197,7 @@
 #define UI_ACTION_FLOW_MIN                  1702
 #define UI_ACTION_FLOW_MAX                  1703
 #define UI_ACTION_FLOW_DF                   1704
+#define UI_ACTION_FLOW_DV                   1705
 
 #define UI_ACTION_FET1_OUTPUT               2001
 #define UI_ACTION_FET2_OUTPUT               2002
