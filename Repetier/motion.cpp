@@ -791,6 +791,7 @@ void PrintLine::updateTrapezoids()
     PrintLine *previous = &lines[previousIndex];
 
     // filters z-move<->not z-move //Nibbels: Test if this is better with our type of Z-Comp because of bad edges? See https://github.com/repetier/Repetier-Firmware/commit/5fbe3748a0ca55386d5315d5b44c4209bec62fc2#diff-593812a66d7348c87b711b15b1ad5195L696
+    /*
     if((previous->primaryAxis == Z_AXIS && act->primaryAxis != Z_AXIS) || (previous->primaryAxis != Z_AXIS && act->primaryAxis == Z_AXIS))
     {
         previous->setEndSpeedFixed(true);
@@ -799,10 +800,15 @@ void PrintLine::updateTrapezoids()
         firstLine->unblock();
         return;
     }
+    */
 
     if( previous->isEOnlyMove() != act->isEOnlyMove() )
     {
-        previous->maxJunctionSpeed = previous->endSpeed;
+        previous->maxJunctionSpeed = RMath::min(previous->endSpeed,act->startSpeed);
+        /*
+        if(act->isEOnlyMove())      previous->maxJunctionSpeed = previous->safeSpeed(previous->primaryAxis); //previous->endSpeed; //previous->endSpeed;
+        if(previous->isEOnlyMove()) previous->maxJunctionSpeed = act->safeSpeed(act->primaryAxis); //act->startSpeed; //previous->endSpeed;
+        */
         previous->setEndSpeedFixed(true);
         act->setStartSpeedFixed(true);
         act->updateStepsParameter();
@@ -866,7 +872,7 @@ inline void PrintLine::computeMaxJunctionSpeed(PrintLine *previous,PrintLine *cu
     {
         // if we start/stop extrusion we need to do so with lowest possible end speed
         // or advance would leave a drolling extruder and can not adjust fast enough.
-        if(previous->isEMove() != current->isEMove()) //&& (previous->isXOrYMove() || current->isXOrYMove())
+        if(previous->isEMove() != current->isEMove() && previous->isEMove()) //&& (previous->isXOrYMove() || current->isXOrYMove())
         {
             previous->setEndSpeedFixed(true);
             current->setStartSpeedFixed(true);
