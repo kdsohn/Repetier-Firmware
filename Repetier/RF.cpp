@@ -6340,7 +6340,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
         if( g_pauseStatus == PAUSE_STATUS_PAUSED ) //and absolutly not PAUSE_STATUS_HEATING
         {
 #if EXTRUDER_CURRENT_PAUSE_DELAY
-            if( (uTime - g_uPauseTime) > EXTRUDER_CURRENT_PAUSE_DELAY ) //das sind alle 5s 
+            if( (uTime - g_uPauseTime) > EXTRUDER_CURRENT_PAUSE_DELAY ) //das sind alle 30s 
             {
                 char    nProcessExtruder = 0;
 #if FEATURE_MILLING_MODE
@@ -7077,7 +7077,7 @@ void continuePrint( void )
     if(g_pauseMode == PAUSE_MODE_NONE || g_pauseStatus != PAUSE_STATUS_PAUSED){
         if( Printer::debugErrors() ) Com::printFLN( PSTR( "continuePrint(): we are not paused." ) );
         if(countplays++ >= 10){
-             Com::printFLN( PSTR( "LCD re-initialization") );
+             Com::printFLN( PSTR( "LCD re-init") );
              countplays = 1;
              showInformation( PSTR(UI_TEXT_MANUAL), PSTR(UI_TEXT_Z_CIRCUIT), PSTR(UI_TEXT_RESET) );
              initializeLCD();
@@ -7085,7 +7085,7 @@ void continuePrint( void )
         return;
     }
     countplays = 1;
-
+    g_uPauseTime = 0; //do not drop temps later
     g_uStartOfIdle    = 0;
     UI_STATUS_UPD( UI_TEXT_CONTINUING );
     BEEP_CONTINUE
