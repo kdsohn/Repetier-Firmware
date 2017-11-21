@@ -468,7 +468,7 @@ void Printer::moveTo(float x,float y,float z,float e,float f)
     if(e != IGNORE_COORDINATE)
         queuePositionTargetSteps[E_AXIS] = e * axisStepsPerMM[E_AXIS];
     if(f != IGNORE_COORDINATE)
-        feedrate = f;
+        Printer::feedrate = f;
 
     PrintLine::prepareQueueMove(ALWAYS_CHECK_ENDSTOPS,true);
     updateCurrentPosition(false);
@@ -496,7 +496,7 @@ void Printer::moveToReal(float x,float y,float z,float e,float f)
     if(e != IGNORE_COORDINATE)
         queuePositionTargetSteps[E_AXIS] = e * axisStepsPerMM[E_AXIS];
     if(f != IGNORE_COORDINATE)
-        feedrate = f;
+        Printer::feedrate = f;
 
     PrintLine::prepareQueueMove(ALWAYS_CHECK_ENDSTOPS,true);
 
@@ -661,9 +661,9 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
     if(com->hasF())
     {
         if(unitIsInches)
-            feedrate = com->F * (float)feedrateMultiply * 0.0042333f;  // Factor is 25.5/60/100
+            Printer::feedrate = com->F * (float)feedrateMultiply * 0.0042333f;  // Factor is 25.5/60/100
         else
-            feedrate = com->F * (float)feedrateMultiply * 0.00016666666f;
+            Printer::feedrate = com->F * (float)feedrateMultiply * 0.00016666666f;
     }
 
     if(!Printer::isPositionAllowed(x,y,z))
@@ -1364,16 +1364,13 @@ void Printer::MemoryPosition()
 void Printer::GoToMemoryPosition(bool x,bool y,bool z,bool e,float feed)
 {
     bool all = !(x || y || z);
-    float oldFeedrate = feedrate;
-
-
+    float oldFeedrate = Printer::feedrate;
     moveToReal((all || x ? memoryX : IGNORE_COORDINATE)
                ,(all || y ? memoryY : IGNORE_COORDINATE)
                ,(all || z ? memoryZ : IGNORE_COORDINATE)
                ,(e ? memoryE:IGNORE_COORDINATE),
                feed);
-    feedrate = oldFeedrate;
-
+    Printer::feedrate = oldFeedrate;
 } // GoToMemoryPosition
 #endif // FEATURE_MEMORY_POSITION
 

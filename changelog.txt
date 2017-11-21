@@ -1,6 +1,10 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37x6.Mod (2017-11-20)
+- Testupdate for extruders current @RF1000 (90 -> 110)
+- Testfix for pause-idle-bug (hang of lowered temperatures)
+
 V RF.01.37x5.Mod (2017-11-20)
 - found and fixed some inconsistency within path planning. Repetier fixed this 2 years ago: https://github.com/repetier/Repetier-Firmware/commit/be24acec2e35365c1e273e3c08f76359d96984b0#diff-593812a66d7348c87b711b15b1ad5195L707 introduced in https://github.com/Nibbels/Repetier-Firmware/commit/c9d62466d015e009bd023d8f64338bfe17c34322#diff-b41781ad2ccef1b45ce8da5ca500778aR796
 - changed this inconsistency a bit (choose lowest junction speed as minimum from previous end- and next startspeed)

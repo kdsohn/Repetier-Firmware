@@ -1142,7 +1142,7 @@ void Commands::executeGCode(GCode *com)
                     do
                     {
                         currentTime = HAL::timeInMilliseconds();
-                        Commands::printTemperatures();                       
+                        Commands::printTemperatures();
                         Commands::checkForPeriodicalActions();
                         GCode::keepAlive( WaitHeater );
 #if RETRACT_DURING_HEATUP
