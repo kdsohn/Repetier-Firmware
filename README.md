@@ -83,6 +83,7 @@ M3902 Z0            - to shift your active zOffset to the zMatrix. The M3006 zOf
 M3902 Sn            - to save the active Matrix to position n = {1..9}  
 M3902 Z0 S1         - to shift the zOffset to your zMatrix and save the Matrix at position 1. This is an example to show that the options of M3902 can be combined.  
 M3911 S6000 P9000 E-30 - to limit extrusion when getting high digits because of overextrusion (Example: -10% per 1000 digits starting from 6000 digits)  
+M3911 S6000 P9000 F-30 - to limit speed when getting high digits (Example: -10% per 1000 digits starting from 6000 digits) M3911 is adjustable at runtime within menus Configuration -> DMS Features -> Digit Flow CMP (No EEPROM-support!)  
 M3939 Fn St1 Pt2 Ex Iy Rm   - to messure a curve of your Filaments velocity over digits -> viscosity.  
 
 M3920 Sb - to go into or switch back from SilentMode (This will lower your steppers current to an alternative profile)  
