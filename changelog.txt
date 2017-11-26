@@ -1,7 +1,89 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
-V RF.01.37v8.Mod (2017-10-17)
+V RF.01.37x7.Mod (2017-11-25)
+- Fix FEATURE_DIGIT_FLOW_COMPENSATION menu when not using FEATURE_READ_CALIPER. Thx @AtlonXP
+
+V RF.01.37x6.Mod (2017-11-20)
+- Testupdate for extruders current @RF1000 (90 -> 110)
+- Testfix for pause-idle-bug (hang of lowered temperatures)
+
+V RF.01.37x5.Mod (2017-11-20)
+- found and fixed some inconsistency within path planning. Repetier fixed this 2 years ago: https://github.com/repetier/Repetier-Firmware/commit/be24acec2e35365c1e273e3c08f76359d96984b0#diff-593812a66d7348c87b711b15b1ad5195L707 introduced in https://github.com/Nibbels/Repetier-Firmware/commit/c9d62466d015e009bd023d8f64338bfe17c34322#diff-b41781ad2ccef1b45ce8da5ca500778aR796
+- changed this inconsistency a bit (choose lowest junction speed as minimum from previous end- and next startspeed)
+- slowdown for advance only if extrude ends, not if extrude starts (I didn't see the point of both directions.)
+
+V RF.01.37x4.Mod (2017-11-18)
+- dSpeed @ digit flow comp REV2 .. smoothed control. Still not perfect but usable.
+- test if slowdown at z-change by gcode is better in our case. See https://github.com/repetier/Repetier-Firmware/commit/5fbe3748a0ca55386d5315d5b44c4209bec62fc2#diff-593812a66d7348c87b711b15b1ad5195L696
+- had to save some eeprom-space -> shortened texts.
+
+V RF.01.37x3.Mod (2017-11-18)
+- added dSpeed to digit flow compensation
+Warning: This is some experimental link from Digits to Printing-Speed. You can decrease printing speed when having high digits. But we still miss some sort of trajectory splitting when having long path pieces in move cache. This is a problem: actual digits influence the 16th next move. Not the active one! -> Deadtime.. Swing... Use very low dV on a high range of digits to have it stable!
+
+V RF.01.37x2.Mod (2017-11-12)
+- insert missing temperature sensor menu again. It got lost at the end of the menu list when inserting tyreus lyben pid autotune
+- minor fix
+
+V RF.01.37x.Mod (2017-11-07)
+- AtlonXPs Digit Flow compensation got a special menu (Values are not stored within EEPROM! Do this with G-Code because this feature is only for special parts)
+- Notfall Pause / Emergency Pause got a prettier menu style
+- Notfall Z-Stop / Emergency Z-Stop got a prettier menu style
+- replaced y-axis with lengthMM[Y_AXIS] on some points
+- Repetiers fix for https://github.com/repetier/Repetier-Firmware/issues/709 -> https://github.com/repetier/Repetier-Firmware/commit/e76875ec2d04bd0dbfdd9a157270ee03f4731d5f
+
+V RF.01.37w9.Mod (2017-11-03)
+- removed Timo-Watchdog-Bug by limiting MoveZ to 5mm while Scan ABS/Scan PLA
+- removed PID autotune methods P, PI, PD because they are unnecessary. We found perfectly suitable methods for hotends and heated bed in 1.37w8.
+- some cleanup and updates in README.MD
+- completely removed DEBUG_SHOW_DEVELOPMENT_LOGS for cleanup because those msgs are not necessary anymore.
+- excluded some debug routines from compilation.
+
+V RF.01.37w8.Mod (2017-10-30)
+- Included PID autotune method Tyreus-Lyben (Hinweis/Anstoß von hal4822) -> possible best method for PID autotuning 220V Heated Bed
+- fixed readme
+
+V RF.01.37w7.Mod (2017-10-30)
+- Fix GT-2 (Sensor 8 / E3D) Temptable 222 -> 244
+
+V RF.01.37w6.Mod (2017-10-29)
+- PeterKa PID Temperatur tuning (Result of EXTRx_PID_IDRIVE_MIN discussion http://www.rf1000.de/viewtopic.php?f=23&t=2054)
+
+V RF.01.37w5.Mod (2017-10-27)
+- fix for Case Fan ON-ON-Off-exploit
+- fix for possibility to disable X45 auto management through temperaturesetting (Off for now: M3121 / Always off: M3121 P1 / On: M3120)
+
+V RF.01.37w4.Mod (2017-10-26)
+- autofix 40-40 PID bug from 1.37- original firmware when reading pid-I-drive-min = 40 and pid-I-drive-max = 40 in eeprom
+
+V RF.01.37w3.Mod (2017-10-26)
+- fix: do not "correct" timing for extrusion moves without x,y,z. This let SensibleViscosity Feature fail since 1.37s3 and later. 
+- upgrade and cleanup of sensible viscosity feature: It now saves new files to SD for every extrusion test you do
+- removed some text and garbage functions to save eeprom space
+
+V RF.01.37w2.Mod (2017-10-22)
+- fix follow-up flow when you press RF Button Extrude or RF Button Retract long
+- fix long running z-homing when homing with large ENDSTOP_Z_BACK_MOVE because of large Z_ENDSTOP_DRIVE_OVER.
+
+V RF.01.37w.Mod (2017-10-21)
+- make #define FEATURE_MILLING_MODE 0 work again to save eeprom space / possibility to exclude millingmode from firmware
+- set standard emergency-block back to 10000. this is configurable within menu and eeprom afterwards
+
+V RF.01.37v9.Mod (2017-10-20)
+- added more temperature tolerance when unpausing print to start faster.
+- #define MIN_EXTRUDER_TEMP 80 as discussed in Neuenstadt
+- fit adjustment of offset within mod-menu to up-down-rule outside of mod-menu. Switch of direction for RF-Z-UP and RF-Z-DOWN within mod-menu. (Thx AtlonXP)
+- Implemented new G-Code M3911 S[F-Min] P[F-Max] E[extrusion decrease -99..0 / increase 0..99] to have unwanted high digits influencing extrusion percentage.
+  This is AtlonXPs "linear digit flow compensation"
+  which might get handy having slight overextrusion on solid parts 
+  or to secure flex-prints. (It will not work within long straight lines, because move-cache will delay its effect)
+- Test for very deep z-matrices: when z-compensation has to do more work than 0.5mm wait!
+- tell repetier and octoprint to stop the print in case of temperature sensor error
+- FEATURE_READ_STEPPER_STATUS has now to be enabled in configuration.h to safe eeprom space. Normal users dont need it.
+- Removed leftovers (depreached text message) from SilentMode M3920 to save EEPROM space
+
+V RF.01.37v8.Mod (2017-10-17 -> Stable)
 - Digit Compensation finally got its own Menu (Menu->Configuration->DMS Features) and EEPROM-Support for switching it on and off. Default: ON
 - Zero Digits after Homing finally got its own Menu (Menu->Configuration->DMS Features) and EEPROM-Support for switching it on and off. Default: ON
 - On-Off-Hysteresis for RF2000 seems to be < 0.01f -> new choice for hysteresis is 0.1f (was 0.2f) (AtlonXPs optical endstop On-Off hysteresis with selfprinted flag is ~ 0.06 at RF1000)

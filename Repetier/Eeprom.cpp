@@ -753,6 +753,10 @@ void EEPROM::initializeAllOperatingModes()
 
 void EEPROM::readDataFromEEPROM()
 {
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+    bool change = false;
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+
 #if EEPROM_MODE!=0
     uint8_t version = HAL::eprGetByte(EPR_VERSION); // This is the saved version. Don't copy data not set in older versions!
     baudrate = HAL::eprGetInt32(EPR_BAUDRATE);
@@ -820,6 +824,25 @@ void EEPROM::readDataFromEEPROM()
 
         e->tempControl.pidDriveMax = HAL::eprGetByte(o+EPR_EXTRUDER_DRIVE_MAX);
         e->tempControl.pidDriveMin = HAL::eprGetByte(o+EPR_EXTRUDER_DRIVE_MIN);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+        if(e->tempControl.pidDriveMin == 40 && e->tempControl.pidDriveMax == 40){
+            e->tempControl.pidDriveMin = 
+#if NUM_EXTRUDER >= 2
+                    (i==0 ? EXT0_PID_INTEGRAL_DRIVE_MIN : (i==1 ? EXT1_PID_INTEGRAL_DRIVE_MIN : HT3_PID_INTEGRAL_DRIVE_MIN));
+#else
+                    EXT0_PID_INTEGRAL_DRIVE_MIN;
+#endif
+            e->tempControl.pidDriveMax = 
+#if NUM_EXTRUDER >= 2
+                    (i==0 ? EXT0_PID_INTEGRAL_DRIVE_MAX : (i==1 ? EXT1_PID_INTEGRAL_DRIVE_MAX : HT3_PID_INTEGRAL_DRIVE_MAX));
+#else
+                    EXT0_PID_INTEGRAL_DRIVE_MAX;
+#endif
+            HAL::eprSetByte(o+EPR_EXTRUDER_DRIVE_MIN,e->tempControl.pidDriveMin);
+            HAL::eprSetByte(o+EPR_EXTRUDER_DRIVE_MAX,e->tempControl.pidDriveMax);
+            change = true; //update checksum later in this function
+        }
+#endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
         e->tempControl.pidPGain    = HAL::eprGetFloat(o+EPR_EXTRUDER_PID_PGAIN);
         e->tempControl.pidIGain    = HAL::eprGetFloat(o+EPR_EXTRUDER_PID_IGAIN);
         e->tempControl.pidDGain    = HAL::eprGetFloat(o+EPR_EXTRUDER_PID_DGAIN);
@@ -836,7 +859,7 @@ void EEPROM::readDataFromEEPROM()
             e->zOffset = 0; //this offset is negative only! to tune a (right) hotend down.
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(o+EPR_EXTRUDER_Z_OFFSET,0.00f); //do not allow positive values
-            EEPROM::updateChecksum();
+            change = true; //update checksum later in this function
 #endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
         }
         e->watchPeriod = HAL::eprGetInt16(o+EPR_EXTRUDER_WATCH_PERIOD);
@@ -946,9 +969,11 @@ void EEPROM::readDataFromEEPROM()
     //min = 0 and max = 0 -> means feature off
 #endif // FEATURE_EMERGENCY_PAUSE
 
-#if FEATURE_AUTOMATIC_EEPROM_UPDATE
-    bool change = false;
-#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+    //Standardgrenzen hängen von Pause-Digits ab! Das macht sinn ;)
+    g_nDigitFlowCompensation_Fmin = short(abs(g_nEmergencyPauseDigitsMax)*0.7);  //mögliche Standardwerte
+    g_nDigitFlowCompensation_Fmax = short(abs(g_nEmergencyPauseDigitsMax)); //mögliche Standardwerte -> z.b. gut wenn das die pause-digits sind.
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
 
 #if FEATURE_MILLING_MODE
     Printer::max_milling_all_axis_acceleration = HAL::eprGetInt16(EPR_RF_MILL_ACCELERATION);

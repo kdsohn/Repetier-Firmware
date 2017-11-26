@@ -70,7 +70,7 @@ public:
     void updateTempControlVars();
     inline bool isAlarm() {return flags & TEMPERATURE_CONTROLLER_FLAG_ALARM;}
     inline void setAlarm(bool on) {if(on) flags |= TEMPERATURE_CONTROLLER_FLAG_ALARM; else flags &= ~TEMPERATURE_CONTROLLER_FLAG_ALARM;}
-    void waitForTargetTemperature();
+    void waitForTargetTemperature(uint8_t plus_temp_tolerance = 0);
     void autotunePID(float temp, uint8_t controllerId, int maxCycles, bool storeResult, int method);
 }; // TemperatureController
 

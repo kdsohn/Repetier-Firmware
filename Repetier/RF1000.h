@@ -168,7 +168,7 @@ Overridden if EEPROM activated.*/
 /** \brief The maximum value, I-gain can contribute to the output. */
 #define HT2_PID_INTEGRAL_DRIVE_MAX          130
 /** \brief lower value for integral part. */
-#define HT2_PID_INTEGRAL_DRIVE_MIN          5
+#define HT2_PID_INTEGRAL_DRIVE_MIN          30
 /** \brief P-gain. */
 #define HT2_PID_P                           37.52
 /** \brief I-gain. */
@@ -183,7 +183,7 @@ Overridden if EEPROM activated.*/
 /** \brief The maximum value, I-gain can contribute to the output. */
 #define HT3_PID_INTEGRAL_DRIVE_MAX          120
 /** \brief lower value for integral part. */
-#define HT3_PID_INTEGRAL_DRIVE_MIN          5
+#define HT3_PID_INTEGRAL_DRIVE_MIN          30
 /** \brief P-gain. */
 #define HT3_PID_P                           12.5
 /** \brief I-gain. */
@@ -630,6 +630,14 @@ A good start is 30 lower then the optimal value. You need to leave room for cool
 // ##########################################################################################
 
 /** \brief Specifies the maximal drive over millimeters which the z-endstop can bear without getting damaged or degraded */
+/*
+Known Limits for Z_ENDSTOP_DRIVE_OVER to avoid when extending value:
+Z-EndStop button crash RF1000: ~ >0.8f
+Z-EndStop optical button crash RF2000: ~ >1.3f
+Crash with Einhausung/Plexiglas backside RFx000: ~ >5.0 .. 6.0f
+Crash with backside metal RFx000: ~ >10.0..12.0f
+Overflow in Z-Matrix: >12.7f 
+*/
 #define Z_ENDSTOP_DRIVE_OVER                 0.8f                              //mm
 
 /** \brief Specifies the maximal steps which can be moved into z-direction after the z-endstop has been reached */
@@ -720,7 +728,7 @@ can set it on for safety. */
 /** \brief Motor Current MAX setting */
 #define MOTOR_CURRENT_MAX                       {150,150,126,126,126}                               // Values 0-255 (126 = ~2A), order: driver 1 (x), driver 2 (y), driver 3 (z), driver 4 (extruder 1), driver 5 (reserved)
 /** \brief Motor Current settings at start: Tweak with menu for better silence <-> stability */
-#define MOTOR_CURRENT_NORMAL                    {110,110,95,90,90}
+#define MOTOR_CURRENT_NORMAL                    {110,110,95,110,110}
 #define MOTOR_CURRENT_MIN                       EXTRUDER_CURRENT_PAUSED
 
 /** \brief number of analog input signals. Normally 1 for each temperature sensor */
@@ -959,7 +967,7 @@ it 0 as default. */
 #if EXTRUDER_ALLOW_COLD_MOVE
 #define MIN_EXTRUDER_TEMP                   0
 #else
-#define MIN_EXTRUDER_TEMP                   120
+#define MIN_EXTRUDER_TEMP                   80
 #endif
 /** \brief Enable advance algorithm.
 Without a correct adjusted advance algorithm, you get blobs at points, where acceleration changes. The

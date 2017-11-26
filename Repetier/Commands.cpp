@@ -1142,7 +1142,7 @@ void Commands::executeGCode(GCode *com)
                     do
                     {
                         currentTime = HAL::timeInMilliseconds();
-                        Commands::printTemperatures();                       
+                        Commands::printTemperatures();
                         Commands::checkForPeriodicalActions();
                         GCode::keepAlive( WaitHeater );
 #if RETRACT_DURING_HEATUP
@@ -1293,7 +1293,7 @@ void Commands::executeGCode(GCode *com)
 #if NUM_TEMPERATURE_LOOPS > 0
                 int temp = 150;
                 int cont = 0;
-                int cycles = 8;
+                int cycles = 10;
                 int method = 0; //0 = Classic PID
                 if(com->hasS()) temp = com->S; //Verwechsle ich immer, weil T wie Temperatur, aber T ist 0..255
                 if(com->hasP()) cont = com->P;

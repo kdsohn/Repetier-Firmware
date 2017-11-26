@@ -164,7 +164,11 @@ void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize)
         p->delta[axis] = Printer::queuePositionTargetSteps[axis] - Printer::queuePositionLastSteps[axis];
         if(axis == E_AXIS)
         {
-            Printer::extrudeMultiplyError += (static_cast<float>(p->delta[E_AXIS]) * Printer::extrusionFactor);
+            Printer::extrudeMultiplyError += (static_cast<float>(p->delta[E_AXIS]) * Printer::extrusionFactor
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_flowmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+               );
             p->delta[E_AXIS] = static_cast<int32_t>(Printer::extrudeMultiplyError);
             Printer::extrudeMultiplyError -= p->delta[E_AXIS];
             Printer::filamentPrinted += p->delta[E_AXIS] * Printer::invAxisStepsPerMM[axis];
@@ -221,7 +225,7 @@ void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize)
         else
             p->distance = sqrt(xydist2);
         Printer::backlashDir = (Printer::backlashDir & 56) | (p2->dir & 7);
-        p->calculateQueueMove(back_diff,pathOptimize);
+        p->calculateQueueMove(back_diff, pathOptimize, p->primaryAxis);
         p = p2;                             // use saved instance for the real move
     }
 #endif // ENABLE_BACKLASH_COMPENSATION
@@ -246,7 +250,7 @@ void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize)
     }
     else
         p->distance = fabs(axisDistanceMM[E_AXIS]);
-    p->calculateQueueMove(axisDistanceMM, pathOptimize);
+    p->calculateQueueMove(axisDistanceMM, pathOptimize, p->primaryAxis);
 
 } // prepareQueueMove
 
@@ -274,7 +278,11 @@ void PrintLine::prepareDirectMove(void)
         p->delta[axis] = Printer::directPositionTargetSteps[axis] - Printer::directPositionCurrentSteps[axis];
         if(axis == E_AXIS)
         {
-            Printer::extrudeMultiplyError += (static_cast<float>(p->delta[E_AXIS]) * Printer::extrusionFactor);
+            Printer::extrudeMultiplyError += (static_cast<float>(p->delta[E_AXIS]) * Printer::extrusionFactor
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_flowmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+               );
             p->delta[E_AXIS] = static_cast<int32_t>(Printer::extrudeMultiplyError);
             Printer::extrudeMultiplyError -= p->delta[E_AXIS];
             Printer::filamentPrinted += p->delta[E_AXIS] * Printer::invAxisStepsPerMM[axis];
@@ -314,7 +322,7 @@ void PrintLine::prepareDirectMove(void)
     }
     else
         p->distance = fabs(axisDistanceMM[E_AXIS]);
-    p->calculateDirectMove(axisDistanceMM,false);
+    p->calculateDirectMove(axisDistanceMM, false, p->primaryAxis);
 
 } // prepareDirectMove
 
@@ -334,11 +342,14 @@ void PrintLine::stopDirectMove( void ) //Funktion ist bereits zur ausführzeit v
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 
-void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize)
+void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, fast8_t drivingAxis)
 {
     long    axisInterval[4];
-    //float   timeForMove = (float)(F_CPU)*distance / (isXOrYMove() ? RMath::max(Printer::minimumSpeed,Printer::feedrate) : Printer::feedrate);   // time is in ticks
-    float timeForMove = (float)(F_CPU) * distance / Printer::feedrate; // time is in ticks
+    float timeForMove = (float)(F_CPU) * distance / Printer::feedrate
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+                                                                      / g_nDigitFlowCompensation_feedmulti
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
+    ; // time is in ticks
     
     if(linesCount < MOVE_CACHE_LOW && timeForMove < LOW_TICKS_PER_MOVE)   // Limit speed to keep cache full.
     {
@@ -435,9 +446,18 @@ void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize)
     // Now we can calculate the new primary axis acceleration, so that the slowest axis max acceleration is not violated
     fAcceleration = 262144.0*(float)accelerationPrim / F_CPU; // will overflow without float!
     accelerationDistance2 = 2.0 * distance * slowestAxisPlateauTimeRepro * fullSpeed / ((float)F_CPU);  // mm^2/s^2
-    startSpeed = endSpeed = minSpeed = safeSpeed();
-    if(startSpeed > Printer::feedrate)
-        startSpeed = endSpeed = minSpeed = Printer::feedrate;
+    startSpeed = endSpeed = minSpeed = safeSpeed(drivingAxis);
+    if(startSpeed > Printer::feedrate
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+                                      * g_nDigitFlowCompensation_feedmulti
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
+    ){
+        startSpeed = endSpeed = minSpeed = Printer::feedrate
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+                                      * g_nDigitFlowCompensation_feedmulti
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
+        ;
+    }
     // Can accelerate to full speed within the line
     if (startSpeed * startSpeed + accelerationDistance2 >= fullSpeed * fullSpeed)
         setNominalMove();
@@ -498,7 +518,7 @@ void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize)
 
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize)
+void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize, fast8_t drivingAxis)
 {
     long    axisInterval[4];
     float   timeForMove = (float)(F_CPU)*distance / (isXOrYMove() ? DIRECT_FEEDRATE_XY : isZMove() ? DIRECT_FEEDRATE_Z : DIRECT_FEEDRATE_E);    // time is in ticks
@@ -622,9 +642,18 @@ void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize)
     // Now we can calculate the new primary axis acceleration, so that the slowest axis max acceleration is not violated
     fAcceleration = 262144.0*(float)accelerationPrim/F_CPU;                                         // will overflow without float!
     accelerationDistance2 = 2.0*distance*slowestAxisPlateauTimeRepro*fullSpeed/((float)F_CPU);  // mm^2/s^2
-    startSpeed = endSpeed = minSpeed = safeSpeed();
-    if(startSpeed > Printer::feedrate)
-        startSpeed = endSpeed = minSpeed = Printer::feedrate;
+    startSpeed = endSpeed = minSpeed = safeSpeed(drivingAxis);
+    if(startSpeed > Printer::feedrate
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+                                      * g_nDigitFlowCompensation_feedmulti
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
+    ){
+        startSpeed = endSpeed = minSpeed = Printer::feedrate
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+                                      * g_nDigitFlowCompensation_feedmulti
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
+        ;
+    }
     // Can accelerate to full speed within the line
     if (startSpeed * startSpeed + accelerationDistance2 >= fullSpeed * fullSpeed)
         setNominalMove();
@@ -761,19 +790,25 @@ void PrintLine::updateTrapezoids()
     previousPlannerIndex(previousIndex);
     PrintLine *previous = &lines[previousIndex];
 
-    // filters z-move<->not z-move
-    /*if((previous->primaryAxis == Z_AXIS && act->primaryAxis != Z_AXIS) || (previous->primaryAxis != Z_AXIS && act->primaryAxis == Z_AXIS))
+    // filters z-move<->not z-move //Nibbels: Test if this is better with our type of Z-Comp because of bad edges? See https://github.com/repetier/Repetier-Firmware/commit/5fbe3748a0ca55386d5315d5b44c4209bec62fc2#diff-593812a66d7348c87b711b15b1ad5195L696
+    /*
+    if((previous->primaryAxis == Z_AXIS && act->primaryAxis != Z_AXIS) || (previous->primaryAxis != Z_AXIS && act->primaryAxis == Z_AXIS))
     {
         previous->setEndSpeedFixed(true);
         act->setStartSpeedFixed(true);
         act->updateStepsParameter();
         firstLine->unblock();
         return;
-    }*/
+    }
+    */
 
     if( previous->isEOnlyMove() != act->isEOnlyMove() )
     {
-        previous->maxJunctionSpeed = previous->endSpeed;
+        previous->maxJunctionSpeed = RMath::min(previous->endSpeed,act->startSpeed);
+        /*
+        if(act->isEOnlyMove())      previous->maxJunctionSpeed = previous->safeSpeed(previous->primaryAxis); //previous->endSpeed; //previous->endSpeed;
+        if(previous->isEOnlyMove()) previous->maxJunctionSpeed = act->safeSpeed(act->primaryAxis); //act->startSpeed; //previous->endSpeed;
+        */
         previous->setEndSpeedFixed(true);
         act->setStartSpeedFixed(true);
         act->updateStepsParameter();
@@ -837,7 +872,7 @@ inline void PrintLine::computeMaxJunctionSpeed(PrintLine *previous,PrintLine *cu
     {
         // if we start/stop extrusion we need to do so with lowest possible end speed
         // or advance would leave a drolling extruder and can not adjust fast enough.
-        if(previous->isEMove() != current->isEMove()) //&& (previous->isXOrYMove() || current->isXOrYMove())
+        if(previous->isEMove() != current->isEMove() && previous->isEMove()) //&& (previous->isXOrYMove() || current->isXOrYMove())
         {
             previous->setEndSpeedFixed(true);
             current->setStartSpeedFixed(true);
@@ -1027,11 +1062,13 @@ void PrintLine::forwardPlanner(uint8_t first)
 } // forwardPlanner
 
 
-inline float PrintLine::safeSpeed()
+inline float PrintLine::safeSpeed(fast8_t drivingAxis)
 {
-    float safe(Printer::maxJerk * 0.5);
+    float xyMin = Printer::maxJerk * 0.5f;
+    float mz = 0;
+    float safe(xyMin);
     if(isZMove()) {
-        float mz = Printer::maxZJerk * 0.5;
+        mz = Printer::maxZJerk * 0.5f;
         if(isXOrYMove()) {
             if(fabs(speedZ) > mz)
                 safe = RMath::min(safe, mz * fullSpeed / fabs(speedZ));
@@ -1041,10 +1078,15 @@ inline float PrintLine::safeSpeed()
     }
     if(isEMove()) {
         if(isXYZMove())
-            safe = RMath::min(safe, 0.5 * Extruder::current->maxStartFeedrate * fullSpeed / fabs(speedE));
+            safe = RMath::min(safe, 0.5f * Extruder::current->maxStartFeedrate * fullSpeed / fabs(speedE));
         else
-            safe = 0.5 * Extruder::current->maxStartFeedrate; // This is a retraction move
+            safe = 0.5f * Extruder::current->maxStartFeedrate; // This is a retraction move
     }
+    
+    // enforce minimum speed for numerical stability of explicit speed integration
+    if(drivingAxis == X_AXIS || drivingAxis == Y_AXIS) safe = RMath::max(xyMin, safe);
+    else if(drivingAxis == Z_AXIS)                     safe = RMath::max(mz, safe);
+ 
     return RMath::min(safe, fullSpeed);
 } // safeSpeed
 
@@ -1323,6 +1365,11 @@ long PrintLine::performPauseCheck(){
             return true;
         }
 #endif //FEATURE_PAUSE_PRINTING
+        // Pause a bit, if z-compensation is way out of line: this is usefull when starting prints using very deep bed-leveling and custom z-endstop switches which can override a lot.
+        if( abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ ) > ZAXIS_STEPS_PER_MM / 2 && Printer::compensatedPositionTargetStepsZ ){
+            HAL::forbidInterrupts();
+            return true;
+        }
     }
     return false; //ignore this.
 }
@@ -2043,8 +2090,6 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
         if(Printer::vMaxReached > move->vMax) Printer::vMaxReached = move->vMax;
         unsigned int v = Printer::updateStepsPerTimerCall(Printer::vMaxReached);
         Printer::interval = HAL::CPUDivU2(v);
-        if(Printer::maxInterval < Printer::interval) // fix timing for very slow speeds
-            Printer::interval = Printer::maxInterval;
         Printer::timer+=Printer::interval;
 #if USE_ADVANCE
         move->updateAdvanceSteps(Printer::vMaxReached, max_loops, true);
@@ -2066,8 +2111,6 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
 #endif // USE_ADVANCE
         v = Printer::updateStepsPerTimerCall(v);
         Printer::interval = HAL::CPUDivU2(v);
-        if(Printer::maxInterval < Printer::interval) // fix timing for very slow speeds
-             Printer::interval = Printer::maxInterval;
         Printer::timer += Printer::interval;
     }
     else // full speed reached

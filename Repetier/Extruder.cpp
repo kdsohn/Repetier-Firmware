@@ -103,6 +103,9 @@ void Extruder::manageTemperatures()
                 Printer::flag0 |= PRINTER_FLAG0_TEMPSENSOR_DEFECT;
                 reportTempsensorError();
 
+                Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetier-host / server to stop printing
+                Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
+                
                 showError( (void*)ui_text_temperature_manager, (void*)ui_text_sensor_error );
             }
         }
@@ -127,14 +130,17 @@ void Extruder::manageTemperatures()
             if( act->targetTemperatureC < 20.0f )
             {
                 output = 0; // off is off, even if damping term wants a heat peak!
+                act->tempIState = 0;
             } 
             else if( error > PID_CONTROL_RANGE )
             {
                 output = act->pidMax;
+                act->tempIState = 0;
             }
             else if( error < -PID_CONTROL_RANGE )
             {
                 output = 0;
+                act->tempIState = 0;
             }
             else
             {
@@ -463,18 +469,18 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
     }
 
     bool alloffs = true;
-    for(uint8_t i=0; i<NUM_EXTRUDER; i++)
-        if(tempController[i]->targetTemperatureC>15) alloffs = false;
+    for(uint8_t i=0; i < NUM_EXTRUDER; i++)
+        if(tempController[i]->targetTemperatureC > 15) alloffs = false;
 
 #ifdef EXTRUDER_MAX_TEMP
     if(temperatureInCelsius>EXTRUDER_MAX_TEMP) temperatureInCelsius = EXTRUDER_MAX_TEMP;
 #endif // EXTRUDER_MAX_TEMP
 
-    if(temperatureInCelsius<0) temperatureInCelsius=0;
+    if(temperatureInCelsius < 0) temperatureInCelsius=0;
     TemperatureController *tc = tempController[extr];
     tc->setTargetTemperature(temperatureInCelsius,0);
     tc->updateTempControlVars();
-    if(beep && temperatureInCelsius>30)
+    if(beep && temperatureInCelsius > 30)
         tc->setAlarm(true);
     if(temperatureInCelsius>=EXTRUDER_FAN_COOL_TEMP) extruder[extr].coolerPWM = extruder[extr].coolerSpeed;
 
@@ -485,34 +491,36 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
     }
 
 #if FEATURE_CASE_FAN && !CASE_FAN_ALWAYS_ON
-    if( temperatureInCelsius >= CASE_FAN_ON_TEMPERATURE )
-    {
-        if(Printer::ignoreFanOn){
-            //ignore the case fan whenever there is another cooling solution available // Nibbels
-            //the fan should still be connected within the rf2000 but might be avoided to suppress noise.
-            //the ignore-flag has to be set at runtime to prevent unlearned persons to risk overheat having the wrong startcode.
-            //enable and disable the fan with M3120 or M3121 or M3300 P3 S{1,0}
-            Printer::prepareFanOff = 0;
-            Printer::fanOffDelay = 0;
-        }else{
-            // enable the case fan in case the extruder is turned on
-            Printer::prepareFanOff = 0;
-            WRITE(CASE_FAN_PIN, 1);         
-        }
-    }
-    else
-    {
-        // disable the case fan in case the extruder is turned off
-        if( Printer::fanOffDelay )
+    if(Printer::ignoreFanOn){
+        //ignore the case fan whenever there is another cooling solution available // Nibbels
+        //the fan should still be connected within the rf2000 but might be avoided to suppress noise.
+        //the ignore-flag has to be set at runtime to prevent unlearned persons to risk overheat having the wrong startcode.
+        //enable and disable the fan with M3120 or M3121 or M3300 P3 S{1,0}
+        Printer::prepareFanOff = 0;
+        Printer::fanOffDelay = 0;
+    }else{
+        bool isheating = false;
+        for(uint8_t i=0; i < NUM_EXTRUDER; i++) if(tempController[i]->targetTemperatureC > CASE_FAN_ON_TEMPERATURE) isheating = true;
+        if( isheating )
         {
-            // we are going to disable the case fan after the delay
-            Printer::prepareFanOff = HAL::timeInMilliseconds();
+            // enable the case fan in case any extruder is turned on
+            Printer::prepareFanOff = 0;
+            WRITE(CASE_FAN_PIN, 1);
         }
         else
         {
-            // we are going to disable the case fan now
-            Printer::prepareFanOff = 0;
-            WRITE(CASE_FAN_PIN, 0);
+            // disable the case fan in case the extruder is turned off
+            if( Printer::fanOffDelay )
+            {
+                // we are going to disable the case fan after the delay
+                Printer::prepareFanOff = HAL::timeInMilliseconds();
+            }
+            else
+            {
+                // we are going to disable the case fan now
+                Printer::prepareFanOff = 0;
+                WRITE(CASE_FAN_PIN, 0);
+            }
         }
     }
 #endif // FEATURE_CASE_FAN && !CASE_FAN_ALWAYS_ON
@@ -523,13 +531,13 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
         TemperatureController *tc2 = tempController[1];
         tc2->setTargetTemperature(temperatureInCelsius,0);
         tc2->updateTempControlVars();
-        if(temperatureInCelsius>=EXTRUDER_FAN_COOL_TEMP) extruder[1].coolerPWM = extruder[1].coolerSpeed;
+        if(temperatureInCelsius >= EXTRUDER_FAN_COOL_TEMP) extruder[1].coolerPWM = extruder[1].coolerSpeed;
     }
 #endif // FEATURE_DITTO_PRINTING
 
     bool alloff = true;
-    for(uint8_t i=0; i<NUM_EXTRUDER; i++)
-        if(tempController[i]->targetTemperatureC>15) alloff = false;
+    for(uint8_t i=0; i < NUM_EXTRUDER; i++)
+        if(tempController[i]->targetTemperatureC > 15) alloff = false;
 
 #if EEPROM_MODE != 0
     if(alloff && !alloffs) // All heaters are now switched off?
@@ -690,7 +698,7 @@ const short temptable_4[NUMTEMPS_4][2] PROGMEM =
 #define NUMTEMPS_8 34 
 const short temptable_8[NUMTEMPS_8][2] PROGMEM =
 {
-    {0,8000},{69,2400},{79,2320},{92,2240},{107,2160},{125,2080},{146,2000},{172,1920},{204,1840},{222,1760},{291,1680},{350,1600},
+    {0,8000},{69,2400},{79,2320},{92,2240},{107,2160},{125,2080},{146,2000},{172,1920},{204,1840},{244,1760},{291,1680},{350,1600},
     {422,1520},{511,1440},{621,1360},{755,1280},{918,1200},{1114,1120},{1344,1040},{1608,960},{1902,880},{2216,800},{2539,720},
     {2851,640},{3137,560},{3385,480},{3588,400},{3746,320},{3863,240},{3945,160},{4002,80},{4038,0},{4061,-80},{4075,-160}
 };
@@ -1295,7 +1303,7 @@ void Extruder::disableAllHeater()
 
 } // disableAllHeater
 
-void TemperatureController::waitForTargetTemperature() {
+void TemperatureController::waitForTargetTemperature(uint8_t plus_temp_tolerance) {
     if(targetTemperatureC < 30) return;
     if(Printer::debugDryrun()) return;
     g_uStartOfIdle = 0;
@@ -1308,7 +1316,7 @@ void TemperatureController::waitForTargetTemperature() {
         Commands::printTemperatures();
         Commands::checkForPeriodicalActions();
         GCode::keepAlive(WaitHeater);
-        if( fabs(targetTemperatureC - currentTemperatureC) <= TEMP_TOLERANCE ) {
+        if( fabs(targetTemperatureC - currentTemperatureC) <= TEMP_TOLERANCE + plus_temp_tolerance ) {
             return;
         }
     }
@@ -1339,14 +1347,8 @@ void TemperatureController::autotunePID(float temp, uint8_t controllerId, int ma
     Com::printInfoFLN(Com::tPIDAutotuneStart);
     Com::printF( PSTR("Ruleset: "), (int)method );
     switch(method){
-        case 6: //P
-            Com::printFLN(Com::tAPIDsimpleP);
-        break;
-        case 5: //PI
-            Com::printFLN(Com::tAPIDsimplePI);
-        break;
-        case 4: //PD
-            Com::printFLN(Com::tAPIDsimplePD);
+        case 4: //Tyreus-Lyben
+            Com::printFLN(Com::tAPIDTyreusLyben);
         break;
         case 3: //PID no overshoot
             Com::printFLN(Com::tAPIDNone);
@@ -1430,24 +1432,11 @@ KP = Ku * Maßzahl lt. Tabelle
 see also: http://www.mstarlabs.com/control/znrule.html
 */
                         switch(method){
-                            case 6: //P
-                               Kp = 0.5f*Ku;          //0.5 KRkrit
-                               Ki = 0;
-                               Kd = 0;
-                               Com::printFLN(Com::tAPIDsimpleP);
-                            break;
-                            case 5: //PI
-                               Kp = 0.45f*Ku;          //0.45 KRkrit
-                               Ki = 1.2f*Kp/Tu;       //0.833 Tkrit
-                               Kd = 0;
-                               Com::printFLN(Com::tAPIDsimplePI);
-                            break;
-                            case 4: //PD
-                               Kp = 0.8f*Ku;          //0.8 KRkrit
-                               Ki = 0;
-                               Kd = Kp*Tu/8.0f;       //0.125 Tkrit
-                               Com::printFLN(Com::tAPIDsimplePD);
-                            break;
+                            case 4: //Tyreus-Lyben
+                                Kp = 0.4545f*Ku;      //1/2.2 KRkrit
+                                Ki = Kp/Tu/2.2f;        //2.2 Tkrit
+                                Kd = Kp*Tu/6.3f;      //1/6.3 Tkrit[/code]
+                                Com::printFLN(Com::tAPIDTyreusLyben);
                             case 3: //PID no overshoot
                                Kp = 0.2f*Ku;          //0.2 KRkrit
                                Ki = 2.0f*Kp/Tu;       //0.5 Tkrit

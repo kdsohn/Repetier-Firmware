@@ -1264,20 +1264,28 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 if(c2=='f')                                                                             // %of : flow multiplier
                 {
-                    addInt(Printer::extrudeMultiply,3);
+                    addInt(Printer::extrudeMultiply
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_flowmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+                    ,3);
                     break;
                 }
                 if(c2=='m')                                                                             // %om : Speed multiplier
                 {
-                    addInt(Printer::feedrateMultiply,3);
+                    addInt(Printer::feedrateMultiply
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_feedmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+                    ,3);
                     break;
                 }
                 if(c2=='p')                                                                             // %op : Is single double or quadstepping?
                 {
                     switch(Printer::stepsPerTimerCall){
-                        case 1: addStringP( PSTR(" Sgl") ); break; //kein double oder quadstepping
-                        case 2: addStringP( PSTR(" Dbl") ); break; //kein double oder quadstepping
-                        case 4: addStringP( PSTR(" Qud") ); break; //kein double oder quadstepping
+                        case 1: addStringP( PSTR(" Sgl") ); break; //Single Stepping aktiv
+                        case 2: addStringP( PSTR(" Dbl") ); break; //Double Stepping aktiv
+                        case 4: addStringP( PSTR(" Qud") ); break; //Quad Stepping aktiv
                     }
                     break;
                 }
@@ -1892,8 +1900,8 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 break;
             }
-#if FEATURE_READ_CALIPER
             case 'C':{
+#if FEATURE_READ_CALIPER
                 if(c2=='a')                                                                             // %Ca : Caliper Active Reading
                 {
                     addLong(abs(caliper_um)+caliper_collect_adjust,5);
@@ -1920,9 +1928,27 @@ void UIDisplay::parse(char *txt,bool ram)
                         addInt(100,3);
                     }
                 }
+#endif //FEATURE_READ_CALIPER
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+                if(c2=='U')                                                                        // %CU : digit flow lower limit
+                {
+                    addInt((int)g_nDigitFlowCompensation_Fmin,5);
+                }
+                else if(c2=='O')                                                                        // %CO : digit flow higher limit
+                {
+                    addInt((int)g_nDigitFlowCompensation_Fmax,5);
+                }
+                else if(c2=='F')                                                                        // %CF : digit flow flowrate
+                {
+                    addInt((int)g_nDigitFlowCompensation_intense,3); //eigentlcih sollten wir F und E hier tauschen... egal.
+                }
+                else if(c2=='E')                                                                        // %CE : digit flow feedrate
+                {
+                    addInt((int)g_nDigitFlowCompensation_speed_intense,3);
+                }
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
                 break;
             }
-#endif //FEATURE_READ_CALIPER
             case 'Z':                                                                                   // %Z1-Z4: Page5 service intervall, %Z5-Z8: Page4 printing/milling time
             {
                 if(c2=='1')                                                                             // Shows text printing/milling time since last service
@@ -3904,11 +3930,13 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
         case UI_ACTION_RF_RESET_ACK:
-        {
-            INCREMENT_MIN_MAX(g_nYesNo,1,0,1);
-            break;
-        }
         case UI_ACTION_SD_STOP_ACK:
+        case UI_ACTION_RESTORE_DEFAULTS:
+        case UI_ACTION_CHOOSE_CLASSICPID:
+        case UI_ACTION_CHOOSE_LESSERINTEGRAL:
+        case UI_ACTION_CHOOSE_SOME:
+        case UI_ACTION_CHOOSE_NO:
+        case UI_ACTION_CHOOSE_TYREUS_LYBEN:
         {
             INCREMENT_MIN_MAX(g_nYesNo,1,0,1);
             break;
@@ -3956,20 +3984,6 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
 #endif //FEATURE_EMERGENCY_STOP_ALL
 
-        case UI_ACTION_RESTORE_DEFAULTS:
-        {
-            INCREMENT_MIN_MAX(g_nYesNo,1,0,1);
-            break;
-        }
-
-        case UI_ACTION_CHOOSE_CLASSICPID:
-        case UI_ACTION_CHOOSE_LESSERINTEGRAL:
-        case UI_ACTION_CHOOSE_SOME:
-        case UI_ACTION_CHOOSE_NO:
-        {
-            INCREMENT_MIN_MAX(g_nYesNo,1,0,1);
-            break;
-        }
         case UI_ACTION_CHOOSE_DMIN:
         {
             if(uid.menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
@@ -4112,6 +4126,31 @@ void UIDisplay::nextPreviousAction(int8_t next)
             }
             break;
         }
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+        case UI_ACTION_FLOW_MIN:
+        {
+            INCREMENT_MIN_MAX(g_nDigitFlowCompensation_Fmin,200,0,g_nDigitFlowCompensation_Fmax);
+            break;
+        }
+        case UI_ACTION_FLOW_MAX:
+        {
+            short max = (g_nEmergencyPauseDigitsMax ? abs(g_nEmergencyPauseDigitsMax) : abs(EMERGENCY_PAUSE_DIGITS_MAX));
+            INCREMENT_MIN_MAX(g_nDigitFlowCompensation_Fmax,200,g_nDigitFlowCompensation_Fmin,max);
+            break;
+        }
+        case UI_ACTION_FLOW_DF:
+        {
+            INCREMENT_MIN_MAX(g_nDigitFlowCompensation_intense,1,-99,99);
+            //flowmulti wird zur laufzeit geändert, anhand von steigung intense -> aber je nach cache erst sehr spät.
+            break;
+        }
+        case UI_ACTION_FLOW_DV:
+        {
+            INCREMENT_MIN_MAX(g_nDigitFlowCompensation_speed_intense,1,-99,99);
+            //feedmulti wird zur laufzeit geändert, anhand von steigung intense
+            break;
+        }
+#endif //FEATURE_DIGIT_FLOW_COMPENSATION
         case UI_ACTION_FREQ_DBL:
         {
             INCREMENT_MIN_MAX(Printer::stepsDoublerFrequency,500,5000,12000);
@@ -4213,6 +4252,7 @@ void UIDisplay::finishAction(int action)
         case UI_ACTION_CHOOSE_LESSERINTEGRAL:
         case UI_ACTION_CHOOSE_SOME:
         case UI_ACTION_CHOOSE_NO:
+        case UI_ACTION_CHOOSE_TYREUS_LYBEN:
         {
             if( g_nYesNo != 1 )
             {

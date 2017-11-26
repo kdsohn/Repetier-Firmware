@@ -160,10 +160,12 @@
 #define UI_ACTION_EMERGENCY_ZSTOP_MIN       1672
 #define UI_ACTION_EMERGENCY_ZSTOP_MAX       1673
 
-#define UI_ACTION_CHOOSE_CLASSICPID         1674
-#define UI_ACTION_CHOOSE_LESSERINTEGRAL     1675
-#define UI_ACTION_CHOOSE_SOME               1676
-#define UI_ACTION_CHOOSE_NO                 1677
+#define UI_ACTION_CHOOSE_CLASSICPID         1674 //pid kram
+#define UI_ACTION_CHOOSE_LESSERINTEGRAL     1675 //pid kram
+#define UI_ACTION_CHOOSE_SOME               1676 //pid kram
+#define UI_ACTION_CHOOSE_NO                 1677 //pid kram
+#define UI_ACTION_CHOOSE_TYREUS_LYBEN       1701 //pid kram
+
 #define UI_ACTION_CHOOSE_DMIN               1678
 #define UI_ACTION_CHOOSE_DMAX               1679
 #define UI_ACTION_CHOOSE_PIDMAX             1680
@@ -191,6 +193,11 @@
 
 #define UI_ACTION_FEATURE_ZERO_DIGITS       1699
 #define UI_ACTION_DIGIT_COMPENSATION        1700
+//1701 oben
+#define UI_ACTION_FLOW_MIN                  1702
+#define UI_ACTION_FLOW_MAX                  1703
+#define UI_ACTION_FLOW_DF                   1704
+#define UI_ACTION_FLOW_DV                   1705
 
 #define UI_ACTION_FET1_OUTPUT               2001
 #define UI_ACTION_FET2_OUTPUT               2002

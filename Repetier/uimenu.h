@@ -178,6 +178,11 @@ List of placeholder:
 %Cc : Caliper Correction
 %Cn : needed flow multi for measurement
 
+%CU : digit flow lower limit
+%CO : digit flow higher limit
+%CF : digit flow flowrate
+%CE : digit flow feedrate
+
 %FH : Digit Homing to Zero ON/OFF
 %FC : Digits force-bend-hotend-down Compensation Z ON/OFF
 
@@ -841,50 +846,83 @@ UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_extruder_offset_y,UI_TEXT_EXTRUDER_OFFSET_
 #define EXTRUDER_OFFSET_TYPE_COUNT_XY 0
 #endif // NUM_EXTRUDER>1
 
+
+/** \brief Configuration->DMS-Features->Emergency Pause */
 #if FEATURE_EMERGENCY_PAUSE
-UI_MENU_ACTION4C(ui_menu_emergency_pause_min2,UI_ACTION_EMERGENCY_PAUSE_MIN,UI_TEXT_EMERGENCY_PAUSE_MIN2)
-UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_emergency_pause_min,UI_TEXT_EMERGENCY_PAUSE_MIN,ui_menu_emergency_pause_min2, MENU_MODE_PRINTER, 0)
-UI_MENU_ACTION4C(ui_menu_emergency_pause_max2,UI_ACTION_EMERGENCY_PAUSE_MAX,UI_TEXT_EMERGENCY_PAUSE_MAX2)
-UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_emergency_pause_max,UI_TEXT_EMERGENCY_PAUSE_MAX,ui_menu_emergency_pause_max2, MENU_MODE_PRINTER, 0)
-#define EMERGENCY_PAUSE_MINMAX_ENTRY &ui_menu_emergency_pause_min ,&ui_menu_emergency_pause_max 
-#define EMERGENCY_PAUSE_MINMAX_COUNT 2
-#else
-#define EMERGENCY_PAUSE_MINMAX_ENTRY
-#define EMERGENCY_PAUSE_MINMAX_COUNT 0
-#endif // FEATURE_EMERGENCY_PAUSE
+ UI_MENU_CHANGEACTION( ui_menu_emergency_pause_min, UI_TEXT_EMERGENCY_PAUSE_MIN, UI_ACTION_EMERGENCY_PAUSE_MIN )
+ UI_MENU_CHANGEACTION( ui_menu_emergency_pause_max, UI_TEXT_EMERGENCY_PAUSE_MAX, UI_ACTION_EMERGENCY_PAUSE_MAX )
 
+ #define UI_MENU_CONF_EMERGENCY_PAUSE {UI_MENU_ADDCONDBACK &ui_menu_emergency_pause_min, &ui_menu_emergency_pause_max}
+ UI_MENU(ui_menu_settings_emerg_pause,UI_MENU_CONF_EMERGENCY_PAUSE,UI_MENU_BACKCNT+2)
+
+ UI_MENU_SUBMENU_FILTER(ui_menu_conf_emerg_pause, UI_TEXT_EMERGENCY_PAUSE_MENU, ui_menu_settings_emerg_pause, MENU_MODE_PRINTER,0)
+ #define UI_MENU_CONFIGURATION_EMERGENCY_PAUSE_COND &ui_menu_conf_emerg_pause, 
+ #define UI_MENU_CONFIGURATION_EMERGENCY_PAUSE_COUNT 1
+ 
+#else //FEATURE_EMERGENCY_PAUSE
+ #define UI_MENU_CONFIGURATION_EMERGENCY_PAUSE_COND 
+ #define UI_MENU_CONFIGURATION_EMERGENCY_PAUSE_COUNT 0
+#endif //FEATURE_EMERGENCY_PAUSE
+
+
+/** \brief Configuration->DMS-Features->Emergency Z-Stop */
 #if FEATURE_EMERGENCY_STOP_ALL
-UI_MENU_ACTION4C(ui_menu_emergency_zstop_min2,UI_ACTION_EMERGENCY_ZSTOP_MIN,UI_TEXT_EMERGENCY_ZSTOP_MIN2)
-UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_emergency_zstop_min,UI_TEXT_EMERGENCY_ZSTOP_MIN,ui_menu_emergency_zstop_min2, MENU_MODE_PRINTER, 0)
-UI_MENU_ACTION4C(ui_menu_emergency_zstop_max2,UI_ACTION_EMERGENCY_ZSTOP_MAX,UI_TEXT_EMERGENCY_ZSTOP_MAX2)
-UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_emergency_zstop_max,UI_TEXT_EMERGENCY_ZSTOP_MAX,ui_menu_emergency_zstop_max2, MENU_MODE_PRINTER, 0)
-#define EMERGENCY_ZSTOP_MINMAX_ENTRY ,&ui_menu_emergency_zstop_min ,&ui_menu_emergency_zstop_max 
-#define EMERGENCY_ZSTOP_MINMAX_COUNT 2
-#else
-#define EMERGENCY_ZSTOP_MINMAX_ENTRY
-#define EMERGENCY_ZSTOP_MINMAX_COUNT 0
-#endif // FEATURE_EMERGENCY_STOP_ALL
+ UI_MENU_CHANGEACTION( ui_menu_emergency_zstop_min, UI_TEXT_EMERGENCY_ZSTOP_MIN, UI_ACTION_EMERGENCY_ZSTOP_MIN )
+ UI_MENU_CHANGEACTION( ui_menu_emergency_zstop_max, UI_TEXT_EMERGENCY_ZSTOP_MAX, UI_ACTION_EMERGENCY_ZSTOP_MAX )
 
+ #define UI_MENU_CONF_EMERGENCY_ZSTOP {UI_MENU_ADDCONDBACK &ui_menu_emergency_zstop_min, &ui_menu_emergency_zstop_max}
+ UI_MENU(ui_menu_settings_emerg_zstop,UI_MENU_CONF_EMERGENCY_ZSTOP,UI_MENU_BACKCNT+2)
+
+ UI_MENU_SUBMENU_FILTER(ui_menu_conf_emerg_zstop, UI_TEXT_EMERGENCY_ZSTOP_MENU, ui_menu_settings_emerg_zstop, MENU_MODE_PRINTER,0)
+ #define UI_MENU_CONFIGURATION_EMERGENCY_ZSTOP_COND &ui_menu_conf_emerg_zstop, 
+ #define UI_MENU_CONFIGURATION_EMERGENCY_ZSTOP_COUNT 1
+ 
+#else //FEATURE_EMERGENCY_STOP_ALL
+ #define UI_MENU_CONFIGURATION_EMERGENCY_ZSTOP_COND 
+ #define UI_MENU_CONFIGURATION_EMERGENCY_ZSTOP_COUNT 0
+#endif //FEATURE_EMERGENCY_STOP_ALL
+
+/** \brief Configuration->DMS-Features->Zero Digits ON OFF */
 #if FEATURE_ZERO_DIGITS
 UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_zero_digits_homing,UI_TEXT_DO_FEATURE_ZERO_DIGITS,UI_ACTION_FEATURE_ZERO_DIGITS,MENU_MODE_PRINTER, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED)
-#define UI_MENU_FEATURE_ZERO_DIGITS  , &ui_menu_zero_digits_homing 
+#define UI_MENU_FEATURE_ZERO_DIGITS  &ui_menu_zero_digits_homing, 
 #define UI_MENU_FEATURE_ZERO_DIGITS_COUNT 1
 #else
 #define UI_MENU_FEATURE_ZERO_DIGITS  
 #define UI_MENU_FEATURE_ZERO_DIGITS_COUNT 0
 #endif // FEATURE_ZERO_DIGITS
 
+/** \brief Configuration->DMS-Features->DIGIT COMPENSATION ON OFF */
 #if FEATURE_DIGIT_Z_COMPENSATION
 UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_digits_cmp,UI_TEXT_DO_DIGIT_COMPENSATION,UI_ACTION_DIGIT_COMPENSATION,MENU_MODE_PRINTER, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED)
-#define UI_MENU_FEATURE_DIGITS_CMP  , &ui_menu_digits_cmp 
+#define UI_MENU_FEATURE_DIGITS_CMP  &ui_menu_digits_cmp 
 #define UI_MENU_FEATURE_DIGITS_CMP_COUNT 1
 #else
 #define UI_MENU_FEATURE_DIGITS_CMP  
 #define UI_MENU_FEATURE_DIGITS_CMP_COUNT 0
 #endif // FEATURE_DIGIT_Z_COMPENSATION
 
-#define UI_MENU_DMS {UI_MENU_ADDCONDBACK EMERGENCY_PAUSE_MINMAX_ENTRY EMERGENCY_ZSTOP_MINMAX_ENTRY UI_MENU_FEATURE_ZERO_DIGITS UI_MENU_FEATURE_DIGITS_CMP}
-UI_MENU(ui_menu_dms,UI_MENU_DMS,UI_MENU_BACKCNT+EMERGENCY_PAUSE_MINMAX_COUNT+EMERGENCY_ZSTOP_MINMAX_COUNT+UI_MENU_FEATURE_ZERO_DIGITS_COUNT+UI_MENU_FEATURE_DIGITS_CMP_COUNT)
+/** \brief Configuration->DMS-Features->Flow Compensation menu */
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+ UI_MENU_CHANGEACTION( ui_menu_flow_min, UI_TEXT_FLOW_MIN, UI_ACTION_FLOW_MIN)
+ UI_MENU_CHANGEACTION( ui_menu_flow_max, UI_TEXT_FLOW_MAX, UI_ACTION_FLOW_MAX)
+ UI_MENU_CHANGEACTION( ui_menu_flow_df,  UI_TEXT_FLOW_DF,  UI_ACTION_FLOW_DF)
+ UI_MENU_CHANGEACTION( ui_menu_flow_dv,  UI_TEXT_FLOW_DV,  UI_ACTION_FLOW_DV)
+
+ #define UI_MENU_CONF_FLOW_COMPENSATION {UI_MENU_ADDCONDBACK &ui_menu_flow_min, &ui_menu_flow_max, &ui_menu_flow_df, &ui_menu_flow_dv}
+ UI_MENU(ui_menu_settings_flow,UI_MENU_CONF_FLOW_COMPENSATION,UI_MENU_BACKCNT+4)
+
+ UI_MENU_SUBMENU_FILTER(ui_menu_conf_flow, UI_TEXT_FLOW_MENU, ui_menu_settings_flow, MENU_MODE_PRINTER,0)
+ #define UI_MENU_CONFIGURATION_FLOW_COMPENSATION_COND &ui_menu_conf_flow, 
+ #define UI_MENU_CONFIGURATION_FLOW_COMPENSATION_COUNT 1
+ 
+#else //FEATURE_DIGIT_FLOW_COMPENSATION
+ #define UI_MENU_CONFIGURATION_FLOW_COMPENSATION_COND 
+ #define UI_MENU_CONFIGURATION_FLOW_COMPENSATION_COUNT 0
+#endif //FEATURE_DIGIT_FLOW_COMPENSATION
+
+#define UI_MENU_DMS {UI_MENU_ADDCONDBACK UI_MENU_CONFIGURATION_EMERGENCY_PAUSE_COND UI_MENU_CONFIGURATION_EMERGENCY_ZSTOP_COND UI_MENU_CONFIGURATION_FLOW_COMPENSATION_COND UI_MENU_FEATURE_ZERO_DIGITS UI_MENU_FEATURE_DIGITS_CMP }
+UI_MENU(ui_menu_dms,UI_MENU_DMS,UI_MENU_BACKCNT+UI_MENU_CONFIGURATION_EMERGENCY_PAUSE_COUNT+UI_MENU_CONFIGURATION_EMERGENCY_ZSTOP_COUNT+UI_MENU_CONFIGURATION_FLOW_COMPENSATION_COUNT+UI_MENU_FEATURE_ZERO_DIGITS_COUNT+UI_MENU_FEATURE_DIGITS_CMP_COUNT)
 
 /** \brief Configuration->DMS Features menu */
 UI_MENU_SUBMENU_FILTER(ui_menu_conf_dms, UI_TEXT_DMS, ui_menu_dms, MENU_MODE_PRINTER, 0)
@@ -901,13 +939,15 @@ UI_MENU_ACTION4C(ui_menu_pid_choose_some_ack,UI_ACTION_CHOOSE_SOME,UI_TEXT_PID_A
 UI_MENU_ACTIONSELECTOR(ui_menu_pid_choose_some,UI_ACTION_TEXT_SOME,ui_menu_pid_choose_some_ack)
 UI_MENU_ACTION4C(ui_menu_pid_choose_no_ack,UI_ACTION_CHOOSE_NO,UI_TEXT_PID_ACK)
 UI_MENU_ACTIONSELECTOR(ui_menu_pid_choose_no,UI_ACTION_TEXT_NO,ui_menu_pid_choose_no_ack)
+UI_MENU_ACTION4C(ui_menu_pid_choose_tyreus_lyben_ack,UI_ACTION_CHOOSE_TYREUS_LYBEN,UI_TEXT_PID_ACK)
+UI_MENU_ACTIONSELECTOR(ui_menu_pid_choose_tyreus_lyben,UI_ACTION_TEXT_TYREUS_LYBEN,ui_menu_pid_choose_tyreus_lyben_ack)
 UI_MENU_CHANGEACTION(ui_menu_pid_choose_drivemin,UI_TEXT_EXTR_DMIN,UI_ACTION_CHOOSE_DMIN)
 UI_MENU_CHANGEACTION(ui_menu_pid_choose_drivemax,UI_TEXT_EXTR_DMAX,UI_ACTION_CHOOSE_DMAX)
 UI_MENU_CHANGEACTION(ui_menu_pid_choose_PIDmax,UI_TEXT_EXTR_PMAX,UI_ACTION_CHOOSE_PIDMAX)
 UI_MENU_CHANGEACTION(ui_menu_pid_choose_sensor,UI_TEXT_EXTR_SENSOR_TYPE,UI_ACTION_CHOOSE_SENSOR)
 
-#define UI_MENU_PID_CHOOSE {UI_MENU_ADDCONDBACK &ui_menu_pid_choose_classicpid ,&ui_menu_pid_choose_lesserintegral, &ui_menu_pid_choose_some, &ui_menu_pid_choose_no, &ui_menu_pid_choose_drivemin, &ui_menu_pid_choose_drivemax, &ui_menu_pid_choose_PIDmax, &ui_menu_pid_choose_sensor}
-UI_MENU(ui_menu_pid_choose,UI_MENU_PID_CHOOSE,8) //8 ??? mit 9 gabs probleme. ???
+#define UI_MENU_PID_CHOOSE {UI_MENU_ADDCONDBACK &ui_menu_pid_choose_classicpid ,&ui_menu_pid_choose_lesserintegral, &ui_menu_pid_choose_some, &ui_menu_pid_choose_no, &ui_menu_pid_choose_tyreus_lyben, &ui_menu_pid_choose_drivemin, &ui_menu_pid_choose_drivemax, &ui_menu_pid_choose_PIDmax, &ui_menu_pid_choose_sensor}
+UI_MENU(ui_menu_pid_choose, UI_MENU_PID_CHOOSE, 9)
 
 UI_MENU_SUBMENU(ui_menu_pid_ext0_cond,  UI_TEXT_EXTRUDER " 0", ui_menu_pid_choose)
 #define UI_MENU_PID_EXT0_COND   &ui_menu_pid_ext0_cond

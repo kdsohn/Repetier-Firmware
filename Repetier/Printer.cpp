@@ -43,7 +43,6 @@ short           Printer::max_milling_all_axis_acceleration = MILLER_ACCELERATION
 unsigned long   Printer::maxPrintAccelerationStepsPerSquareSecond[4];
 /** Acceleration in steps/s^2 in movement mode.*/
 unsigned long   Printer::maxTravelAccelerationStepsPerSquareSecond[4];
-uint32_t        Printer::maxInterval;
 #endif // RAMP_ACCELERATION
 
 uint8_t         Printer::relativeCoordinateMode = false;                ///< Determines absolute (false) or relative Coordinates (true).
@@ -333,8 +332,15 @@ void Printer::updateDerivedParameter()
         }
 #endif  // FEATURE_MILLING_MODE
 #endif // RAMP_ACCELERATION
-    } 
-    
+    }
+
+    // 07 11 2017 https://github.com/repetier/Repetier-Firmware/commit/e76875ec2d04bd0dbfdd9a157270ee03f4731d5f#diff-dbe11559ff43e09563388a4968911e40L1973
+    // For numeric stability we need to start accelerations at a minimum speed and hence ensure that the
+    // jerk is at least 2 * minimum speed.
+
+    // For xy moves the minimum speed is multiplied with 1.41 to enforce the condition also for diagonals since the
+    // driving axis is the problematic speed.
+
     float accel;
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
@@ -348,14 +354,28 @@ void Printer::updateDerivedParameter()
     }
 #endif  // FEATURE_MILLING_MODE
     
-    float minimumSpeed = accel * sqrt(2.0f / (axisStepsPerMM[X_AXIS] * accel));
+    float minimumSpeed = 1.41 * accel * sqrt(2.0f / (axisStepsPerMM[X_AXIS] * accel));
+#if FEATURE_MILLING_MODE
+    if( Printer::operatingMode == OPERATING_MODE_PRINT )
+    {
+#endif // FEATURE_MILLING_MODE
+      accel = RMath::max(maxAccelerationMMPerSquareSecond[Y_AXIS], maxTravelAccelerationMMPerSquareSecond[Y_AXIS]);
+#if FEATURE_MILLING_MODE
+    }
+    else{
+      accel = MILLER_ACCELERATION;
+    }
+#endif  // FEATURE_MILLING_MODE    
+    float minimumSpeed2 = 1.41 * accel * sqrt(2.0f / (axisStepsPerMM[Y_AXIS] * accel));
+        if(minimumSpeed2 > minimumSpeed) {
+            minimumSpeed = minimumSpeed2;
+        }
+
     if(maxJerk < 2 * minimumSpeed) {// Enforce minimum start speed if target is faster and jerk too low
         maxJerk = 2 * minimumSpeed;
         Com::printFLN(PSTR("XY jerk was too low, setting to "), maxJerk);
     }
-    
-    
-    
+
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
@@ -369,17 +389,8 @@ void Printer::updateDerivedParameter()
         maxZJerk = 2 * minimumZSpeed;
         Com::printFLN(PSTR("Z jerk was too low, setting to "), maxZJerk);
     }
-    
-    maxInterval = F_CPU / (minimumSpeed * axisStepsPerMM[X_AXIS]);
-    uint32_t tmp = F_CPU / (minimumSpeed * axisStepsPerMM[Y_AXIS]);
-    if(tmp < maxInterval)
-        maxInterval = tmp;
-    tmp = F_CPU / (minimumZSpeed * axisStepsPerMM[Z_AXIS]);
-    if(tmp < maxInterval) 
-        maxInterval = tmp;
 
     Printer::updateAdvanceFlags();
-
 } // updateDerivedParameter
 
 
@@ -457,7 +468,7 @@ void Printer::moveTo(float x,float y,float z,float e,float f)
     if(e != IGNORE_COORDINATE)
         queuePositionTargetSteps[E_AXIS] = e * axisStepsPerMM[E_AXIS];
     if(f != IGNORE_COORDINATE)
-        feedrate = f;
+        Printer::feedrate = f;
 
     PrintLine::prepareQueueMove(ALWAYS_CHECK_ENDSTOPS,true);
     updateCurrentPosition(false);
@@ -485,7 +496,7 @@ void Printer::moveToReal(float x,float y,float z,float e,float f)
     if(e != IGNORE_COORDINATE)
         queuePositionTargetSteps[E_AXIS] = e * axisStepsPerMM[E_AXIS];
     if(f != IGNORE_COORDINATE)
-        feedrate = f;
+        Printer::feedrate = f;
 
     PrintLine::prepareQueueMove(ALWAYS_CHECK_ENDSTOPS,true);
 
@@ -551,7 +562,7 @@ void Printer::updateCurrentPosition(bool copyLastCmd)
 */
 uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
 {
-    register long   p;
+    register int32_t p;
     float           x, y, z;
 
     if(!relativeCoordinateMode)
@@ -604,28 +615,38 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
 
     if(com->hasE() && !Printer::debugDryrun())
     {
-        p = convertToMM(com->E * axisStepsPerMM[E_AXIS]);
         if(relativeCoordinateMode || relativeExtruderCoordinateMode)
         {
             if(
 #if MIN_EXTRUDER_TEMP > 30
                 Extruder::current->tempControl.currentTemperatureC < MIN_EXTRUDER_TEMP ||
 #endif // MIN_EXTRUDER_TEMP > 30
-
-                fabs(com->E) * extrusionFactor > EXTRUDE_MAXLENGTH)
-                    {
-                        p = 0;
-                    }
-            queuePositionTargetSteps[E_AXIS] = queuePositionLastSteps[E_AXIS] + p;
-            
+                fabs(com->E) * extrusionFactor
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_flowmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+                > EXTRUDE_MAXLENGTH)
+            {
+                queuePositionTargetSteps[E_AXIS] = queuePositionLastSteps[E_AXIS]; //p = 0;
+            }else{
+                Printer::extrudeMultiplyError += convertToMM(com->E * axisStepsPerMM[E_AXIS]);
+                p = static_cast<int32_t>(Printer::extrudeMultiplyError);
+                Printer::extrudeMultiplyError -= p;
+                queuePositionTargetSteps[E_AXIS] = queuePositionLastSteps[E_AXIS] + p;
+            }
         }
         else
         {
+            p = convertToMM(com->E * axisStepsPerMM[E_AXIS]);
             if(
 #if MIN_EXTRUDER_TEMP > 30
                 Extruder::current->tempControl.currentTemperatureC < MIN_EXTRUDER_TEMP ||
 #endif // MIN_EXTRUDER_TEMP > 30
-                fabs(p - queuePositionLastSteps[E_AXIS]) * extrusionFactor > EXTRUDE_MAXLENGTH * axisStepsPerMM[E_AXIS])
+                fabs(p - queuePositionLastSteps[E_AXIS]) * extrusionFactor
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_flowmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+                > EXTRUDE_MAXLENGTH * axisStepsPerMM[E_AXIS])
                     {
                         queuePositionLastSteps[E_AXIS] = p;
                     }
@@ -640,9 +661,9 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
     if(com->hasF())
     {
         if(unitIsInches)
-            feedrate = com->F * (float)feedrateMultiply * 0.0042333f;  // Factor is 25.5/60/100
+            Printer::feedrate = com->F * (float)feedrateMultiply * 0.0042333f;  // Factor is 25.5/60/100
         else
-            feedrate = com->F * (float)feedrateMultiply * 0.00016666666f;
+            Printer::feedrate = com->F * (float)feedrateMultiply * 0.00016666666f;
     }
 
     if(!Printer::isPositionAllowed(x,y,z))
@@ -1343,16 +1364,13 @@ void Printer::MemoryPosition()
 void Printer::GoToMemoryPosition(bool x,bool y,bool z,bool e,float feed)
 {
     bool all = !(x || y || z);
-    float oldFeedrate = feedrate;
-
-
+    float oldFeedrate = Printer::feedrate;
     moveToReal((all || x ? memoryX : IGNORE_COORDINATE)
                ,(all || y ? memoryY : IGNORE_COORDINATE)
                ,(all || z ? memoryZ : IGNORE_COORDINATE)
                ,(e ? memoryE:IGNORE_COORDINATE),
                feed);
-    feedrate = oldFeedrate;
-
+    Printer::feedrate = oldFeedrate;
 } // GoToMemoryPosition
 #endif // FEATURE_MEMORY_POSITION
 
@@ -1563,9 +1581,23 @@ void Printer::homeZAxis()
         PrintLine::moveRelativeDistanceInSteps(0,0,2*steps,0,homingFeedrate[Z_AXIS],true,true);
         setHoming(false);
         queuePositionLastSteps[Z_AXIS] = (nHomeDir == -1) ? minSteps[Z_AXIS] : maxSteps[Z_AXIS];
-        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * -1 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
+        //ENDSTOP_Z_BACK_MOVE größer als 32768+wenig ist eigentlich nicht möglich, nicht sinnvoll und würde, da das überfahren bei 32microsteps von der z-matrix >-12,7mm abhängig ist verboten sein.
+        //darum ist uint16_t ok.
+        for(uint16_t step = 0; step < axisStepsPerMM[Z_AXIS] * ENDSTOP_Z_BACK_MOVE; step += 0.1f * axisStepsPerMM[Z_AXIS]){
+            //faktor *2 und *5 : doppelt/5x so schnell beim zurücksetzen als nachher beim hinfahren.
+            if(Printer::isZMinEndstopHit()){
+                //schalter noch gedrückt, wir müssen weiter zurück, aber keinesfalls mehr als ENDSTOP_Z_BACK_MOVE
+                PrintLine::moveRelativeDistanceInSteps(0,0, 0.1f*axisStepsPerMM[Z_AXIS] * -1 * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR * 5,true,false);
+            }else{ //wir sind aus dem schalterbereich raus, müssten also nicht weiter zurücksetzen:
+                //rest drüberfahren, der über die schalterüberfahrung drübersteht: dann ende der for{}
+                PrintLine::moveRelativeDistanceInSteps(0,0, axisStepsPerMM[Z_AXIS] * (ENDSTOP_Z_BACK_MOVE - Z_ENDSTOP_DRIVE_OVER)* -1 * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR * 2,true,false);
+                break; 
+            }
+        }
+        //PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * -1 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR*2,true,false);
         setHoming(true);
-        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * 2 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,true);
+        //der fährt nur bis zum schalter, aber ENDSTOP_Z_BACK_MOVE + wenig ist maximum.
+        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * (0.1f + ENDSTOP_Z_BACK_MOVE) * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,true);
         setHoming(false);
 
 #if FEATURE_MILLING_MODE
@@ -1620,7 +1652,9 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
 #else
     homingOrder = HOMING_ORDER;
 #endif // FEATURE_MILLING_MODE
+#if FEATURE_MILLING_MODE
     if(operatingMode == OPERATING_MODE_PRINT){
+#endif // FEATURE_MILLING_MODE
       if( (!yaxis && zaxis) || ( homingOrder == HOME_ORDER_XZY && homingOrder == HOME_ORDER_ZXY && homingOrder == HOME_ORDER_ZYX ) )
       {
        // do not allow homing Z-Only within menu, when the Extruder is configured < 0 and over bed.
@@ -1630,7 +1664,9 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
           //wenn Z genullt wird, sollte auch Y genullt werden dürfen.
        }
       }
+#if FEATURE_MILLING_MODE
     }
+#endif // FEATURE_MILLING_MODE
 
     switch( homingOrder )
     {

@@ -16,7 +16,7 @@ https://github.com/RF1000/Repetier-Firmware (siehe Branch developement)
 ## Installationsanleitung
 
 - Das Firmwarepaket `Branch: community_development` herunterladen und entpacken.  
-- Installiere Arduino.cc 1.6.5 or 1.8.4 oder später, wenn Arduino nicht bereits installiert ist.  
+- Installiere Arduino.cc 1.6.5 or 1.8.5 oder später, wenn Arduino nicht bereits installiert ist.  
 - Man bearbeitet und speichert die Configuration.h bei Zeile 46 und 47, je nachdem welchen Drucker man besitzt mit einem Texteditor. Man muss die zwei **//** vor dem Druckermodell entfernen, welches man aktivieren will:  
 `#define MOTHERBOARD                         DEVICE_TYPE_RF1000` or  
 `#define MOTHERBOARD                         DEVICE_TYPE_RF2000`
@@ -28,16 +28,25 @@ Board: `Arduino Mega 2560 or Mega ADK`,
 Prozessor: `ATMega 2560 (Mega 2560)`,  
 Port: Der Port des Druckers, wie `COM3`, wenn er korrekt verbunden ist.
 - **Prüfen** and **Hochladen** der Firmware zum Drucker.
+
+## Vorbereitete Hex-Files / automatisches Build-System
+
+Wer mit den Standard-Konfigurationen zufrieden ist, kann auf der Seite https://jenkins.beta-centauri.de/view/Repetier/ fertig compilierte Hex-Files dieser Firmware herunterladen. Dort sind zwei Versionen zu finden, eine "stable" und eine "development".
+Siehe auch http://www.rf1000.de/viewtopic.php?f=7&t=2057
+Unter Linux kann man diese Firmwares mit 
+```avrdude -patmega2560 -cwiring -P/dev/ttyUSB0 -b115200 -D -Uflash:w:Repetier.hex:i``` 
+in die Drucker einspielen.
+
 ## Wenn du von Version from 1.37r oder früher updatest, mache bitte einen neuen M303 PID-Autotune bei allen Heizelementen!  
-- RF2000/RF1000 Extruder 1: `M303 P0 X0 S230 R10 J1`
-- RF2000 Extruder 2: `M303 P1 X0 S230 R10 J1`
-- RF2000 Heizbett: `M303 P2 X0 S70 R15 J3`
-- RF1000 Heizbett: `M303 P1 X0 S70 R15 J3`  
-Starte mit EEPROM-Werten `PID drive min = 5` and `PID drive max = 100`  
-Oder setze #define PID_CONTROL_DRIVE_MIN_LIMIT_FACTOR zu 10.0f in der configuration.h um die alte Version des PID Reglers zu nutzen.
+- RF2000/RF1000 Extruder 1: `M303 P0 X0 S230 R10 J1`  
+- RF2000 Extruder 2: `M303 P1 X0 S230 R10 J1`  
+- RF2000 Heizbett: `M303 P2 X0 S70 R15 J4`  
+- RF1000 Heizbett: `M303 P1 X0 S70 R15 J4`  
+Starte mit EEPROM-Werten `PID I drive min = 30` and `PID I drive max = 100`  
 
 ## Version RF 1.37mod - wichtige Threads im Forum
 
+http://www.rf1000.de/viewtopic.php?f=67&t=2043 (Thread to Stable 1.37v8 / 18.10.2017)
 http://www.rf1000.de/viewtopic.php?f=74&t=1674 (Nibbels/Wessix SenseOffset-Thread)  
 http://www.rf1000.de/viewtopic.php?f=7&t=1504#p14882 (mhier Mod)  
 http://www.rf1000.de/viewtopic.php?f=7&t=1504&start=60#p16397 (added feature)  
@@ -73,6 +82,8 @@ _von Nibbels_:
 **M3902 Z0** - Verschiebe das aktuell eingestellte Z-Offset in die zMatrix im RAM. Danach ist das Z-Offset=0.00 (Siehe M3006 / Z-Offset im Menü des Druckers), das tatsächliche Druck-Offset hat sich nicht geändert (+-0).
 **M3902 Z0 S1** - Kombinationsbefehl: Verschiebe das aktuell eingestellte Z-Offset in die zMatrix im RAM und speichere diese zMatrix an der Position 1 im EEPROM - Dies ist ein Beispiel um zu zeigen, dass die Optionen von M3902 kombiniert werden können.  
 **M3902 Sn** - Speichere die aktuell im RAM liegende zMatrix unter der Postion n = {1..9}  
+**M3911 S6000 P9000 E-30 - Bei hohen Kraftwerten wegen Überextrusion wird die Filamentförderung zurückgefahren (-10% pro 1000 digits, beginnend bei 6000 digits)  
+**M3911 S6000 P9000 F-30 - Bei hohen Kraftwerten wird die Druckgeschwindigkeit eingeschränkt (Example: -10% Geschwindigkeit pro 1000 digits, beginnend bei 6000 digits) M3911 ist im Menü unter Configuration -> DMS Features -> Digit Flow CMP zur Laufzeit einstellbar (Kein EEPROM-Support!)  
 **M3939 Fn St1 Pt2 Ex Iy Rm** - um ein Diagramm über die Filamentextrusionsgeschwindigkeit und die korrelierende Digit Zahl aufzuzeichnen -> ermöglicht Rückschlüsse zur Viskosität des Filaments. Siehe unten.
 **M3920 Sb** - Flüstermodus ein oder ausschalten. (Diese Funktion vermindert den Strom der Steppermotoren auf ein in der Firmware definiertes alternatives Strom-Profil MOTOR\_CURRENT\_SILENT = [110/110/90/90/90] ).  
 Es wurden **alle Compilerwarnungen und Compilerfehler eliminiert**.  
@@ -83,6 +94,7 @@ In der pins.h wurden alle optionalen Pins für RF1000 und RF2000 aufgelistet.
 Korrektur des RF2000 Statuszeilenlimits auf 20 Zeichen.
 Korrektur des M3117
 Dritter Z-Scale Modus: G-Code unter Configuration->Z-Configuration->Z-Scale.
+(+ Massive Bug-Elimination überall im Code)
 
 _von Nibbels und Wessix entwickelt_:  
 **M3909 Pn Sm** - siehe unten "SenseOffset" (Kompensation der thermischen Nachdehnung)  
@@ -177,7 +189,8 @@ Menü -> Configuration -> Stepper :: DblFq = 6500 oder {5000...12000}
 
 ## Konfigurierbare Temperatureinstellungen im Menü und EEPROM  
 Der PID-Autotune, die weiteren Regelparameter und der Sensortyp sind im Menü einstellbar.  
-Menü -> Configuration -> Temperatures -> Extruder0/Extruder1/Heizbett  
+Menü -> Configuration -> Temperatures -> Extruder0/Extruder1/Heizbett -> Sensortype: {1=Pico/Reprap, 3=EPCOS G550, 8=104-GT2, 14=3950-100k}  
+Sollte man andere Sensortypen benötigen kann man sie in der RF1000.h / RF2000.h nachschlagen und im EEPROM direkt editieren.  
 
 ## Dual-Hotend TipDown Support (beta)
 * M3919 [S]mikrometer - Testfunktion für ein Herunterlass-Hotend beim rechten Hotend T1: Das rechte Hotend kann gefedert eingebaut werden. Wird das Hotend ausgewählt, wird das bett automatisch heruntergefahren, sodass es niedriger hängt wie das linke hotend, aber nicht mit dem Bett kollidiert. Der Ultimaker 3 macht das so beim rechten Hotend.
@@ -187,10 +200,9 @@ Beispiel: M3919 T1 Z-0.6 sagt dem Drucker, dass das Rechte Hotend 0,6mm weiter h
 ## Feature Digit-Z-Kompensation (beta)
 Wenn auf die DMS gedrückt wird, wird das Bett in seiner Höhe korrigiert, wenn die Z-Kompensation arbeitet. Damit wird die Durchbiegung der DMS-Sensoren unter Last korrigiert. Die Änderungen bewegen sich in etwa im Bereich von +0,01mm wenn +1000 Digits Kraft auf die Sensoren aufgebracht werden.
 
-## RF2000: Zusätzlicher Temperatursensor
-
-Diese Option aktiviert einen weiteren Temperatursensor T3, dessen Messwerte automatisch mit der Statusabfrage ausgegeben werden.
-Beispiel: ``` 15:16:14.637: T:204.67 /205 B:28.60 /20 B@:0 @:143 T0:28.60 /0 @0:0 T1:204.67 /205 @1:143 T3:28.23 F:322 ```  
+## RF2000: Zusätzlicher Temperatursensor für den Heizraum  
+Diese Option aktiviert einen weiteren Temperatursensor C, dessen Messwerte automatisch mit der Statusabfrage ausgegeben werden.
+Beispiel: ``` 22:09:24.271: T:21.7 /0 @:0 B:20.6 /0 B@:0 T0:21.7 /0 @0:0 T1:23.2 /0 @1:0 C:21.5 /0 C@:0 F:-173 /0 @:0 ```  
 Weitere Konfigurationsoptionen (Einstellunge der Umrechungstabelle) findet man durch die Suche nach RESERVE_ANALOG_SENSOR_TYPE in der RF2000.h.
 Sucht man in der Firmware nach RESERVE_ANALOG_INPUTS sieht man weiteren nützlichen Code, welcher zum Sensor gehört.
 Man muss, um den Temperatursensor zu nutzen, ein zusätzliches Kabel mit einem Temperatursensor am Port X35 an der Druckerplatine des RF2000-Druckers anschliessen. Anschließend kann der optionale Sensor an einem beliebigen Punkt im Drucker positioniert werden.
@@ -203,7 +215,7 @@ Erweiterter GCode M303:
 [J1] Pessen Integral Rule (empfohlen für Hotend)  
 [J2] Some Overshoot  
 [J3] No Overshoot (empfohlen für Heizbett)  
-[J4] bis [J6] sind PD, PI, P-Profile for regelungstechnik experten bzw. spezielle Anwendungsfälle.  
+[J4] Tyreus-Luyben (empfohlen für Heizbett)  
 [Rn] Configurable Autotune cycles  
 Autotune support über das Druckermenü am Display.  
 Siehe auch http://www.rf1000.de/viewtopic.php?f=7&t=1963  
@@ -216,4 +228,4 @@ Manuelles extrudieren während der Pause deaktiviert den automatischen Retract d
 ## Wessix's Hilfe-Video:
 [![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)
 
-## !! 22.08.2017: An diesem Projekt wird kontinuierlich weitergearbeitet, spontane Änderungen sind jederzeit möglich.
+## !! 12.11.2017: An diesem Projekt wird kontinuierlich weitergearbeitet, spontane Änderungen sind jederzeit möglich.
