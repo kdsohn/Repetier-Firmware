@@ -1900,8 +1900,8 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 break;
             }
-#if FEATURE_READ_CALIPER
             case 'C':{
+#if FEATURE_READ_CALIPER
                 if(c2=='a')                                                                             // %Ca : Caliper Active Reading
                 {
                     addLong(abs(caliper_um)+caliper_collect_adjust,5);
@@ -1928,14 +1928,15 @@ void UIDisplay::parse(char *txt,bool ram)
                         addInt(100,3);
                     }
                 }
+#endif //FEATURE_READ_CALIPER
 #if FEATURE_DIGIT_FLOW_COMPENSATION
-                else if(c2=='U')                                                                        // %CU : digit flow lower limit
+                if(c2=='U')                                                                        // %CU : digit flow lower limit
                 {
-                    addInt((int)g_nDigitFlowCompensation_Fmin,6);
+                    addInt((int)g_nDigitFlowCompensation_Fmin,5);
                 }
                 else if(c2=='O')                                                                        // %CO : digit flow higher limit
                 {
-                    addInt((int)g_nDigitFlowCompensation_Fmax,6);
+                    addInt((int)g_nDigitFlowCompensation_Fmax,5);
                 }
                 else if(c2=='F')                                                                        // %CF : digit flow flowrate
                 {
@@ -1948,7 +1949,6 @@ void UIDisplay::parse(char *txt,bool ram)
 #endif // FEATURE_DIGIT_FLOW_COMPENSATION
                 break;
             }
-#endif //FEATURE_READ_CALIPER
             case 'Z':                                                                                   // %Z1-Z4: Page5 service intervall, %Z5-Z8: Page4 printing/milling time
             {
                 if(c2=='1')                                                                             // Shows text printing/milling time since last service
