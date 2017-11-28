@@ -805,7 +805,7 @@ void PrintLine::updateTrapezoids()
     //Retract: 
     if( previous->isEOnlyMove() != act->isEOnlyMove() )
     {
-        previous->maxJunctionSpeed = RMath::min(previous->endSpeed,act->startSpeed);  https://github.com/repetier/Repetier-Firmware/issues/716#issuecomment-347000465
+        previous->maxJunctionSpeed = RMath::min(previous->endSpeed,act->startSpeed);  //https://github.com/repetier/Repetier-Firmware/issues/716#issuecomment-347000465
         /*
         if(act->isEOnlyMove())      previous->maxJunctionSpeed = previous->safeSpeed(previous->primaryAxis); //previous->endSpeed; //previous->endSpeed;
         if(previous->isEOnlyMove()) previous->maxJunctionSpeed = act->safeSpeed(act->primaryAxis); //act->startSpeed; //previous->endSpeed;
