@@ -802,9 +802,10 @@ void PrintLine::updateTrapezoids()
     }
     */
 
+    //Retract: 
     if( previous->isEOnlyMove() != act->isEOnlyMove() )
     {
-        previous->maxJunctionSpeed = RMath::min(previous->endSpeed,act->startSpeed);
+        previous->maxJunctionSpeed = RMath::min(previous->endSpeed,act->startSpeed);  //https://github.com/repetier/Repetier-Firmware/issues/716#issuecomment-347000465
         /*
         if(act->isEOnlyMove())      previous->maxJunctionSpeed = previous->safeSpeed(previous->primaryAxis); //previous->endSpeed; //previous->endSpeed;
         if(previous->isEOnlyMove()) previous->maxJunctionSpeed = act->safeSpeed(act->primaryAxis); //act->startSpeed; //previous->endSpeed;
@@ -872,6 +873,8 @@ inline void PrintLine::computeMaxJunctionSpeed(PrintLine *previous,PrintLine *cu
     {
         // if we start/stop extrusion we need to do so with lowest possible end speed
         // or advance would leave a drolling extruder and can not adjust fast enough.
+        
+        //https://github.com/repetier/Repetier-Firmware/issues/716#issuecomment-347000465 @1)
         if(previous->isEMove() != current->isEMove() && previous->isEMove()) //&& (previous->isXOrYMove() || current->isXOrYMove())
         {
             previous->setEndSpeedFixed(true);

@@ -1581,13 +1581,13 @@ void scanHeatBed( void )
                 PrintLine::moveRelativeDistanceInSteps( HEAT_BED_SCAN_X_CALIBRATION_POINT_STEPS, HEAT_BED_SCAN_Y_CALIBRATION_POINT_STEPS, 0, 0, MAX_FEEDRATE_X, true, true );
 
                 g_lastScanTime       = HAL::timeInMilliseconds();
-                g_nHeatBedScanStatus = 135;
+                g_nHeatBedScanStatus = 133;
 
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
-                    Com::printFLN( PSTR( "130->135" ) );
+                    Com::printFLN( PSTR( "130->133" ) );
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
@@ -1645,6 +1645,7 @@ void scanHeatBed( void )
             }
             case 135:
             {
+                g_lastScanTime       = HAL::timeInMilliseconds();
                 // at this point we are homed and we are above the x/y position at which we shall perform the measurement of the z-offset with the hot extruder(s)
 #if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( g_nHeatBedScanMode == HEAT_BED_SCAN_MODE_PLA )
