@@ -1,6 +1,10 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37x9.Mod (2017-12-05)
+- Scan Z-Offset-Scan on slightly random Point around Matrix-Point: See SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_RAND_MM
+- Some ROM-Text savings for this feature
+
 V RF.01.37x8.Mod (2017-11-28)
 - Bugfix: RF1000 with one Extruder should as well heat up in distance Z=10mm before reaching final Temperature for Matrix Scan ABS/PLA Scan because someone might use a DDP. Thx. and Sorry @dabr0013
 
