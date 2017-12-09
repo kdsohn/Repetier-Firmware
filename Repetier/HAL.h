@@ -598,6 +598,9 @@ public:
 
     } // eprGetFloat
 
+    // Faster version of InterruptProtectedBlock.
+    // For safety it may only be called from within an
+    // interrupt handler.
     static inline void allowInterrupts()
     {
         sei();
