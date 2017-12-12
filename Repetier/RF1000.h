@@ -827,8 +827,8 @@ This defines the full power duration before returning to set value. Time is in m
 #define MAX_FEEDRATE_Z                      50
 
 /** \brief Home position speed in mm/s. Overridden if EEPROM activated. */
-#define HOMING_FEEDRATE_X_PRINT             165
-#define HOMING_FEEDRATE_Y_PRINT             165
+#define HOMING_FEEDRATE_X_PRINT             80
+#define HOMING_FEEDRATE_Y_PRINT             80
 #define HOMING_FEEDRATE_Z_PRINT             10
 
 #define HOMING_FEEDRATE_X_MILL              70
@@ -1091,6 +1091,7 @@ Above this value the z compensation will distribute the roughness of the surface
 // scan position defined by the index of the heat bed matrix, counting from 1
 #define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_INDEX_X    5
 #define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_INDEX_Y    5
+#define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_RAND_MM    5
 // number of scanning iterations
 #define SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS          5
 

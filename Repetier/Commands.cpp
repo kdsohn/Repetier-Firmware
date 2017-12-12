@@ -205,48 +205,14 @@ void Commands::waitUntilEndOfZOS()
 void Commands::printCurrentPosition()
 {
     float x,y,z;
-    
-    
     Printer::currentPosition(x,y,z);
     x += Printer::originOffsetMM[X_AXIS];
     y += Printer::originOffsetMM[Y_AXIS];
     z += Printer::originOffsetMM[Z_AXIS];
-
-    if( Printer::debugInfo() )
-    {
-        Com::printF(Com::tXColon,x*(Printer::unitIsInches?0.03937:1),2);
-        Com::printF(Com::tSpaceYColon,y*(Printer::unitIsInches?0.03937:1),2);
-        Com::printF(Com::tSpaceZColon,z*(Printer::unitIsInches?0.03937:1),2);
-        Com::printFLN(Com::tSpaceEColon,Printer::queuePositionLastSteps[E_AXIS]*Printer::invAxisStepsPerMM[E_AXIS]*(Printer::unitIsInches?0.03937:1),2);
-        //Com::printF(PSTR("OffX:"),Printer::extruderOffset[X_AXIS]); // to debug offset handling
-        //Com::printFLN(PSTR(" OffY:"),Printer::extruderOffset[Y_AXIS]);
-        //Com::printFLN(PSTR(" OffZ:"),Printer::extruderOffset[Z_AXIS]); //to support Nozzle-Tip-Down-Hotends
-
-/*      Com::printF(Com::tXColon,Printer::directPositionTargetSteps[X_AXIS]);
-        Com::printF(Com::tSpaceYColon,Printer::directPositionTargetSteps[Y_AXIS]);
-        Com::printFLN(Com::tSpaceZColon,Printer::directPositionTargetSteps[Z_AXIS]);
-
-        Com::printF(Com::tXColon,Printer::directPositionCurrentSteps[X_AXIS]);
-        Com::printF(Com::tSpaceYColon,Printer::directPositionCurrentSteps[Y_AXIS]);
-        Com::printFLN(Com::tSpaceZColon,Printer::directPositionCurrentSteps[Z_AXIS]);
-*/  }
-
-/*  Com::printF(PSTR("Queue;x="),(float)Printer::queuePositionCurrentSteps[X_AXIS]*Printer::invAxisStepsPerMM[X_AXIS],2);
-    Com::printF(PSTR(";y="),(float)Printer::queuePositionCurrentSteps[Y_AXIS]*Printer::invAxisStepsPerMM[Y_AXIS],2);
-    Com::printFLN(PSTR(";z="),(float)Printer::queuePositionCurrentSteps[Z_AXIS]*Printer::invAxisStepsPerMM[Z_AXIS],2);
-    Com::printF(PSTR("Direct;x="),(float)Printer::directPositionCurrentSteps[X_AXIS]*Printer::invAxisStepsPerMM[X_AXIS],2);
-    Com::printF(PSTR(";y="),(float)Printer::directPositionCurrentSteps[Y_AXIS]*Printer::invAxisStepsPerMM[Y_AXIS],2);
-    Com::printFLN(PSTR(";z="),(float)Printer::directPositionCurrentSteps[Z_AXIS]*Printer::invAxisStepsPerMM[Z_AXIS],2);
-
-    Com::printF(PSTR("Queue;x="),(float)Printer::queuePositionTargetSteps[X_AXIS]*Printer::invAxisStepsPerMM[X_AXIS],2);
-    Com::printF(PSTR(";y="),(float)Printer::queuePositionTargetSteps[Y_AXIS]*Printer::invAxisStepsPerMM[Y_AXIS],2);
-    Com::printFLN(PSTR(";z="),(float)Printer::queuePositionTargetSteps[Z_AXIS]*Printer::invAxisStepsPerMM[Z_AXIS],2);
-    Com::printF(PSTR("Direct;x="),(float)Printer::directPositionTargetSteps[X_AXIS]*Printer::invAxisStepsPerMM[X_AXIS],2);
-    Com::printF(PSTR(";y="),(float)Printer::directPositionTargetSteps[Y_AXIS]*Printer::invAxisStepsPerMM[Y_AXIS],2);
-    Com::printFLN(PSTR(";z="),(float)Printer::directPositionTargetSteps[Z_AXIS]*Printer::invAxisStepsPerMM[Z_AXIS],2);
-    Com::printFLN(PSTR("*"));
-*/
-
+    Com::printF(Com::tXColon,x*(Printer::unitIsInches?0.03937:1),2);
+    Com::printF(Com::tSpaceYColon,y*(Printer::unitIsInches?0.03937:1),2);
+    Com::printF(Com::tSpaceZColon,z*(Printer::unitIsInches?0.03937:1),2);
+    Com::printFLN(Com::tSpaceEColon,Printer::queuePositionLastSteps[E_AXIS]*Printer::invAxisStepsPerMM[E_AXIS]*(Printer::unitIsInches?0.03937:1),2);
 } // printCurrentPosition
 
 

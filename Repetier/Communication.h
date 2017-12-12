@@ -200,6 +200,7 @@ public:
     FSTRINGVAR(tEPRYHomePos)
     FSTRINGVAR(tEPRZHomePos)
     FSTRINGVAR(tEPRXMaxLength)
+    FSTRINGVAR(tEPRXMaxLengthMilling)
     FSTRINGVAR(tEPRYMaxLength)
     FSTRINGVAR(tEPRZMaxLength)
     FSTRINGVAR(tEPRXBacklash)

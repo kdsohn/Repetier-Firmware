@@ -545,7 +545,16 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
     HAL::eprSetFloat(EPR_X_HOME_OFFSET,Printer::minMM[X_AXIS]);
     HAL::eprSetFloat(EPR_Y_HOME_OFFSET,Printer::minMM[Y_AXIS]);
     HAL::eprSetFloat(EPR_Z_HOME_OFFSET,Printer::minMM[Z_AXIS]);
-    HAL::eprSetFloat(EPR_X_LENGTH,Printer::lengthMM[X_AXIS]);
+#if FEATURE_MILLING_MODE
+    if( Printer::operatingMode == OPERATING_MODE_PRINT )
+    {
+#endif // FEATURE_MILLING_MODE
+        HAL::eprSetFloat(EPR_X_LENGTH,Printer::lengthMM[X_AXIS]);
+#if FEATURE_MILLING_MODE
+    }else{
+        HAL::eprSetFloat(EPR_X_LENGTH_MILLING,Printer::lengthMM[X_AXIS]);
+    }
+#endif  // FEATURE_MILLING_MODE
     HAL::eprSetFloat(EPR_Y_LENGTH,Printer::lengthMM[Y_AXIS]);
     HAL::eprSetFloat(EPR_Z_LENGTH,Printer::lengthMM[Z_AXIS]);
 
@@ -801,7 +810,27 @@ void EEPROM::readDataFromEEPROM()
     Printer::minMM[X_AXIS] = HAL::eprGetFloat(EPR_X_HOME_OFFSET);
     Printer::minMM[Y_AXIS] = HAL::eprGetFloat(EPR_Y_HOME_OFFSET);
     Printer::minMM[Z_AXIS] = HAL::eprGetFloat(EPR_Z_HOME_OFFSET);
-    Printer::lengthMM[X_AXIS] = HAL::eprGetFloat(EPR_X_LENGTH);
+    
+#if FEATURE_MILLING_MODE
+    if( Printer::operatingMode == OPERATING_MODE_PRINT )
+    {
+#endif // FEATURE_MILLING_MODE
+        Printer::lengthMM[X_AXIS] = HAL::eprGetFloat(EPR_X_LENGTH);
+        if(Printer::lengthMM[X_AXIS] <= 0 || Printer::lengthMM[X_AXIS] > 245.0f){
+            Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_PRINT;
+            HAL::eprSetFloat(EPR_X_LENGTH,Printer::lengthMM[X_AXIS]);
+            change = true; //update checksum later in this function
+        }
+#if FEATURE_MILLING_MODE
+    }else{
+        Printer::lengthMM[X_AXIS] = HAL::eprGetFloat(EPR_X_LENGTH_MILLING);
+        if(Printer::lengthMM[X_AXIS] <= 0 || Printer::lengthMM[X_AXIS] > 245.0f){
+            Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_MILL;
+            HAL::eprSetFloat(EPR_X_LENGTH_MILLING,Printer::lengthMM[X_AXIS]);
+            change = true; //update checksum later in this function
+        }
+    }
+#endif  // FEATURE_MILLING_MODE
     Printer::lengthMM[Y_AXIS] = HAL::eprGetFloat(EPR_Y_LENGTH);
     Printer::lengthMM[Z_AXIS] = HAL::eprGetFloat(EPR_Z_LENGTH);
 
@@ -1271,7 +1300,17 @@ void EEPROM::writeSettings()
     writeFloat(EPR_X_HOME_OFFSET,Com::tEPRXHomePos);
     writeFloat(EPR_Y_HOME_OFFSET,Com::tEPRYHomePos);
     writeFloat(EPR_Z_HOME_OFFSET,Com::tEPRZHomePos);
-    writeFloat(EPR_X_LENGTH,Com::tEPRXMaxLength);
+    
+#if FEATURE_MILLING_MODE
+    if( Printer::operatingMode == OPERATING_MODE_PRINT )
+    {
+#endif // FEATURE_MILLING_MODE
+      writeFloat(EPR_X_LENGTH,Com::tEPRXMaxLength);
+#if FEATURE_MILLING_MODE
+    }else{
+      writeFloat(EPR_X_LENGTH_MILLING,Com::tEPRXMaxLengthMilling);
+    }
+#endif  // FEATURE_MILLING_MODE
     writeFloat(EPR_Y_LENGTH,Com::tEPRYMaxLength);
     writeFloat(EPR_Z_LENGTH,Com::tEPRZMaxLength);
 

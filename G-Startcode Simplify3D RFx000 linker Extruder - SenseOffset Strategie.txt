@@ -3,8 +3,6 @@
 ;
 ; Notiz: Bei diesem Startcode wird davon ausgegangen, dass die Z-Matrix bereits stimmt und das Offset so gewählt, ist dass es bei einem nicht durchgewärmten Drucker ca. perfekt ist.
 ; Tipp: Man kann vorher mit M3900 das Rest-Offset zur gegebenen Temperatur erfassen und dann mit M3902 Sx an die Matrix x=1..9 speichern. M3009 Sx mit Matrix x=1..9 wählt eine Matrix aus.
-;--------------------------------------
-M3920 S1 ; Silence Mode activation -> Extruder Motorstrom runter auf 90
 
 ; Abluft und Wakue an @X19
 ;--------------------------------------

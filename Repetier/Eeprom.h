@@ -143,6 +143,7 @@ have problems with other modules using the eeprom */
 #define EPR_RF_ZERO_DIGIT_STATE           1937 //[1byte]
 #define EPR_RF_DIGIT_CMP_STATE            1938 //[1byte]
 
+#define EPR_X_LENGTH_MILLING              1939 //[4byte float x-axis length for milling / switching]
 
 //Nibbels: Computechecksum geht bis 2047
 
