@@ -98,7 +98,12 @@
 For delta robot Z_MAX_LENGTH is the maximum travel of the towers and should be set to the distance between the hotend
 and the platform when the printer is at its home position.
 If EEPROM is enabled these values will be overidden with the values in the EEPROM */
+#if NUM_EXTRUDER == 2
 #define X_MAX_LENGTH_PRINT                  (long)180
+#else
+#define X_MAX_LENGTH_PRINT                  (long)230
+#endif // NUM_EXTRUDER == 2
+
 #define X_MAX_LENGTH_MILL                   (long)230
 #define Y_MAX_LENGTH                        (long)245
 #define Z_MAX_LENGTH                        (long)200 //RF2000 von Nibbels: ~194,86 -> PAUSE_Z_MAX_SPACING großzügig einplanen

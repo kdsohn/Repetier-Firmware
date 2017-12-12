@@ -13240,11 +13240,19 @@ void setupForPrinting( void )
     Printer::homingFeedrate[Z_AXIS] = HOMING_FEEDRATE_Z_PRINT;
 #endif // EEPROM_MODE
 
-#if MOTHERBOARD == DEVICE_TYPE_RF2000
+#if EEPROM_MODE
+    Printer::lengthMM[X_AXIS] = HAL::eprGetFloat(EPR_X_LENGTH);
+    if(Printer::lengthMM[X_AXIS] <= 0 || Printer::lengthMM[X_AXIS] > 245.0f){
+        Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_PRINT;
+  #if FEATURE_AUTOMATIC_EEPROM_UPDATE
+        HAL::eprSetFloat(EPR_X_LENGTH,Printer::lengthMM[X_AXIS]);
+        EEPROM::updateChecksum();
+  #endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
+    }
+#else
     Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_PRINT;
-    HAL::eprSetFloat(EPR_X_LENGTH,Printer::lengthMM[X_AXIS]);
-    EEPROM::updateChecksum();
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+#endif // EEPROM_MODE
+
     Printer::updateDerivedParameter();
 
     g_staticZSteps = (Printer::ZOffset * Printer::axisStepsPerMM[Z_AXIS]) / 1000;
@@ -13297,11 +13305,19 @@ void setupForMilling( void )
     Extruder::setHeatedBedTemperature( 0, false );
     Extruder::setTemperatureForExtruder( 0, 0, false );
 
-#if MOTHERBOARD == DEVICE_TYPE_RF2000
+#if EEPROM_MODE
+    Printer::lengthMM[X_AXIS] = HAL::eprGetFloat(EPR_X_LENGTH_MILLING);
+    if(Printer::lengthMM[X_AXIS] <= 0 || Printer::lengthMM[X_AXIS] > 245.0f){
+        Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_MILL;
+  #if FEATURE_AUTOMATIC_EEPROM_UPDATE
+        HAL::eprSetFloat(EPR_X_LENGTH_MILLING,Printer::lengthMM[X_AXIS]);
+        EEPROM::updateChecksum();
+  #endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
+    }
+#else
     Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_MILL;
-    HAL::eprSetFloat(EPR_X_LENGTH,Printer::lengthMM[X_AXIS]);
-    EEPROM::updateChecksum();
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+#endif // EEPROM_MODE
+
     Printer::updateDerivedParameter();
 
     g_staticZSteps = 0;
