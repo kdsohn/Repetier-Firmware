@@ -772,8 +772,8 @@ can set it on for safety. */
 
 
 #define XYZ_DIRECTION_CHANGE_DELAY          250                                                 // [us]
-#define XYZ_STEPPER_HIGH_DELAY              250                                                 // [us]
-#define XYZ_STEPPER_LOW_DELAY               250                                                 // [us]
+#define XYZ_STEPPER_HIGH_DELAY              100                                                 // [us]
+#define XYZ_STEPPER_LOW_DELAY               100                                                 // [us]
 #define LOOP_INTERVAL                       2000                                                // [ms]
 
 /** \brief Automatic filament change, unmounting of the filament - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
@@ -1059,10 +1059,11 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_Z_START_STEPS             long(ZAXIS_STEPS_PER_MM * HEAT_BED_SCAN_Z_START_uM / 1000)              // [steps]
 
 #define HEAT_BED_SCAN_UP_FAST_STEPS             long(-ZAXIS_STEPS_PER_MM / 40)                                          // [steps] das sind 64
-#define HEAT_BED_SCAN_UP_SLOW_STEPS             long(-RF_MICRO_STEPS*10)                                                // [steps] das sind ca. 4um aber eine gerade Zahl. statt 12,8 oder 10,24 steps
+#define HEAT_BED_SCAN_DOWN_FAST_STEPS           long(ZAXIS_STEPS_PER_MM / 2)                                            // [steps] das sind 2560/4
+#define HEAT_BED_SCAN_UP_SLOW_STEPS             long(-ZAXIS_STEPS_PER_MM / 200)                                         // [steps] das sind 0.005
 #define HEAT_BED_SCAN_DOWN_SLOW_STEPS           long(ZAXIS_STEPS_PER_MM / 80)                                           // [steps] das sind 32
-#define HEAT_BED_SCAN_DOWN_FAST_STEPS           long(ZAXIS_STEPS_PER_MM / 2)                                            // [steps] das sind 1280
-#define HEAT_BED_SCAN_FAST_STEP_DELAY_MS        5                                                                       // [ms]
+
+#define HEAT_BED_SCAN_FAST_STEP_DELAY_MS        1                                                                       // [ms]
 #define HEAT_BED_SCAN_SLOW_STEP_DELAY_MS        100                                                                     // [ms]
 #define HEAT_BED_SCAN_IDLE_DELAY_MS             250                                                                     // [ms]
 

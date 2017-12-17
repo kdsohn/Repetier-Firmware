@@ -117,7 +117,6 @@ short           g_nMinPressureRetry;
 short           g_nMinPressureIdle;
 short           g_nFirstIdlePressure;
 short           g_nCurrentIdlePressure;
-char            g_nTempDirectionZ            = 0;   // this is the current z-direction during operations like the bed scan or finding of the z-origin
 
 // configurable scan parameters - the proper default values are set by restoreDefaultScanParameters()
 long            g_nScanXStartSteps           = 0;
@@ -489,7 +488,6 @@ void scanHeatBed( void )
     static char             nIndexYDirection;
     static long             nX;
     static long             nY;
-    static long             nZ;
     static long             nYDirection;
 #if DEBUG_HEAT_BED_SCAN
     static short            nContactPressure;
@@ -512,7 +510,7 @@ void scanHeatBed( void )
         g_abortZScan = 0;
 
         // avoid to crash the extruder against the heat bed during the following homing
-        g_nZScanZPosition += moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
+        moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
 
         // start at the home position
         Printer::homeAxis( true, true, true );
@@ -546,7 +544,6 @@ void scanHeatBed( void )
         }
 
         g_nHeatBedScanStatus  = 0;
-        g_nZScanZPosition     = 0;
         g_nLastZScanZPosition = 0;
         g_retryZScan          = 0;
         g_retryStatus         = 0;
@@ -594,7 +591,6 @@ void scanHeatBed( void )
 #if DEBUG_HEAT_BED_SCAN
                 nContactPressure   = 0;
 #endif // DEBUG_HEAT_BED_SCAN
-                g_nTempDirectionZ  = 0;
                 g_retryStatus      = 0;
 
                 if( Printer::debugInfo() )
@@ -750,7 +746,7 @@ void scanHeatBed( void )
 #endif // DEBUG_HEAT_BED_SCAN == 2
 
                 // move a bit away from the heat bed in order to achieve better measurements in case of hardware configurations where the extruder is very close to the heat bed after the z-homing
-                g_nZScanZPosition += moveZ( HEAT_BED_SCAN_Z_START_STEPS );
+                moveZ( HEAT_BED_SCAN_Z_START_STEPS );
 
                 g_nHeatBedScanStatus = 25;
                 g_lastScanTime       = HAL::timeInMilliseconds();
@@ -812,7 +808,6 @@ void scanHeatBed( void )
             {
                 nX               = g_nScanXStartSteps;
                 nY               = g_nScanYStartSteps;
-                nZ               = HEAT_BED_SCAN_Z_START_STEPS;
                 nYDirection      = g_nScanYStepSizeSteps;   // we start to move the heat bed from the back to the front
                 nIndexYDirection = 1;
                 nIndexX          = 2;
@@ -952,8 +947,6 @@ void scanHeatBed( void )
                 Printer::homeAxis( false, false, true ); //Nibbels: wäre schädlich für zu hohe druckbetten.
                 //TODO: Home Y+Z, goto Z=HEAT_BED_SCAN_Z_START_STEPS, goto Y, continue. für Case 45 105 139 + 132
                 g_scanRetries        --;
-                g_nZScanZPosition    = 0;
-                nZ                   = 0;
                 g_nHeatBedScanStatus = 50;
                 g_lastScanTime       = HAL::timeInMilliseconds();
 
@@ -1019,9 +1012,7 @@ void scanHeatBed( void )
             case 51:
             {
                 // move fast to the surface
-                nZ += moveZUpFast();
-                g_nZScanZPosition = nZ;
-
+                moveZUpFast();
                 g_nHeatBedScanStatus = 52;
 
 #if DEBUG_HEAT_BED_SCAN == 2
@@ -1036,8 +1027,7 @@ void scanHeatBed( void )
             case 52:
             {
                 // move a little bit away from the surface
-                nZ += moveZDownSlow();
-                g_nZScanZPosition = nZ;
+                moveZDownSlow();
 
                 g_nHeatBedScanStatus = 53;
 
@@ -1053,8 +1043,7 @@ void scanHeatBed( void )
             case 53:
             {
                 // move slowly to the surface
-                nZ += moveZUpSlow( &nTempPressure );
-                g_nZScanZPosition = nZ;
+                moveZUpSlow( &nTempPressure );
 #if DEBUG_HEAT_BED_SCAN
                 nContactPressure  = nTempPressure;
 #endif // DEBUG_HEAT_BED_SCAN
@@ -1079,8 +1068,8 @@ void scanHeatBed( void )
                     Com::printF( Com::tSemiColon, (float)nX / Printer::axisStepsPerMM[X_AXIS] );
                     Com::printF( PSTR( ";nY;" ), nY );
                     Com::printF( Com::tSemiColon, (float)nY / Printer::axisStepsPerMM[Y_AXIS] );
-                    Com::printF( PSTR( ";nZ;" ), nZ );
-                    Com::printF( Com::tSemiColon, (float)nZ / Printer::axisStepsPerMM[Z_AXIS] );
+                    Com::printF( PSTR( ";nZ;" ), g_nZScanZPosition );
+                    Com::printF( Com::tSemiColon, (float)g_nZScanZPosition / Printer::axisStepsPerMM[Z_AXIS] );
                     Com::printF( PSTR( ";Pressure;" ), nContactPressure );
 
                     Com::printF( PSTR( ";nIndexX;" ), (int)nIndexX );
@@ -1097,7 +1086,7 @@ void scanHeatBed( void )
 #endif // DEBUG_HEAT_BED_SCAN
 
                 // remember the z-position and the exact y-position of this row/column
-                g_ZCompensationMatrix[nIndexX][nIndexY] = (short)nZ;
+                g_ZCompensationMatrix[nIndexX][nIndexY] = (short)g_nZScanZPosition;
                 g_ZCompensationMatrix[0][nIndexY]       = (short)((float)nY / Printer::axisStepsPerMM[Y_AXIS] + 0.5);   // convert to mm
 
 #if DEBUG_REMEMBER_SCAN_PRESSURE
@@ -1130,8 +1119,7 @@ void scanHeatBed( void )
             case 55:
             {
                 // move away from the surface
-                nZ += moveZDownFast();
-                g_nZScanZPosition = nZ;
+                moveZDownFast();
 
                 if( nYDirection > 0 )
                 {
@@ -1205,12 +1193,10 @@ void scanHeatBed( void )
             case 60:
             {
                 // avoid to crash the extruder against the heat bed during the following homing
-                g_nZScanZPosition += moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
+                moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
 
                 // move back to the home position
                 Printer::homeAxis( true, true, true);
-                g_nZScanZPosition =
-                nZ                = 0;
 
 #if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( !g_nHeatBedScanMode )
@@ -1416,8 +1402,6 @@ void scanHeatBed( void )
                 Printer::homeAxis( false, false, true );  //Nibbels: wäre schädlich für zu hohe druckbetten.
                 //TODO: Home Y+Z, goto Z=HEAT_BED_SCAN_Z_START_STEPS, goto Y, continue. für Case 45 105 139 + 132
                 g_scanRetries        --;
-                g_nZScanZPosition    = 0;
-                nZ                   = 0;
                 g_nHeatBedScanStatus = 110;
                 g_lastScanTime       = HAL::timeInMilliseconds();
 
@@ -1468,8 +1452,7 @@ void scanHeatBed( void )
             case 120:
             {
                 // move to the surface
-                nZ += moveZUpFast();
-                g_nZScanZPosition = nZ;
+                moveZUpFast();
 
                 g_nHeatBedScanStatus = 121;
 
@@ -1488,8 +1471,7 @@ void scanHeatBed( void )
                 g_nLastZScanZPosition = 0;
 
                 // move a little bit away from the surface
-                nZ += moveZDownSlow();
-                g_nZScanZPosition = nZ;
+                moveZDownSlow();
 
                 g_nHeatBedScanStatus = 122;
 
@@ -1505,8 +1487,7 @@ void scanHeatBed( void )
             case 122:
             {
                 // move slowly to the surface
-                nZ += moveZUpSlow( &nTempPressure );
-                g_nZScanZPosition = nZ;
+                moveZUpSlow( &nTempPressure );
 
                 g_nHeatBedScanStatus = 123;
 
@@ -1596,8 +1577,6 @@ void scanHeatBed( void )
             {
                 // determine the z-home position
                 Printer::homeAxis( false, false, true); //Nibbels: wäre schädlich für zu hohe druckbetten.
-                g_nZScanZPosition =
-                nZ                = 0;
 
                 g_lastScanTime       = HAL::timeInMilliseconds();
                 g_nHeatBedScanStatus = 133;
@@ -1614,7 +1593,7 @@ void scanHeatBed( void )
             case 133:
             {
                 // move the heat bed 5mm down
-                g_nZScanZPosition += moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
+                moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
                 g_lastScanTime       = HAL::timeInMilliseconds();
                 g_nHeatBedScanStatus = 134;
 
@@ -1630,7 +1609,7 @@ void scanHeatBed( void )
             case 134:
             {
                 // move the heat bed 5mm down
-                g_nZScanZPosition += moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
+                moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
                 g_lastScanTime       = HAL::timeInMilliseconds();
                 g_nHeatBedScanStatus = 135;
 
@@ -1750,8 +1729,6 @@ void scanHeatBed( void )
                 Printer::homeAxis( false, false, true ); //Nibbels: wäre schädlich für zu hohe druckbetten.
                 //TODO: Home Y+Z, goto Z=HEAT_BED_SCAN_Z_START_STEPS, goto Y, continue. für Case 45 105 139 + 132
                 g_scanRetries        --;
-                g_nZScanZPosition    = 0;
-                nZ                   = 0;
                 g_nHeatBedScanStatus = 140;
                 g_lastScanTime       = HAL::timeInMilliseconds();
 
@@ -1802,8 +1779,7 @@ void scanHeatBed( void )
             case 141:
             {
                 // move to the surface
-                nZ += moveZUpFast();
-                g_nZScanZPosition = nZ;
+                moveZUpFast();
 
                 g_nHeatBedScanStatus = 142;
 
@@ -1822,8 +1798,7 @@ void scanHeatBed( void )
                 g_nLastZScanZPosition = 0;
 
                 // move a little bit away from the surface
-                nZ += moveZDownSlow();
-                g_nZScanZPosition = nZ;
+                moveZDownSlow();
 
                 g_nHeatBedScanStatus = 143;
 
@@ -1839,8 +1814,7 @@ void scanHeatBed( void )
             case 143:
             {
                 // move slowly to the surface
-                nZ += moveZUpSlow( &nTempPressure );
-                g_nZScanZPosition = nZ;
+                moveZUpSlow( &nTempPressure );
 
                 g_nHeatBedScanStatus = 144;
 
@@ -1856,7 +1830,7 @@ void scanHeatBed( void )
             case 144:
             {
                 // adjust the current z-position to the compensation matrix in order to consider the different length of the extruder at higher temperatures
-                adjustCompensationMatrix( (short)nZ );
+                adjustCompensationMatrix( (short)g_nZScanZPosition );
 
                 if( Printer::debugInfo() )
                 {
@@ -1880,13 +1854,10 @@ void scanHeatBed( void )
             case 145:
             {
                 // avoid to crash the extruder against the heat bed during the following homing
-                g_nZScanZPosition += moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
+                moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
 
                 // move back to the home position
                 Printer::homeAxis( true, true, true);
-                g_nZScanZPosition =
-                nZ                = 0;
-
                 g_nHeatBedScanStatus = 150;
 
 #if DEBUG_HEAT_BED_SCAN == 2
@@ -2159,27 +2130,23 @@ void searchZOScan( void )
                 // start at the home position
                 Printer::homeAxis( true, true, true );
                 Commands::waitUntilEndOfAllMoves();
-                if(g_nZScanZPosition){
-                    Com::printFLN( PSTR( "Z-Error = " ), g_nZScanZPosition );
-                    g_nZScanZPosition = 0;
-                }
-                g_ZOSScanStatus = 3;  
+                g_ZOSScanStatus = 3;
                 break;
             }
             case 3:
             {
 #if DEBUG_HEAT_BED_SCAN == 2
-                Com::printF( PSTR( "Spacing Z" ),HEAT_BED_SCAN_Z_START_STEPS );
+                Com::printF( PSTR( "Spacing Z" ),g_min_nZScanZPosition );
                 Com::printFLN( PSTR( " [Steps]" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
 
-                g_nZScanZPosition += moveZ( HEAT_BED_SCAN_Z_START_STEPS ); //Wenn man hier mit moveRelativeDistanceInSteps über die queue Z verfährt, zeigt das display 10mm statt 5mm an. Weil currentZPositionSteps addiert und man die hier braucht. Also während dem Scan immer nur die moveZ verwenden.
+                moveZ( g_min_nZScanZPosition ); //Wenn man hier mit moveRelativeDistanceInSteps über die queue Z verfährt, zeigt das display 10mm statt 5mm an. Weil currentZPositionSteps addiert und man die hier braucht. Also während dem Scan immer nur die moveZ verwenden.
 
                 // move a bit away from the heat bed in order to achieve better measurements in case of hardware configurations where the extruder is very close to the heat bed after the z-homing     
                 UI_STATUS_UPD( UI_TEXT_ZCALIB );
                 g_uStartOfIdle = 0; //zeige nicht gleich wieder Printer Ready an.
                 GCode::keepAlive( Processing );
-                g_ZOSScanStatus = 4;   
+                g_ZOSScanStatus = 4;
                 break;
             }
             case 4:
@@ -2231,14 +2198,14 @@ void searchZOScan( void )
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 PrintLine::moveRelativeDistanceInSteps( xScanPosition, yScanPosition, 0, 0, RMath::min(MAX_FEEDRATE_X,MAX_FEEDRATE_Y), true, true );
                 GCode::keepAlive( Processing );
-                g_ZOSScanStatus = 6;    
+                g_ZOSScanStatus = 6;
                 break;
             }
             case 6:
             {
                 g_scanRetries = 20; //für 9, 10, 20
                 GCode::keepAlive( Processing );
-                g_ZOSScanStatus = 7;    
+                g_ZOSScanStatus = 9;
                 break;
             }
 
@@ -2246,7 +2213,8 @@ void searchZOScan( void )
             {
                 HAL::delayMilliseconds( HEAT_BED_SCAN_DELAY );
                 GCode::keepAlive( Processing );
-                g_ZOSScanStatus = 9;    
+                moveZDownFast();
+                g_ZOSScanStatus = 9;
                 break;
             }
             case 9:
@@ -2293,7 +2261,7 @@ void searchZOScan( void )
                 Com::printFLN( PSTR( "Approaching HeatBed" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2          
                 // move to the surface
-                moveZUpFast(false); // without runStandardTasks() inside to prevent an endless loop
+                moveZUpFast();
                 HAL::delayMilliseconds( g_nScanSlowStepDelay );
 
                 //Wenn Filament langsam nachgibt, wandert evtl. die Kraft langsam. Hier prüfen, ob idle digits gültig.
@@ -2302,8 +2270,10 @@ void searchZOScan( void )
                     if(g_scanRetries > 0) g_abortZScan = 0; //funktion soll wenn retrys übrig sind nie abbrechen, das g_abortZScan kommt aus readAveragePressure() -> hat einfluss auf HBS-Abort!!
                     g_retryZScan = 1;
                 } 
+                
+                // move a little bit away from the surface
+                moveZDownSlow();
 
-                g_nZScanZPosition += moveZ( -g_nScanHeatBedUpFastSteps*4 );
                 HAL::delayMilliseconds( g_nScanSlowStepDelay );
 
                 short   nTempPressureUp;
@@ -2322,7 +2292,7 @@ void searchZOScan( void )
                     g_scanRetries--;
                     Com::printFLN( PSTR( "Bettsuchproblem 10 -> 7 :" ), g_scanRetries );
                     GCode::keepAlive( Processing );
-                    g_ZOSScanStatus = 7;   
+                    g_ZOSScanStatus = 7;
                     break;
                 }
                
@@ -2335,7 +2305,7 @@ void searchZOScan( void )
                 }
 
                 GCode::keepAlive( Processing );
-                g_ZOSScanStatus = 20;   
+                g_ZOSScanStatus = 20;
                 break;
             }
             case 20:
@@ -2351,13 +2321,13 @@ void searchZOScan( void )
                       Com::printFLN( PSTR( "x" ) );
 #endif // DEBUG_HEAT_BED_SCAN
 
-                      // move two of the fast steps from moveZUpFast() down again
-                      g_nZScanZPosition += moveZ( -g_nScanHeatBedUpFastSteps*2 );
-                      HAL::delayMilliseconds( g_nScanSlowStepDelay );         
+                      // move from moveZUpFast() down again
+                      moveZDownSlow();
+                      HAL::delayMilliseconds( g_nScanSlowStepDelay );
 
                       // move slowly to the surface
                       short nTempPressure;
-                      moveZUpSlow( &nTempPressure, false ); // without runStandardTasks() inside to prevent an endless loop
+                      moveZUpSlow( &nTempPressure );
 
                       if(g_scanRetries > 0 && g_retryZScan){
                         g_retryZScan = 0;
@@ -2495,11 +2465,12 @@ void searchZOScan( void )
                         {
                         g_ZOSScanStatus = 2; // Goto next AUTO_MATRIX_LEVELING Setting
                         g_ZOS_Auto_Matrix_Leveling_State++;
-                        g_nZScanZPosition += moveZ( Printer::axisStepsPerMM[Z_AXIS] );
-                        long xScanPosition = (long)(g_ZCompensationMatrix[g_ZOSTestPoint[X_AXIS]][0] * Printer::axisStepsPerMM[X_AXIS]);
+                        moveZ( Printer::axisStepsPerMM[Z_AXIS] );
+                        Printer::homeAxis( true, true, false );
+                        /*long xScanPosition = (long)(g_ZCompensationMatrix[g_ZOSTestPoint[X_AXIS]][0] * Printer::axisStepsPerMM[X_AXIS]);
                         long yScanPosition = (long)(g_ZCompensationMatrix[0][g_ZOSTestPoint[Y_AXIS]] * Printer::axisStepsPerMM[Y_AXIS]); // + g_nScanYStartSteps; <-- NEIN!
-                        PrintLine::moveRelativeDistanceInSteps( -xScanPosition, -yScanPosition, 0, 0, MAX_FEEDRATE_Y, true, true );
-                        g_nZScanZPosition += moveZ( -g_nZScanZPosition );    // g_nZScanZPosition counts z-steps. we need to move the heatbed down to be at z=0 again
+                        PrintLine::moveRelativeDistanceInSteps( -xScanPosition, -yScanPosition, 0, 0, MAX_FEEDRATE_Y, true, true );*/
+                        moveZ( -g_nZScanZPosition );    // g_nZScanZPosition counts z-steps. we need to move the heatbed down to be at z=0 again
                         outputCompensationMatrix( 1 );
                         }
                 }
@@ -2520,10 +2491,11 @@ void searchZOScan( void )
 #if DEBUG_HEAT_BED_SCAN == 2
                 Com::printFLN( PSTR( "GOTO z=0" ) );
 #endif // DEBUG_HEAT_BED_SCAN
-                g_nZScanZPosition += moveZ( Printer::axisStepsPerMM[Z_AXIS] );
-                long yScanPosition = (long)(g_ZCompensationMatrix[0][g_ZOSTestPoint[Y_AXIS]]* Printer::axisStepsPerMM[Y_AXIS]); // + g_nScanYStartSteps; <-- NEIN!
-                PrintLine::moveRelativeDistanceInSteps( 0, -yScanPosition, 0, 0, MAX_FEEDRATE_Y, true, true );
-                g_nZScanZPosition += moveZ( -g_nZScanZPosition );    // g_nZScanZPosition counts z-steps. we need to move the heatbed down to be at z=0 again
+                moveZ( Printer::axisStepsPerMM[Z_AXIS] );
+                /*long yScanPosition = (long)(g_ZCompensationMatrix[0][g_ZOSTestPoint[Y_AXIS]]* Printer::axisStepsPerMM[Y_AXIS]); // + g_nScanYStartSteps; <-- NEIN!
+                PrintLine::moveRelativeDistanceInSteps( 0, -yScanPosition, 0, 0, MAX_FEEDRATE_Y, true, true );*/
+                Printer::homeAxis( false, true, false );
+                moveZ( -g_nZScanZPosition );    // g_nZScanZPosition counts z-steps. we need to move the heatbed down to be at z=0 again
                 //g_nZScanZPosition is 0 now.
                 BEEP_SHORT
 
@@ -2541,7 +2513,6 @@ void abortSearchHeatBedZOffset( bool reloadMatrix )
     g_ZOSScanStatus = 0;
     g_retryZScan = 0;
     g_abortZScan = 0;
-    g_nZScanZPosition = 0;
 
     // the search has been aborted
     UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_ABORTED );
@@ -3438,16 +3409,6 @@ long getHeatBedOffset( void )
     nOffset     = nTempXFront +
                   (nTempXBack - nTempXFront) * nDeltaY / nStepSizeY;
 
-#if FEATURE_DIGIT_Z_COMPENSATION //For Comments see doHeatBedZCompensation(){}
-    if(g_nDigitZCompensationDigits_active){
-        long nNeededDigitZCompensationSteps = abs((long)(g_nDigitZCompensationDigits * (float)Printer::axisStepsPerMM[Z_AXIS])); 
-        nNeededDigitZCompensationSteps >>= 17;
-        nOffset += constrain(nNeededDigitZCompensationSteps, 0, 600);
-    }else{
-        //wie bisher ohne addition
-    }
-#endif // FEATURE_DIGIT_Z_COMPENSATION
-
     return nOffset;
 
 } // getHeatBedOffset
@@ -3511,7 +3472,6 @@ void scanWorkPart( void )
     static char             nIndexYDirection;
     static long             nX;
     static long             nY;
-    static long             nZ;
     static long             nYDirection;
     static short            nContactPressure = 0;
     //char                  nLastWorkPartScanStatus = g_nWorkPartScanStatus;
@@ -3567,7 +3527,6 @@ void scanWorkPart( void )
         }
 
         g_nWorkPartScanStatus = 0;
-        g_nZScanZPosition     = 0;
         g_nLastZScanZPosition = 0;
         g_retryZScan          = 0;
         return;
@@ -3594,7 +3553,6 @@ void scanWorkPart( void )
                 g_scanStartTime    = HAL::timeInMilliseconds();
                 g_abortZScan       = 0;
                 nContactPressure   = 0;
-                g_nTempDirectionZ  = 0;
 
                 if( Printer::debugInfo() )
                 {
@@ -3692,13 +3650,8 @@ void scanWorkPart( void )
                 g_nMinPressureIdle    = g_nFirstIdlePressure - g_nScanIdlePressureDelta;
                 g_nMaxPressureIdle    = g_nFirstIdlePressure + g_nScanIdlePressureDelta;
 
-                // prepare the direction of the z-axis (we have to move the milling bed up)
-                prepareBedUp();
-                g_nTempDirectionZ = -1;
-
                 nX               = g_nScanXStartSteps;
                 nY               = g_nScanYStartSteps;
-                nZ               = 0;
                 nYDirection      = g_nScanYStepSizeSteps;   // we start to move the milling bed from the back to the front
                 nIndexYDirection = 1;
                 nIndexX          = 2;
@@ -3760,7 +3713,7 @@ void scanWorkPart( void )
                         return;
                     }
 
-                    g_nZScanZPosition += moveZ( g_nScanHeatBedUpFastSteps );
+                    moveZ( g_nScanHeatBedUpFastSteps );
 
                     if( (HAL::timeInMilliseconds() - g_lastScanTime) > SEARCH_Z_ORIGIN_BREAKOUT_DELAY )
                     {
@@ -3800,8 +3753,8 @@ void scanWorkPart( void )
                         setZOrigin();
 
                         // move away from the surface
-                        nZ = moveZDownFast();
-                        g_nZScanZPosition = nZ;
+                        moveZDownFast();
+
                         g_nWorkPartScanStatus = 35;
 
                         // ensure that we do not remember any previous z-position at this moment
@@ -3828,7 +3781,7 @@ void scanWorkPart( void )
                         return;
                     }
 
-                    g_nZScanZPosition += moveZ( g_nScanHeatBedDownSlowSteps );
+                    moveZ( g_nScanHeatBedDownSlowSteps );
 
                     if( (HAL::timeInMilliseconds() - g_lastScanTime) > SEARCH_Z_ORIGIN_BREAKOUT_DELAY )
                     {
@@ -3956,8 +3909,7 @@ void scanWorkPart( void )
             case 45:
             {
                 // move away from the surface
-                nZ += moveZ( g_nScanHeatBedDownFastSteps );
-                g_nZScanZPosition = nZ;
+                moveZ( g_nScanHeatBedDownFastSteps );
 
                 g_scanRetries         --;
                 g_nWorkPartScanStatus = 46;
@@ -3967,7 +3919,7 @@ void scanWorkPart( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanWorkPart );
-                    Com::printFLN( PSTR( "45 -> 46 > " ), nZ );
+                    Com::printFLN( PSTR( "45 -> 46" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -4057,8 +4009,7 @@ void scanWorkPart( void )
             case 51:
             {
                 // move fast to the surface
-                nZ += moveZUpFast();
-                g_nZScanZPosition = nZ;
+                moveZUpFast();
 
                 g_nWorkPartScanStatus = 52;
 
@@ -4066,7 +4017,7 @@ void scanWorkPart( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanWorkPart );
-                    Com::printFLN( PSTR( "51 -> 52 > " ), nZ );
+                    Com::printFLN( PSTR( "51 -> 52" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -4074,16 +4025,14 @@ void scanWorkPart( void )
             case 52:
             {
                 // move a little bit away from the surface
-                nZ += moveZDownSlow();
-                g_nZScanZPosition = nZ;
-
+                moveZDownSlow();
                 g_nWorkPartScanStatus = 53;
 
 #if DEBUG_WORK_PART_SCAN == 2
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanWorkPart );
-                    Com::printFLN( PSTR( "52 -> 53 > " ), nZ );
+                    Com::printFLN( PSTR( "52 -> 53" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -4091,9 +4040,7 @@ void scanWorkPart( void )
             case 53:
             {
                 // move slowly to the surface
-                nZ += moveZUpSlow( &nTempPressure );
-                g_nZScanZPosition = nZ;
-
+                moveZUpSlow( &nTempPressure );
                 nContactPressure      = nTempPressure;
                 g_nWorkPartScanStatus = 54;
 
@@ -4101,7 +4048,7 @@ void scanWorkPart( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanWorkPart );
-                    Com::printFLN( PSTR( "53 -> 54 > " ), nZ );
+                    Com::printFLN( PSTR( "53 -> 54" ) );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -4115,8 +4062,8 @@ void scanWorkPart( void )
                     Com::printF( Com::tSemiColon, (float)nX / Printer::axisStepsPerMM[X_AXIS] );
                     Com::printF( PSTR( ";nY;" ), nY );
                     Com::printF( Com::tSemiColon, (float)nY / Printer::axisStepsPerMM[Y_AXIS] );
-                    Com::printF( PSTR( ";nZ;" ), nZ );
-                    Com::printF( Com::tSemiColon, (float)nZ / Printer::axisStepsPerMM[Z_AXIS] );
+                    Com::printF( PSTR( ";nZ;" ), g_nZScanZPosition );
+                    Com::printF( Com::tSemiColon, (float)g_nZScanZPosition / Printer::axisStepsPerMM[Z_AXIS] );
                     Com::printF( PSTR( ";Pressure;" ), nContactPressure );
 
                     Com::printF( PSTR( ";nIndexX;" ), (int)nIndexX );
@@ -4133,7 +4080,7 @@ void scanWorkPart( void )
 #endif // DEBUG_WORK_PART_SCAN
 
                 // remember the z-position and the exact y-position of this row/column
-                g_ZCompensationMatrix[nIndexX][nIndexY] = (short)nZ;
+                g_ZCompensationMatrix[nIndexX][nIndexY] = (short)g_nZScanZPosition;
                 g_ZCompensationMatrix[0][nIndexY]       = (short)((float)nY / Printer::axisStepsPerMM[Y_AXIS] + 0.5);   // convert to mm
 
 #if DEBUG_REMEMBER_SCAN_PRESSURE
@@ -4158,7 +4105,7 @@ void scanWorkPart( void )
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanWorkPart );
-                    Com::printFLN( PSTR( "54 -> 55 > " ), nZ );
+                    Com::printFLN( PSTR( "54 -> 55 > " ), g_nZScanZPosition );
                 }
 #endif // DEBUG_WORK_PART_SCAN
                 break;
@@ -4166,8 +4113,7 @@ void scanWorkPart( void )
             case 55:
             {
                 // move away from the surface
-                nZ += moveZDownFast();
-                g_nZScanZPosition = nZ;
+                moveZDownFast();
 
                 if( nYDirection > 0 )
                 {
@@ -4805,7 +4751,6 @@ short readIdlePressure( short* pnIdlePressure )
         // wait some extra amount of time in case our results were not constant enough
         HAL::delayMilliseconds( 500 );
         
-        //runStandardTasks();
         Commands::checkForPeriodicalActions(); 
     }
 
@@ -4901,7 +4846,6 @@ short readAveragePressure( short* pnAveragePressure )
         // wait some extra amount of time in case our results were not constant enough
         HAL::delayMilliseconds( 100 );
         
-        //runStandardTasks();
         Commands::checkForPeriodicalActions(); 
     }
 
@@ -4916,70 +4860,45 @@ short readAveragePressure( short* pnAveragePressure )
 } // readAveragePressure
 
 
-short moveZUpFast( bool execRunStandardTasks )
+//Spacing Schnell:
+void moveZDownFast()
 {
     short   nTempPressure;
-    short   nZ = 0;
-    short   nSteps;
 
+    // move the heat bed down so that we won't hit it when we move to the next position
+    g_nLastZScanZPosition = g_nZScanZPosition;
+    HAL::delayMilliseconds( g_nScanFastStepDelay );
 
-    // move the heat bed up until we detect the contact pressure (fast speed)
-    while( 1 )
+    moveZ( g_nScanHeatBedDownFastSteps );
+
+    Commands::checkForPeriodicalActions(); 
+    GCode::keepAlive( Processing );
+
+    if( readAveragePressure( &nTempPressure ) )
     {
-        HAL::delayMilliseconds( g_nScanFastStepDelay );
-        if( readAveragePressure( &nTempPressure ) )
+        // some error has occurred
+        if( Printer::debugErrors() )
         {
-            // some error has occurred
-            break;
+            Com::printFLN( PSTR( "moveZDownFast(): the pressure could not be determined" ) );
         }
-
-        if( nTempPressure > g_nMaxPressureContact || nTempPressure < g_nMinPressureContact )
-        {
-            // we have reached the target pressure
-            break;
-        }
-
-        nSteps            =  moveZ( g_nScanHeatBedUpFastSteps );
-        nZ                += nSteps;
-        g_nZScanZPosition += nSteps;
-
-        if(execRunStandardTasks) {
-          runStandardTasks();
-        }
-        else {
-          Commands::checkForPeriodicalActions();
-          GCode::keepAlive( Processing );
-        }
-
-        if( g_abortZScan )
-        {
-            break;
-        }
-
-        if( g_nZScanZPosition < -g_nScanZMaxCompensationSteps || g_nZScanZPosition > HEAT_BED_SCAN_Z_START_STEPS )
-        {
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( PSTR( "moveZUpFast(): the z position went out of range, retries = " ), (int)g_scanRetries );
-            }
-            
-            if( g_scanRetries ) g_retryZScan = 1;
-            else                g_abortZScan = 1;
-            break;
-        }
+        g_abortZScan = 1;
+        return;
     }
 
-    return nZ;
+#if DEBUG_HEAT_BED_SCAN || DEBUG_WORK_PART_SCAN
+    if( Printer::debugInfo() )
+    {
+        Com::printFLN( PSTR( "moveZDownFast(): " ), (int)nTempPressure );
+    }
+#endif // DEBUG_HEAT_BED_SCAN || DEBUG_WORK_PART_SCAN
 
-} // moveZUpFast
+} // moveZDownFast
 
 
-short moveZDownSlow( bool execRunStandardTasks )
+//Spacing Langsam:
+void moveZDownSlow()
 {
     short   nTempPressure;
-    short   nZ = 0;
-    short   nSteps;
-
 
     // move the heat bed down until we detect the retry pressure (slow speed)
     while( 1 )
@@ -4997,16 +4916,11 @@ short moveZDownSlow( bool execRunStandardTasks )
             break;
         }
 
-        nSteps            =  moveZ( g_nScanHeatBedDownSlowSteps );
-        nZ                += nSteps;
-        g_nZScanZPosition += nSteps;
+        moveZ( g_nScanHeatBedDownSlowSteps );
 
-        if(execRunStandardTasks) {
-          runStandardTasks();
-        }
-        else {
-          Commands::checkForPeriodicalActions();
-        }
+        Commands::checkForPeriodicalActions(); 
+        GCode::keepAlive( Processing );
+        //runStandardTasks();
 
         if( g_abortZScan )
         {
@@ -5018,6 +4932,7 @@ short moveZDownSlow( bool execRunStandardTasks )
             if( Printer::debugErrors() )
             {
                 Com::printFLN( PSTR( "moveZDownSlow(): the z position went out of range, retries = " ), g_scanRetries );
+                Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition );
             }
             
             if( g_scanRetries ) g_retryZScan = 1;
@@ -5032,6 +4947,7 @@ short moveZDownSlow( bool execRunStandardTasks )
                 if( Printer::debugErrors() )
                 {
                     Com::printFLN( PSTR( "moveZDownSlow(): the z position delta went out of range, retries = " ), g_scanRetries );
+                    Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition );
                 }
             
                 if( g_scanRetries ) g_retryZScan = 1;
@@ -5040,18 +4956,60 @@ short moveZDownSlow( bool execRunStandardTasks )
             }
         }
     }
-
-    return nZ;
-
 } // moveZDownSlow
 
 
-short moveZUpSlow( short* pnContactPressure, bool execRunStandardTasks )
+//gegen Düse fahren schnell:
+void moveZUpFast()
 {
     short   nTempPressure;
-    short   nZ = 0;
-    short   nSteps;
 
+    // move the heat bed up until we detect the contact pressure (fast speed)
+    while( 1 )
+    {
+        HAL::delayMilliseconds( g_nScanFastStepDelay );
+        if( readAveragePressure( &nTempPressure ) )
+        {
+            // some error has occurred
+            break;
+        }
+
+        if( nTempPressure > g_nMaxPressureContact || nTempPressure < g_nMinPressureContact )
+        {
+            // we have reached the target pressure
+            break;
+        }
+
+        moveZ( g_nScanHeatBedUpFastSteps );
+
+        Commands::checkForPeriodicalActions(); 
+        GCode::keepAlive( Processing );
+
+        if( g_abortZScan )
+        {
+            break;
+        }
+
+        if( g_nZScanZPosition < -g_nScanZMaxCompensationSteps || g_nZScanZPosition > HEAT_BED_SCAN_Z_START_STEPS )
+        {
+            if( Printer::debugErrors() )
+            {
+                Com::printFLN( PSTR( "moveZUpFast(): the z position went out of range, retries = " ), (int)g_scanRetries );
+                Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition );
+            }
+            
+            if( g_scanRetries ) g_retryZScan = 1;
+            else                g_abortZScan = 1;
+            break;
+        }
+    }
+} // moveZUpFast
+
+
+//Gegen Düse fahren langsam:
+void moveZUpSlow( short* pnContactPressure )
+{
+    short   nTempPressure;
 
     // move the heat bed up until we detect the contact pressure (slow speed)
     while( 1 )
@@ -5069,16 +5027,10 @@ short moveZUpSlow( short* pnContactPressure, bool execRunStandardTasks )
             break;
         }
 
-        nSteps            =  moveZ( g_nScanHeatBedUpSlowSteps );
-        nZ                += nSteps;
-        g_nZScanZPosition += nSteps;
+        moveZ( g_nScanHeatBedUpSlowSteps );
 
-        if(execRunStandardTasks) {
-          runStandardTasks();
-        }
-        else {
-          Commands::checkForPeriodicalActions();
-        }
+        Commands::checkForPeriodicalActions(); 
+        GCode::keepAlive( Processing );
 
         if( g_abortZScan )
         {
@@ -5090,6 +5042,7 @@ short moveZUpSlow( short* pnContactPressure, bool execRunStandardTasks )
             if( Printer::debugErrors() )
             {
                 Com::printFLN( PSTR( "moveZUpSlow(): the z position went out of range, retries = " ), g_scanRetries );
+                Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition );
             }
             
             if( g_scanRetries ) g_retryZScan = 1;
@@ -5097,57 +5050,11 @@ short moveZUpSlow( short* pnContactPressure, bool execRunStandardTasks )
             break;
         }
     }
-
     *pnContactPressure = nTempPressure;
-    return nZ;
-
 } // moveZUpSlow
 
 
-short moveZDownFast( bool execRunStandardTasks )
-{
-    short   nTempPressure;
-    short   nZ = 0;
-    short   nSteps;
-
-    // move the heat bed down so that we won't hit it when we move to the next position
-    g_nLastZScanZPosition = g_nZScanZPosition;
-    HAL::delayMilliseconds( g_nScanFastStepDelay );
-
-    nSteps            =  moveZ( g_nScanHeatBedDownFastSteps );
-    nZ                += nSteps;
-    g_nZScanZPosition += nSteps;
-
-    if(execRunStandardTasks) {
-      runStandardTasks();
-    }
-    else {
-      Commands::checkForPeriodicalActions();
-    }
-
-    if( readAveragePressure( &nTempPressure ) )
-    {
-        // some error has occurred
-        if( Printer::debugErrors() )
-        {
-            Com::printFLN( PSTR( "moveZDownFast(): the pressure could not be determined" ) );
-        }
-        g_abortZScan = 1;
-        return nZ;
-    }
-
-#if DEBUG_HEAT_BED_SCAN || DEBUG_WORK_PART_SCAN
-    if( Printer::debugInfo() )
-    {
-        Com::printFLN( PSTR( "moveZDownFast(): " ), (int)nTempPressure );
-    }
-#endif // DEBUG_HEAT_BED_SCAN || DEBUG_WORK_PART_SCAN
-    return nZ;
-
-} // moveZDownFast
-
-
-int moveZ( int nSteps )
+void moveZ( int nSteps )
 {
     /*
     Warning 03.11.2017 : Do not try to make more steps than < 10mm in one row. Some printers will get a watchdog reset.
@@ -5155,99 +5062,55 @@ int moveZ( int nSteps )
     We changed Scan PLA/ABS to 2x 5mm and it worked.
     Reason is because we removed watchdog-ping from HAL::delayMicroseconds (which was good!)
     */
-    
-    int     i;
-    int     nMaxLoops;
-    char    bBreak;
-    
 
     // Warning: this function does not check any end stops
     // choose the direction
-    if( nSteps >= 0 )
-    {
-        nMaxLoops = nSteps;
+    char DirectionZ            = 0;   // this is the current z-direction during operations like the bed scan or finding of the z-origin
 
-        if( g_nTempDirectionZ != 1 )
-        {
-            prepareBedDown();
-
-            HAL::delayMicroseconds( XYZ_DIRECTION_CHANGE_DELAY );
-            g_nTempDirectionZ = 1;
-        }
-    }
-    else
-    {
-        nMaxLoops = -nSteps;
-
-        if( g_nTempDirectionZ != -1 )
-        {
-            prepareBedUp();
-
-            HAL::delayMicroseconds( XYZ_DIRECTION_CHANGE_DELAY );
-            g_nTempDirectionZ = -1;
-        }
-    }
+    int nMaxLoops;
+    if( nSteps >= 0 ) nMaxLoops = nSteps;
+    else              nMaxLoops = -nSteps;
     
     // perform the steps
-    for( i=0; i<nMaxLoops; i++ )
+    for( int i=0; i<nMaxLoops; i++ )
     {
-        bBreak = 0;
-
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-        if( g_abortZScan )
-        {
-            bBreak = 1;
-        }
+        if( g_abortZScan ) break; // do not continue here in case the current operation has been cancelled
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-        
-#if FEATURE_FIND_Z_ORIGIN
-        if( g_abortSearch )
-        {
-            bBreak = 1;
-        }
-#endif // FEATURE_FIND_Z_ORIGIN
 
-        if( bBreak )
-        {
-            // do not continue here in case the current operation has been cancelled
-            if( nSteps > 0 )    nSteps = i;
-            else                nSteps = -i;
-            break;
-        }
+#if FEATURE_FIND_Z_ORIGIN
+        if( g_abortSearch ) break; // do not continue here in case the current operation has been cancelled
+#endif // FEATURE_FIND_Z_ORIGIN
 
         if( nSteps >= 0 )
         {
             if( READ( Z_DIR_PIN ) != !INVERT_Z_DIR )
             {
                 prepareBedDown();
-
                 HAL::delayMicroseconds( XYZ_DIRECTION_CHANGE_DELAY );
-                g_nTempDirectionZ = 1;
-
-                Com::printFLN( PSTR( "moveZ(): prepareBedDown()" ) );
+                Com::printFLN( PSTR( "moveZ: BedDown Z=" ),g_nZScanZPosition );
             }
+            DirectionZ = 1;
         }
         else
         {
             if( READ( Z_DIR_PIN ) != INVERT_Z_DIR )
             {
                 prepareBedUp();
-
                 HAL::delayMicroseconds( XYZ_DIRECTION_CHANGE_DELAY );
-                g_nTempDirectionZ = -1;
-
-                Com::printFLN( PSTR( "moveZ(): prepareBedUp()" ) );
+                Com::printFLN( PSTR( "moveZ: BedUp Z=" ),g_nZScanZPosition );
             }
+            DirectionZ = -1;
         }
 
         HAL::delayMicroseconds( XYZ_STEPPER_HIGH_DELAY );
-        startZStep( g_nTempDirectionZ );
+        startZStep( DirectionZ );
 
         HAL::delayMicroseconds( XYZ_STEPPER_LOW_DELAY );
         endZStep();
+        
+        g_nZScanZPosition += DirectionZ;
     }
-
-    return nSteps;
 
 } // moveZ
 
@@ -6691,9 +6554,9 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 
 #endif // FEATURE_OUTPUT_FINISHED_OBJECT
 
-            cleanupXPositions();
-            cleanupYPositions();
-            cleanupZPositions();
+            // cleanupXPositions(); siehe disableXStepper ! bzw output_object ebenfalls
+            //cleanupYPositions(); Siehe disableYStepper ! bzw output_object ebenfalls
+            //cleanupZPositions(); Siehe disableZStepper ! bzw output_object ebenfalls
             g_uBlockSDCommands = 0;
         }
     }
@@ -10953,23 +10816,6 @@ void processCommand( GCode* pCommand )
 
 } // processCommand
 
-
-void runStandardTasks( void )
-{
-    GCode*  pCode;
-    GCode::readFromSerial();
-    pCode = GCode::peekCurrentCommand();
-    if( pCode )
-    {
-        Commands::executeGCode( pCode );
-        pCode->popCurrentCommand();
-    }
-    Commands::checkForPeriodicalActions(); 
-    return;
-
-} // runStandardTasks
-
-
 void queueTask( char task )
 {
     while( PrintLine::linesCount >= MOVE_CACHE_SIZE )
@@ -12410,7 +12256,9 @@ void setZOrigin( void )
     Printer::directPositionCurrentSteps[Z_AXIS] = 
     Printer::directPositionLastSteps[Z_AXIS]    = 0;
     Printer::originOffsetMM[Z_AXIS]             = 0;
-
+    
+    g_nZScanZPosition                           = 0;
+    
 #if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
     Printer::currentZSteps                      = 0;
 #endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
@@ -12520,8 +12368,8 @@ void findZOrigin( void )
     {
         // the search has been aborted
         g_abortSearch       = 0;
-        g_nZOriginPosition[Z_AXIS] = 0;
-        g_nZOriginSet       = 0;
+        g_nZOriginPosition[Z_AXIS] = 0; //unnötig siehe Printer::disableZStepper(); -> cleanupZPositions()
+        g_nZOriginSet       = 0; //unnötig siehe Printer::disableZStepper(); -> cleanupZPositions()
 
         // turn off the engines
         Printer::disableZStepper();
@@ -12581,10 +12429,6 @@ void findZOrigin( void )
                 Printer::enableZStepper();
                 Printer::unsetAllSteppersDisabled();
 
-                // prepare the direction of the z-axis (we have to move the milling bed up)
-                prepareBedUp();
-
-                g_nTempDirectionZ    = -1;
                 g_nFindZOriginStatus = 10;
 
 #if DEBUG_FIND_Z_ORIGIN
@@ -12622,8 +12466,9 @@ void findZOrigin( void )
                         return;
                     }
 
-                    g_nZOriginPosition[Z_AXIS] += moveZ( SEARCH_Z_ORIGIN_BED_UP_STEPS );
-
+                    moveZ( SEARCH_Z_ORIGIN_BED_UP_STEPS );
+                    g_nZOriginPosition[Z_AXIS] = g_nZScanZPosition; //passt wenn korrekt gehomed.
+                    
                     uCurrentTime = HAL::timeInMilliseconds();
                     if( (uCurrentTime - uStartTime) > SEARCH_Z_ORIGIN_BREAKOUT_DELAY )
                     {
@@ -12669,7 +12514,8 @@ void findZOrigin( void )
                         return;
                     }
 
-                    g_nZOriginPosition[Z_AXIS] += moveZ( SEARCH_Z_ORIGIN_BED_DOWN_STEPS );
+                    moveZ( SEARCH_Z_ORIGIN_BED_DOWN_STEPS );
+                    g_nZOriginPosition[Z_AXIS] = g_nZScanZPosition; //passt wenn korrekt gehomed.
 
                     uCurrentTime = HAL::timeInMilliseconds();
                     if( (uCurrentTime - uStartTime) > SEARCH_Z_ORIGIN_BREAKOUT_DELAY )

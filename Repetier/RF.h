@@ -801,19 +801,19 @@ extern short testIdlePressure( void );
 extern short readAveragePressure( short* pnAveragePressure );
 
 // moveZUpFast()
-extern short moveZUpFast( bool execRunStandardTasks=true );
+extern void moveZUpFast();
 
 // moveZDownSlow()
-extern short moveZDownSlow( bool execRunStandardTasks=true );
+extern void moveZDownSlow();
 
 // moveZUpSlow()
-extern short moveZUpSlow( short* pnContactPressure, bool execRunStandardTasks=true );
+extern void moveZUpSlow( short* pnContactPressure );
 
 // moveZDownFast()
-extern short moveZDownFast( bool execRunStandardTasks=true );
+extern void moveZDownFast();
 
 // moveZ()
-extern int moveZ( int nSteps );
+extern void moveZ( int nSteps );
 
 // restoreDefaultScanParameters()
 extern void restoreDefaultScanParameters( void );
@@ -910,9 +910,6 @@ extern void setExtruderCurrent( uint8_t nr, uint8_t current );
 
 // processCommand()
 extern void processCommand( GCode* pCommand );
-
-// runStandardTasks()
-extern void runStandardTasks( void );
 
 // queueTask()
 extern void queueTask( char task );
