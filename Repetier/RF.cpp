@@ -2271,8 +2271,8 @@ void searchZOScan( void )
                     g_retryZScan = 1;
                 } 
                 
-                // move a little bit away from the surface
-                moveZDownSlow();
+                // move around one step back away from the surface
+                moveZ( int(random(abs(g_nScanHeatBedUpFastSteps),2*abs(g_nScanHeatBedUpFastSteps))) );
 
                 HAL::delayMilliseconds( g_nScanSlowStepDelay );
 
@@ -2321,8 +2321,8 @@ void searchZOScan( void )
                       Com::printFLN( PSTR( "x" ) );
 #endif // DEBUG_HEAT_BED_SCAN
 
-                      // move from moveZUpFast() down again
-                      moveZDownSlow();
+                      // move from moveZUpFast() down again -> für neuen anlauf
+                      moveZ( int(random(3*abs(g_nScanHeatBedUpSlowSteps),10*abs(g_nScanHeatBedDownSlowSteps))) );
                       HAL::delayMilliseconds( g_nScanSlowStepDelay );
 
                       // move slowly to the surface
