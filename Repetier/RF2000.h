@@ -176,6 +176,20 @@ Overridden if EEPROM activated.*/
 /** \brief Dgain. */
 #define HT3_PID_D                           18
 
+// ##########################################################################################
+// ##	Hotend V3 : Nibbels 23.12.2017: PID Werte sind noch die falschen alten Werte vom V2
+// ##########################################################################################
+
+/** \brief The maximum value, I-gain can contribute to the output. */
+#define HT4_PID_INTEGRAL_DRIVE_MAX			180
+/** \brief lower value for integral part. */
+#define HT4_PID_INTEGRAL_DRIVE_MIN			40
+/** \brief P-gain. */
+#define HT4_PID_P							95
+/** \brief I-gain. */
+#define HT4_PID_I							120
+/** \brief Dgain. */
+#define HT4_PID_D							130
 
 // ##########################################################################################
 // ##   Miller type 1 (= one track)
@@ -218,13 +232,13 @@ NTC-Thermistors
 10: 100k 0603 SMD Vishay NTCS0603E3104FXT (4.7k pullup)
 11: 100k GE Sensing AL03006-58.2K-97-G1 (4.7k pullup)
 12: 100k RS Thermistor 198-961 (4.7k pullup)
+13: NTC 3950 100k thermistor - Conrad V3
 14: Thermistor NTC 3950 100k Ohm (Version 1)
 15: Thermistor NTC 3950 100k Ohm (Version 2)
 97: USE_GENERIC_THERMISTORTABLE_1 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 98: USE_GENERIC_THERMISTORTABLE_2 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 99: USE_GENERIC_THERMISTORTABLE_3 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 PTC-Thermistors
-13: E3D PT100 (externe Platine, 500°C)
 50: USER_THERMISTORTABLE0 als PTC
 51: USER_THERMISTORTABLE1 als PTC
 52: USER_THERMISTORTABLE2 als PTC
@@ -381,13 +395,13 @@ NTC-Thermistors
 10: 100k 0603 SMD Vishay NTCS0603E3104FXT (4.7k pullup)
 11: 100k GE Sensing AL03006-58.2K-97-G1 (4.7k pullup)
 12: 100k RS Thermistor 198-961 (4.7k pullup)
+13: NTC 3950 100k thermistor - Conrad V3
 14: Thermistor NTC 3950 100k Ohm (Version 1)
 15: Thermistor NTC 3950 100k Ohm (Version 2)
 97: USE_GENERIC_THERMISTORTABLE_1 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 98: USE_GENERIC_THERMISTORTABLE_2 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 99: USE_GENERIC_THERMISTORTABLE_3 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 PTC-Thermistors
-13: E3D PT100 (externe Platine, 500°C)
 50: USER_THERMISTORTABLE0 als PTC
 51: USER_THERMISTORTABLE1 als PTC
 52: USER_THERMISTORTABLE2 als PTC
@@ -800,9 +814,11 @@ can set it on for safety. */
 #define HEATER_PWM_SPEED                    1
 //Nibbels 28.09.17: original ist 3, aber 3 ist wegen nem Bug wie 2, nun stimmt der Code, daher hier 2: bleibt also gleich.
 #define COOLER_PWM_SPEED                    2
+
 /** Some fans won't start for low values, but would run if started with higher power at the beginning.
 This defines the full power duration before returning to set value. Time is in milliseconds */
 #define FAN_KICKSTART_TIME  200                                                                 // [ms]
+
 /** Defines the max. fan speed for M106 controlled fans. Normally 255 to use full range, but for
  12V fans on 24V this might help preventing a defect. For all other fans there is a explicit maximum PWM value
  you can set, so this is not used for other fans! */

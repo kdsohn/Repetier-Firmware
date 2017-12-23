@@ -225,10 +225,18 @@
 
 - M3075 [S] [P] - configure the emergency pause digits
   - Examples:
-  - M3075 S-5000 ; sets the min emergency pause digits to -5000 [digits]
-  - M3075 P5000 ; sets the max emergency pause digits to 5000 [digits]
-  - M3075 S-5000 P5000 ; sets the min emergency pause digits to -5000 [digits] and the max emergency pause digits to 5000 [digits]
+  - M3075 S-15000 ; sets the min emergency pause digits to -15000 [digits]
+  - M3075 P15000 ; sets the max emergency pause digits to 15000 [digits]
+  - M3075 S-15000 P15000 ; sets the min emergency pause digits to -15000 [digits] and the max emergency pause digits to 15000 [digits]
+  - M3075 S0 P0 ; disables the emergency pause
 
+- M3076 [S] [P] - configure the emergency stop digits
+  - Examples:
+  - M3076 S-5000 ; sets the min emergency stop digits to -5000 [digits]
+  - M3076 P5000 ; sets the max emergency stop digits to 5000 [digits]
+  - M3076 S-5000 P5000 ; sets the min emergency stop digits to -5000 [digits] and the max emergency stop digits to 5000 [digits]
+  - M3076 S0 P0 ; disables the emergency stop
+ 
 - M3079 - output the printed object
   - Examples:
   - M3079 ; outputs the printed object
@@ -377,7 +385,7 @@
 
 
 // ##########################################################################################
-// ##   the following M codes are supported only by the RF2000
+// ##   the following M codes are supported only by the RF2000 and RF2000 V2
 // ##########################################################################################
 
 - M3300 [P] [S] - configure the 24V FET outputs ( on/off )

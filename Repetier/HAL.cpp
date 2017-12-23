@@ -278,7 +278,7 @@ void HAL::setupTimer()
     OCR4C = 0;                                      // default B = 0 at startup
 #endif // FEATURE_RGB_LIGHT_EFFECTS
 
-#if FEATURE_SERVO && MOTHERBOARD == DEVICE_TYPE_RF2000
+#if FEATURE_SERVO && (MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2)
     //Configure Timer 5
     TCCR5A  = 0;                                    // clear Register
     TCCR5B  = 0;
@@ -297,7 +297,7 @@ void HAL::setupTimer()
     OCR5A = 1600;                                   // default ( 800 [uS] )
     OCR5B = 1600;                                   // default ( 800 [uS] )
     OCR5C = 1600;                                   // default ( 800 [uS] )
-#endif // FEATURE_SERVO && MOTHERBOARD == DEVICE_TYPE_RF2000
+#endif // FEATURE_SERVO && (MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2)
 
 #if FEATURE_SERVO && MOTHERBOARD == DEVICE_TYPE_RF1000
 #if SERVO0_PIN>-1

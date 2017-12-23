@@ -537,7 +537,7 @@ void scanHeatBed( void )
         BEEP_ABORT_HEAT_BED_SCAN
 
         // restore the compensation values from the EEPROM
-        if( loadCompensationMatrix( (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveHeatBed) ) )
+        if( loadCompensationMatrix( 0 ) )
         {
             // there is no valid compensation matrix available
             initCompensationMatrix();
@@ -2618,7 +2618,7 @@ bool calculateZScrewCorrection( void )
         
         Com::printFLN( PSTR( "Je kaelter der Gesamtdrucker aktuell ist (nach langer Pause frisch angeschaltet), desto besser der Korrekturwert." ) );
         g_ZSchraubeOk = -1; //neg -> Matrix negativ -> ok. ausser, wenn:      
-#if MOTHERBOARD == DEVICE_TYPE_RF2000
+#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2 //TODO: Prüfen ob das beim RF2000v2 stimmen wird.
         if( -0.5f <= ZSchraubenDrehungenWarm && SollkorrekturWarm < 40.0f /* [um] */){ // < 0.25mm = 0.5Umdrehungen ist mit dem RF2000 nicht machbar.
             Com::printFLN( PSTR( " (Die Z-Schraube ist ok!)" ) ); //das ist die Änderung in M3-Regelgewinde-Z-Schrauben-Umdrehungen
             //meldung:
@@ -3142,12 +3142,21 @@ void doHeatBedZCompensation( void )
     long            i;
 
 
-    if( !Printer::doHeatBedZCompensation || (g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE2 && g_pauseStatus != PAUSE_STATUS_TASKGOTO_PAUSE_2) ) // -> weil evtl. bewegung in xy auch solange pausestatus da ist.
+    if( !Printer::doHeatBedZCompensation ) 
     {
         // there is nothing to do at the moment
         return;
     }
-
+    
+#if FEATURE_PAUSE_PRINTING
+    // -> weil evtl. bewegung in xy auch solange pausestatus da ist.
+    if( g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE2 && g_pauseStatus != PAUSE_STATUS_TASKGOTO_PAUSE_2 )
+    {
+        // there is nothing to do at the moment
+        return;
+    }
+#endif // FEATURE_PAUSE_PRINTING
+ 
     InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
     nCurrentPositionSteps[X_AXIS] = Printer::queuePositionCurrentSteps[X_AXIS];
     nCurrentPositionSteps[Y_AXIS] = Printer::queuePositionCurrentSteps[Y_AXIS];
@@ -3520,7 +3529,7 @@ void scanWorkPart( void )
         BEEP_ABORT_WORK_PART_SCAN
 
         // restore the compensation values from the EEPROM
-        if( loadCompensationMatrix( 0 ) ) //Nibbels: Ist das hier nicht vieleicht Falsch? Eher das: (EEPROM_SECTOR_SIZE *9) + (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveWorkPart)? --> Bei Adresse 0 wird in der Funktion ermittelt welche passt.
+        if( loadCompensationMatrix( 0 ) ) // --> Bei Adresse 0 wird in der Funktion ermittelt welche passt.
         {
             // there is no valid compensation matrix available
             initCompensationMatrix();
@@ -4389,11 +4398,18 @@ void doWorkPartZCompensation( void )
     long            i;
 
 
-    if( !Printer::doWorkPartZCompensation || (g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE2 && g_pauseStatus != PAUSE_STATUS_TASKGOTO_PAUSE_2) )
+    if( !Printer::doWorkPartZCompensation )
     {
         // there is nothing to do at the moment
         return;
     }
+
+ #if FEATURE_PAUSE_PRINTING
+    if(g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE2 && g_pauseStatus != PAUSE_STATUS_TASKGOTO_PAUSE_2){
+        // there is nothing to do at the moment
+        return;
+    }
+ #endif // FEATURE_PAUSE_PRINTING
 
     InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
     nCurrentPositionSteps[X_AXIS] = Printer::queuePositionCurrentSteps[X_AXIS];
@@ -5737,7 +5753,7 @@ char loadCompensationMatrix( unsigned int uAddress )
 #if FEATURE_MILLING_MODE
         if( Printer::operatingMode == OPERATING_MODE_PRINT )
         {
-#if FEATURE_HEAT_BED_Z_COMPENSATION
+ #if FEATURE_HEAT_BED_Z_COMPENSATION
             // load the currently active heat bed compensation matrix
             uTemp = readWord24C256( I2C_ADDRESS_EXTERNAL_EEPROM, EEPROM_OFFSET_ACTIVE_HEAT_BED_Z_MATRIX );
 
@@ -5757,14 +5773,14 @@ char loadCompensationMatrix( unsigned int uAddress )
             {
                 Com::printFLN( PSTR( "loadCompensationMatrix(): active heat bed z matrix: " ), (int)g_nActiveHeatBed );
             }
-#else
+ #else
             // we do not support the heat bed compensation
             return -1;
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION
+ #endif // FEATURE_HEAT_BED_Z_COMPENSATION
         }
         else
         {
-#if FEATURE_WORK_PART_Z_COMPENSATION
+ #if FEATURE_WORK_PART_Z_COMPENSATION
             // load the currently active work part compensation matrix
             uTemp = readWord24C256( I2C_ADDRESS_EXTERNAL_EEPROM, EEPROM_OFFSET_ACTIVE_WORK_PART_Z_MATRIX );
 
@@ -5779,19 +5795,38 @@ char loadCompensationMatrix( unsigned int uAddress )
 
             g_nActiveWorkPart = (char)uTemp;
             uAddress          = (EEPROM_SECTOR_SIZE *9) + (unsigned int)(EEPROM_SECTOR_SIZE * uTemp);
-#else
+ #else
             // we do not support the work part compensation
             return -1;
-#endif // FEATURE_WORK_PART_Z_COMPENSATION
+ #endif // FEATURE_WORK_PART_Z_COMPENSATION
         }
-#else
-#if FEATURE_HEAT_BED_Z_COMPENSATION
-        // load the heat bed compensation matrix
-        uAddress = EEPROM_SECTOR_SIZE;
-#else
+        
+#else //FEATURE_MILLING_MODE
+
+ #if FEATURE_HEAT_BED_Z_COMPENSATION
+        // load the currently active heat bed compensation matrix
+        uTemp = readWord24C256( I2C_ADDRESS_EXTERNAL_EEPROM, EEPROM_OFFSET_ACTIVE_HEAT_BED_Z_MATRIX );
+
+        if( uTemp < 1 || uTemp > EEPROM_MAX_HEAT_BED_SECTORS )
+        {
+            if( Printer::debugErrors() )
+            {
+                Com::printFLN( PSTR( "loadCompensationMatrix(): invalid active heat bed z matrix detected: " ), (int)uTemp );
+            }
+            return -1;
+        }
+
+        g_nActiveHeatBed    = (char)uTemp;
+        uAddress            = (unsigned int)(EEPROM_SECTOR_SIZE * uTemp);
+
+        if( Printer::debugErrors() )
+        {
+            Com::printFLN( PSTR( "loadCompensationMatrix(): active heat bed z matrix: " ), (int)g_nActiveHeatBed );
+        }
+ #else
         // we do not support the heat bed compensation
         return -1;
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION
+ #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 #endif // FEATURE_MILLING_MODE
     }
 
@@ -7698,6 +7733,18 @@ void processCommand( GCode* pCommand )
             {
                 if( isSupportedMCommand( pCommand->M, OPERATING_MODE_PRINT ) )
                 {
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+                    if( Printer::doHeatBedZCompensation )
+                    {
+                        if( Printer::debugErrors() )
+                        {
+                            Com::printFLN( PSTR( "M3011: the heat bed z matrix can not be cleared while the z-compensation is active" ) );
+                        }
+
+                        showError( (void*)ui_text_z_compensation, (void*)ui_text_operation_denied );
+                        break;
+                    }
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION
                     if( pCommand->hasS() )
                     {
                         nTemp = pCommand->S;
@@ -7727,8 +7774,6 @@ void processCommand( GCode* pCommand )
                     {
                         Com::printFLN( PSTR( "M3011: cleared heat bed z matrix: " ), nTemp );
                     }
-
-                    // TODO: in case the z-compensation matrix is active at the moment, this command should not work
                 }
                 break;
             }
@@ -8369,8 +8414,8 @@ void processCommand( GCode* pCommand )
                 {
                     if( Printer::debugErrors() )
                     {
-                        Com::printF( PSTR( "M3075: min is not smaller than max (" ), (int)g_nEmergencyPauseDigitsMin );
-                        Com::printF( PSTR( "/" ), (int)g_nEmergencyPauseDigitsMax );
+                        Com::printF( PSTR( "M3075: min is not smaller than max (" ), (int)nMin );
+                        Com::printF( PSTR( "/" ), (int)nMin );
                         Com::printFLN( PSTR( " [digits])" ) );
                     }
                 }
@@ -8378,6 +8423,59 @@ void processCommand( GCode* pCommand )
                 break;
             }
 #endif // FEATURE_EMERGENCY_PAUSE
+
+#if FEATURE_EMERGENCY_STOP_ALL
+            case 3076: // M3076 [S] [P] - configure the emergency stop digits
+            {
+                long	nMin = g_nZEmergencyStopAllMin;
+                long	nMax = g_nZEmergencyStopAllMax;
+
+                if( pCommand->hasS() )
+                {
+                    // test and take over the specified value - this is our new min value
+                    nMin = pCommand->S;
+                }
+                if( pCommand->hasP() )
+                {
+                    // test and take over the specified value - this is our new max value
+                    nMax = pCommand->P;
+                }
+
+                if( nMin == 0 && nMax == 0 )
+                {
+                    g_nZEmergencyStopAllMin = 0;
+                    g_nZEmergencyStopAllMax = 0;
+
+                    if( Printer::debugInfo() )
+                    {
+                        Com::printFLN( PSTR( "M3076: the emergency stop has been disabled" ) );
+                    }
+                }
+                else if( nMin < nMax && nMin >= -32768 && nMax <= 32767 )
+                {
+                    g_nZEmergencyStopAllMin = (short)nMin;
+                    g_nZEmergencyStopAllMax = (short)nMax;
+
+                    if( Printer::debugInfo() )
+                    {
+                        Com::printF( PSTR( "M3076: new min: " ), (int)g_nZEmergencyStopAllMin );
+                        Com::printF( PSTR( " [digits], new max: " ), (int)g_nZEmergencyStopAllMax );
+                        Com::printFLN( PSTR( " [digits]" ) );
+                    }
+                }
+                else
+                {
+                    if( Printer::debugErrors() )
+                    {
+                        Com::printF( PSTR( "M3076: min is not smaller than max (" ), (int)nMin );
+                        Com::printF( PSTR( "/" ), (int)nMax );
+                        Com::printFLN( PSTR( " [digits])" ) );
+                    }
+                }
+
+                break;
+            }
+#endif // FEATURE_EMERGENCY_STOP_ALL
 
 #if FEATURE_OUTPUT_FINISHED_OBJECT
             case 3079: // M3079 - output the printed object
@@ -8978,6 +9076,17 @@ void processCommand( GCode* pCommand )
             {
                 if( isSupportedMCommand( pCommand->M, OPERATING_MODE_MILL ) )
                 {
+                    if( Printer::doWorkPartZCompensation )
+                    {
+                        if( Printer::debugErrors() )
+                        {
+                            Com::printFLN( PSTR( "M3151: the work part z matrix can not be cleared while the z-compensation is active" ) );
+                        }
+
+                        showError( (void*)ui_text_z_compensation, (void*)ui_text_operation_denied );
+                        break;
+                    }
+
                     if( pCommand->hasS() )
                     {
                         nTemp = pCommand->S;
@@ -11194,10 +11303,6 @@ void nextPreviousXAction( int8_t increment )
 
                 noInts.protect(); //HAL::forbidInterrupts();
                 Printer::directPositionTargetSteps[X_AXIS] += steps;
-                /*if( Printer::directPositionTargetSteps[Z_AXIS] < EXTENDED_BUTTONS_Z_MIN )
-                {
-                    Printer::directPositionTargetSteps[Z_AXIS] = EXTENDED_BUTTONS_Z_MIN;
-                }*/
                 noInts.unprotect(); //HAL::allowInterrupts();
 
                 if( Printer::debugInfo() )
@@ -11348,10 +11453,6 @@ void nextPreviousYAction( int8_t increment )
 
                 noInts.protect(); //HAL::forbidInterrupts();
                 Printer::directPositionTargetSteps[Y_AXIS] += steps;
-                /*if( Printer::directPositionTargetSteps[Z_AXIS] < EXTENDED_BUTTONS_Z_MIN )
-                {
-                    Printer::directPositionTargetSteps[Z_AXIS] = EXTENDED_BUTTONS_Z_MIN;
-                }*/
                 noInts.unprotect(); //HAL::allowInterrupts();
 
                 if( Printer::debugInfo() )
@@ -11553,7 +11654,7 @@ void nextPreviousZAction( int8_t increment )
                 //Ohne Homing gibts den Z-Endstop Min. Diese Zahl Z=.... stimmt ohne Homing nicht!
                 /*if( increment < 0 && Printer::directPositionTargetSteps[Z_AXIS] < EXTENDED_BUTTONS_Z_MIN )
                 {
-                    Printer::directPositionTargetSteps[Z_AXIS] = Printer::directPositionCurrentSteps[Z_AXIS];
+                    Printer::directPositionTargetSteps[Z_AXIS] = EXTENDED_BUTTONS_Z_MIN;
 
                     if( Printer::debugErrors() )
                     {
@@ -11563,7 +11664,7 @@ void nextPreviousZAction( int8_t increment )
                 }
                 if( increment > 0 && Printer::directPositionTargetSteps[Z_AXIS] > EXTENDED_BUTTONS_Z_MAX )
                 {
-                    Printer::directPositionTargetSteps[Z_AXIS] = Printer::directPositionCurrentSteps[Z_AXIS];
+                    Printer::directPositionTargetSteps[Z_AXIS] = EXTENDED_BUTTONS_Z_MAX;
 
                     if( Printer::debugErrors() )
                     {
@@ -13760,7 +13861,7 @@ void notifyAboutWrongHardwareType( unsigned char guessedHardwareType )
         }
         case DEVICE_TYPE_RF2000:
         {
-            // we try to beep via the beeper pin of the RF2000 hardware
+            // we try to beep via the beeper pin of the RF2000 / RF2000 V2 hardware
             SET_OUTPUT( BEEPER_PIN_RF2000 );
 
             for( uint8_t i=0; i<count; i++ )

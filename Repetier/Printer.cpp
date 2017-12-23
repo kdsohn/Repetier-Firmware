@@ -254,8 +254,13 @@ void Printer::constrainQueueDestinationCoords()
 
 void Printer::constrainDirectDestinationCoords()
 {
-    if(isNoDestinationCheck()) return;
-    if(g_pauseStatus) return; //pausebewegung rechnet mit current queue
+    if(isNoDestinationCheck()){
+        return;
+    }
+    if(g_pauseStatus){
+        return; 
+        // the pause-and-continue functionality must calculate the constrains by itself
+    }
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 #if max_software_endstop_x == true
     if (queuePositionTargetSteps[X_AXIS] + directPositionTargetSteps[X_AXIS] > Printer::maxSteps[X_AXIS]) Printer::directPositionTargetSteps[X_AXIS] = Printer::maxSteps[X_AXIS] - queuePositionTargetSteps[X_AXIS];
@@ -1786,8 +1791,9 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
 
 bool Printer::allowQueueMove( void )
 {
+#if FEATURE_PAUSE_PRINTING
     if( g_pauseStatus == PAUSE_STATUS_PAUSED ) return false;
-
+#endif // FEATURE_PAUSE_PRINTING
     if( !( (PAUSE_STATUS_GOTO_PAUSE1 <= g_pauseStatus && g_pauseStatus <= PAUSE_STATUS_HEATING) || g_pauseStatus == PAUSE_STATUS_NONE) 
         && !PrintLine::cur )
     {
@@ -1943,12 +1949,20 @@ void Printer::performZCompensation( void )
     {
         if( PrintLine::cur->isZMove() )
         {
-            // do not peform any compensation while there is a "real" move into z-direction
+            // do not peform any compensation while there is a queue move into z-direction
             if( PrintLine::cur->stepsRemaining ) return;
             else PrintLine::cur->setZMoveFinished();
         }
     }
 
+/* das hier ... conrad 1.39, oder meine version : eins drunter??? TODO Nibbels 23.12.2017
+    if( Printer::directPositionCurrentSteps[Z_AXIS] != Printer::directPositionTargetSteps[Z_AXIS] )
+    {
+        // do not perform any compensation while there is a direct move into z-direction
+        return;
+    }
+ */
+    
     if( PrintLine::direct.isZMove() )
     {
         // do not peform any compensation while there is a direct-move into z-direction

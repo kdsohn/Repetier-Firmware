@@ -556,6 +556,8 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
     if(alloffs && !alloff) // heaters are turned on, start measuring printing time
     {
         Printer::msecondsPrinting = HAL::timeInMilliseconds();
+        Printer::filamentPrinted = 0;  // new print, new counter  
+        Printer::flag2 &= ~PRINTER_FLAG2_RESET_FILAMENT_USAGE;  
     }
 
 } // setTemperatureForExtruder
@@ -745,12 +747,26 @@ const short temptable_12[NUMTEMPS_12][2] PROGMEM =
     {701*4, 86*8},{736*4, 81*8},{771*4, 76*8},{806*4, 70*8},{841*4, 63*8},{876*4, 56*8},{911*4, 48*8},{946*4, 38*8},{981*4, 23*8},{1005*4, 5*8},{1016*4, 0*8}
 };
 
+/*
 // PT100 E3D
 #define NUMTEMPS_13 19 
 const short temptable_13[NUMTEMPS_13][2] PROGMEM =
 {
     {0,0},{908,8},{942,10*8},{982,20*8},{1015,8*30},{1048,8*40},{1080,8*50},{1113,8*60},{1146,8*70},{1178,8*80},{1211,8*90},{1276,8*110},{1318,8*120}
     ,{1670,8*230},{2455,8*500},{3445,8*900},{3666,8*1000},{3871,8*1100},{4095,8*2000}
+};
+*/
+
+#define NUMTEMPS_13 61 // NTC 3950 100k thermistor - Conrad V3
+const short temptable_13[NUMTEMPS_13][2] PROGMEM =
+{
+  {23*4, 300*8},{25*4, 295*8},{27*4, 290*8},{28*4, 285*8},{31*4, 280*8},{33*4, 275*8},{35*4, 270*8},{38*4, 265*8},{41*4, 260*8},{44*4, 255*8},
+  {48*4, 250*8},{52*4, 245*8},{56*4, 240*8},{61*4, 235*8},{66*4, 230*8},{71*4, 225*8},{78*4, 220*8},{84*4, 215*8},{92*4, 210*8},{100*4, 205*8},
+  {109*4, 200*8},{120*4, 195*8},{131*4, 190*8},{143*4, 185*8},{156*4, 180*8},{171*4, 175*8},{187*4, 170*8},{205*4, 165*8},{224*4, 160*8},{245*4, 155*8},
+  {268*4, 150*8},{293*4, 145*8},{320*4, 140*8},{348*4, 135*8},{379*4, 130*8},{411*4, 125*8},{445*4, 120*8},{480*4, 115*8},{516*4, 110*8},{553*4, 105*8},
+  {591*4, 100*8},{628*4, 95*8},{665*4, 90*8},{702*4, 85*8},{737*4, 80*8},{770*4, 75*8},{801*4, 70*8},{830*4, 65*8},{857*4, 60*8},{881*4, 55*8},
+  {903*4, 50*8},{922*4, 45*8},{939*4, 40*8},{954*4, 35*8},{966*4, 30*8},{977*4, 25*8},{985*4, 20*8},{993*4, 15*8},{999*4, 10*8},{1004*4, 5*8},
+  {1008*4, 0*8}
 };
 
 // Thermistor NTC 3950 100k Ohm (result seems a bit to cold for my amazon-ntcs)
@@ -848,7 +864,7 @@ void TemperatureController::updateCurrentTemperature()
         case 10: // 100k 0603 SMD Vishay NTCS0603E3104FXT (4.7k pullup)
         case 11: // 100k GE Sensing AL03006-58.2K-97-G1 (4.7k pullup)
         case 12: // 100k RS thermistor 198-961 (4.7k pullup)
-        //case 13 weiter unten, E3D PT100.
+        case 13: // NTC 3950 100k thermistor - Conrad V3
         case 14: // Thermistor NTC 3950 100k Ohm
         case 15: // Thermistor NTC 3950 100k Ohm
         case 97: // Define Raw Thermistor and Restistor-Settings within configuration.h see USE_GENERIC_THERMISTORTABLE_1 and GENERIC_THERM_NUM_ENTRIES 
@@ -858,7 +874,6 @@ void TemperatureController::updateCurrentTemperature()
             currentTemperature = (1023<<(2-ANALOG_REDUCE_BITS))-(osAnalogInputValues[sensorPin]>>(ANALOG_REDUCE_BITS)); // Convert to 10 bit result
             break;
         }
-        case 13: // PT100 E3D
         case 50: // User defined PTC table
         case 51:
         case 52:
@@ -891,6 +906,7 @@ void TemperatureController::updateCurrentTemperature()
         case 10:
         case 11:
         case 12:
+        case 13:
         case 14: // Thermistor NTC 3950 100k Ohm
         case 15: // Thermistor NTC 3950 100k Ohm
         {
@@ -953,7 +969,6 @@ void TemperatureController::updateCurrentTemperature()
 
             break;
         }
-        case 13:
         case 50: // User defined PTC thermistor
         case 51:
         case 52:
@@ -1135,6 +1150,7 @@ void TemperatureController::setTargetTemperature(float target, float offset)
         case 10:
         case 11:
         case 12:
+        case 13: // NTC 3950 100k thermistor - Conrad V3
         case 14: // Thermistor NTC 3950 100k Ohm
         case 15: // Thermistor NTC 3950 100k Ohm
         {
@@ -1172,7 +1188,6 @@ void TemperatureController::setTargetTemperature(float target, float offset)
 #endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
             break;
         }
-        case 13: // PT100 E3D
         case 50: // user defined PTC thermistor
         case 51:
         case 52:

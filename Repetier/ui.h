@@ -539,7 +539,7 @@ void ui_check_slow_keys(int &action) {
 #endif // MOTHERBOARD == DEVICE_TYPE_RF1000
 
 
-#if MOTHERBOARD == DEVICE_TYPE_RF2000
+#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 #define UI_HAS_KEYS                       1     // 1 = Some keys attached
 #define UI_HAS_BACK_KEY                   1
 #define UI_DISPLAY_TYPE                   1     // 1 = LCD Display with 4 bit data bus
@@ -595,7 +595,7 @@ void ui_check_slow_keys(int &action) {
     (void)action;
 }
 #endif // UI_MAIN
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+#endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 
 
 #if UI_ROWS==4

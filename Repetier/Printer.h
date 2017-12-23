@@ -39,6 +39,7 @@
 #define PRINTER_FLAG1_NO_DESTINATION_CHECK      32
 #define PRINTER_FLAG1_Z_ORIGIN_SET              64
 
+#define PRINTER_FLAG2_RESET_FILAMENT_USAGE      4
 #define PRINTER_FLAG2_HOMING                    64
  
 #define PRINTER_FLAG3_X_HOMED                   1 // flag3 alike original repetier

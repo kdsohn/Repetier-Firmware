@@ -371,12 +371,12 @@ With RF1.37r2.Mod the Emergency-Pause-Features limits can be changed in EEPROM a
 
 
 // ##########################################################################################
-// ##   configuration of the emergency z stop functionality
+// ##   configuration of the emergency stop functionality
 // ##########################################################################################
 
 #if FEATURE_EMERGENCY_STOP_ALL
 
-/** \brief Specifies the pressure at which the emergency z-stop shall be performed, in [digits] 
+/** \brief Specifies the pressure at which the emergency stop shall be performed, in [digits] 
 With RF1.37r6.Mod the Emergency-ZStop-Features limits can be changed in EEPROM and Printers Menu. Here are the absolute maximum limits:
 Do not set them to Zero.
 */
@@ -817,7 +817,7 @@ non-Repetier PC applications may fall over the debug outputs of the firmware. */
 #define COMMAND_BLOCK_DELAY                 1000                                                // [ms]
 
 /** \brief Configuration of the external watchdog
-The TPS3820 of the RF1000/RF2000 resets about [t_tout is watchdog time out: min 112, typ 200, max 310ms] after the last time when it was triggered
+The TPS3820 of the RF1000/RF2000 resets about 112/200/310 (min/typical/max) ms after the last time when it was triggered
 http://pdf1.alldatasheet.com/datasheet-pdf/view/29215/TI/TPS3820-50DBVT.html 
 t_d in datasheet is delay time: how long reset is triggered after timeout: 15...25...37ms for TPS3820.
 */

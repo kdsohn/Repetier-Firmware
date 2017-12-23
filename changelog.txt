@@ -1,6 +1,29 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.37z (2017-12-23)
+
+To move towards Renkforces 1.39 I already pulled the following changes from 1.39:
+- Added V3 Hotend (possible wrong pid values!)
+- Added definitions for RF2000v2 and PIN mapping (final??)
+- Replaced PT100 with V3 Hotends 3950 100k type, because Renkforce chose that number. PT100 is not really usable with RFx000 (not without soldering), removing that table might be ok.
+- some more ifdef Feature_Pause_Printing marks.
+- moved menu sensor type from 14 to 13 to have V3 support by menu
+- some minor code cleanup
+- added RF1000s M3076 and description
+- added checks for deleting zmatrix while CMP
+- added RF1000s PRINTER_FLAG2_RESET_FILAMENT_USAGE-fix
+- RF1000s fix for loadCompensationMatrix without milling mode
+TODO: Pull Feature Allign Extruders
+We will not pull changes for "FEATURE_CONFIGURABLE_HOTEND_TYPE" because we have another way to do this: menu configuration. This feature has been abandoned with RF.01.37r5.Mod.
+Other changes are not needed because we already fixed this stuff in earlier releases.
+TODO: We should grab the sensor tables for 13, 14, 15 and compare them. If they are somehow similar remove the clones. (One is from Renkforce, two from the Internet. hliebscher previously used type 14 for Ultimaker Hotends, but not anymore)
+
+V RF.01.37y.Mod (2017-12-18)
+- changes in matrix heat bed scan
+- changes in Z-Offset-Scan
+- changes according active and ongoing discussion with PeterKA about precision
+
 V RF.01.37x9.Mod (2017-12-05)
 - Scan Z-Offset-Scan on slightly random Point around Matrix-Point: See SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_RAND_MM
 - Some ROM-Text savings for this feature

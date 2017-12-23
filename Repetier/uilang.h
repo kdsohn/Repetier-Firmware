@@ -361,7 +361,7 @@
 #define UI_TEXT_SENSOR_3                " EPCOS-G550" //3
 #define UI_TEXT_SENSOR_4                " 10k NTC" //4 10K für heizbett vom alternativen Hersteller ohne umbau.
 #define UI_TEXT_SENSOR_8                " 104-GT2" //8
-#define UI_TEXT_SENSOR_14               " 3950-100k" //14
+#define UI_TEXT_SENSOR_13               " 3950-100k" //13 V3 Hotend
 
 // Printtime output gets aggregated like <Days_5gisgits>UI_TEXT_PRINTTIME_DAYS<Hours>UI_TEXT_PRINTTIME_HOURS<Minutes>UI_TEXT_PRINTTIME_MINUTES
 // ___88 days 12:45
@@ -407,7 +407,7 @@
 #define UI_TEXT_FLOW_DF                "dFlow:   :%CF%%%"
 #define UI_TEXT_FLOW_DV                "dFeed:   :%CE%%%"
 
-#if MOTHERBOARD == DEVICE_TYPE_RF2000
+#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min reached unhomed"
     #define UI_TEXT_RGB_LIGHT_MODE          "RGB Light: %li"
@@ -482,7 +482,7 @@
     #define UI_TEXT_TEMPERATURE_MANAGER     "Temp. Manager"
     #define UI_TEXT_OPERATION_DENIED        "Operat. denied"
     #define UI_TEXT_TEMPERATURE_WRONG       "Temp. wrong"
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+#endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 
 //#endif
 #else
@@ -733,7 +733,7 @@
 #define UI_TEXT_SENSOR_3                " EPCOS-G550" //3
 #define UI_TEXT_SENSOR_4                " 10k NTC" //4 10K für heizbett vom alternativen Hersteller ohne umbau.
 #define UI_TEXT_SENSOR_8                " 104-GT2" //8
-#define UI_TEXT_SENSOR_14               " 3950-100k" //14
+#define UI_TEXT_SENSOR_13               " 3950-100k" //13 V3 Hotend
 
 // Printtime output gets aggregated like <Days_5gisgits>UI_TEXT_PRINTTIME_DAYS<Hours>UI_TEXT_PRINTTIME_HOURS<Minutes>UI_TEXT_PRINTTIME_MINUTES
 // ___88 days 12:45
@@ -772,7 +772,7 @@
 #define UI_TEXT_FLOW_DF                "dFlow:   :%CF%%%"
 #define UI_TEXT_FLOW_DV                "dFeed:   :%CE%%%"
 
-#if MOTHERBOARD == DEVICE_TYPE_RF2000
+#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min Kontakt unhomed"
@@ -919,7 +919,7 @@
     #define UI_TEXT_INVALID_MATRIX          "Ung. Matrix"   
     #define UI_TEXT_TEMPERATURE_WRONG       "Temp. falsch"  
 
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+#endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 
 
 #endif // UI_LANGUAGE==1
