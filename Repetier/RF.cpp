@@ -2261,7 +2261,7 @@ void searchZOScan( void )
                 Com::printFLN( PSTR( "Approaching HeatBed" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2          
                 // move to the surface
-                moveZUpFast();
+                moveZUpFast(); // ------
                 HAL::delayMilliseconds( g_nScanSlowStepDelay );
 
                 //Wenn Filament langsam nachgibt, wandert evtl. die Kraft langsam. Hier prüfen, ob idle digits gültig.
@@ -2272,7 +2272,7 @@ void searchZOScan( void )
                 } 
                 
                 // move around one step back away from the surface
-                moveZ( int(random(abs(g_nScanHeatBedUpFastSteps),2*abs(g_nScanHeatBedUpFastSteps))) );
+                moveZ( int(random(abs(g_nScanHeatBedUpFastSteps),2*abs(g_nScanHeatBedUpFastSteps))) ); // ++
 
                 HAL::delayMilliseconds( g_nScanSlowStepDelay );
 
@@ -2322,12 +2322,12 @@ void searchZOScan( void )
 #endif // DEBUG_HEAT_BED_SCAN
 
                       // move from moveZUpFast() down again -> für neuen anlauf
-                      moveZ( int(random(3*abs(g_nScanHeatBedUpSlowSteps),10*abs(g_nScanHeatBedDownSlowSteps))) );
+                      moveZ( int(random(3*abs(g_nScanHeatBedUpSlowSteps),10*abs(g_nScanHeatBedDownSlowSteps))) ); // +++..
                       HAL::delayMilliseconds( g_nScanSlowStepDelay );
 
                       // move slowly to the surface
                       short nTempPressure;
-                      moveZUpSlow( &nTempPressure );
+                      moveZUpSlow( &nTempPressure ); // -
 
                       if(g_scanRetries > 0 && g_retryZScan){
                         g_retryZScan = 0;
@@ -4957,8 +4957,8 @@ void moveZDownSlow()
         }
         if( g_nLastZScanZPosition )
         {
-            if( (g_nZScanZPosition > g_nLastZScanZPosition && (g_nZScanZPosition - g_nLastZScanZPosition) > g_nScanHeatBedDownFastSteps) ||
-                (g_nZScanZPosition < g_nLastZScanZPosition && (g_nLastZScanZPosition - g_nZScanZPosition) > g_nScanHeatBedDownFastSteps) )
+            if( (g_nZScanZPosition > g_nLastZScanZPosition && (g_nZScanZPosition - g_nLastZScanZPosition) > g_nScanHeatBedDownFastSteps*2) ||
+                (g_nZScanZPosition < g_nLastZScanZPosition && (g_nLastZScanZPosition - g_nZScanZPosition) > g_nScanHeatBedDownFastSteps*2) )
             {
                 if( Printer::debugErrors() )
                 {

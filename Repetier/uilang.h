@@ -358,10 +358,10 @@
 #define UI_TEXT_STATUSMSG               "%os"
 
 #define UI_TEXT_SENSOR_1                " Pico/RepRa" //1 B57560G0107F000
-#define UI_TEXT_SENSOR_3                " EPCOS-G550" //3
-#define UI_TEXT_SENSOR_4                " 10k NTC" //4 10K für heizbett vom alternativen Hersteller ohne umbau.
-#define UI_TEXT_SENSOR_8                " 104-GT2" //8
-#define UI_TEXT_SENSOR_13               " 3950-100k" //13 V3 Hotend
+#define UI_TEXT_SENSOR_3                " EPCOS-G550" //3 V1/V2 Hotend
+#define UI_TEXT_SENSOR_4                " 10k NTC"    //4 10K für Heizbett vom alternativen Hersteller ohne Umbau.
+#define UI_TEXT_SENSOR_8                " 104-GT2"    //8
+#define UI_TEXT_SENSOR_13               " 3950-100k"  //13 V3 Hotend
 
 // Printtime output gets aggregated like <Days_5gisgits>UI_TEXT_PRINTTIME_DAYS<Hours>UI_TEXT_PRINTTIME_HOURS<Minutes>UI_TEXT_PRINTTIME_MINUTES
 // ___88 days 12:45
@@ -706,20 +706,20 @@
 #define UI_TEXT_WARNING                 "Warnung:"
 #define UI_TEXT_INFORMATION             "Information:"
 #define UI_TEXT_SET_ORIGIN              "Setze Ursprung"
-#define UI_TEXT_AUTODETECT_PID          "PID ermitteln" 
+#define UI_TEXT_AUTODETECT_PID          "PID ermitteln"
 #define UI_TEXT_PID_ACK                 UI_TEXT_AUTODETECT_PID "?","","%mYJa","%mNNein"
 // Temp. = Temperatur
 #define UI_TEXT_HOME_UNKNOWN            "Home unbekannt"
-#define UI_TEXT_SAVING_NEEDLESS         "Sichern sinnlos"  
-#define UI_TEXT_SAVING_SUCCESS          "Matrix gesichert"      
+#define UI_TEXT_SAVING_NEEDLESS         "Sichern sinnlos"
+#define UI_TEXT_SAVING_SUCCESS          "Matrix gesichert"
 // n.m. = nicht moeglich
-#define UI_TEXT_OPERATION_DENIED        "Operation verw."       
+#define UI_TEXT_OPERATION_DENIED        "Operation verw."
 // verw. = verweigert
 #define UI_TEXT_EMERGENCY_PAUSE         "Notfall Pause"
 #define UI_TEXT_EMERGENCY_STOP          "Notfall Block"
 
 #define UI_TEXT_MIN_REACHED             "Min erreicht"
-#define UI_TEXT_MAX_REACHED             "Max erreicht"      
+#define UI_TEXT_MAX_REACHED             "Max erreicht"
 // Temp. = Temperatur
 #define UI_TEXT_TIMEOUT                 "Timeout"
 #define UI_TEXT_AUTODETECT_PID_DONE     "PID ermittelt"
@@ -730,10 +730,10 @@
 #define UI_TEXT_STATUSMSG               "%os"
 
 #define UI_TEXT_SENSOR_1                " Pico/RepRa" //1 B57560G0107F000
-#define UI_TEXT_SENSOR_3                " EPCOS-G550" //3
-#define UI_TEXT_SENSOR_4                " 10k NTC" //4 10K für heizbett vom alternativen Hersteller ohne umbau.
-#define UI_TEXT_SENSOR_8                " 104-GT2" //8
-#define UI_TEXT_SENSOR_13               " 3950-100k" //13 V3 Hotend
+#define UI_TEXT_SENSOR_3                " EPCOS-G550" //3 V1/V2 Hotend
+#define UI_TEXT_SENSOR_4                " 10k NTC"    //4 10K für Heizbett vom alternativen Hersteller ohne Umbau.
+#define UI_TEXT_SENSOR_8                " 104-GT2"    //8
+#define UI_TEXT_SENSOR_13               " 3950-100k"  //13 V3 Hotend
 
 // Printtime output gets aggregated like <Days_5gisgits>UI_TEXT_PRINTTIME_DAYS<Hours>UI_TEXT_PRINTTIME_HOURS<Minutes>UI_TEXT_PRINTTIME_MINUTES
 // ___88 days 12:45

@@ -1,8 +1,10 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
-V RF.01.37z (2017-12-23)
+V RF.01.37z (2017-12-26)
+- small corrections
 
+V RF.01.37z (2017-12-23)
 To move towards Renkforces 1.39 I already pulled the following changes from 1.39:
 - Added V3 Hotend (possible wrong pid values!)
 - Added definitions for RF2000v2 and PIN mapping (final??)

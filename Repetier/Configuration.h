@@ -45,11 +45,13 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
 /** \brief Define the type of your device */
 //#define MOTHERBOARD                         DEVICE_TYPE_RF1000
 //#define MOTHERBOARD                         DEVICE_TYPE_RF2000
-#define PROTOTYPE_PCB                       0                                                   // 1 = first PCB's / 0 = Final
+//#define MOTHERBOARD                         DEVICE_TYPE_RF2000v2
 
 #ifndef MOTHERBOARD
-#error Device type is not defined. Edit Configuration.h or pass the corresponding option to the compiler.
+#error Device type (RF1000 / RF2000 / RF2000v2) is not defined. Edit Configuration.h or pass the corresponding option to the compiler.
 #endif
+
+#define PROTOTYPE_PCB                       0                                                   // 1 = first PCB's / 0 = Final
 
 /** \brief EEPROM storage mode
 Set the EEPROM_MODE to 0 if you always want to use the settings in this configuration file. If not,
