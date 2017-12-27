@@ -8391,7 +8391,7 @@ void processCommand( GCode* pCommand )
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
                     if( Printer::debugInfo() )
                     {
-                        Com::printFLN( PSTR( "M3075: the emergency pause has been disabled" ) );
+                        Com::printFLN( PSTR( "M3075: emergency pause disabled" ) );
                     }
                 }
                 else if( nMin < nMax )
@@ -8414,9 +8414,9 @@ void processCommand( GCode* pCommand )
                 {
                     if( Printer::debugErrors() )
                     {
-                        Com::printF( PSTR( "M3075: min is not smaller than max (" ), (int)nMin );
-                        Com::printF( PSTR( "/" ), (int)nMin );
-                        Com::printFLN( PSTR( " [digits])" ) );
+                        Com::printF( PSTR( "M3075: min max (" ), (int)nMin );
+                        Com::printF( Com::tSlash, (int)nMin );
+                        Com::printFLN( PSTR( ") invalide" ) );
                     }
                 }
 
@@ -8448,7 +8448,7 @@ void processCommand( GCode* pCommand )
 
                     if( Printer::debugInfo() )
                     {
-                        Com::printFLN( PSTR( "M3076: the emergency stop has been disabled" ) );
+                        Com::printFLN( PSTR( "M3076: emerg zstop temp. disabled" ) );
                     }
                 }
                 else if( nMin < nMax && nMin >= -32768 && nMax <= 32767 )
@@ -8462,14 +8462,19 @@ void processCommand( GCode* pCommand )
                         Com::printF( PSTR( " [digits], new max: " ), (int)g_nZEmergencyStopAllMax );
                         Com::printFLN( PSTR( " [digits]" ) );
                     }
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                    HAL::eprSetInt16( EPR_RF_EMERGENCYZSTOPDIGITSMAX, g_nZEmergencyStopAllMax );
+                    HAL::eprSetInt16( EPR_RF_EMERGENCYZSTOPDIGITSMIN, g_nZEmergencyStopAllMin );
+                    EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
                 }
                 else
                 {
                     if( Printer::debugErrors() )
                     {
-                        Com::printF( PSTR( "M3076: min is not smaller than max (" ), (int)nMin );
-                        Com::printF( PSTR( "/" ), (int)nMax );
-                        Com::printFLN( PSTR( " [digits])" ) );
+                        Com::printF( PSTR( "M3076: min max (" ), (int)nMin );
+                        Com::printF( Com::tSlash , (int)nMax );
+                        Com::printFLN( PSTR( ") invalide" ) );
                     }
                 }
 
@@ -9586,8 +9591,8 @@ void processCommand( GCode* pCommand )
                         case 16:
                         {
                             Com::printF( PSTR( "stepperDirection=" ), Printer::stepperDirection[X_AXIS] );
-                            Com::printF( PSTR( "/" ), Printer::stepperDirection[Y_AXIS] );
-                            Com::printF( PSTR( "/" ), Printer::stepperDirection[Z_AXIS] );
+                            Com::printF( Com::tSlash , Printer::stepperDirection[Y_AXIS] );
+                            Com::printF( Com::tSlash , Printer::stepperDirection[Z_AXIS] );
                             Com::printFLN( PSTR( "" ) );
                             break;
                         }
