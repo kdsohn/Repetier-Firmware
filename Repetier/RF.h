@@ -812,10 +812,10 @@ extern short readAveragePressure( short* pnAveragePressure );
 extern void moveZUpFast();
 
 // moveZDownSlow()
-extern void moveZDownSlow();
+extern void moveZDownSlow( uint8_t acuteness = 1 );
 
 // moveZUpSlow()
-extern void moveZUpSlow( short* pnContactPressure );
+extern void moveZUpSlow( short* pnContactPressure, uint8_t acuteness = 1 );
 
 // moveZDownFast()
 extern void moveZDownFast();

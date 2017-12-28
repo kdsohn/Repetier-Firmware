@@ -2252,14 +2252,14 @@ void searchZOScan( void )
                     Com::printFLN( PSTR( " g_nMaxPressureIdle = " ), g_nMaxPressureIdle );
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 GCode::keepAlive( Processing );
-                g_ZOSScanStatus = 10;   
+                g_ZOSScanStatus = 10;
                 break;
             }
             case 10:
             {
 #if DEBUG_HEAT_BED_SCAN == 2
                 Com::printFLN( PSTR( "Approaching HeatBed" ) );
-#endif // DEBUG_HEAT_BED_SCAN == 2          
+#endif // DEBUG_HEAT_BED_SCAN == 2
                 // move to the surface
                 moveZUpFast(); // ------
                 HAL::delayMilliseconds( g_nScanSlowStepDelay );
@@ -2271,8 +2271,8 @@ void searchZOScan( void )
                     g_retryZScan = 1;
                 } 
                 
-                // move around one step back away from the surface
-                moveZ( int(random(abs(g_nScanHeatBedUpFastSteps),2*abs(g_nScanHeatBedUpFastSteps))) ); // ++
+                // move 2 intervals back away from the surface
+                moveZ( 2*abs(g_nScanHeatBedUpFastSteps) ); // ++
 
                 HAL::delayMilliseconds( g_nScanSlowStepDelay );
 
@@ -2314,6 +2314,7 @@ void searchZOScan( void )
                 Com::printFLN( PSTR( "Testing Surface " ));
 #endif // DEBUG_HEAT_BED_SCAN
                 bool prebreak = false;
+                uint8_t acuteness = 1;
                 // we have roughly found the surface, now we perform the precise slow scan SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS times  
                 for(int i=0; i<SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS; ++i) {
 #if DEBUG_HEAT_BED_SCAN == 2
@@ -2322,19 +2323,22 @@ void searchZOScan( void )
 #endif // DEBUG_HEAT_BED_SCAN
 
                       // move from moveZUpFast() down again -> für neuen anlauf
-                      moveZ( int(random(3*abs(g_nScanHeatBedUpSlowSteps),10*abs(g_nScanHeatBedDownSlowSteps))) ); // +++..
+                      moveZ( 2*abs(g_nScanHeatBedUpSlowSteps)/acuteness ); // +++..
                       HAL::delayMilliseconds( g_nScanSlowStepDelay );
 
                       // move slowly to the surface
                       short nTempPressure;
-                      moveZUpSlow( &nTempPressure ); // -
-
+                      
+                      moveZUpSlow( &nTempPressure, acuteness ); // -
+                      moveZDownSlow(acuteness*2); // +
+                      
+                      acuteness++;
                       if(g_scanRetries > 0 && g_retryZScan){
                         g_retryZScan = 0;
                         g_scanRetries--;
                         Com::printFLN( PSTR( "Suchproblem 20 -> 7:" ), g_scanRetries );
                         GCode::keepAlive( Processing );
-                        g_ZOSScanStatus = 7;   
+                        g_ZOSScanStatus = 7;
                         prebreak = true; break;
                       }
                       // check for error
@@ -2345,17 +2349,16 @@ void searchZOScan( void )
                         prebreak = true; break;
                       }
                       
+                      
                       // keep the minimum as the final result
-                      if(g_nZScanZPosition < g_min_nZScanZPosition) g_min_nZScanZPosition = g_nZScanZPosition;
+                      if(i && g_nZScanZPosition < g_min_nZScanZPosition) g_min_nZScanZPosition = g_nZScanZPosition;
 
-#if DEBUG_HEAT_BED_SCAN == 2
-                      Com::printF( PSTR( "Z = " ), g_nZScanZPosition );
-                      Com::printFLN( PSTR( " Minimum-Z = " ), g_min_nZScanZPosition );
-#endif // DEBUG_HEAT_BED_SCAN
+                      Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition * Printer::invAxisStepsPerMM[Z_AXIS],4 );
+
                       GCode::keepAlive( Processing );
                 }
                 if(prebreak) break;
-                g_ZOSScanStatus = 50;   
+                g_ZOSScanStatus = 50;
                 break;
                 
             }
@@ -2378,7 +2381,7 @@ void searchZOScan( void )
                 //Nibbels: scaling nZ according to learning Rate for additional corrective scans
                 nZ = (long)((float)nZ * g_ZOSlearningRate);
 #if DEBUG_HEAT_BED_SCAN == 2
-                Com::printFLN( PSTR( "nZ*g_ZOSlearningRate = " ), nZ );     
+                Com::printFLN( PSTR( "nZ*g_ZOSlearningRate = " ), nZ );
 #endif // DEBUG_HEAT_BED_SCAN 
                 
                 //Nibbels: weight change because of distance. lerne bettwinkelausgleich.
@@ -2446,10 +2449,10 @@ void searchZOScan( void )
 #endif // DEBUG_HEAT_BED_SCAN
                 }
                 // determine the minimal distance between extruder and heat bed
-                determineCompensationOffsetZ();     
+                determineCompensationOffsetZ();
                 g_ZMatrixChangedInRam = 1; //man kan die matrix mit diesem marker nun sichern.
                 
-                g_ZOSScanStatus = 51;   
+                g_ZOSScanStatus = 51;
                 break;
             }
             case 51:
@@ -2467,9 +2470,6 @@ void searchZOScan( void )
                         g_ZOS_Auto_Matrix_Leveling_State++;
                         moveZ( Printer::axisStepsPerMM[Z_AXIS] );
                         Printer::homeAxis( true, true, false );
-                        /*long xScanPosition = (long)(g_ZCompensationMatrix[g_ZOSTestPoint[X_AXIS]][0] * Printer::axisStepsPerMM[X_AXIS]);
-                        long yScanPosition = (long)(g_ZCompensationMatrix[0][g_ZOSTestPoint[Y_AXIS]] * Printer::axisStepsPerMM[Y_AXIS]); // + g_nScanYStartSteps; <-- NEIN!
-                        PrintLine::moveRelativeDistanceInSteps( -xScanPosition, -yScanPosition, 0, 0, MAX_FEEDRATE_Y, true, true );*/
                         moveZ( -g_nZScanZPosition );    // g_nZScanZPosition counts z-steps. we need to move the heatbed down to be at z=0 again
                         outputCompensationMatrix( 1 );
                         }
@@ -3132,7 +3132,6 @@ void doHeatBedZCompensation( void )
     long            nTemp;
     long            nDeltaX;
     long            nDeltaY;
-    long            nDeltaZ;
     long            nStepSizeX;
     long            nStepSizeY;
     long            nNeededZCompensation;
@@ -3168,6 +3167,8 @@ void doHeatBedZCompensation( void )
     nCurrentPositionSteps[Z_AXIS] += Printer::directPositionCurrentSteps[Z_AXIS];
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     noInts.unprotect(); //HAL::allowInterrupts();
+    
+    nCurrentPositionSteps[Z_AXIS] += Extruder::current->zOffset;
 
 #if DEBUG_HEAT_BED_Z_COMPENSATION
     g_nLastZCompensationPositionSteps[X_AXIS] = nCurrentPositionSteps[X_AXIS];
@@ -3177,10 +3178,10 @@ void doHeatBedZCompensation( void )
     
     // Der Z-Kompensation wird das extruderspezifische Z-Offset des jeweiligen Extruders verschwiegen, sodass dieses die Höhen / Limits nicht beeinflusst. Die X- und Y-Offsets werden behalten, denn das korrigiert Düsen- zu Welligkeitsposition nach Extruderwechsel. Das extruderspezifische Z-Offset Extruder::current->zOffset wird beim Toolchange in nCurrentPositionSteps[Z_AXIS] eingerechnet und verfahren.
     // Extruder::current->zOffset ist negativ, wenn das hotend weiter heruntergedrückt werden kann als 0. -> Bettfahrt nach unten, um auszuweichen.
-    if( nCurrentPositionSteps[Z_AXIS] + Extruder::current->zOffset > 0 )
+    if( nCurrentPositionSteps[Z_AXIS] >= 0 )
     {
         // check whether we have to perform a compensation in z-direction
-        if( nCurrentPositionSteps[Z_AXIS] + Extruder::current->zOffset < g_maxZCompensationSteps )
+        if( nCurrentPositionSteps[Z_AXIS] < g_maxZCompensationSteps )
         {
             // find the rectangle which covers the current position of the extruder
             nXLeftIndex = 1;
@@ -3227,6 +3228,7 @@ void doHeatBedZCompensation( void )
                           (g_ZCompensationMatrix[nXRightIndex][nYFrontIndex] - g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex]) * nDeltaX / nStepSizeX;
             nTempXBack  = g_ZCompensationMatrix[nXLeftIndex][nYBackIndex] +
                           (g_ZCompensationMatrix[nXRightIndex][nYBackIndex] - g_ZCompensationMatrix[nXLeftIndex][nYBackIndex]) * nDeltaX / nStepSizeX;
+
             nNeededZCompensation = nTempXFront +
                                    (nTempXBack - nTempXFront) * nDeltaY / nStepSizeY;
 
@@ -3248,37 +3250,34 @@ void doHeatBedZCompensation( void )
             g_nMatrix[3]        = g_ZCompensationMatrix[nXRightIndex][nYBackIndex];
 #endif // DEBUG_HEAT_BED_Z_COMPENSATION
 
-            if( nCurrentPositionSteps[Z_AXIS] + Extruder::current->zOffset <= g_minZCompensationSteps )
+            if( nCurrentPositionSteps[Z_AXIS] <= g_minZCompensationSteps )
             {
                 // the printer is very close to the surface - we shall print a layer of exactly the desired thickness
-                nNeededZCompensation += g_staticZSteps;
+                if(nCurrentPositionSteps[Z_AXIS] == 0){
+                    nNeededZCompensation += 13; //G1 Z0 shall not hit the bed: +5um -> this is better than not compensating at all because it makes tests weired.
+                }
             }
             else
             {
                 // the printer is already a bit away from the surface - do the actual compensation
-                nDeltaZ = g_maxZCompensationSteps - (nCurrentPositionSteps[Z_AXIS] + Extruder::current->zOffset);
                 nNeededZCompensation = g_offsetZCompensationSteps + 
-                                       (nNeededZCompensation - g_offsetZCompensationSteps) * nDeltaZ / (g_maxZCompensationSteps - g_minZCompensationSteps);
-                nNeededZCompensation += g_staticZSteps;
+                                       (nNeededZCompensation - g_offsetZCompensationSteps) * (g_maxZCompensationSteps - nCurrentPositionSteps[Z_AXIS])
+                                                                                              / (g_maxZCompensationSteps - g_minZCompensationSteps);
             }
         }
         else
         {   
             // after the first layers, only the static offset to the surface must be compensated
-            nNeededZCompensation = g_offsetZCompensationSteps + g_staticZSteps;
+            nNeededZCompensation = g_offsetZCompensationSteps;
         }
     }
     else
     {
-        //RF1000 dev: we do not perform a compensation in case the z-position from the G-code is 0 (because this would drive the extruder against the heat bed)
-        //nNeededZCompensation = g_staticZSteps;
-        
-        //Nibbels: Wenn ich meine Z-Matrix um 4mm ins Plus setze (Oder wohin auch immer ins Plus), dann G1 Z0 -> Fährt -4mm auf Z = 0, dann G1 Z0.2 -> Fährt +4,2mm in Compensationsposition.
-        // Das Verhalten ist ziemlich bescheuert, der soll wen möglich immer, wenn Z-Compensation Aktiv ist auf mindestens den höchsten Punkt der Z-Matrix anheben, weil er sonst gegen das Bett crashen könnte.
-        // after the first layers, only the static offset to the surface must be compensated
-        //Dann evtl. lieber über dem Zenit bleiben + kleines Offset?? 29.05.2017
-        nNeededZCompensation = g_offsetZCompensationSteps + g_staticZSteps + (long)(0.001 * Printer::axisStepsPerMM[Z_AXIS]);
+        //Gcode Z < 0 soll 5um überhalb des top matrix elements bleiben: diese anweisungen sind generell für uns sinnlos bzw. schädlich.
+        nNeededZCompensation = g_offsetZCompensationSteps + 13;
     }
+
+    nNeededZCompensation += g_staticZSteps;
 
 #if FEATURE_DIGIT_Z_COMPENSATION
     //Etwa 5500 digits verursachen 0.05 mm tiefere nozzle: ca. 0.00001 = 1/100.000 mm pro digit.
@@ -4912,14 +4911,14 @@ void moveZDownFast()
 
 
 //Spacing Langsam:
-void moveZDownSlow()
+void moveZDownSlow(uint8_t acuteness)
 {
     short   nTempPressure;
 
     // move the heat bed down until we detect the retry pressure (slow speed)
     while( 1 )
     {
-        HAL::delayMilliseconds( g_nScanSlowStepDelay );
+        HAL::delayMilliseconds( g_nScanSlowStepDelay * (acuteness > 1 ? 2 : 1) );
         if( readAveragePressure( &nTempPressure ) )
         {
             // some error has occurred
@@ -4932,7 +4931,7 @@ void moveZDownSlow()
             break;
         }
 
-        moveZ( g_nScanHeatBedDownSlowSteps );
+        moveZ( (g_nScanHeatBedDownSlowSteps/acuteness ? g_nScanHeatBedDownSlowSteps/acuteness : 1) );
 
         Commands::checkForPeriodicalActions(); 
         GCode::keepAlive( Processing );
@@ -5023,14 +5022,14 @@ void moveZUpFast()
 
 
 //Gegen Düse fahren langsam:
-void moveZUpSlow( short* pnContactPressure )
+void moveZUpSlow( short* pnContactPressure, uint8_t acuteness )
 {
     short   nTempPressure;
 
     // move the heat bed up until we detect the contact pressure (slow speed)
     while( 1 )
     {
-        HAL::delayMilliseconds( g_nScanSlowStepDelay );
+        HAL::delayMilliseconds( g_nScanSlowStepDelay * (acuteness > 1 ? 2 : 1) );
         if( readAveragePressure( &nTempPressure ) )
         {
             // some error has occurred
@@ -5043,7 +5042,7 @@ void moveZUpSlow( short* pnContactPressure )
             break;
         }
 
-        moveZ( g_nScanHeatBedUpSlowSteps );
+        moveZ( (g_nScanHeatBedUpSlowSteps / acuteness ? g_nScanHeatBedUpSlowSteps / acuteness : 1 ) );
 
         Commands::checkForPeriodicalActions(); 
         GCode::keepAlive( Processing );
@@ -11620,7 +11619,7 @@ void nextPreviousZAction( int8_t increment )
     }
     if(increment<0 && Printer::isZMinEndstopHit()){
         //fall down to Single Steps @Endstop
-        moveMode = MOVE_MODE_SINGLE_STEPS;        
+        moveMode = MOVE_MODE_SINGLE_STEPS;
     }
 
     switch( moveMode )
