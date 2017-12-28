@@ -49,7 +49,7 @@
 #endif // FEATURE_MILLING_MODE
 
 /** \brief Number of extruders */
-#define NUM_EXTRUDER                        1
+#define NUM_EXTRUDER                        2
 
 /** \brief Allows to use the 230V output */
 #define FEATURE_230V_OUTPUT                 1                                                   // 1 = on, 0 = off
