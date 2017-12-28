@@ -5377,6 +5377,15 @@ void UIDisplay::executeAction(int action)
                 break;
             }
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_ALIGN_EXTRUDERS
+            case UI_ACTION_ALIGN_EXTRUDERS:
+            {
+                uid.menuPos[0] = 0;
+                uid.menuLevel = 0;
+                startAlignExtruders();
+                break;
+            }
+#endif // FEATURE_ALIGN_EXTRUDERS
         }
     }
 

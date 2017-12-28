@@ -55,6 +55,8 @@
 #define UI_ACTION_RF_SCAN_WORK_PART         1528
 #define UI_ACTION_RF_SET_SCAN_XY_START      1529
 #define UI_ACTION_RF_SET_SCAN_XY_END        1530
+//FEATURE_ALIGN_EXTRUDERS
+#define	UI_ACTION_RF_ALIGN_EXTRUDERS        1531
 
 #define UI_ACTION_RF_MAX_SINGLE             1600
 
@@ -538,6 +540,9 @@ extern const char   ui_text_change_miller_type[]    PROGMEM;
 extern const char   ui_text_x_axis[]                PROGMEM;
 extern const char   ui_text_y_axis[]                PROGMEM;
 extern const char   ui_text_z_axis[]                PROGMEM;
+#if FEATURE_ALIGN_EXTRUDERS
+extern const char   ui_text_align_extruders[]       PROGMEM;
+#endif // FEATURE_ALIGN_EXTRUDERS
 extern const char   ui_text_extruder[]              PROGMEM;
 extern const char   ui_text_autodetect_pid[]        PROGMEM;
 extern const char   ui_text_temperature_manager[]   PROGMEM;
@@ -729,6 +734,10 @@ extern unsigned char    g_uRGBTargetG;
 extern unsigned char    g_uRGBTargetB;
 #endif // FEATURE_RGB_LIGHT_EFFECTS
 
+#if FEATURE_ALIGN_EXTRUDERS
+extern unsigned char    g_nAlignExtrudersStatus;
+extern char             g_abortAlignExtruders;
+#endif // FEATURE_ALIGN_EXTRUDERS
 
 // initRF()
 extern void initRF( void );
@@ -779,6 +788,13 @@ extern long getHeatBedOffset( void );
 extern void switchActiveHeatBed( char newActiveHeatBed );
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
+#if FEATURE_ALIGN_EXTRUDERS
+// startAlignExtruders()
+extern void startAlignExtruders( void );
+ 
+// alignExtruders()
+extern void alignExtruders( void );
+#endif // FEATURE_ALIGN_EXTRUDERS
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
 // startWorkPartScan()

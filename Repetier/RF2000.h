@@ -49,7 +49,7 @@
 #endif // FEATURE_MILLING_MODE
 
 /** \brief Number of extruders */
-#define NUM_EXTRUDER                        2
+#define NUM_EXTRUDER                        1
 
 /** \brief Allows to use the 230V output */
 #define FEATURE_230V_OUTPUT                 1                                                   // 1 = on, 0 = off
@@ -369,6 +369,9 @@ The codes are only executed for multiple extruder when changing the extruder. */
 
 
 #if NUM_EXTRUDER == 2
+
+#define FEATURE_ALIGN_EXTRUDERS             1
+
 // ##########################################################################################
 // ##   Configuration of the 2. extruder
 // ##########################################################################################

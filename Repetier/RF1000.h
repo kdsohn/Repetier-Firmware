@@ -384,6 +384,9 @@ The codes are only executed for multiple extruder when changing the extruder. */
 
 
 #if NUM_EXTRUDER == 2
+
+#define FEATURE_ALIGN_EXTRUDERS             1
+
 // ##########################################################################################
 // ##   Configuration of the 2. extruder
 // ##########################################################################################

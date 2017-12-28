@@ -297,8 +297,11 @@
 #define UI_TEXT_RESET_ACK               "Restart now?","","%mYYes","%mNNo"
 #define UI_TEXT_HEAT_BED_SCAN_ABORTED   "Scan aborted"
 #define UI_TEXT_HEAT_BED_SCAN_DONE      "Scan completed"
-#define UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN "mOffset: %HO um"
+// FEATURE_ALIGN_EXTRUDERS
+#define UI_TEXT_ALIGN_EXTRUDERS_ABORTED "Align aborted"
+#define UI_TEXT_ALIGN_EXTRUDERS_DONE    "Align completed"
 #define UI_TEXT_ALIGN_EXTRUDERS         "Align Extruders"
+#define UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN "mOffset: %HO um"
 #define UI_TEXT_PRINT_MODE              "Printer"
 #define UI_TEXT_MILL_MODE               "Miller"
 #define UI_TEXT_Z_SINGLE                "Single"
@@ -668,6 +671,9 @@
 #define UI_TEXT_RESET_ACK               "Neustart jetzt?","","%mYJa","%mNNein"
 #define UI_TEXT_HEAT_BED_SCAN_ABORTED   "Scan abgebrochen"
 #define UI_TEXT_HEAT_BED_SCAN_DONE      "Scan beendet"
+// FEATURE_ALIGN_EXTRUDERS
+#define UI_TEXT_ALIGN_EXTRUDERS_ABORTED "Ausr. abgebr."
+#define UI_TEXT_ALIGN_EXTRUDERS_DONE    "Ausr. beendet"
 #define UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN "mOffset: %HO um"
 #define UI_TEXT_PRINT_MODE              "Drucker"
 #define UI_TEXT_MILL_MODE               "Fr" STR_auml "ser"

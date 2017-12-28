@@ -40,6 +40,9 @@ FSTRINGVALUE( ui_text_change_miller_type, UI_TEXT_CHANGE_MILLER_TYPE )
 FSTRINGVALUE( ui_text_x_axis, UI_TEXT_X_AXIS )
 FSTRINGVALUE( ui_text_y_axis, UI_TEXT_Y_AXIS )
 FSTRINGVALUE( ui_text_z_axis, UI_TEXT_Z_AXIS )
+#if FEATURE_ALIGN_EXTRUDERS
+ FSTRINGVALUE( ui_text_align_extruders, UI_TEXT_ALIGN_EXTRUDERS );
+#endif // FEATURE_ALIGN_EXTRUDERS
 FSTRINGVALUE( ui_text_extruder, UI_TEXT_EXTRUDER )
 FSTRINGVALUE( ui_text_autodetect_pid, UI_TEXT_AUTODETECT_PID )
 FSTRINGVALUE( ui_text_temperature_manager, UI_TEXT_TEMPERATURE_MANAGER )
@@ -271,6 +274,10 @@ unsigned long   g_nlastServiceTime  = 0;
 int             g_nEnteredService   = 0;
 #endif // FEATURE_SERVICE_INTERVAL
 
+#if FEATURE_ALIGN_EXTRUDERS
+ unsigned char  g_nAlignExtrudersStatus = 0;
+ char           g_abortAlignExtruders   = 0;
+#endif // FEATURE_ALIGN_EXTRUDERS
 
 void initRF( void )
 {
@@ -3425,6 +3432,317 @@ long getHeatBedOffset( void )
 } // getHeatBedOffset
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
+#if FEATURE_ALIGN_EXTRUDERS
+void startAlignExtruders( void )
+{
+    if( g_nAlignExtrudersStatus )
+    {
+        // abort the alignment of the extruders
+        if( Printer::debugInfo() )
+        {
+            Com::printFLN( PSTR( "startAlignExtruders(): cancelled" ) );
+        }
+        g_abortAlignExtruders = 1;
+        return;
+    }
+    else
+    {
+        if( PrintLine::linesCount )
+        {
+            // there is some printing in progress at the moment - do not start to align the extruders in this case
+            if( Printer::debugErrors() )
+            {
+                Com::printFLN( PSTR( "startAlignExtruders(): error printing in progress" ) );
+            }
+
+            showError( (void*)ui_text_align_extruders, (void*)ui_text_operation_denied );
+            return;
+        }
+
+        if( Printer::doHeatBedZCompensation 
+            || !Printer::isHomed() 
+            || Printer::currentYPosition() < HEAT_BED_SCAN_Y_START_MM 
+            || Printer::currentXPosition() < HEAT_BED_SCAN_X_START_MM 
+            || Printer::currentZPositionSteps() )
+        {
+            if( Printer::doHeatBedZCompensation ) resetZCompensation();
+            Printer::homeAxis( true, true, true );
+            PrintLine::moveRelativeDistanceInSteps( HEAT_BED_SCAN_X_CALIBRATION_POINT_STEPS, HEAT_BED_SCAN_Y_CALIBRATION_POINT_STEPS, 0, 0, RMath::min(MAX_FEEDRATE_X,MAX_FEEDRATE_Y), true, true );
+        }
+
+        if( abs( extruder[0].tempControl.currentTemperatureC - extruder[1].tempControl.currentTemperatureC ) > 10 )
+        {
+            if( Printer::debugErrors() )
+            {
+                Com::printFLN( PSTR( "startAlignExtruders(): error temperature difference too big" ) );
+            }
+
+            showError( (void*)ui_text_align_extruders, (void*)ui_text_temperature_wrong );
+            return;
+        }
+
+        // we are ready to align the extruders at the current x and y position with the current temperature
+        // the user can choose the x and y position as well as the to-be-used temperatures of the extruders
+        g_nAlignExtrudersStatus = 100;
+        BEEP_START_ALIGN_EXTRUDERS
+        return;
+    }
+    return;
+} // startAlignExtruders
+
+
+void alignExtruders( void )
+{
+	// directions:
+	// +x = to the right
+	// -x = to the left
+	// +y = heat bed moves to the front
+	// -y = heat bed moves to the back
+	// +z = heat bed moves down
+	// -z = heat bed moves up
+
+	if( g_abortAlignExtruders )
+	{
+		// the alignment has been aborted
+		g_abortAlignExtruders = 0;
+
+		// avoid to crash the extruder against the heat bed during a following move
+		moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
+
+		if( Printer::debugInfo() )
+		{
+			Com::printFLN( PSTR( "alignExtruders(): the alignment has been aborted" ) );
+		}
+
+		UI_STATUS_UPD( UI_TEXT_ALIGN_EXTRUDERS_ABORTED );
+		BEEP_ABORT_ALIGN_EXTRUDERS
+
+		g_nAlignExtrudersStatus  = 0;
+		return;
+	}
+
+	// show that we are active
+	previousMillisCmd = HAL::timeInMilliseconds();
+
+	if( g_nAlignExtrudersStatus )
+	{
+		if( g_nAlignExtrudersStatus != 123 &&
+			g_nAlignExtrudersStatus != 125 )
+		{
+			// there are a few cases where we do not want to change the current status text
+			UI_STATUS( UI_TEXT_ALIGN_EXTRUDERS );
+		}
+
+		if( g_retryZScan )
+		{
+			// we have to retry to scan the current position
+			g_nAlignExtrudersStatus = g_retryStatus;
+			g_retryZScan		 = 0;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+			if( Printer::debugInfo() )
+			{
+				Com::printFLN( PSTR( "alignExtruders(): retry -> " ), g_retryStatus );
+			}
+#endif // DEBUG_HEAT_BED_SCAN == 2
+		}
+
+		switch( g_nAlignExtrudersStatus )
+		{
+			case 100:
+			{
+				// when we are here we assume that all preconditions for the alignment of the extruders are fulfilled already
+				g_lastScanTime			= HAL::timeInMilliseconds();
+				g_scanRetries			= HEAT_BED_SCAN_RETRIES;
+				g_retryStatus			= 105;
+				g_nAlignExtrudersStatus = 110;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+				if( Printer::debugInfo() )
+				{
+					Com::printFLN( PSTR( "alignExtruders(): 100 -> 110" ) );
+				}
+#endif // DEBUG_HEAT_BED_SCAN == 2
+				break;
+			}
+			case 105:
+			{
+				// home the z-axis in order to find the starting point again
+				Printer::homeAxis( false, false, true );
+
+				g_scanRetries			--;
+				g_nAlignExtrudersStatus = 110;
+				g_lastScanTime			= HAL::timeInMilliseconds();
+
+#if DEBUG_HEAT_BED_SCAN == 2
+				if( Printer::debugInfo() )
+				{
+					Com::printFLN( PSTR( "alignExtruders(): 105 -> 110" ) );
+				}
+#endif // DEBUG_HEAT_BED_SCAN == 2
+				break;
+			}
+			case 110:
+			{
+				if( (HAL::timeInMilliseconds() - g_lastScanTime) < g_nScanIdleDelay )
+				{
+					// do not check too early
+					break;
+				}
+
+				// scan this point
+				if( testIdlePressure() )
+				{
+					// the current idle pressure is not plausible
+					g_abortAlignExtruders = 1;
+					break;
+				}
+
+				// we should consider that the idle presse can change slightly
+				g_nMinPressureContact = g_nCurrentIdlePressure - g_nScanContactPressureDelta;
+				g_nMaxPressureContact = g_nCurrentIdlePressure + g_nScanContactPressureDelta;
+				g_nMinPressureRetry	  = g_nCurrentIdlePressure - g_nScanRetryPressureDelta;
+				g_nMaxPressureRetry   = g_nCurrentIdlePressure + g_nScanRetryPressureDelta;
+				g_nMinPressureIdle	  = g_nCurrentIdlePressure - g_nScanIdlePressureDelta;
+				g_nMaxPressureIdle	  = g_nCurrentIdlePressure + g_nScanIdlePressureDelta;
+
+				g_nAlignExtrudersStatus = 120;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+				if( Printer::debugInfo() )
+				{
+					Com::printFLN( PSTR( "alignExtruders(): 110 -> 120" ) );
+				}
+#endif // DEBUG_HEAT_BED_SCAN == 2
+				break;
+			}
+			case 120:
+			{
+				// move to the surface
+				moveZUpFast();
+
+				g_nAlignExtrudersStatus = 121;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+				if( Printer::debugInfo() )
+				{
+					Com::printFLN( PSTR( "alignExtruders(): 120 -> 121" ) );
+				}
+#endif // DEBUG_HEAT_BED_SCAN == 2
+				break;
+			}
+			case 121:
+			{
+				// ensure that we do not remember any previous z-position at this moment
+				g_nLastZScanZPosition = 0;
+
+				// move a little bit away from the surface
+				moveZDownSlow();
+
+				g_nAlignExtrudersStatus = 122;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+				if( Printer::debugInfo() )
+				{
+					Com::printFLN( PSTR( "alignExtruders(): 121 -> 122" ) );
+				}
+#endif // DEBUG_HEAT_BED_SCAN == 2
+				break;
+			}
+			case 122:
+			{
+				// move slowly to the surface
+                short nTempPressure = 0;
+				moveZUpSlow( &nTempPressure );
+                moveZDownSlow(8); // entspannen
+
+				g_nAlignExtrudersStatus = 123;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+				if( Printer::debugInfo() )
+				{
+					Com::printFLN( PSTR( "alignExtruders(): 122 -> 123" ) );
+				}
+#endif // DEBUG_HEAT_BED_SCAN == 2
+				break;
+			}
+			case 123:
+			{
+				// the left extruder is at the surface now - show that the user must move also the right extruder to the surface in order to get them to the same z-height
+				UI_STATUS_UPD( UI_TEXT_ALIGN_EXTRUDERS );
+				BEEP_ALIGN_EXTRUDERS
+
+				g_nContinueButtonPressed = 0;
+				g_nAlignExtrudersStatus	 = 125;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+				if( Printer::debugInfo() )
+				{
+					Com::printFLN( PSTR( "alignExtruders(): 123 -> 125" ) );
+				}
+#endif // DEBUG_HEAT_BED_SCAN == 2
+				break;
+			}
+			case 125:
+			{
+				// wait until the continue button has been pressed
+				if( !g_nContinueButtonPressed )
+				{
+					break;
+				}
+
+				// we are done
+				g_nAlignExtrudersStatus = 145;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+				if( Printer::debugInfo() )
+				{
+					Com::printFLN( PSTR( "g_nAlignExtrudersStatus(): 125 -> 145" ) );
+				}
+#endif // DEBUG_HEAT_BED_SCAN == 2
+				break;
+			}
+			case 145:
+			{
+				// avoid to crash the extruder against the heat bed during the following moves
+				moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
+
+                Printer::homeAxis( true, true, true );
+
+				g_nAlignExtrudersStatus = 160;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+				if( Printer::debugInfo() )
+				{
+					Com::printFLN( PSTR( "alignExtruders(): 145 -> 160" ) );
+				}
+#endif // DEBUG_HEAT_BED_SCAN == 2
+				break;
+			}
+			case 160:
+			{
+				if( Printer::debugInfo() )
+				{
+					Com::printFLN( PSTR( "alignExtruders(): the alignment has been completed" ) );
+				}
+				UI_STATUS_UPD( UI_TEXT_ALIGN_EXTRUDERS_DONE );
+				BEEP_STOP_ALIGN_EXTRUDERS
+
+				g_nAlignExtrudersStatus = 0;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+				if( Printer::debugInfo() )
+				{
+					Com::printFLN( PSTR( "alignExtruders(): 160 -> 0" ) );
+				}
+#endif // DEBUG_HEAT_BED_SCAN == 2
+				break;
+			}
+		}
+	}
+	return;
+} // alignExtruders
+#endif // FEATURE_ALIGN_EXTRUDERS
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
 void startWorkPartScan( char nMode )
@@ -6213,6 +6531,13 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 
 #endif // FEATURE_MILLING_MODE
 
+#if FEATURE_ALIGN_EXTRUDERS
+    if( g_nAlignExtrudersStatus )
+    {
+        alignExtruders();
+    }
+#endif // FEATURE_ALIGN_EXTRUDERS
+
 #if FEATURE_FIND_Z_ORIGIN
     if( g_nFindZOriginStatus )
     {
@@ -6974,12 +7299,18 @@ void continuePrint( void )
     static char countplays = 1;
     if(g_pauseMode == PAUSE_MODE_NONE || g_pauseStatus != PAUSE_STATUS_PAUSED){
         if( Printer::debugErrors() ) Com::printFLN( PSTR( "continuePrint(): we are not paused." ) );
-        if(countplays++ >= 10){
-             Com::printFLN( PSTR( "LCD re-init") );
-             countplays = 1;
-             showInformation( PSTR(UI_TEXT_MANUAL), PSTR(UI_TEXT_Z_CIRCUIT), PSTR(UI_TEXT_RESET) );
-             initializeLCD();
-        } 
+        if(     !g_nHeatBedScanStatus 
+#if FEATURE_ALIGN_EXTRUDERS
+                && !g_nAlignExtrudersStatus 
+#endif // FEATURE_ALIGN_EXTRUDERS
+        ){
+            if(countplays++ >= 10){
+                 Com::printFLN( PSTR( "LCD re-init") );
+                 countplays = 1;
+                 showInformation( PSTR(UI_TEXT_MANUAL), PSTR(UI_TEXT_Z_CIRCUIT), PSTR(UI_TEXT_RESET) );
+                 initializeLCD();
+            }
+        }
         return;
     }
     countplays = 1;
@@ -10310,6 +10641,17 @@ void processCommand( GCode* pCommand )
             }
 #endif // FEATURE_RGB_LIGHT_EFFECTS
 
+#if FEATURE_ALIGN_EXTRUDERS
+            case 3309:   // start/abort to align the two extruders
+            {
+                if( isSupportedMCommand( pCommand->M, OPERATING_MODE_PRINT ) )
+                {
+                    startAlignExtruders();
+                }
+                break;
+            }
+#endif // FEATURE_ALIGN_EXTRUDERS
+
 #if FEATURE_HEAT_BED_Z_COMPENSATION
             case 3901: // 3901 [X] [Y] - configure the Matrix-Position to Scan, [S] confugure learningrate, [P] configure dist weight || by Nibbels
             case 3900: // 3900 direct preconfig, no break;->next is M3900.
@@ -11206,6 +11548,14 @@ extern void processButton( int nAction )
         }
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
+
+#if FEATURE_ALIGN_EXTRUDERS
+        case UI_ACTION_RF_ALIGN_EXTRUDERS:
+        {
+            startAlignExtruders();
+            break;
+        }
+#endif // FEATURE_ALIGN_EXTRUDERS
 
 #if FEATURE_OUTPUT_FINISHED_OBJECT
         case UI_ACTION_RF_OUTPUT_OBJECT:
