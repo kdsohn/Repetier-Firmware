@@ -2330,7 +2330,7 @@ void searchZOScan( void )
                       short nTempPressure;
                       
                       moveZUpSlow( &nTempPressure, acuteness ); // -
-                      moveZDownSlow(acuteness*2); // +
+                      moveZDownSlow(acuteness*4); // +
                       
                       acuteness++;
                       if(g_scanRetries > 0 && g_retryZScan){
@@ -3261,8 +3261,8 @@ void doHeatBedZCompensation( void )
             {
                 // the printer is already a bit away from the surface - do the actual compensation
                 nNeededZCompensation = g_offsetZCompensationSteps + 
-                                       (nNeededZCompensation - g_offsetZCompensationSteps) * (g_maxZCompensationSteps - nCurrentPositionSteps[Z_AXIS])
-                                                                                              / (g_maxZCompensationSteps - g_minZCompensationSteps);
+                                       (long)((nNeededZCompensation - g_offsetZCompensationSteps) * (g_maxZCompensationSteps - nCurrentPositionSteps[Z_AXIS]))
+                                                                                              / (long)(g_maxZCompensationSteps - g_minZCompensationSteps);
             }
         }
         else
