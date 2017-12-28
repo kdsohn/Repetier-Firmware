@@ -732,9 +732,16 @@ void scanHeatBed( void )
                 if ( g_nHeatBedScanMode )
                 {
                     // wait some time so that the desired target temperature is reached in all parts of our components
-                    if( (HAL::timeInMilliseconds() - g_lastScanTime) < (PRECISE_HEAT_BED_SCAN_WARMUP_DELAY * 1000) )
+                    unsigned long   uRemainingSeconds;
+
+                    uRemainingSeconds = (HAL::timeInMilliseconds() - g_lastScanTime) / 1000;
+                    if( uRemainingSeconds < PRECISE_HEAT_BED_SCAN_WARMUP_DELAY )
                     {
-                        UI_STATUS_UPD( UI_TEXT_HEATING ); 
+                        char   szStatus[32];
+                        strcpy( szStatus, UI_TEXT_HEATING );
+                        addLong( szStatus, PRECISE_HEAT_BED_SCAN_WARMUP_DELAY - uRemainingSeconds, 3 );
+                        strcat( szStatus, "[s]" );
+                        UI_STATUS_UPD_RAM( szStatus );
                         break;
                     }
                 }
@@ -1704,9 +1711,16 @@ void scanHeatBed( void )
                 if ( g_nHeatBedScanMode )
                 {
                     // wait some time so that the desired target temperature is reached in all parts of our components
-                    if( (HAL::timeInMilliseconds() - g_lastScanTime) < (PRECISE_HEAT_BED_SCAN_CALIBRATION_DELAY * 1000) )
+                    unsigned long   uRemainingSeconds;
+
+                    uRemainingSeconds = (HAL::timeInMilliseconds() - g_lastScanTime) / 1000;
+                    if( uRemainingSeconds < PRECISE_HEAT_BED_SCAN_CALIBRATION_DELAY )
                     {
-                        UI_STATUS_UPD( UI_TEXT_HEATING );
+                        char   szStatus[32];
+                        strcpy( szStatus, UI_TEXT_HEATING );
+                        addLong( szStatus, PRECISE_HEAT_BED_SCAN_CALIBRATION_DELAY - uRemainingSeconds, 3 );
+                        strcat( szStatus, "[s]" );
+                        UI_STATUS_UPD_RAM( szStatus );
                         break;
                     }
                 }
@@ -14344,3 +14358,51 @@ void doEmergencyStop( char reason )
     return;
 
 } // doEmergencyStop
+
+
+void addLong( char* string, long value, char digits )
+{
+    uint8_t		dig = 0;
+	uint8_t		neg = 0;
+	uint8_t		col = strlen( string );
+    char		buf[13]; // Assumes 8-bit chars plus zero byte.
+    char*		str = &buf[12];
+
+
+    if(value<0)
+    {
+        neg	  = 1;
+        value = -value;
+        dig++;
+    }
+
+    buf[12] = 0;
+    do
+    {
+        unsigned long m = value;
+        value /= 10;
+        char c = m - 10 * value;
+        *--str = c + '0';
+        dig++;
+    }while( value );
+
+    if(neg)
+        string[col++] = '-';
+
+    if(digits<=11)
+	{
+        while(dig<digits)
+        {
+            *--str = ' ';
+            dig++;
+        }
+	}
+
+    while(*str)
+    {
+        string[col++] = *str;
+        str++;
+    }
+	string[col] = 0;
+
+} // addLong

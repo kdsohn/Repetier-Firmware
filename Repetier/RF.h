@@ -1080,5 +1080,7 @@ extern void showMyPage( const void* line1, const void* line2 = NULL, const void*
 // doEmergencyStop()
 void doEmergencyStop( char reason );
 
+// addLong() to string
+void addLong( char* string, long value, char digits );
 
 #endif // RF_H

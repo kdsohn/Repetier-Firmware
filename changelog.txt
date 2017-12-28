@@ -5,6 +5,7 @@ TODO: Testing, testing ..
 - fixed details in FEATURE_ALIGN_EXTRUDERS
 - added menu support: Configuration -> Z-Compensation -> Align Extruders
 - added autoresolving errors by homing -> align extruders will then move to old hbs align position if you dont set manual x and y (which is possible if you dont move z out of 0!)
+- added display countdown from renkforce 1.39 to "PLA Scan" and "ABS Scan" heating process.
 
 V RF.01.38.Mod (2017-12-28)
 - improved ZOS handling
