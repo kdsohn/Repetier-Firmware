@@ -2,8 +2,13 @@ TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has th
 TODO: Testing, testing ..
 
 V RF.01.38.Mod (2017-12-28)
+- improved ZOS handling
+- testimprovement for HBS (take back push in force by driving back in very tiny steps)
+- Temps for Scan PLA are now 210 / 60 instead of 230 / 60
+- Temps for Scan ABS are now 240 / 100 instead of 260 / 130 (Bed 100 is a better limit for DDPs, 240 is enough for most ABS)
+- Temps for preheating ABS are now 210 / 100 instead of 240 / 110 to prevent filament degradation in heatzone.
 - version bump to meet renkforce stable (no change between 1.37 and 1.38 except calling it stable)
-- testing and minor tweaks
+- testing and minor tweaks (UI_PRINT_AUTORETURN_TO_MENU_AFTER   120000 instead of 60000 / ..)
 
 V RF.01.37z2.Mod (2017-12-27)
 - Tweaks for ZOS precision

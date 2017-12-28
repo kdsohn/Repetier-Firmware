@@ -1044,6 +1044,7 @@ void scanHeatBed( void )
             {
                 // move slowly to the surface
                 moveZUpSlow( &nTempPressure );
+                moveZDownSlow(8); //and slowslowly back near idle pressure
 #if DEBUG_HEAT_BED_SCAN
                 nContactPressure  = nTempPressure;
 #endif // DEBUG_HEAT_BED_SCAN
@@ -1488,6 +1489,7 @@ void scanHeatBed( void )
             {
                 // move slowly to the surface
                 moveZUpSlow( &nTempPressure );
+                moveZDownSlow(8); //and slowslowly back near idle pressure
 
                 g_nHeatBedScanStatus = 123;
 
@@ -1815,6 +1817,7 @@ void scanHeatBed( void )
             {
                 // move slowly to the surface
                 moveZUpSlow( &nTempPressure );
+                moveZDownSlow(8); //and slowslowly back near idle pressure
 
                 g_nHeatBedScanStatus = 144;
 
@@ -2314,7 +2317,7 @@ void searchZOScan( void )
                 Com::printFLN( PSTR( "Testing Surface " ));
 #endif // DEBUG_HEAT_BED_SCAN
                 bool prebreak = false;
-                uint8_t acuteness = 1;
+                uint8_t acuteness = 2;
                 // we have roughly found the surface, now we perform the precise slow scan SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS times  
                 for(int i=0; i<SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS; ++i) {
 #if DEBUG_HEAT_BED_SCAN == 2
@@ -4050,6 +4053,7 @@ void scanWorkPart( void )
                 // move slowly to the surface
                 moveZUpSlow( &nTempPressure );
                 nContactPressure      = nTempPressure;
+                moveZDownSlow(8); //and slowslowly back near idle pressure
                 g_nWorkPartScanStatus = 54;
 
 #if DEBUG_WORK_PART_SCAN == 2
@@ -4918,7 +4922,7 @@ void moveZDownSlow(uint8_t acuteness)
     // move the heat bed down until we detect the retry pressure (slow speed)
     while( 1 )
     {
-        HAL::delayMilliseconds( g_nScanSlowStepDelay * (acuteness > 1 ? 2 : 1) );
+        HAL::delayMilliseconds( g_nScanSlowStepDelay );
         if( readAveragePressure( &nTempPressure ) )
         {
             // some error has occurred
@@ -5029,7 +5033,7 @@ void moveZUpSlow( short* pnContactPressure, uint8_t acuteness )
     // move the heat bed up until we detect the contact pressure (slow speed)
     while( 1 )
     {
-        HAL::delayMilliseconds( g_nScanSlowStepDelay * (acuteness > 1 ? 2 : 1) );
+        HAL::delayMilliseconds( g_nScanSlowStepDelay );
         if( readAveragePressure( &nTempPressure ) )
         {
             // some error has occurred

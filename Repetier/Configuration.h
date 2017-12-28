@@ -620,7 +620,7 @@ info pages with next/previous button/click-encoder */
 #define UI_DISABLE_AUTO_PAGESWITCH          true
 
 /** \brief Time to return to info menu if x millisconds no key was pressed. Set to 0 to disable it. */
-#define UI_PRINT_AUTORETURN_TO_MENU_AFTER   60000
+#define UI_PRINT_AUTORETURN_TO_MENU_AFTER   120000
 #define UI_MILL_AUTORETURN_TO_MENU_AFTER    0
 
 /** \brief Normally cou want a next/previous actions with every click of your encoder.
@@ -675,8 +675,8 @@ Values must be in range 1..255 */
 /** \brief Values used for preheat */
 #define UI_SET_PRESET_HEATED_BED_TEMP_PLA   60
 #define UI_SET_PRESET_EXTRUDER_TEMP_PLA     180
-#define UI_SET_PRESET_HEATED_BED_TEMP_ABS   110
-#define UI_SET_PRESET_EXTRUDER_TEMP_ABS     240
+#define UI_SET_PRESET_HEATED_BED_TEMP_ABS   100
+#define UI_SET_PRESET_EXTRUDER_TEMP_ABS     210
 
 /** \brief Values used for unload(unmount)/load(mount) filament */
 #define UI_SET_EXTRUDER_TEMP_UNMOUNT        120

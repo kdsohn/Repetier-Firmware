@@ -1094,10 +1094,10 @@ Above this value the z compensation will distribute the roughness of the surface
 #define PRECISE_HEAT_BED_SCAN_WARMUP_DELAY          (uint32_t)600                                                  // [s]
 #define PRECISE_HEAT_BED_SCAN_CALIBRATION_DELAY     (uint32_t)600                                                  // [s]
 #define PRECISE_HEAT_BED_SCAN_BED_TEMP_PLA          60                                                                  // [°C]
-#define PRECISE_HEAT_BED_SCAN_BED_TEMP_ABS          130                                                                 // [°C]
+#define PRECISE_HEAT_BED_SCAN_BED_TEMP_ABS          100                                                                 // [°C]
 #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_SCAN    100                                                                 // [°C]
-#define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA     230                                                                 // [°C]
-#define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS     260                                                                 // [°C]
+#define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA     210                                                                 // [°C]
+#define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS     240                                                                 // [°C]
 
 #endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
@@ -1108,9 +1108,9 @@ Above this value the z compensation will distribute the roughness of the surface
 // scan position defined by the index of the heat bed matrix, counting from 1
 #define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_INDEX_X    5
 #define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_INDEX_Y    5
-#define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_RAND_MM    5
+#define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_RAND_MM    3
 // number of scanning iterations 2+
-#define SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS          3
+#define SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS          2
 
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
