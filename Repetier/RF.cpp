@@ -3261,8 +3261,8 @@ void doHeatBedZCompensation( void )
             {
                 // the printer is already a bit away from the surface - do the actual compensation
                 nNeededZCompensation = g_offsetZCompensationSteps + 
-                                       (long)((nNeededZCompensation - g_offsetZCompensationSteps) * (g_maxZCompensationSteps - nCurrentPositionSteps[Z_AXIS]))
-                                                                                              / (long)(g_maxZCompensationSteps - g_minZCompensationSteps);
+                                       ((nNeededZCompensation - g_offsetZCompensationSteps) * (g_maxZCompensationSteps - nCurrentPositionSteps[Z_AXIS]))
+                                                                                              / (g_maxZCompensationSteps - g_minZCompensationSteps);
             }
         }
         else

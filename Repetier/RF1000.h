@@ -898,7 +898,7 @@ a faster solution is needed, and this is to double/quadruple the steps in one in
 This is like reducing your 1/16th microstepping to 1/8 or 1/4. It is much cheaper then 1 or 3
 additional stepper interrupts with all it's overhead. As a result you can go as high as
 40000Hz. STEP_DOUBLER_FREQUENCY should be in range 5000-12000 for RFx000 but 8000 is much for RF2000 (with ADVANCE?).*/
-#define STEP_DOUBLER_FREQUENCY              6500
+#define STEP_DOUBLER_FREQUENCY              7000
 
 /** \brief If you need frequencies off more then 30000 you definitely need to enable this. If you have only 1/8 stepping
 enabling this may cause to stall your moves when 20000Hz is reached. */

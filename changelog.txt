@@ -1,14 +1,18 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
-V RF.01.37z2 (2017-12-27)
+V RF.01.38.Mod (2017-12-28)
+- version bump to meet renkforce stable (no change between 1.37 and 1.38 except calling it stable)
+- testing and minor tweaks
+
+V RF.01.37z2.Mod (2017-12-27)
 - Tweaks for ZOS precision
 - tempered and cleared up things with z compensation - G1 Z0 is now surface + 5um, only minus z is forbidden. testers have been distracted too often by this stupid "Z0 = no real CMD" rule.
 
-V RF.01.37z (2017-12-26)
+V RF.01.37z.Mod (2017-12-26)
 - small corrections
 
-V RF.01.37z (2017-12-23)
+V RF.01.37z.Mod (2017-12-23)
 To move towards Renkforces 1.39 I already pulled the following changes from 1.39:
 - Added V3 Hotend (possible wrong pid values!)
 - Added definitions for RF2000v2 and PIN mapping (final??)
