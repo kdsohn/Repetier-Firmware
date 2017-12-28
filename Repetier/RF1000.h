@@ -248,8 +248,7 @@ NTC-Thermistors
 11: 100k GE Sensing AL03006-58.2K-97-G1 (4.7k pullup)
 12: 100k RS Thermistor 198-961 (4.7k pullup)
 13: NTC 3950 100k thermistor - Conrad V3
-14: Thermistor NTC 3950 100k Ohm (Version 1)
-15: Thermistor NTC 3950 100k Ohm (Version 2)
+14: Thermistor NTC 3950 100k Ohm
 97: USE_GENERIC_THERMISTORTABLE_1 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 98: USE_GENERIC_THERMISTORTABLE_2 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 99: USE_GENERIC_THERMISTORTABLE_3 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
@@ -411,8 +410,7 @@ NTC-Thermistors
 11: 100k GE Sensing AL03006-58.2K-97-G1 (4.7k pullup)
 12: 100k RS Thermistor 198-961 (4.7k pullup)
 13: NTC 3950 100k thermistor - Conrad V3
-14: Thermistor NTC 3950 100k Ohm (Version 1)
-15: Thermistor NTC 3950 100k Ohm (Version 2)
+14: Thermistor NTC 3950 100k Ohm
 97: USE_GENERIC_THERMISTORTABLE_1 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 98: USE_GENERIC_THERMISTORTABLE_2 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 99: USE_GENERIC_THERMISTORTABLE_3 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h

@@ -9,6 +9,7 @@ V RF.01.38.Mod (2017-12-28)
 - Temps for preheating ABS are now 210 / 100 instead of 240 / 110 to prevent filament degradation in heatzone.
 - version bump to meet renkforce stable (no change between 1.37 and 1.38 except calling it stable)
 - testing and minor tweaks (UI_PRINT_AUTORETURN_TO_MENU_AFTER   120000 instead of 60000 / ..)
+- removed Temptable 14 and put Temptable 15 to that place. 15 looked better in excel than 14 but is quite similar.
 
 V RF.01.37z2.Mod (2017-12-27)
 - Tweaks for ZOS precision
