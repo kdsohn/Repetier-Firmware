@@ -39,6 +39,7 @@
 #define PRINTER_FLAG1_NO_DESTINATION_CHECK      32
 #define PRINTER_FLAG1_Z_ORIGIN_SET              64
 
+#define PRINTER_FLAG2_RESET_FILAMENT_USAGE      4
 #define PRINTER_FLAG2_HOMING                    64
  
 #define PRINTER_FLAG3_X_HOMED                   1 // flag3 alike original repetier
@@ -1213,8 +1214,8 @@ public:
     static void defaultLoopActions();
     static uint8_t setDestinationStepsFromGCode(GCode *com);
     static uint8_t setDestinationStepsFromMenu( float relativeX, float relativeY, float relativeZ );
-    static void moveTo(float x,float y,float z,float e,float f);
-    static void moveToReal(float x,float y,float z,float e,float f);
+    static void moveTo(float x,float y,float z,float e,float feedrate);
+    static void moveToReal(float x,float y,float z,float e,float feedrate);
     static void homeAxis(bool xaxis,bool yaxis,bool zaxis); /// Home axis
     static uint8_t setOrigin(float xOff,float yOff,float zOff);
     static bool isPositionAllowed(float x,float y,float z);

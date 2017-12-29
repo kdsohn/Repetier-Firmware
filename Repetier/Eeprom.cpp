@@ -1145,7 +1145,7 @@ void EEPROM::updatePrinterUsage()
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
-        if(Printer::filamentPrinted==0) return; // No miles only enabled
+        if(Printer::filamentPrinted == 0 || (Printer::flag2 & PRINTER_FLAG2_RESET_FILAMENT_USAGE) != 0) return; // No miles only enabled
         uint32_t seconds = (HAL::timeInMilliseconds()-Printer::msecondsPrinting)/1000;
         seconds += HAL::eprGetInt32(EPR_PRINTING_TIME);
         HAL::eprSetInt32(EPR_PRINTING_TIME,seconds);
@@ -1158,7 +1158,7 @@ void EEPROM::updatePrinterUsage()
         HAL::eprSetFloat(EPR_PRINTING_DISTANCE_SERVICE,HAL::eprGetFloat(EPR_PRINTING_DISTANCE_SERVICE)+Printer::filamentPrinted*0.001);
 #endif // FEATURE_SERVICE_INTERVAL
 
-        Printer::filamentPrinted = 0;
+        Printer::flag2 |= PRINTER_FLAG2_RESET_FILAMENT_USAGE;
         Printer::msecondsPrinting = HAL::timeInMilliseconds();
         uint8_t newcheck = computeChecksum();
         if(newcheck!=HAL::eprGetByte(EPR_INTEGRITY_BYTE))

@@ -90,21 +90,18 @@ uint8_t             PrintLine::linesPos         = 0;    // Position for executin
 /** \brief Move printer the given number of steps. Puts the move into the queue. Used by e.g. homing commands. */
 void PrintLine::moveRelativeDistanceInSteps(long x,long y,long z,long e,float feedrate,bool waitEnd,bool checkEndstop)
 {
-    float savedFeedrate = Printer::feedrate;
     Printer::queuePositionTargetSteps[X_AXIS] = Printer::queuePositionLastSteps[X_AXIS] + x;
     Printer::queuePositionTargetSteps[Y_AXIS] = Printer::queuePositionLastSteps[Y_AXIS] + y;
     Printer::queuePositionTargetSteps[Z_AXIS] = Printer::queuePositionLastSteps[Z_AXIS] + z;
     Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] + e;
 
-    Printer::feedrate = feedrate;
-    prepareQueueMove(checkEndstop,false);
-    Printer::feedrate = savedFeedrate;
+    prepareQueueMove(checkEndstop, false, feedrate);
+
     Printer::updateCurrentPosition();
     if(waitEnd)
         Commands::waitUntilEndOfAllMoves();
 
     previousMillisCmd = HAL::timeInMilliseconds();
-
 } // moveRelativeDistanceInSteps
 
 
@@ -140,7 +137,7 @@ void PrintLine::moveRelativeDistanceInStepsReal(long x,long y,long z,long e,floa
   If the cache is full, the method will wait, until a place gets free. During
   wait communication and temperature control is enabled.
   @param check_endstops Read endstop during move. */
-void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize)
+void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize, float feedrate)
 {
     Printer::unsetAllSteppersDisabled();
     PrintLine::waitForXFreeLines(1);
@@ -250,7 +247,7 @@ void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize)
     }
     else
         p->distance = fabs(axisDistanceMM[E_AXIS]);
-    p->calculateQueueMove(axisDistanceMM, pathOptimize, p->primaryAxis);
+    p->calculateQueueMove(axisDistanceMM, pathOptimize, p->primaryAxis, feedrate);
 
 } // prepareQueueMove
 
@@ -342,10 +339,10 @@ void PrintLine::stopDirectMove( void ) //Funktion ist bereits zur ausführzeit v
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 
-void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, fast8_t drivingAxis)
+void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, fast8_t drivingAxis, float feedrate)
 {
     long    axisInterval[4];
-    float timeForMove = (float)(F_CPU) * distance / Printer::feedrate
+    float timeForMove = (float)(F_CPU) * distance / feedrate
 #if FEATURE_DIGIT_FLOW_COMPENSATION
                                                                       / g_nDigitFlowCompensation_feedmulti
 #endif // FEATURE_DIGIT_FLOW_COMPENSATION
@@ -447,12 +444,12 @@ void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, 
     fAcceleration = 262144.0*(float)accelerationPrim / F_CPU; // will overflow without float!
     accelerationDistance2 = 2.0 * distance * slowestAxisPlateauTimeRepro * fullSpeed / ((float)F_CPU);  // mm^2/s^2
     startSpeed = endSpeed = minSpeed = safeSpeed(drivingAxis);
-    if(startSpeed > Printer::feedrate
+    if(startSpeed > feedrate
 #if FEATURE_DIGIT_FLOW_COMPENSATION
                                       * g_nDigitFlowCompensation_feedmulti
 #endif // FEATURE_DIGIT_FLOW_COMPENSATION
     ){
-        startSpeed = endSpeed = minSpeed = Printer::feedrate
+        startSpeed = endSpeed = minSpeed = feedrate
 #if FEATURE_DIGIT_FLOW_COMPENSATION
                                       * g_nDigitFlowCompensation_feedmulti
 #endif // FEATURE_DIGIT_FLOW_COMPENSATION
@@ -643,12 +640,12 @@ void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize,
     fAcceleration = 262144.0*(float)accelerationPrim/F_CPU;                                         // will overflow without float!
     accelerationDistance2 = 2.0*distance*slowestAxisPlateauTimeRepro*fullSpeed/((float)F_CPU);  // mm^2/s^2
     startSpeed = endSpeed = minSpeed = safeSpeed(drivingAxis);
-    if(startSpeed > Printer::feedrate
+    if(startSpeed > (isXOrYMove() ? DIRECT_FEEDRATE_XY : isZMove() ? DIRECT_FEEDRATE_Z : DIRECT_FEEDRATE_E)
 #if FEATURE_DIGIT_FLOW_COMPENSATION
                                       * g_nDigitFlowCompensation_feedmulti
 #endif // FEATURE_DIGIT_FLOW_COMPENSATION
     ){
-        startSpeed = endSpeed = minSpeed = Printer::feedrate
+        startSpeed = endSpeed = minSpeed = (isXOrYMove() ? DIRECT_FEEDRATE_XY : isZMove() ? DIRECT_FEEDRATE_Z : DIRECT_FEEDRATE_E)
 #if FEATURE_DIGIT_FLOW_COMPENSATION
                                       * g_nDigitFlowCompensation_feedmulti
 #endif // FEATURE_DIGIT_FLOW_COMPENSATION

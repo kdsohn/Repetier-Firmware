@@ -297,8 +297,11 @@
 #define UI_TEXT_RESET_ACK               "Restart now?","","%mYYes","%mNNo"
 #define UI_TEXT_HEAT_BED_SCAN_ABORTED   "Scan aborted"
 #define UI_TEXT_HEAT_BED_SCAN_DONE      "Scan completed"
-#define UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN "mOffset: %HO um"
+// FEATURE_ALIGN_EXTRUDERS
+#define UI_TEXT_ALIGN_EXTRUDERS_ABORTED "Align aborted"
+#define UI_TEXT_ALIGN_EXTRUDERS_DONE    "Align completed"
 #define UI_TEXT_ALIGN_EXTRUDERS         "Align Extruders"
+#define UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN "mOffset: %HO um"
 #define UI_TEXT_PRINT_MODE              "Printer"
 #define UI_TEXT_MILL_MODE               "Miller"
 #define UI_TEXT_Z_SINGLE                "Single"
@@ -358,10 +361,10 @@
 #define UI_TEXT_STATUSMSG               "%os"
 
 #define UI_TEXT_SENSOR_1                " Pico/RepRa" //1 B57560G0107F000
-#define UI_TEXT_SENSOR_3                " EPCOS-G550" //3
-#define UI_TEXT_SENSOR_4                " 10k NTC" //4 10K für heizbett vom alternativen Hersteller ohne umbau.
-#define UI_TEXT_SENSOR_8                " 104-GT2" //8
-#define UI_TEXT_SENSOR_14               " 3950-100k" //14
+#define UI_TEXT_SENSOR_3                " EPCOS-G550" //3 V1/V2 Hotend
+#define UI_TEXT_SENSOR_4                " 10k NTC"    //4 10K für Heizbett vom alternativen Hersteller ohne Umbau.
+#define UI_TEXT_SENSOR_8                " 104-GT2"    //8
+#define UI_TEXT_SENSOR_13               " 3950-100k"  //13 V3 Hotend
 
 // Printtime output gets aggregated like <Days_5gisgits>UI_TEXT_PRINTTIME_DAYS<Hours>UI_TEXT_PRINTTIME_HOURS<Minutes>UI_TEXT_PRINTTIME_MINUTES
 // ___88 days 12:45
@@ -407,7 +410,7 @@
 #define UI_TEXT_FLOW_DF                "dFlow:   :%CF%%%"
 #define UI_TEXT_FLOW_DV                "dFeed:   :%CE%%%"
 
-#if MOTHERBOARD == DEVICE_TYPE_RF2000
+#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min reached unhomed"
     #define UI_TEXT_RGB_LIGHT_MODE          "RGB Light: %li"
@@ -482,7 +485,7 @@
     #define UI_TEXT_TEMPERATURE_MANAGER     "Temp. Manager"
     #define UI_TEXT_OPERATION_DENIED        "Operat. denied"
     #define UI_TEXT_TEMPERATURE_WRONG       "Temp. wrong"
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+#endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 
 //#endif
 #else
@@ -668,6 +671,9 @@
 #define UI_TEXT_RESET_ACK               "Neustart jetzt?","","%mYJa","%mNNein"
 #define UI_TEXT_HEAT_BED_SCAN_ABORTED   "Scan abgebrochen"
 #define UI_TEXT_HEAT_BED_SCAN_DONE      "Scan beendet"
+// FEATURE_ALIGN_EXTRUDERS
+#define UI_TEXT_ALIGN_EXTRUDERS_ABORTED "Ausr. abgebr."
+#define UI_TEXT_ALIGN_EXTRUDERS_DONE    "Ausr. beendet"
 #define UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN "mOffset: %HO um"
 #define UI_TEXT_PRINT_MODE              "Drucker"
 #define UI_TEXT_MILL_MODE               "Fr" STR_auml "ser"
@@ -706,20 +712,20 @@
 #define UI_TEXT_WARNING                 "Warnung:"
 #define UI_TEXT_INFORMATION             "Information:"
 #define UI_TEXT_SET_ORIGIN              "Setze Ursprung"
-#define UI_TEXT_AUTODETECT_PID          "PID ermitteln" 
+#define UI_TEXT_AUTODETECT_PID          "PID ermitteln"
 #define UI_TEXT_PID_ACK                 UI_TEXT_AUTODETECT_PID "?","","%mYJa","%mNNein"
 // Temp. = Temperatur
 #define UI_TEXT_HOME_UNKNOWN            "Home unbekannt"
-#define UI_TEXT_SAVING_NEEDLESS         "Sichern sinnlos"  
-#define UI_TEXT_SAVING_SUCCESS          "Matrix gesichert"      
+#define UI_TEXT_SAVING_NEEDLESS         "Sichern sinnlos"
+#define UI_TEXT_SAVING_SUCCESS          "Matrix gesichert"
 // n.m. = nicht moeglich
-#define UI_TEXT_OPERATION_DENIED        "Operation verw."       
+#define UI_TEXT_OPERATION_DENIED        "Operation verw."
 // verw. = verweigert
 #define UI_TEXT_EMERGENCY_PAUSE         "Notfall Pause"
 #define UI_TEXT_EMERGENCY_STOP          "Notfall Block"
 
 #define UI_TEXT_MIN_REACHED             "Min erreicht"
-#define UI_TEXT_MAX_REACHED             "Max erreicht"      
+#define UI_TEXT_MAX_REACHED             "Max erreicht"
 // Temp. = Temperatur
 #define UI_TEXT_TIMEOUT                 "Timeout"
 #define UI_TEXT_AUTODETECT_PID_DONE     "PID ermittelt"
@@ -730,10 +736,10 @@
 #define UI_TEXT_STATUSMSG               "%os"
 
 #define UI_TEXT_SENSOR_1                " Pico/RepRa" //1 B57560G0107F000
-#define UI_TEXT_SENSOR_3                " EPCOS-G550" //3
-#define UI_TEXT_SENSOR_4                " 10k NTC" //4 10K für heizbett vom alternativen Hersteller ohne umbau.
-#define UI_TEXT_SENSOR_8                " 104-GT2" //8
-#define UI_TEXT_SENSOR_14               " 3950-100k" //14
+#define UI_TEXT_SENSOR_3                " EPCOS-G550" //3 V1/V2 Hotend
+#define UI_TEXT_SENSOR_4                " 10k NTC"    //4 10K für Heizbett vom alternativen Hersteller ohne Umbau.
+#define UI_TEXT_SENSOR_8                " 104-GT2"    //8
+#define UI_TEXT_SENSOR_13               " 3950-100k"  //13 V3 Hotend
 
 // Printtime output gets aggregated like <Days_5gisgits>UI_TEXT_PRINTTIME_DAYS<Hours>UI_TEXT_PRINTTIME_HOURS<Minutes>UI_TEXT_PRINTTIME_MINUTES
 // ___88 days 12:45
@@ -772,7 +778,7 @@
 #define UI_TEXT_FLOW_DF                "dFlow:   :%CF%%%"
 #define UI_TEXT_FLOW_DV                "dFeed:   :%CE%%%"
 
-#if MOTHERBOARD == DEVICE_TYPE_RF2000
+#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min Kontakt unhomed"
@@ -919,7 +925,7 @@
     #define UI_TEXT_INVALID_MATRIX          "Ung. Matrix"   
     #define UI_TEXT_TEMPERATURE_WRONG       "Temp. falsch"  
 
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+#endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 
 
 #endif // UI_LANGUAGE==1

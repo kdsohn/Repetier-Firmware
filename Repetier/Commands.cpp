@@ -535,7 +535,7 @@ void Commands::executeGCode(GCode *com)
             }
             if(Printer::setDestinationStepsFromGCode(com)) // For X Y Z E F
             {
-                PrintLine::prepareQueueMove(ALWAYS_CHECK_ENDSTOPS,true);
+                PrintLine::prepareQueueMove(ALWAYS_CHECK_ENDSTOPS,true, Printer::feedrate);
             }
             break;
         }
@@ -917,11 +917,13 @@ void Commands::executeGCode(GCode *com)
             }
             case 24: // M24 - Start SD print
             {
+#if FEATURE_PAUSE_PRINTING
                 if( g_pauseStatus == PAUSE_STATUS_PAUSED ) 
                 {
                     continuePrint();
                 }
                 else
+#endif // FEATURE_PAUSE_PRINTING
                 {
                     sd.startPrint();
                 }
@@ -929,7 +931,9 @@ void Commands::executeGCode(GCode *com)
             }
             case 25: // M25 - Pause SD print
             {
+#if FEATURE_PAUSE_PRINTING
                 pausePrint();
+#endif // FEATURE_PAUSE_PRINTING
                 break;
             }
             case 26: // M26 - Set SD index
@@ -1503,11 +1507,11 @@ void Commands::executeGCode(GCode *com)
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
 #endif // MOTHERBOARD == DEVICE_TYPE_RF1000
 
-#if MOTHERBOARD == DEVICE_TYPE_RF2000
+#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
                 // the RF2000 uses the max endstop in all operating modes
                 Com::printF(Com::tZMaxColon);
                 Com::printF(Printer::isZMaxEndstopHit()?Com::tHSpace:Com::tLSpace);
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+#endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 #endif // (Z_MAX_PIN > -1) && MAX_HARDWARE_ENDSTOP_Z
 
                 Com::println();
@@ -1811,7 +1815,7 @@ void Commands::executeGCode(GCode *com)
             }
 #endif // FEATURE_SERVO && MOTHERBOARD == DEVICE_TYPE_RF1000
 
-#if FEATURE_SERVO && MOTHERBOARD == DEVICE_TYPE_RF2000
+#if FEATURE_SERVO && (MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2)
             case 340:   // M340
             {
                 if( com->hasP() )
@@ -1877,7 +1881,7 @@ void Commands::executeGCode(GCode *com)
                 }
                 break;
             }
-#endif // FEATURE_SERVO && MOTHERBOARD == DEVICE_TYPE_RF2000
+#endif // FEATURE_SERVO && (MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2)
 
             default:
             {

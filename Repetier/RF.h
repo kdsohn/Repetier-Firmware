@@ -55,6 +55,8 @@
 #define UI_ACTION_RF_SCAN_WORK_PART         1528
 #define UI_ACTION_RF_SET_SCAN_XY_START      1529
 #define UI_ACTION_RF_SET_SCAN_XY_END        1530
+//FEATURE_ALIGN_EXTRUDERS
+#define	UI_ACTION_RF_ALIGN_EXTRUDERS        1531
 
 #define UI_ACTION_RF_MAX_SINGLE             1600
 
@@ -225,10 +227,18 @@
 
 - M3075 [S] [P] - configure the emergency pause digits
   - Examples:
-  - M3075 S-5000 ; sets the min emergency pause digits to -5000 [digits]
-  - M3075 P5000 ; sets the max emergency pause digits to 5000 [digits]
-  - M3075 S-5000 P5000 ; sets the min emergency pause digits to -5000 [digits] and the max emergency pause digits to 5000 [digits]
+  - M3075 S-15000 ; sets the min emergency pause digits to -15000 [digits]
+  - M3075 P15000 ; sets the max emergency pause digits to 15000 [digits]
+  - M3075 S-15000 P15000 ; sets the min emergency pause digits to -15000 [digits] and the max emergency pause digits to 15000 [digits]
+  - M3075 S0 P0 ; disables the emergency pause
 
+- M3076 [S] [P] - configure the emergency stop digits
+  - Examples:
+  - M3076 S-5000 ; sets the min emergency stop digits to -5000 [digits]
+  - M3076 P5000 ; sets the max emergency stop digits to 5000 [digits]
+  - M3076 S-5000 P5000 ; sets the min emergency stop digits to -5000 [digits] and the max emergency stop digits to 5000 [digits]
+  - M3076 S0 P0 ; disables the emergency stop
+ 
 - M3079 - output the printed object
   - Examples:
   - M3079 ; outputs the printed object
@@ -377,7 +387,7 @@
 
 
 // ##########################################################################################
-// ##   the following M codes are supported only by the RF2000
+// ##   the following M codes are supported only by the RF2000 and RF2000 V2
 // ##########################################################################################
 
 - M3300 [P] [S] - configure the 24V FET outputs ( on/off )
@@ -530,6 +540,9 @@ extern const char   ui_text_change_miller_type[]    PROGMEM;
 extern const char   ui_text_x_axis[]                PROGMEM;
 extern const char   ui_text_y_axis[]                PROGMEM;
 extern const char   ui_text_z_axis[]                PROGMEM;
+#if FEATURE_ALIGN_EXTRUDERS
+extern const char   ui_text_align_extruders[]       PROGMEM;
+#endif // FEATURE_ALIGN_EXTRUDERS
 extern const char   ui_text_extruder[]              PROGMEM;
 extern const char   ui_text_autodetect_pid[]        PROGMEM;
 extern const char   ui_text_temperature_manager[]   PROGMEM;
@@ -721,6 +734,10 @@ extern unsigned char    g_uRGBTargetG;
 extern unsigned char    g_uRGBTargetB;
 #endif // FEATURE_RGB_LIGHT_EFFECTS
 
+#if FEATURE_ALIGN_EXTRUDERS
+extern unsigned char    g_nAlignExtrudersStatus;
+extern char             g_abortAlignExtruders;
+#endif // FEATURE_ALIGN_EXTRUDERS
 
 // initRF()
 extern void initRF( void );
@@ -771,6 +788,13 @@ extern long getHeatBedOffset( void );
 extern void switchActiveHeatBed( char newActiveHeatBed );
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
+#if FEATURE_ALIGN_EXTRUDERS
+// startAlignExtruders()
+extern void startAlignExtruders( void );
+ 
+// alignExtruders()
+extern void alignExtruders( void );
+#endif // FEATURE_ALIGN_EXTRUDERS
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
 // startWorkPartScan()
@@ -801,19 +825,19 @@ extern short testIdlePressure( void );
 extern short readAveragePressure( short* pnAveragePressure );
 
 // moveZUpFast()
-extern short moveZUpFast( bool execRunStandardTasks=true );
+extern void moveZUpFast();
 
 // moveZDownSlow()
-extern short moveZDownSlow( bool execRunStandardTasks=true );
+extern void moveZDownSlow( uint8_t acuteness = 1 );
 
 // moveZUpSlow()
-extern short moveZUpSlow( short* pnContactPressure, bool execRunStandardTasks=true );
+extern void moveZUpSlow( short* pnContactPressure, uint8_t acuteness = 1 );
 
 // moveZDownFast()
-extern short moveZDownFast( bool execRunStandardTasks=true );
+extern void moveZDownFast();
 
 // moveZ()
-extern int moveZ( int nSteps );
+extern void moveZ( int nSteps );
 
 // restoreDefaultScanParameters()
 extern void restoreDefaultScanParameters( void );
@@ -910,9 +934,6 @@ extern void setExtruderCurrent( uint8_t nr, uint8_t current );
 
 // processCommand()
 extern void processCommand( GCode* pCommand );
-
-// runStandardTasks()
-extern void runStandardTasks( void );
 
 // queueTask()
 extern void queueTask( char task );
@@ -1059,5 +1080,7 @@ extern void showMyPage( const void* line1, const void* line2 = NULL, const void*
 // doEmergencyStop()
 void doEmergencyStop( char reason );
 
+// addLong() to string
+void addLong( char* string, long value, char digits );
 
 #endif // RF_H

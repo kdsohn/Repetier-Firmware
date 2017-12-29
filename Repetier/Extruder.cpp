@@ -442,9 +442,7 @@ void Extruder::selectExtruderById(uint8_t extruderId)
     
     if(Printer::areAxisHomed())
     {
-        float oldfeedrate = Printer::feedrate;
         Printer::moveToReal(IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,Printer::homingFeedrate[X_AXIS]);
-        Printer::feedrate = oldfeedrate;
     }
     Printer::updateCurrentPosition();
 #if USE_ADVANCE
@@ -556,6 +554,8 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
     if(alloffs && !alloff) // heaters are turned on, start measuring printing time
     {
         Printer::msecondsPrinting = HAL::timeInMilliseconds();
+        Printer::filamentPrinted = 0;  // new print, new counter  
+        Printer::flag2 &= ~PRINTER_FLAG2_RESET_FILAMENT_USAGE;  
     }
 
 } // setTemperatureForExtruder
@@ -745,6 +745,7 @@ const short temptable_12[NUMTEMPS_12][2] PROGMEM =
     {701*4, 86*8},{736*4, 81*8},{771*4, 76*8},{806*4, 70*8},{841*4, 63*8},{876*4, 56*8},{911*4, 48*8},{946*4, 38*8},{981*4, 23*8},{1005*4, 5*8},{1016*4, 0*8}
 };
 
+/*
 // PT100 E3D
 #define NUMTEMPS_13 19 
 const short temptable_13[NUMTEMPS_13][2] PROGMEM =
@@ -752,20 +753,24 @@ const short temptable_13[NUMTEMPS_13][2] PROGMEM =
     {0,0},{908,8},{942,10*8},{982,20*8},{1015,8*30},{1048,8*40},{1080,8*50},{1113,8*60},{1146,8*70},{1178,8*80},{1211,8*90},{1276,8*110},{1318,8*120}
     ,{1670,8*230},{2455,8*500},{3445,8*900},{3666,8*1000},{3871,8*1100},{4095,8*2000}
 };
+*/
 
-// Thermistor NTC 3950 100k Ohm (result seems a bit to cold for my amazon-ntcs)
-#define NUMTEMPS_14 46 
-const short temptable_14[NUMTEMPS_14][2] PROGMEM = {
-    {1*4,8*938}, {31*4,8*314}, {41*4,8*290}, {51*4,8*272}, {61*4,8*258}, {71*4,8*247}, {81*4,8*237}, {91*4,8*229}, {101*4,8*221}, {111*4,8*215}, {121*4,8*209},
-    {131*4,8*204}, {141*4,8*199}, {151*4,8*195}, {161*4,8*190}, {171*4,8*187}, {181*4,8*183}, {191*4,8*179}, {201*4,8*176}, {221*4,8*170}, {241*4,8*165}, 
-    {261*4,8*160}, {281*4,8*155}, {301*4,8*150}, {331*4,8*144}, {361*4,8*139}, {391*4,8*133}, {421*4,8*128}, {451*4,8*123}, {491*4,8*117}, {531*4,8*111}, 
-    {571*4,8*105}, {611*4,8*100}, {681*4,8*90}, {711*4,8*85}, {811*4,8*69}, {831*4,8*65}, {881*4,8*55}, 
-    {901*4,8*51},  {941*4,8*39}, {971*4,8*28}, {981*4,8*23}, {991*4,8*17}, {1001*4,8*9}, {1021*4,8*-27},{1023*4,8*-200}
+//TODO: Tabelle startet erst bei 92°C ... Kleine Rundungszacken am Anfang, weil alles *4.
+#define NUMTEMPS_13 61 // NTC 3950 100k thermistor - Conrad V3
+const short temptable_13[NUMTEMPS_13][2] PROGMEM =
+{
+  {23*4, 300*8},{25*4, 295*8},{27*4, 290*8},{28*4, 285*8},{31*4, 280*8},{33*4, 275*8},{35*4, 270*8},{38*4, 265*8},{41*4, 260*8},{44*4, 255*8},
+  {48*4, 250*8},{52*4, 245*8},{56*4, 240*8},{61*4, 235*8},{66*4, 230*8},{71*4, 225*8},{78*4, 220*8},{84*4, 215*8},{92*4, 210*8},{100*4, 205*8},
+  {109*4, 200*8},{120*4, 195*8},{131*4, 190*8},{143*4, 185*8},{156*4, 180*8},{171*4, 175*8},{187*4, 170*8},{205*4, 165*8},{224*4, 160*8},{245*4, 155*8},
+  {268*4, 150*8},{293*4, 145*8},{320*4, 140*8},{348*4, 135*8},{379*4, 130*8},{411*4, 125*8},{445*4, 120*8},{480*4, 115*8},{516*4, 110*8},{553*4, 105*8},
+  {591*4, 100*8},{628*4, 95*8},{665*4, 90*8},{702*4, 85*8},{737*4, 80*8},{770*4, 75*8},{801*4, 70*8},{830*4, 65*8},{857*4, 60*8},{881*4, 55*8},
+  {903*4, 50*8},{922*4, 45*8},{939*4, 40*8},{954*4, 35*8},{966*4, 30*8},{977*4, 25*8},{985*4, 20*8},{993*4, 15*8},{999*4, 10*8},{1004*4, 5*8},
+  {1008*4, 0*8}
 };
 
 // Thermistor NTC 3950 100k Ohm (other source)
-#define NUMTEMPS_15 103 
-const short temptable_15[NUMTEMPS_15][2] PROGMEM = {
+#define NUMTEMPS_14 103 
+const short temptable_14[NUMTEMPS_14][2] PROGMEM = {
     {1*4,938*8},{11*4,423*8},{21*4,351*8},{31*4,314*8},{41*4,290*8},{51*4,272*8},{61*4,258*8},{71*4,247*8},\
 {81*4,237*8},{91*4,229*8},{101*4,221*8},{111*4,215*8},{121*4,209*8},{131*4,204*8},{141*4,199*8},{151*4,195*8},\
 {161*4,190*8},{171*4,187*8},{181*4,183*8},{191*4,179*8},{201*4,176*8},{211*4,173*8},{221*4,170*8},{231*4,167*8},\
@@ -778,7 +783,7 @@ const short temptable_15[NUMTEMPS_15][2] PROGMEM = {
 {731*4,82*8},{741*4,81*8},{751*4,79*8},{761*4,77*8},{771*4,76*8},{781*4,74*8},{791*4,72*8},{801*4,71*8},{811*4,69*8},\
 {821*4,67*8},{831*4,65*8},{841*4,63*8},{851*4,62*8},{861*4,60*8},{871*4,57*8},{881*4,55*8},{891*4,53*8},{901*4,51*8},\
 {911*4,48*8},{921*4,45*8},{931*4,42*8},{941*4,39*8},{951*4,36*8},{961*4,32*8},{971*4,28*8},{981*4,23*8},{991*4,17*8},\
-{1001*4,9*8},{1011*4,-1*8},{1021*4,-26*8}   
+{1001*4,9*8},{1011*4,-1*8},{1021*4,-26*8}
 };
 
 
@@ -794,7 +799,7 @@ const short temptable_6[NUM_TEMPS_USERTHERMISTOR1][2] PROGMEM = USER_THERMISTORT
 const short temptable_7[NUM_TEMPS_USERTHERMISTOR2][2] PROGMEM = USER_THERMISTORTABLE2 ;
 #endif // NUM_TEMPS_USERTHERMISTOR2>0
 
-const short * const temptables[15] PROGMEM = {(short int *)&temptable_1[0][0],(short int *)&temptable_2[0][0],(short int *)&temptable_3[0][0],(short int *)&temptable_4[0][0]
+const short * const temptables[14] PROGMEM = {(short int *)&temptable_1[0][0],(short int *)&temptable_2[0][0],(short int *)&temptable_3[0][0],(short int *)&temptable_4[0][0]
 #if NUM_TEMPS_USERTHERMISTOR0>0
         ,(short int *)&temptable_5[0][0]
 #else
@@ -820,10 +825,9 @@ const short * const temptables[15] PROGMEM = {(short int *)&temptable_1[0][0],(s
         ,(short int *)&temptable_12[0][0]
         ,(short int *)&temptable_13[0][0]
         ,(short int *)&temptable_14[0][0]
-        ,(short int *)&temptable_15[0][0]
-                                             };
-const uint8_t temptables_num[15] PROGMEM = {NUMTEMPS_1,NUMTEMPS_2,NUMTEMPS_3,NUMTEMPS_4,NUM_TEMPS_USERTHERMISTOR0,NUM_TEMPS_USERTHERMISTOR1,NUM_TEMPS_USERTHERMISTOR2,NUMTEMPS_8,
-                                 NUMTEMPS_9,NUMTEMPS_10,NUMTEMPS_11,NUMTEMPS_12,NUMTEMPS_13,NUMTEMPS_14,NUMTEMPS_15
+    };
+const uint8_t temptables_num[14] PROGMEM = {NUMTEMPS_1,NUMTEMPS_2,NUMTEMPS_3,NUMTEMPS_4,NUM_TEMPS_USERTHERMISTOR0,NUM_TEMPS_USERTHERMISTOR1,NUM_TEMPS_USERTHERMISTOR2,NUMTEMPS_8,
+                                                NUMTEMPS_9,NUMTEMPS_10,NUMTEMPS_11,NUMTEMPS_12,NUMTEMPS_13,NUMTEMPS_14
                                            };
 
 
@@ -848,9 +852,8 @@ void TemperatureController::updateCurrentTemperature()
         case 10: // 100k 0603 SMD Vishay NTCS0603E3104FXT (4.7k pullup)
         case 11: // 100k GE Sensing AL03006-58.2K-97-G1 (4.7k pullup)
         case 12: // 100k RS thermistor 198-961 (4.7k pullup)
-        //case 13 weiter unten, E3D PT100.
+        case 13: // NTC 3950 100k thermistor - Conrad V3
         case 14: // Thermistor NTC 3950 100k Ohm
-        case 15: // Thermistor NTC 3950 100k Ohm
         case 97: // Define Raw Thermistor and Restistor-Settings within configuration.h see USE_GENERIC_THERMISTORTABLE_1 and GENERIC_THERM_NUM_ENTRIES 
         case 98: // Define Raw Thermistor and Restistor-Settings within configuration.h see USE_GENERIC_THERMISTORTABLE_2 and GENERIC_THERM_NUM_ENTRIES 
         case 99: // Define Raw Thermistor and Restistor-Settings within configuration.h see USE_GENERIC_THERMISTORTABLE_3 and GENERIC_THERM_NUM_ENTRIES 
@@ -858,7 +861,6 @@ void TemperatureController::updateCurrentTemperature()
             currentTemperature = (1023<<(2-ANALOG_REDUCE_BITS))-(osAnalogInputValues[sensorPin]>>(ANALOG_REDUCE_BITS)); // Convert to 10 bit result
             break;
         }
-        case 13: // PT100 E3D
         case 50: // User defined PTC table
         case 51:
         case 52:
@@ -891,8 +893,8 @@ void TemperatureController::updateCurrentTemperature()
         case 10:
         case 11:
         case 12:
+        case 13: // Conrad V3
         case 14: // Thermistor NTC 3950 100k Ohm
-        case 15: // Thermistor NTC 3950 100k Ohm
         {
             type--;
             uint8_t num = pgm_read_byte(&temptables_num[type])<<1;
@@ -953,7 +955,6 @@ void TemperatureController::updateCurrentTemperature()
 
             break;
         }
-        case 13:
         case 50: // User defined PTC thermistor
         case 51:
         case 52:
@@ -1135,8 +1136,8 @@ void TemperatureController::setTargetTemperature(float target, float offset)
         case 10:
         case 11:
         case 12:
+        case 13: // NTC 3950 100k thermistor - Conrad V3
         case 14: // Thermistor NTC 3950 100k Ohm
-        case 15: // Thermistor NTC 3950 100k Ohm
         {
             type--;
             uint8_t num = pgm_read_byte(&temptables_num[type])<<1;
@@ -1172,7 +1173,6 @@ void TemperatureController::setTargetTemperature(float target, float offset)
 #endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
             break;
         }
-        case 13: // PT100 E3D
         case 50: // user defined PTC thermistor
         case 51:
         case 52:

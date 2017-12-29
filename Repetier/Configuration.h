@@ -45,11 +45,13 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
 /** \brief Define the type of your device */
 //#define MOTHERBOARD                         DEVICE_TYPE_RF1000
 //#define MOTHERBOARD                         DEVICE_TYPE_RF2000
-#define PROTOTYPE_PCB                       0                                                   // 1 = first PCB's / 0 = Final
+//#define MOTHERBOARD                         DEVICE_TYPE_RF2000v2
 
 #ifndef MOTHERBOARD
-#error Device type is not defined. Edit Configuration.h or pass the corresponding option to the compiler.
+#error Device type (RF1000 / RF2000 / RF2000v2) is not defined. Edit Configuration.h or pass the corresponding option to the compiler.
 #endif
+
+#define PROTOTYPE_PCB                       0                                                   // 1 = first PCB's / 0 = Final
 
 /** \brief EEPROM storage mode
 Set the EEPROM_MODE to 0 if you always want to use the settings in this configuration file. If not,
@@ -371,12 +373,12 @@ With RF1.37r2.Mod the Emergency-Pause-Features limits can be changed in EEPROM a
 
 
 // ##########################################################################################
-// ##   configuration of the emergency z stop functionality
+// ##   configuration of the emergency stop functionality
 // ##########################################################################################
 
 #if FEATURE_EMERGENCY_STOP_ALL
 
-/** \brief Specifies the pressure at which the emergency z-stop shall be performed, in [digits] 
+/** \brief Specifies the pressure at which the emergency stop shall be performed, in [digits] 
 With RF1.37r6.Mod the Emergency-ZStop-Features limits can be changed in EEPROM and Printers Menu. Here are the absolute maximum limits:
 Do not set them to Zero.
 */
@@ -618,7 +620,7 @@ info pages with next/previous button/click-encoder */
 #define UI_DISABLE_AUTO_PAGESWITCH          true
 
 /** \brief Time to return to info menu if x millisconds no key was pressed. Set to 0 to disable it. */
-#define UI_PRINT_AUTORETURN_TO_MENU_AFTER   60000
+#define UI_PRINT_AUTORETURN_TO_MENU_AFTER   120000
 #define UI_MILL_AUTORETURN_TO_MENU_AFTER    0
 
 /** \brief Normally cou want a next/previous actions with every click of your encoder.
@@ -664,6 +666,10 @@ Values must be in range 1..255 */
 #define BEEPER_START_WORK_PART_SCAN_SEQUENCE    100,2
 #define BEEPER_ABORT_WORK_PART_SCAN_SEQUENCE    250,5
 #define BEEPER_STOP_WORK_PART_SCAN_SEQUENCE     100,3
+//FEATURE_ALIGN_EXTRUDERS
+ #define BEEPER_START_ALIGN_EXTRUDERS_SEQUENCE  100,2
+ #define BEEPER_ABORT_ALIGN_EXTRUDERS_SEQUENCE  250,5
+ #define BEEPER_STOP_ALIGN_EXTRUDERS_SEQUENCE   100,3
 #define BEEPER_ABORT_SET_POSITION_SEQUENCE      250,5
 #define BEEPER_ACCEPT_SET_POSITION_SEQUENCE     100,2
 #define BEEPER_SERVICE_INTERVALL_SEQUNCE        100,3
@@ -673,8 +679,8 @@ Values must be in range 1..255 */
 /** \brief Values used for preheat */
 #define UI_SET_PRESET_HEATED_BED_TEMP_PLA   60
 #define UI_SET_PRESET_EXTRUDER_TEMP_PLA     180
-#define UI_SET_PRESET_HEATED_BED_TEMP_ABS   110
-#define UI_SET_PRESET_EXTRUDER_TEMP_ABS     240
+#define UI_SET_PRESET_HEATED_BED_TEMP_ABS   100
+#define UI_SET_PRESET_EXTRUDER_TEMP_ABS     210
 
 /** \brief Values used for unload(unmount)/load(mount) filament */
 #define UI_SET_EXTRUDER_TEMP_UNMOUNT        120
@@ -817,7 +823,7 @@ non-Repetier PC applications may fall over the debug outputs of the firmware. */
 #define COMMAND_BLOCK_DELAY                 1000                                                // [ms]
 
 /** \brief Configuration of the external watchdog
-The TPS3820 of the RF1000/RF2000 resets about [t_tout is watchdog time out: min 112, typ 200, max 310ms] after the last time when it was triggered
+The TPS3820 of the RF1000/RF2000 resets about 112/200/310 (min/typical/max) ms after the last time when it was triggered
 http://pdf1.alldatasheet.com/datasheet-pdf/view/29215/TI/TPS3820-50DBVT.html 
 t_d in datasheet is delay time: how long reset is triggered after timeout: 15...25...37ms for TPS3820.
 */

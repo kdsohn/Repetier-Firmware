@@ -477,7 +477,8 @@ public:
 
     void updateStepsParameter();
     inline float safeSpeed(fast8_t drivingAxis);
-    void calculateQueueMove(float axis_diff[],uint8_t pathOptimize, fast8_t drivingAxis);
+    void calculateQueueMove(float axis_diff[],uint8_t pathOptimize, fast8_t drivingAxis, float feedrate
+    );
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     void calculateDirectMove(float axis_diff[],uint8_t pathOptimize, fast8_t drivingAxis);
@@ -541,7 +542,7 @@ public:
     static inline void backwardPlanner(uint8_t p,uint8_t last);
     static void updateTrapezoids();
     static uint8_t insertWaitMovesIfNeeded(uint8_t pathOptimize, uint8_t waitExtraLines);
-    static void prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize);
+    static void prepareQueueMove(uint8_t check_endstops, uint8_t pathOptimize, float feedrate);
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     static void prepareDirectMove( void );

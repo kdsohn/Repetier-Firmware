@@ -1,6 +1,59 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.01.Mod (2017-12-29)
+- added renkforce feature FEATURE_ALIGN_EXTRUDERS
+- fixed details in FEATURE_ALIGN_EXTRUDERS
+- added menu support: Configuration -> Z-Compensation -> Align Extruders
+- added autoresolving errors by homing -> align extruders will then move to old hbs align position if you dont set manual x and y (which is possible if you dont move z out of 0!)
+- added display countdown from renkforce 1.39 to "PLA Scan" and "ABS Scan" heating process.
+Milling:
+- M3071 now shows "Start Miller"
+- M3070 now shows "Paused" and switches to menu mode paused and sends "RequestPause:" ...
+- M3130 now has a wait-for-continue added.
+- cleaned up possible tempering with Printer::feedrate if you plan paths by other functions than gcode.
+- added DEFAULT_PAUSE_STEPS_X_MILL to 0, DEFAULT_PAUSE_STEPS_Y_MILL and DEFAULT_PAUSE_STEPS_Z_MILL
+- DEFAULT_PAUSE_STEPS_Z_MILL increased to 20mm because you might crash into clamps with 2mm. I preset 2mm for printing once. Because I didnt know endstopbehaviour for pausing @RF1000. Still dont know but it seems safer now (not to crash holding clamps)
+
+V RF.01.38.Mod (2017-12-28)
+- improved ZOS handling
+- testimprovement for HBS (take back push in force by driving back in very tiny steps)
+- Temps for Scan PLA are now 210 / 60 instead of 230 / 60
+- Temps for Scan ABS are now 240 / 100 instead of 260 / 130 (Bed 100 is a better limit for DDPs, 240 is enough for most ABS)
+- Temps for preheating ABS are now 210 / 100 instead of 240 / 110 to prevent filament degradation in heatzone.
+- version bump to meet renkforce stable (no change between 1.37 and 1.38 except calling it stable)
+- testing and minor tweaks (UI_PRINT_AUTORETURN_TO_MENU_AFTER   120000 instead of 60000 / ..)
+- removed Temptable 14 and put Temptable 15 to that place. 15 looked better in excel than 14 but is quite similar.
+
+V RF.01.37z2.Mod (2017-12-27)
+- Tweaks for ZOS precision
+- tempered and cleared up things with z compensation - G1 Z0 is now surface + 5um, only minus z is forbidden. testers have been distracted too often by this stupid "Z0 = no real CMD" rule.
+
+V RF.01.37z.Mod (2017-12-26)
+- small corrections
+
+V RF.01.37z.Mod (2017-12-23)
+To move towards Renkforces 1.39 I already pulled the following changes from 1.39:
+- Added V3 Hotend (possible wrong pid values!)
+- Added definitions for RF2000v2 and PIN mapping (final??)
+- Replaced PT100 with V3 Hotends 3950 100k type, because Renkforce chose that number. PT100 is not really usable with RFx000 (not without soldering), removing that table might be ok.
+- some more ifdef Feature_Pause_Printing marks.
+- moved menu sensor type from 14 to 13 to have V3 support by menu
+- some minor code cleanup
+- added RF1000s M3076 and description
+- added checks for deleting zmatrix while CMP
+- added RF1000s PRINTER_FLAG2_RESET_FILAMENT_USAGE-fix
+- RF1000s fix for loadCompensationMatrix without milling mode
+TODO: Pull Feature Allign Extruders
+We will not pull changes for "FEATURE_CONFIGURABLE_HOTEND_TYPE" because we have another way to do this: menu configuration. This feature has been abandoned with RF.01.37r5.Mod.
+Other changes are not needed because we already fixed this stuff in earlier releases.
+TODO: We should grab the sensor tables for 13, 14, 15 and compare them. If they are somehow similar remove the clones. (One is from Renkforce, two from the Internet. hliebscher previously used type 14 for Ultimaker Hotends, but not anymore)
+
+V RF.01.37y.Mod (2017-12-18)
+- changes in matrix heat bed scan
+- changes in Z-Offset-Scan
+- changes according active and ongoing discussion with PeterKA about precision
+
 V RF.01.37x9.Mod (2017-12-05)
 - Scan Z-Offset-Scan on slightly random Point around Matrix-Point: See SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_RAND_MM
 - Some ROM-Text savings for this feature

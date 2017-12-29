@@ -1515,8 +1515,8 @@ void UIDisplay::parse(char *txt,bool ram)
                                 addStringP( PSTR(UI_TEXT_SENSOR_8) );
                                 break;
                             }
-                            case 14: {
-                                addStringP( PSTR(UI_TEXT_SENSOR_14) );
+                            case 13: {
+                                addStringP( PSTR(UI_TEXT_SENSOR_13) );
                                 break;
                             }
                         }
@@ -4080,15 +4080,15 @@ void UIDisplay::nextPreviousAction(int8_t next)
                         if(increment > 0){
                             switch(drive){
                               case 3: { drive = 8; break; }
-                              case 8: { drive = 14; break; } //add more sensors for menu-tweaking here, those are the most common for RFx000
-                              case 14: { drive = 1; break; }
+                              case 8: { drive = 13; break; } //add more sensors for menu-tweaking here, those are the most common for RFx000
+                              case 13: { drive = 1; break; }
                               default: { drive = 3; break; }
                             }
                         }else{ //== 0 gibts nicht, soweit ich weiß
                             switch(drive){
                               case 3: { drive = 1; break; }
-                              case 1: { drive = 14; break; }
-                              case 14: { drive = 8; break; } //add more sensors for menu-tweaking here, those are the most common for RFx000
+                              case 1: { drive = 13; break; }
+                              case 13: { drive = 8; break; } //add more sensors for menu-tweaking here, those are the most common for RFx000
                               default: { drive = 3; break; }
                             }
                         }
@@ -5377,6 +5377,15 @@ void UIDisplay::executeAction(int action)
                 break;
             }
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_ALIGN_EXTRUDERS
+            case UI_ACTION_ALIGN_EXTRUDERS:
+            {
+                uid.menuPos[0] = 0;
+                uid.menuLevel = 0;
+                startAlignExtruders();
+                break;
+            }
+#endif // FEATURE_ALIGN_EXTRUDERS
         }
     }
 

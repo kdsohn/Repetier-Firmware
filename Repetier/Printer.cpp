@@ -254,8 +254,13 @@ void Printer::constrainQueueDestinationCoords()
 
 void Printer::constrainDirectDestinationCoords()
 {
-    if(isNoDestinationCheck()) return;
-    if(g_pauseStatus) return; //pausebewegung rechnet mit current queue
+    if(isNoDestinationCheck()){
+        return;
+    }
+    if(g_pauseStatus){
+        return; 
+        // the pause-and-continue functionality must calculate the constrains by itself
+    }
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 #if max_software_endstop_x == true
     if (queuePositionTargetSteps[X_AXIS] + directPositionTargetSteps[X_AXIS] > Printer::maxSteps[X_AXIS]) Printer::directPositionTargetSteps[X_AXIS] = Printer::maxSteps[X_AXIS] - queuePositionTargetSteps[X_AXIS];
@@ -457,7 +462,7 @@ void Printer::updateAdvanceFlags()
 
 
 // This is for untransformed move to coordinates in printers absolute Cartesian space
-void Printer::moveTo(float x,float y,float z,float e,float f)
+void Printer::moveTo(float x,float y,float z,float e,float feedrate)
 {
     if(x != IGNORE_COORDINATE)
         queuePositionTargetSteps[X_AXIS] = (x + Printer::extruderOffset[X_AXIS]) * axisStepsPerMM[X_AXIS];
@@ -467,17 +472,16 @@ void Printer::moveTo(float x,float y,float z,float e,float f)
         queuePositionTargetSteps[Z_AXIS] = (z + Printer::extruderOffset[Z_AXIS]) * axisStepsPerMM[Z_AXIS];
     if(e != IGNORE_COORDINATE)
         queuePositionTargetSteps[E_AXIS] = e * axisStepsPerMM[E_AXIS];
-    if(f != IGNORE_COORDINATE)
-        Printer::feedrate = f;
+    if(feedrate == IGNORE_COORDINATE) feedrate = Printer::feedrate;
 
-    PrintLine::prepareQueueMove(ALWAYS_CHECK_ENDSTOPS,true);
+    PrintLine::prepareQueueMove(ALWAYS_CHECK_ENDSTOPS, true, feedrate);
     updateCurrentPosition(false);
 
 } // moveTo
 
 /** Move to transformed Cartesian coordinates, mapping real (model) space to printer space.
 */
-void Printer::moveToReal(float x,float y,float z,float e,float f)
+void Printer::moveToReal(float x,float y,float z,float e,float feedrate)
 {
     if(x == IGNORE_COORDINATE)        x = queuePositionLastMM[X_AXIS];
     else queuePositionLastMM[X_AXIS] = x;
@@ -495,10 +499,9 @@ void Printer::moveToReal(float x,float y,float z,float e,float f)
     queuePositionTargetSteps[Z_AXIS] = static_cast<int32_t>(floor(z * axisStepsPerMM[Z_AXIS] + 0.5));
     if(e != IGNORE_COORDINATE)
         queuePositionTargetSteps[E_AXIS] = e * axisStepsPerMM[E_AXIS];
-    if(f != IGNORE_COORDINATE)
-        Printer::feedrate = f;
+    if(feedrate == IGNORE_COORDINATE) feedrate = Printer::feedrate;
 
-    PrintLine::prepareQueueMove(ALWAYS_CHECK_ENDSTOPS,true);
+    PrintLine::prepareQueueMove(ALWAYS_CHECK_ENDSTOPS, true, feedrate);
 
 } // moveToReal
 
@@ -732,7 +735,7 @@ uint8_t Printer::setDestinationStepsFromMenu( float relativeX, float relativeY, 
         return false; // ignore move
     }
 
-    PrintLine::prepareQueueMove( ALWAYS_CHECK_ENDSTOPS, true );
+    PrintLine::prepareQueueMove(ALWAYS_CHECK_ENDSTOPS, true, Printer::feedrate);
     return true;
 
 } // setDestinationStepsFromMenu
@@ -1364,13 +1367,11 @@ void Printer::MemoryPosition()
 void Printer::GoToMemoryPosition(bool x,bool y,bool z,bool e,float feed)
 {
     bool all = !(x || y || z);
-    float oldFeedrate = Printer::feedrate;
     moveToReal((all || x ? memoryX : IGNORE_COORDINATE)
                ,(all || y ? memoryY : IGNORE_COORDINATE)
                ,(all || z ? memoryZ : IGNORE_COORDINATE)
                ,(e ? memoryE:IGNORE_COORDINATE),
                feed);
-    Printer::feedrate = oldFeedrate;
 } // GoToMemoryPosition
 #endif // FEATURE_MEMORY_POSITION
 
@@ -1650,8 +1651,9 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
         homingOrder = HOMING_ORDER_MILL;
     }
 #else
-    homingOrder = HOMING_ORDER;
+    homingOrder = HOMING_ORDER_PRINT;
 #endif // FEATURE_MILLING_MODE
+
 #if FEATURE_MILLING_MODE
     if(operatingMode == OPERATING_MODE_PRINT){
 #endif // FEATURE_MILLING_MODE
@@ -1786,8 +1788,9 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
 
 bool Printer::allowQueueMove( void )
 {
+#if FEATURE_PAUSE_PRINTING
     if( g_pauseStatus == PAUSE_STATUS_PAUSED ) return false;
-
+#endif // FEATURE_PAUSE_PRINTING
     if( !( (PAUSE_STATUS_GOTO_PAUSE1 <= g_pauseStatus && g_pauseStatus <= PAUSE_STATUS_HEATING) || g_pauseStatus == PAUSE_STATUS_NONE) 
         && !PrintLine::cur )
     {
@@ -1943,12 +1946,20 @@ void Printer::performZCompensation( void )
     {
         if( PrintLine::cur->isZMove() )
         {
-            // do not peform any compensation while there is a "real" move into z-direction
+            // do not peform any compensation while there is a queue move into z-direction
             if( PrintLine::cur->stepsRemaining ) return;
             else PrintLine::cur->setZMoveFinished();
         }
     }
 
+/* das hier ... conrad 1.39, oder meine version : eins drunter??? TODO Nibbels 23.12.2017
+    if( Printer::directPositionCurrentSteps[Z_AXIS] != Printer::directPositionTargetSteps[Z_AXIS] )
+    {
+        // do not perform any compensation while there is a direct move into z-direction
+        return;
+    }
+ */
+    
     if( PrintLine::direct.isZMove() )
     {
         // do not peform any compensation while there is a direct-move into z-direction
