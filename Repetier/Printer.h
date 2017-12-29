@@ -1214,8 +1214,8 @@ public:
     static void defaultLoopActions();
     static uint8_t setDestinationStepsFromGCode(GCode *com);
     static uint8_t setDestinationStepsFromMenu( float relativeX, float relativeY, float relativeZ );
-    static void moveTo(float x,float y,float z,float e,float f);
-    static void moveToReal(float x,float y,float z,float e,float f);
+    static void moveTo(float x,float y,float z,float e,float feedrate);
+    static void moveToReal(float x,float y,float z,float e,float feedrate);
     static void homeAxis(bool xaxis,bool yaxis,bool zaxis); /// Home axis
     static uint8_t setOrigin(float xOff,float yOff,float zOff);
     static bool isPositionAllowed(float x,float y,float z);

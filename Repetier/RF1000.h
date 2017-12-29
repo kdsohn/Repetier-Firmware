@@ -862,7 +862,7 @@ This defines the full power duration before returning to set value. Time is in m
     #define HOMING_ORDER_PRINT              HOME_ORDER_XYZ
     #define HOMING_ORDER_MILL               HOME_ORDER_ZXY
 #else
-    #define HOMING_ORDER                    HOME_ORDER_XYZ
+    #define HOMING_ORDER_PRINT              HOME_ORDER_XYZ
 #endif // FEATURE_MILLING_MODE
 
 /** \brief If you have a backlash in both z-directions, you can use this. For most printer, the bed will be pushed down by it's
@@ -1191,9 +1191,13 @@ Above this value the z compensation will distribute the roughness of the surface
 #if FEATURE_PAUSE_PRINTING 
 
 /** \brief Configuration of the pause steps */
-#define DEFAULT_PAUSE_STEPS_X               (XAXIS_STEPS_PER_MM * -200)
-#define DEFAULT_PAUSE_STEPS_Y               (YAXIS_STEPS_PER_MM * 200)
-#define DEFAULT_PAUSE_STEPS_Z               (ZAXIS_STEPS_PER_MM * 2)
+//Nibbels: 29122017 dont know what happens if pause hits max endstop etc. ... might get shifted coordinates!
+#define DEFAULT_PAUSE_STEPS_X_MILL          (XAXIS_STEPS_PER_MM * 0)  //look here if you want to prevent clamp crashes while milling! choose your pause position right.
+#define DEFAULT_PAUSE_STEPS_X_PRINT         (XAXIS_STEPS_PER_MM * -200)
+#define DEFAULT_PAUSE_STEPS_Y_MILL          (YAXIS_STEPS_PER_MM * 200)
+#define DEFAULT_PAUSE_STEPS_Y_PRINT         (YAXIS_STEPS_PER_MM * 200)
+#define DEFAULT_PAUSE_STEPS_Z_MILL          (ZAXIS_STEPS_PER_MM * 20)
+#define DEFAULT_PAUSE_STEPS_Z_PRINT         (ZAXIS_STEPS_PER_MM * 2)
 #define DEFAULT_PAUSE_STEPS_EXTRUDER        (EXT0_STEPS_PER_MM  * SCRIPT_RETRACT_MM)
 
 #define PAUSE_X_SPACING                     (XAXIS_STEPS_PER_MM * 5)

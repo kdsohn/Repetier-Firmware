@@ -535,7 +535,7 @@ void Commands::executeGCode(GCode *com)
             }
             if(Printer::setDestinationStepsFromGCode(com)) // For X Y Z E F
             {
-                PrintLine::prepareQueueMove(ALWAYS_CHECK_ENDSTOPS,true);
+                PrintLine::prepareQueueMove(ALWAYS_CHECK_ENDSTOPS,true, Printer::feedrate);
             }
             break;
         }

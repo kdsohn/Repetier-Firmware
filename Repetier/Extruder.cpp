@@ -442,9 +442,7 @@ void Extruder::selectExtruderById(uint8_t extruderId)
     
     if(Printer::areAxisHomed())
     {
-        float oldfeedrate = Printer::feedrate;
         Printer::moveToReal(IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,Printer::homingFeedrate[X_AXIS]);
-        Printer::feedrate = oldfeedrate;
     }
     Printer::updateCurrentPosition();
 #if USE_ADVANCE

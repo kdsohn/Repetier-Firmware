@@ -172,7 +172,7 @@ unsigned long   g_nManualSteps[4]           = { (unsigned long)DEFAULT_MANUAL_ST
 #endif // FEATURE_EXTENDED_BUTTONS
 
 #if FEATURE_PAUSE_PRINTING
-volatile long   g_nPauseSteps[4]            = { (long)DEFAULT_PAUSE_STEPS_X, (long)DEFAULT_PAUSE_STEPS_Y, (long)DEFAULT_PAUSE_STEPS_Z, (long)DEFAULT_PAUSE_STEPS_EXTRUDER };
+volatile long   g_nPauseSteps[4]            = { (long)DEFAULT_PAUSE_STEPS_X_PRINT, (long)DEFAULT_PAUSE_STEPS_Y_PRINT, (long)DEFAULT_PAUSE_STEPS_Z_PRINT, (long)DEFAULT_PAUSE_STEPS_EXTRUDER };
 volatile long   g_nContinueSteps[4]         = { 0, 0, 0, 0 };
 volatile char   g_pauseStatus               = PAUSE_STATUS_NONE;
 volatile char   g_pauseMode                 = PAUSE_MODE_NONE;
@@ -5439,7 +5439,7 @@ void moveZ( int nSteps )
             {
                 prepareBedDown();
                 HAL::delayMicroseconds( XYZ_DIRECTION_CHANGE_DELAY );
-                Com::printFLN( PSTR( "moveZ: BedDown Z=" ),g_nZScanZPosition );
+                //Com::printFLN( PSTR( "moveZ: BedDown Z=" ),g_nZScanZPosition );  //kann manchmal verwirrend sein, gleiche richtugnen werden nicht angezeigt. Hoch, etwas runter .... scan ergebnis ... runter für neuanlauf  -> scanergebnis unsichtbar.
             }
             DirectionZ = 1;
         }
@@ -5449,7 +5449,7 @@ void moveZ( int nSteps )
             {
                 prepareBedUp();
                 HAL::delayMicroseconds( XYZ_DIRECTION_CHANGE_DELAY );
-                Com::printFLN( PSTR( "moveZ: BedUp Z=" ),g_nZScanZPosition );
+                //Com::printFLN( PSTR( "moveZ: BedUp Z=" ),g_nZScanZPosition );  //kann manchmal verwirrend sein, gleiche richtugnen werden nicht angezeigt. Hoch, etwas runter .... scan ergebnis ... runter für neuanlauf  -> scanergebnis unsichtbar.
             }
             DirectionZ = -1;
         }
@@ -6890,16 +6890,19 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                 // there is no printing in progress any more, do all clean-up now
                 g_uStopTime = 0;
 
-                // disable all heaters
-                Extruder::setHeatedBedTemperature( 0, false );
-                Extruder::setTemperatureForExtruder( 0, 0, false );
-
-#if NUM_EXTRUDER == 2
-                Extruder::setTemperatureForExtruder( 0, 1, false );
-#endif // #if NUM_EXTRUDER == 2
-
 #if FEATURE_MILLING_MODE
-                if ( Printer::operatingMode == OPERATING_MODE_MILL )
+                if ( Printer::operatingMode == OPERATING_MODE_PRINT )
+                {
+#endif // FEATURE_MILLING_MODE
+                    // disable all heaters
+                    Extruder::setHeatedBedTemperature( 0, false );
+                    Extruder::setTemperatureForExtruder( 0, 0, false );
+#if NUM_EXTRUDER == 2
+                    Extruder::setTemperatureForExtruder( 0, 1, false );
+#endif // #if NUM_EXTRUDER == 2
+#if FEATURE_MILLING_MODE
+                }
+                else if ( Printer::operatingMode == OPERATING_MODE_MILL )
                 {
                     EEPROM::updatePrinterUsage();
                 }
@@ -6910,10 +6913,11 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
         }
     }
 
-    if( g_uBlockSDCommands > 1 )
+    if( g_uBlockSDCommands > 1 ) //=1 scheint zu blocken, dann muss StopTIme aktiv sein und hier drüber erst eine Uhrzeit reinsetzen.
     {
         if( (uTime - g_uBlockSDCommands) > COMMAND_BLOCK_DELAY ) //jede 1 sekunden wäre standard nach config
         {
+            g_uBlockSDCommands = 0;
 #if FEATURE_OUTPUT_FINISHED_OBJECT
             // output the object
             outputObject();
@@ -6930,11 +6934,6 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #endif // FEATURE_OUTPUT_FINISHED_OBJECT
-
-            // cleanupXPositions(); siehe disableXStepper ! bzw output_object ebenfalls
-            //cleanupYPositions(); Siehe disableYStepper ! bzw output_object ebenfalls
-            //cleanupZPositions(); Siehe disableZStepper ! bzw output_object ebenfalls
-            g_uBlockSDCommands = 0;
         }
     }
     
@@ -7616,13 +7615,18 @@ void determineZPausePositionForMill( void )
 
 } // determineZPausePositionForMill
 
-void waitUntilContinue( void ) //Nibbels: Verstehe ich nicht! Man sollte Pause und Continue nutzen?? Aber warum das? Wegen der Gcode-Queue? Aber Pause hält auch die Queue an. .... TODO-> 03.09.2017 Das ist ein Warte-GCode 3071 der aufs Auflösen der Pause wartet, aber auch andere GCodes blockt. Kann mir nur gerade keine Anwendung dafür ausdenken.
+void waitUntilContinue( void ) 
+//Nibbels: Verstehe ich nicht! Man sollte Pause und Continue nutzen?? Aber warum das? Wegen der Gcode-Queue? Aber Pause hält auch die Queue an. .... 
+//TODO-> 03.09.2017 Das ist ein Warte-GCode 3071 der aufs Auflösen der Pause wartet, aber auch andere GCodes blockt. Kann mir nur gerade keine Anwendung dafür ausdenken.
+//29_12_2017 -> Das ist fürs Fräsen -> warten auf anschalten des millers
 {
     if( g_pauseStatus == PAUSE_STATUS_NONE )
     {
         // we are not paused at the moment
         return;
     }
+    
+    UI_STATUS_UPD( UI_TEXT_START_MILL );
     
     while ( g_pauseStatus != PAUSE_STATUS_NONE )
     {
@@ -8696,9 +8700,14 @@ void processCommand( GCode* pCommand )
                 //}
                 else
                 {
-                    queueTask( TASK_PAUSE_PRINT ); 
+                    queueTask( TASK_PAUSE_PRINT );
                 }
-
+                //dont want this in interrupt - maybe shown to early but pause will come for sure!
+                Com::printFLN( PSTR("RequestPause:") ); //repetier
+                Com::printFLN( PSTR( "// action:pause" ) ); //octoprint
+                UI_STATUS_UPD( UI_TEXT_PAUSED );
+                uid.refreshPage();
+                Printer::setMenuMode( MENU_MODE_PAUSED, true );
                 break;
             }
             case 3071: // M3071 - wait until the print has been continued via the "Continue" button
@@ -9240,6 +9249,7 @@ void processCommand( GCode* pCommand )
             case 3130: // M3130 - start/stop the search of the z-origin
             {
                 startFindZOrigin();
+                Commands::waitUntilEndOfAllMoves(); //might prevent stop
                 break;
             }
 #endif // FEATURE_FIND_Z_ORIGIN
@@ -13572,6 +13582,10 @@ void setupForPrinting( void )
     Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_PRINT;
 #endif // EEPROM_MODE
 
+    g_nPauseSteps[X_AXIS] = DEFAULT_PAUSE_STEPS_X_PRINT;
+    g_nPauseSteps[Y_AXIS] = DEFAULT_PAUSE_STEPS_Y_PRINT;
+    g_nPauseSteps[Z_AXIS] = DEFAULT_PAUSE_STEPS_Z_PRINT;
+    
     Printer::updateDerivedParameter();
 
     g_staticZSteps = (Printer::ZOffset * Printer::axisStepsPerMM[Z_AXIS]) / 1000;
@@ -13636,6 +13650,10 @@ void setupForMilling( void )
 #else
     Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_MILL;
 #endif // EEPROM_MODE
+
+    g_nPauseSteps[X_AXIS] = DEFAULT_PAUSE_STEPS_X_MILL;
+    g_nPauseSteps[Y_AXIS] = DEFAULT_PAUSE_STEPS_Y_MILL;
+    g_nPauseSteps[Z_AXIS] = DEFAULT_PAUSE_STEPS_Z_MILL;
 
     Printer::updateDerivedParameter();
 
