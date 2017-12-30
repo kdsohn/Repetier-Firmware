@@ -3254,7 +3254,7 @@ void doHeatBedZCompensation( void )
                           (g_ZCompensationMatrix[nXRightIndex][nYBackIndex] - g_ZCompensationMatrix[nXLeftIndex][nYBackIndex]) * nDeltaX / nStepSizeX;
 
             nNeededZCompensation = nTempXFront +
-                                   (nTempXBack - nTempXFront) * nDeltaY / nStepSizeY;
+                                   (nTempXBack - nTempXFront) * nDeltaY / nStepSizeY; //Das ist hier noch der Zeiger auf die Oberfläche.
 
 #if DEBUG_HEAT_BED_Z_COMPENSATION
             g_nDelta[X_AXIS]    = nDeltaX;
@@ -3280,25 +3280,31 @@ void doHeatBedZCompensation( void )
                 if(nCurrentPositionSteps[Z_AXIS] == 0){
                     nNeededZCompensation += 13; //G1 Z0 shall not hit the bed: +5um -> this is better than not compensating at all because it makes tests weired.
                 }
+                Printer::compensatedPositionOverPercE = 0.0f;
             }
             else
             {
-                // the printer is already a bit away from the surface - do the actual compensation
-                nNeededZCompensation = g_offsetZCompensationSteps + 
-                                       ((nNeededZCompensation - g_offsetZCompensationSteps) * (g_maxZCompensationSteps - nCurrentPositionSteps[Z_AXIS]))
-                                                                                              / (g_maxZCompensationSteps - g_minZCompensationSteps);
+                // Compensate Extrusion within ZCMP: Add and sum up this amount for every step extruded in move interrupt. Extrude the step if we have some full >=1.0 in interrupt.
+                Printer::compensatedPositionOverPercE = float(g_offsetZCompensationSteps - nNeededZCompensation) / float(g_maxZCompensationSteps - g_minZCompensationSteps);
+                
+                // the printer is already a bit away from the surface - do the actual compensation -> Hier ist nNeededZCompensation dann nicht mehr der Zeiger auf die Oberfläche, sondern der Zeiger auf die kompensationshöhe:
+                nNeededZCompensation = ((nNeededZCompensation - g_offsetZCompensationSteps) * (g_maxZCompensationSteps - nCurrentPositionSteps[Z_AXIS]))
+                                                                    / (g_maxZCompensationSteps - g_minZCompensationSteps);
+                nNeededZCompensation += g_offsetZCompensationSteps;
             }
         }
         else
         {   
             // after the first layers, only the static offset to the surface must be compensated
             nNeededZCompensation = g_offsetZCompensationSteps;
+            Printer::compensatedPositionOverPercE = 0.0f;
         }
     }
     else
     {
         //Gcode Z < 0 soll 5um überhalb des top matrix elements bleiben: diese anweisungen sind generell für uns sinnlos bzw. schädlich.
         nNeededZCompensation = g_offsetZCompensationSteps + 13;
+        Printer::compensatedPositionOverPercE = 0.0f;
     }
 
     nNeededZCompensation += g_staticZSteps;

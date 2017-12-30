@@ -1,6 +1,9 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.02.Mod (2017-12-30)
+- added E-Compensation for Z-Compensation layer expansion.
+
 V RF.01.38.01.Mod (2017-12-29)
 - added renkforce feature FEATURE_ALIGN_EXTRUDERS
 - fixed details in FEATURE_ALIGN_EXTRUDERS

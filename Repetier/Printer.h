@@ -146,6 +146,9 @@ public:
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
     static volatile long    compensatedPositionTargetStepsZ;
     static volatile long    compensatedPositionCurrentStepsZ;
+    static volatile float   compensatedPositionOverPercE;
+    static volatile float   compensatedPositionCollectTinyE;
+    static volatile bool    compensatedPositionPushE;
     static volatile char    endZCompensationStep;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 

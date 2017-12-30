@@ -1984,7 +1984,7 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
 
         if(move->isEMove())
         {
-            if((move->error[E_AXIS] -= move->delta[E_AXIS]) < 0)
+            if((move->error[E_AXIS] -= move->delta[E_AXIS]) < 0 || Printer::compensatedPositionPushE) //we want to push some E step out if it is planned OR needed because of ZCMP-E-Compensation
             {
 #if USE_ADVANCE
                 if(Printer::isAdvanceActivated()) // Use interrupt for movement
@@ -1998,8 +1998,26 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
 #endif // USE_ADVANCE
                     Extruder::step();
 
-                if( forQueue )  move->error[E_AXIS] += queueError;
-                else            move->error[E_AXIS] += directError;
+                if(!Printer::compensatedPositionPushE){
+                    //add % parts of steps to extrusion because of higher layer heights caused by ZCMP
+                    if(Printer::compensatedPositionOverPercE != 0.0f){
+                        //if we have primaryAxis as E_AXIS we would not be able to smuggle in steps because they are in one row - and it wouldnt make sense anyways, because those moves are retracts typically.
+                        if(move->primaryAxis != E_AXIS) Printer::compensatedPositionCollectTinyE += Printer::compensatedPositionOverPercE;
+                        if(Printer::compensatedPositionCollectTinyE >= 1.0f) Printer::compensatedPositionPushE = true;
+                    /*
+                    }else{
+                        Printer::compensatedPositionCollectTinyE = 0.0f; //clear rest if out of compensation?? --> really necessary or is some part of one step acceptable because we are never gonna come back to CMP if we moved out??
+                    */
+                    }
+                    //only count step if it is not caused by ZCMP-E-Compensation
+                    if( forQueue )  move->error[E_AXIS] += queueError;
+                    else            move->error[E_AXIS] += directError;
+                }else{
+                    //never count or update queue/direct steps if we are smuggling a step amongst others because of ZCMP-E-Compensation
+                    Printer::compensatedPositionPushE = false;
+                    Printer::compensatedPositionCollectTinyE--;
+                }
+
             }
         }
         if(move->isXMove())
