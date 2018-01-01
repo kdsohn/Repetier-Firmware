@@ -2047,7 +2047,10 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
                     if(Printer::compensatedPositionOverPercE != 0.0f){
                         //if we have primaryAxis as E_AXIS we would not be able to smuggle in steps because they are in one row - and it wouldnt make sense anyways, because those moves are retracts typically.
                         if(move->primaryAxis != E_AXIS) Printer::compensatedPositionCollectTinyE += Printer::compensatedPositionOverPercE;
-                        if(Printer::compensatedPositionCollectTinyE >= 1.0f) Printer::compensatedPositionPushE = true;
+                        if(Printer::compensatedPositionCollectTinyE >= 1.0f){
+                            Printer::compensatedPositionPushE = true;
+                            while (Printer::compensatedPositionCollectTinyE >= 2.0f) Printer::compensatedPositionCollectTinyE--; //notfalls bei überkompensation - sollte nicht vorkommen.
+                        }
                     /*
                     }else{
                         Printer::compensatedPositionCollectTinyE = 0.0f; //clear rest if out of compensation?? --> really necessary or is some part of one step acceptable because we are never gonna come back to CMP if we moved out??
