@@ -186,6 +186,13 @@ List of placeholder:
 %FH : Digit Homing to Zero ON/OFF
 %FC : Digits force-bend-hotend-down Compensation Z ON/OFF
 
+%LL : Last Layer (Direct + Queue + Extr. Zoffset)
+%LC : Current Layer (Direct + Queue + Extr. Zoffset)
+%LH : Layer Height
+%LP : ECMP %
+%Lm : g_minZCompensationSteps
+%LM : g_maxZCompensationSteps
+
 */
 
 // Define precision for temperatures. With small displays only integer values fit.
@@ -212,42 +219,7 @@ UI_PAGE2(name,row1,row2);
 for 2 row displays. You can add additional pages or change the default pages like you want.
 */
 
-#if UI_ROWS>=6 && UI_DISPLAY_TYPE==5
-
-    // graphic main status
-    UI_PAGE6(ui_page1,"\xa %e0/%E0\xb0 X:%x0",
-
-    #if NUM_EXTRUDER>1
-         "\xa %e1/%E1\xb0 Y:%x1",
-    #else
-         "\xa -----/---\xb0 Y:%x1",
-    #endif // NUM_EXTRUDER>1
-
-    #if HAVE_HEATED_BED==true
-         "\xe %eb/%Eb\xb0 Z:%x2",
-    #else
-         "\xb -----/---\xb0 Z:%x2",
-    #endif // HAVE_HEATED_BED==true
-
-    "Mul:%om", "Buf:%oB", "%os");
-
-    #if EEPROM_MODE!=0
-        UI_PAGE4(ui_page2,"%Z5","%Z6","%Z7","%Z8")
-        #define UI_PRINTTIME_PAGES ,&ui_page2
-        #define UI_PRINTTIME_COUNT 1
-    #else
-        #define UI_PRINTTIME_PAGES
-        #define UI_PRINTTIME_COUNT 0
-    #endif // EEPROM_MODE!=0
-
-    /* Merge pages together. Use the following pattern:
-    #define UI_PAGES {&name1,&name2,&name3} */
-    #define UI_PAGES {&ui_page1 UI_PRINTTIME_PAGES}
-
-    // How many pages do you want to have. Minimum is 1.
-    #define UI_NUM_PAGES 1+UI_PRINTTIME_COUNT
-
-#elif UI_ROWS>=4
+#if UI_ROWS>=4
     #if HAVE_HEATED_BED==true
         #if UI_COLS<=16
             UI_PAGE4(ui_page1,"%U1%ec/%EcB%eB/%Eb%U2","Z:%x2 mm %sC%hz",UI_TEXT_STRAIN_GAUGE,"%os")
@@ -284,37 +256,43 @@ for 2 row displays. You can add additional pages or change the default pages lik
         #define UI_SERVICE_PAGES
         #define UI_SERVICE_COUNT 0
     #endif // EEPROM_MODE && FEATURE_SERVICE_INTERVAL
+    
     #if UI_COLS<=16
-    UI_PAGE4(ui_page_mod,UI_TEXT_STRAIN_GAUGE_SPEED,
+        UI_PAGE4(ui_page_mod,UI_TEXT_STRAIN_GAUGE_SPEED,
                         "zO: %z0um zM: %HB",
                         "sO: %sSum%sM",
                         "Z: %x2mm %sC%hz")
-    #else   
-    UI_PAGE4(ui_page_mod,UI_TEXT_STRAIN_GAUGE_SPEED,
+    #else
+        UI_PAGE4(ui_page_mod,UI_TEXT_STRAIN_GAUGE_SPEED,
                         "zO: %z0 um zMat: %HB",
                         "sO: %sS um %sM",
                         "Z: %x2 mm %sC%hz")
-    #endif // EEPROM_MODE && FEATURE_SERVICE_INTERVAL
-    #define UI_MOD_PAGES &ui_page_mod
+    #endif 
+    #define UI_MOD_PAGES , &ui_page_mod
     #define UI_MOD_COUNT 1
+    
+    #if UI_COLS<=16
+        UI_PAGE4(ui_page_mod2,  "LayerHeight:%LH",
+                                "ECMP%%%:%LP",
+                                "Max:%LMMin:%Lm",
+                                "Z:%x2 Z:%LC"
+                                )
+    #else
+        UI_PAGE4(ui_page_mod2,  "LayerHeight:%LH",
+                                "ECMP%%%:%LP",
+                                "CMPMax:%LM Min:%Lm",
+                                "Z:%x2 Z:%LC"
+                                )
+    #endif
+    #define UI_MOD2_PAGES , &ui_page_mod2
+    #define UI_MOD2_COUNT 1
     
     /* Merge pages together. Use the following pattern:
     #define UI_PAGES {&name1,&name2,&name3} */
-    #define UI_PAGES {&ui_page1,UI_MOD_PAGES,&ui_page2,&ui_page3 UI_PRINTTIME_PAGES UI_SERVICE_PAGES}
+    #define UI_PAGES {&ui_page1 UI_MOD_PAGES, &ui_page2, &ui_page3 UI_PRINTTIME_PAGES UI_SERVICE_PAGES UI_MOD2_PAGES}
 
     // How many pages do you want to have. Minimum is 1.
-    #define UI_NUM_PAGES 3+UI_PRINTTIME_COUNT+UI_SERVICE_COUNT+UI_MOD_COUNT
-#else
-    UI_PAGE2(ui_page1,UI_TEXT_PAGE_EXTRUDER,UI_TEXT_PAGE_BED)
-    UI_PAGE2(ui_page2,"X:%x0 Y:%x1","%os")
-    UI_PAGE2(ui_page3,"Z:%x2 mm %sC%hz","%os")
-
-    /* Merge pages together. Use the following pattern:
-    #define UI_PAGES {&name1,&name2,&name3} */
-    #define UI_PAGES {&ui_page1,&ui_page2,&ui_page3}
-
-    // How many pages do you want to have. Minimum is 1.
-    #define UI_NUM_PAGES 3
+    #define UI_NUM_PAGES 3+UI_PRINTTIME_COUNT+UI_SERVICE_COUNT+UI_MOD_COUNT+UI_MOD2_COUNT
 #endif // UI_ROWS>=4
 
 /* ============ MENU definition ================

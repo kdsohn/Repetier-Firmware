@@ -1949,6 +1949,40 @@ void UIDisplay::parse(char *txt,bool ram)
 #endif // FEATURE_DIGIT_FLOW_COMPENSATION
                 break;
             }
+            case 'L':
+            {
+                if(c2=='L')                                                                             // %LL : Last Layer (Direct + Queue + Extr. Zoffset)
+                {
+                    addFloat(float(Printer::queuePositionZLayerLast*Printer::invAxisStepsPerMM[Z_AXIS]),3,2);
+                    break;
+                }
+                else if(c2=='C')                                                                        // %LC : Current Layer (Direct + Queue + Extr. Zoffset)
+                {
+                    addFloat(float(Printer::queuePositionZLayerCurrent*Printer::invAxisStepsPerMM[Z_AXIS]),3,2);
+                    break;
+                }
+                else if(c2=='H')                                                                        // %LH : Layer Height
+                {
+                    addFloat(float(Printer::queuePositionZLayerCurrent-Printer::queuePositionZLayerLast)*Printer::invAxisStepsPerMM[Z_AXIS],1,2);
+                    break;
+                }
+                else if(c2=='P')                                                                        // %LP : ECMP %
+                {
+                    addFloat(Printer::compensatedPositionOverPercE,1,4);
+                    break;
+                }
+                else if(c2=='m')                                                                        // %Lm : g_minZCompensationSteps
+                {
+                    addFloat(float(g_minZCompensationSteps*Printer::invAxisStepsPerMM[Z_AXIS]),1,2);
+                    break;
+                }
+                else if(c2=='M')                                                                        // %LM : g_maxZCompensationSteps
+                {
+                    addFloat(float(g_maxZCompensationSteps*Printer::invAxisStepsPerMM[Z_AXIS]),1,2);
+                    break;
+                }
+                break;
+            }
             case 'Z':                                                                                   // %Z1-Z4: Page5 service intervall, %Z5-Z8: Page4 printing/milling time
             {
                 if(c2=='1')                                                                             // Shows text printing/milling time since last service

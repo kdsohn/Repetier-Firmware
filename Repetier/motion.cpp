@@ -159,6 +159,22 @@ void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize, fl
     for(uint8_t axis=0; axis < 4; axis++)
     {
         p->delta[axis] = Printer::queuePositionTargetSteps[axis] - Printer::queuePositionLastSteps[axis];
+        
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+        //find highest Z layer with extrusion beneath g_maxZCompensationSteps for calculating the bordercrossing infill additions
+        if(axis == Z_AXIS){
+            if(p->delta[axis] != 0){ //z achsen aufstieg/abstieg -> wir müssen durch erkennung von extrusion mögliche zlifts filtern!
+                InterruptProtectedBlock noInts;
+                Printer::queuePositionZLayerCurrent_cand = Printer::queuePositionTargetSteps[Z_AXIS] + Extruder::current->zOffset;
+    #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
+                Printer::queuePositionZLayerCurrent_cand += Printer::directPositionCurrentSteps[Z_AXIS];
+    #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
+                noInts.unprotect();
+                if(Printer::queuePositionZLayerCurrent_cand == Printer::queuePositionZLayerCurrent) Printer::queuePositionZLayerCurrent_cand = 0; //nach zlift nicht neu bestimmen.
+            }
+        }
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION
+
         if(axis == E_AXIS)
         {
             Printer::extrudeMultiplyError += (static_cast<float>(p->delta[E_AXIS]) * Printer::extrusionFactor
@@ -169,6 +185,29 @@ void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize, fl
             p->delta[E_AXIS] = static_cast<int32_t>(Printer::extrudeMultiplyError);
             Printer::extrudeMultiplyError -= p->delta[E_AXIS];
             Printer::filamentPrinted += p->delta[E_AXIS] * Printer::invAxisStepsPerMM[axis];
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+            //prüfe ob in der letzten angefahrenen Z layerhöhe extrudiert wird: dann kein zlift!
+            if(Printer::queuePositionZLayerCurrent_cand){
+                if(p->delta[axis] > 0){
+                    InterruptProtectedBlock noInts;
+                    long nCurrentPositionStepsZ = Printer::queuePositionTargetSteps[Z_AXIS] + Extruder::current->zOffset;
+#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
+                    nCurrentPositionStepsZ += Printer::directPositionCurrentSteps[Z_AXIS];
+#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
+                    noInts.unprotect();
+                    if(Printer::queuePositionZLayerCurrent_cand == nCurrentPositionStepsZ){
+                        Printer::queuePositionZLayerLast = Printer::queuePositionZLayerCurrent;
+                        Printer::queuePositionZLayerCurrent = Printer::queuePositionZLayerCurrent_cand;
+                        if(Printer::queuePositionZLayerLast > Printer::queuePositionZLayerCurrent){
+                            if(Printer::queuePositionZLayerCurrent < Printer::axisStepsPerMM[Z_AXIS]){
+                                Printer::queuePositionZLayerLast = 0;
+                            }
+                        }
+                    }
+                    Printer::queuePositionZLayerCurrent_cand = 0;
+                }
+            }
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION
         }
         if(p->delta[axis] >= 0)
             p->setPositiveDirectionForAxis(axis);
@@ -1533,7 +1572,7 @@ long PrintLine::performQueueMove()
 #if FEATURE_FIND_Z_ORIGIN
                             if( g_nZOriginPosition[X_AXIS] || g_nZOriginPosition[Y_AXIS] )
                             {
-                                determineStaticCompensationZ();
+                                Printer::staticCompensationZ = getZMatrixDepth(g_nZOriginPosition[X_AXIS], g_nZOriginPosition[Y_AXIS]); //determineStaticCompensationZ();
                             }
                             else
                             {
@@ -1984,7 +2023,11 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
 
         if(move->isEMove())
         {
-            if((move->error[E_AXIS] -= move->delta[E_AXIS]) < 0 || Printer::compensatedPositionPushE) //we want to push some E step out if it is planned OR needed because of ZCMP-E-Compensation
+            if((move->error[E_AXIS] -= move->delta[E_AXIS]) < 0
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+            || Printer::compensatedPositionPushE
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION
+            ) //we want to push some E step out if it is planned OR needed because of ZCMP-E-Compensation
             {
 #if USE_ADVANCE
                 if(Printer::isAdvanceActivated()) // Use interrupt for movement
@@ -1998,6 +2041,7 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
 #endif // USE_ADVANCE
                     Extruder::step();
 
+#if FEATURE_HEAT_BED_Z_COMPENSATION
                 if(!Printer::compensatedPositionPushE){
                     //add % parts of steps to extrusion because of higher layer heights caused by ZCMP
                     if(Printer::compensatedPositionOverPercE != 0.0f){
@@ -2009,15 +2053,17 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
                         Printer::compensatedPositionCollectTinyE = 0.0f; //clear rest if out of compensation?? --> really necessary or is some part of one step acceptable because we are never gonna come back to CMP if we moved out??
                     */
                     }
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION
                     //only count step if it is not caused by ZCMP-E-Compensation
                     if( forQueue )  move->error[E_AXIS] += queueError;
                     else            move->error[E_AXIS] += directError;
+#if FEATURE_HEAT_BED_Z_COMPENSATION
                 }else{
                     //never count or update queue/direct steps if we are smuggling a step amongst others because of ZCMP-E-Compensation
                     Printer::compensatedPositionPushE = false;
                     Printer::compensatedPositionCollectTinyE--;
                 }
-
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION
             }
         }
         if(move->isXMove())

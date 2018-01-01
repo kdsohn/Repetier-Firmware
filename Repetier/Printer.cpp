@@ -143,6 +143,10 @@ volatile float  Printer::compensatedPositionOverPercE = 0.0f;
 volatile float  Printer::compensatedPositionCollectTinyE = 0.0f;
 volatile bool   Printer::compensatedPositionPushE = false;
 
+volatile long   Printer::queuePositionZLayerCurrent_cand = 0;
+volatile long   Printer::queuePositionZLayerCurrent = 0;
+volatile long   Printer::queuePositionZLayerLast = 0;
+
 volatile char   Printer::endZCompensationStep;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 

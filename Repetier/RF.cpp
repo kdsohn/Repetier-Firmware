@@ -3141,36 +3141,114 @@ short testHeatBedTemperature( void )
 
 } // testHeatBedTemperature
 
+long getZMatrixDepth(long x, long y){
+        // find the rectangle which covers the current position of the extruder
+    unsigned char   nXLeftIndex = 1;
+    long            nXLeftSteps = (long)((float)g_ZCompensationMatrix[1][0] * Printer::axisStepsPerMM[X_AXIS]);
+    unsigned char   nXRightIndex = 0;
+    long            nXRightSteps = 0;
+    long            i;
+    long            nTemp;
+
+    for( i=1; i<=g_uZMatrixMax[X_AXIS]; i++ )
+    {
+        nTemp = g_ZCompensationMatrix[i][0];
+        nTemp = (long)((float)nTemp * Printer::axisStepsPerMM[X_AXIS]);
+        if( x <= nTemp )
+        {
+            nXRightIndex = i;
+            nXRightSteps = nTemp;
+            break;
+        }
+        nXLeftIndex = i;
+        nXLeftSteps = nTemp;
+    }
+
+    unsigned char   nYFrontIndex = 1;
+    long            nYFrontSteps = (long)((float)g_ZCompensationMatrix[0][1] * Printer::axisStepsPerMM[Y_AXIS]);
+    unsigned char   nYBackIndex = 0;
+    long            nYBackSteps = 0;
+
+    for( i=1; i<=g_uZMatrixMax[Y_AXIS]; i++ )
+    {
+        nTemp = g_ZCompensationMatrix[0][i];
+        nTemp = (long)((float)nTemp * Printer::axisStepsPerMM[Y_AXIS]);
+        if( y <= nTemp )
+        {
+            nYBackIndex = i;
+            nYBackSteps = nTemp;
+            break;
+        }
+        nYFrontIndex = i;
+        nYFrontSteps = nTemp;
+    }
+
+    long            nDeltaX    = x - nXLeftSteps;
+    long            nDeltaY    = y - nYFrontSteps;
+    long            nStepSizeX = nXRightSteps - nXLeftSteps;
+    long            nStepSizeY = nYBackSteps - nYFrontSteps;
+
+    // we do a linear interpolation in order to find our exact place within the current rectangle
+    long nTempXFront = g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex] +
+                  (g_ZCompensationMatrix[nXRightIndex][nYFrontIndex] - g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex]) * nDeltaX / nStepSizeX;
+    long nTempXBack  = g_ZCompensationMatrix[nXLeftIndex][nYBackIndex] +
+                  (g_ZCompensationMatrix[nXRightIndex][nYBackIndex] - g_ZCompensationMatrix[nXLeftIndex][nYBackIndex]) * nDeltaX / nStepSizeX;
+
+    long ZMatrixDepth = nTempXFront +
+                           (nTempXBack - nTempXFront) * nDeltaY / nStepSizeY; //Das ist hier noch der Zeiger auf die Oberfläche.
+
+#if DEBUG_HEAT_BED_Z_COMPENSATION
+    g_nDelta[X_AXIS]    = nDeltaX;
+    g_nDelta[Y_AXIS]    = nDeltaY;
+    g_nStepSize[X_AXIS] = nStepSizeX;
+    g_nStepSize[Y_AXIS] = nStepSizeY;
+    g_nTempXFront       = nTempXFront;
+    g_nTempXBack        = nTempXBack;
+    g_nNeededZ          = ZMatrixDepth;
+    g_uIndex[0]         = nXLeftIndex;
+    g_uIndex[1]         = nXRightIndex;
+    g_uIndex[2]         = nYFrontIndex;
+    g_uIndex[3]         = nYBackIndex;
+    g_nMatrix[0]        = g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex];
+    g_nMatrix[1]        = g_ZCompensationMatrix[nXRightIndex][nYFrontIndex];
+    g_nMatrix[2]        = g_ZCompensationMatrix[nXLeftIndex][nYBackIndex];
+    g_nMatrix[3]        = g_ZCompensationMatrix[nXRightIndex][nYBackIndex];
+#endif // DEBUG_HEAT_BED_Z_COMPENSATION
+
+    return ZMatrixDepth;
+}
+
+long getZMatrixDepth_CurrentXY(void){
+    long  nCurrentPositionSteps[2];
+    InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
+    nCurrentPositionSteps[X_AXIS] = Printer::queuePositionCurrentSteps[X_AXIS];
+    nCurrentPositionSteps[Y_AXIS] = Printer::queuePositionCurrentSteps[Y_AXIS];
+
+#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
+    nCurrentPositionSteps[X_AXIS] += Printer::directPositionCurrentSteps[X_AXIS];
+    nCurrentPositionSteps[Y_AXIS] += Printer::directPositionCurrentSteps[Y_AXIS];
+#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
+    noInts.unprotect(); //HAL::allowInterrupts();
+
+#if DEBUG_HEAT_BED_Z_COMPENSATION
+    g_nLastZCompensationPositionSteps[X_AXIS] = nCurrentPositionSteps[X_AXIS];
+    g_nLastZCompensationPositionSteps[Y_AXIS] = nCurrentPositionSteps[Y_AXIS];
+#endif // DEBUG_HEAT_BED_Z_COMPENSATION
+
+    return getZMatrixDepth(nCurrentPositionSteps[X_AXIS], nCurrentPositionSteps[Y_AXIS]);
+}
 
 void doHeatBedZCompensation( void )
 {
-    long            nCurrentPositionSteps[3];
-    unsigned char   nXLeftIndex;
-    unsigned char   nXRightIndex = 0;
-    unsigned char   nYFrontIndex;
-    unsigned char   nYBackIndex = 0;
-    long            nXLeftSteps;
-    long            nXRightSteps = 0;
-    long            nYFrontSteps;
-    long            nYBackSteps = 0;
-    long            nTemp;
-    long            nDeltaX;
-    long            nDeltaY;
-    long            nStepSizeX;
-    long            nStepSizeY;
     long            nNeededZCompensation;
-    long            nTempXFront;
-    long            nTempXBack;
-    //long          nTempZ;
-    long            i;
-
+    float           nNeededZEPerc = 0.0f;
 
     if( !Printer::doHeatBedZCompensation ) 
     {
         // there is nothing to do at the moment
         return;
     }
-    
+
 #if FEATURE_PAUSE_PRINTING
     // -> weil evtl. bewegung in xy auch solange pausestatus da ist.
     if( g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE2 && g_pauseStatus != PAUSE_STATUS_TASKGOTO_PAUSE_2 )
@@ -3179,125 +3257,69 @@ void doHeatBedZCompensation( void )
         return;
     }
 #endif // FEATURE_PAUSE_PRINTING
- 
-    InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
-    nCurrentPositionSteps[X_AXIS] = Printer::queuePositionCurrentSteps[X_AXIS];
-    nCurrentPositionSteps[Y_AXIS] = Printer::queuePositionCurrentSteps[Y_AXIS];
-    nCurrentPositionSteps[Z_AXIS] = Printer::queuePositionCurrentSteps[Z_AXIS];
 
+    InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
+    long nCurrentPositionStepsZ = Printer::queuePositionCurrentSteps[Z_AXIS] + Extruder::current->zOffset;
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-    nCurrentPositionSteps[X_AXIS] += Printer::directPositionCurrentSteps[X_AXIS];
-    nCurrentPositionSteps[Y_AXIS] += Printer::directPositionCurrentSteps[Y_AXIS];
-    nCurrentPositionSteps[Z_AXIS] += Printer::directPositionCurrentSteps[Z_AXIS];
+    nCurrentPositionStepsZ += Printer::directPositionCurrentSteps[Z_AXIS];
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     noInts.unprotect(); //HAL::allowInterrupts();
-    
-    nCurrentPositionSteps[Z_AXIS] += Extruder::current->zOffset;
 
 #if DEBUG_HEAT_BED_Z_COMPENSATION
-    g_nLastZCompensationPositionSteps[X_AXIS] = nCurrentPositionSteps[X_AXIS];
-    g_nLastZCompensationPositionSteps[Y_AXIS] = nCurrentPositionSteps[Y_AXIS];
-    g_nLastZCompensationPositionSteps[Z_AXIS] = nCurrentPositionSteps[Z_AXIS];
+    g_nLastZCompensationPositionSteps[Z_AXIS] = nCurrentPositionStepsZ;
 #endif // DEBUG_HEAT_BED_Z_COMPENSATION
-    
-    // Der Z-Kompensation wird das extruderspezifische Z-Offset des jeweiligen Extruders verschwiegen, sodass dieses die Höhen / Limits nicht beeinflusst. Die X- und Y-Offsets werden behalten, denn das korrigiert Düsen- zu Welligkeitsposition nach Extruderwechsel. Das extruderspezifische Z-Offset Extruder::current->zOffset wird beim Toolchange in nCurrentPositionSteps[Z_AXIS] eingerechnet und verfahren.
+
+    // Der Z-Kompensation wird das extruderspezifische Z-Offset des jeweiligen Extruders verschwiegen, sodass dieses die Höhen / Limits nicht beeinflusst. Die X- und Y-Offsets werden behalten, denn das korrigiert Düsen- zu Welligkeitsposition nach Extruderwechsel. Das extruderspezifische Z-Offset Extruder::current->zOffset wird beim Toolchange in nCurrentPositionStepsZ eingerechnet und verfahren.
     // Extruder::current->zOffset ist negativ, wenn das hotend weiter heruntergedrückt werden kann als 0. -> Bettfahrt nach unten, um auszuweichen.
-    if( nCurrentPositionSteps[Z_AXIS] >= 0 )
+    if( nCurrentPositionStepsZ >= 0 )
     {
         // check whether we have to perform a compensation in z-direction
-        if( nCurrentPositionSteps[Z_AXIS] < g_maxZCompensationSteps )
+        if( nCurrentPositionStepsZ < g_maxZCompensationSteps )
         {
-            // find the rectangle which covers the current position of the extruder
-            nXLeftIndex = 1;
-            nXLeftSteps = (long)((float)g_ZCompensationMatrix[1][0] * Printer::axisStepsPerMM[X_AXIS]);
+            nNeededZCompensation = getZMatrixDepth_CurrentXY(); //Das ist hier der Zeiger auf den interpolierten Z-Matrix-Wert.
 
-            for( i=1; i<=g_uZMatrixMax[X_AXIS]; i++ )
-            {
-                nTemp = g_ZCompensationMatrix[i][0];
-                nTemp = (long)((float)nTemp * Printer::axisStepsPerMM[X_AXIS]);
-                if( nCurrentPositionSteps[X_AXIS] <= nTemp )
-                {
-                    nXRightIndex = i;
-                    nXRightSteps = nTemp;
-                    break;
-                }
-                nXLeftIndex = i;
-                nXLeftSteps = nTemp;
-            }
-                    
-            nYFrontIndex = 1;
-            nYFrontSteps = (long)((float)g_ZCompensationMatrix[0][1] * Printer::axisStepsPerMM[Y_AXIS]);
-
-            for( i=1; i<=g_uZMatrixMax[Y_AXIS]; i++ )
-            {
-                nTemp = g_ZCompensationMatrix[0][i];
-                nTemp = (long)((float)nTemp * Printer::axisStepsPerMM[Y_AXIS]);
-                if( nCurrentPositionSteps[Y_AXIS] <= nTemp )
-                {
-                    nYBackIndex = i;
-                    nYBackSteps = nTemp;
-                    break;
-                }
-                nYFrontIndex = i;
-                nYFrontSteps = nTemp;
-            }
-
-            nDeltaX    = nCurrentPositionSteps[X_AXIS] - nXLeftSteps;
-            nDeltaY    = nCurrentPositionSteps[Y_AXIS] - nYFrontSteps;
-            nStepSizeX = nXRightSteps - nXLeftSteps;
-            nStepSizeY = nYBackSteps - nYFrontSteps;
-
-            // we do a linear interpolation in order to find our exact place within the current rectangle
-            nTempXFront = g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex] +
-                          (g_ZCompensationMatrix[nXRightIndex][nYFrontIndex] - g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex]) * nDeltaX / nStepSizeX;
-            nTempXBack  = g_ZCompensationMatrix[nXLeftIndex][nYBackIndex] +
-                          (g_ZCompensationMatrix[nXRightIndex][nYBackIndex] - g_ZCompensationMatrix[nXLeftIndex][nYBackIndex]) * nDeltaX / nStepSizeX;
-
-            nNeededZCompensation = nTempXFront +
-                                   (nTempXBack - nTempXFront) * nDeltaY / nStepSizeY; //Das ist hier noch der Zeiger auf die Oberfläche.
-
-#if DEBUG_HEAT_BED_Z_COMPENSATION
-            g_nDelta[X_AXIS]    = nDeltaX;
-            g_nDelta[Y_AXIS]    = nDeltaY;
-            g_nStepSize[X_AXIS] = nStepSizeX;
-            g_nStepSize[Y_AXIS] = nStepSizeY;
-            g_nTempXFront       = nTempXFront;
-            g_nTempXBack        = nTempXBack;
-            g_nNeededZ          = nNeededZCompensation;
-            g_uIndex[0]         = nXLeftIndex;
-            g_uIndex[1]         = nXRightIndex;
-            g_uIndex[2]         = nYFrontIndex;
-            g_uIndex[3]         = nYBackIndex;
-            g_nMatrix[0]        = g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex];
-            g_nMatrix[1]        = g_ZCompensationMatrix[nXRightIndex][nYFrontIndex];
-            g_nMatrix[2]        = g_ZCompensationMatrix[nXLeftIndex][nYBackIndex];
-            g_nMatrix[3]        = g_ZCompensationMatrix[nXRightIndex][nYBackIndex];
-#endif // DEBUG_HEAT_BED_Z_COMPENSATION
-
-            if( nCurrentPositionSteps[Z_AXIS] <= g_minZCompensationSteps )
+            if( nCurrentPositionStepsZ <= g_minZCompensationSteps )
             {
                 // the printer is very close to the surface - we shall print a layer of exactly the desired thickness
-                if(nCurrentPositionSteps[Z_AXIS] == 0){
+                if(nCurrentPositionStepsZ == 0){
                     nNeededZCompensation += 13; //G1 Z0 shall not hit the bed: +5um -> this is better than not compensating at all because it makes tests weired.
                 }
-                Printer::compensatedPositionOverPercE = 0.0f;
+                //nNeededZEPerc = 0.0f;
             }
             else
             {
+                long zl;
+                long div;
                 // Compensate Extrusion within ZCMP: Add and sum up this amount for every step extruded in move interrupt. Extrude the step if we have some full >=1.0 in interrupt.
-                Printer::compensatedPositionOverPercE = float(g_offsetZCompensationSteps - nNeededZCompensation) / float(g_maxZCompensationSteps - g_minZCompensationSteps);
-                
+                if(Printer::queuePositionZLayerLast < g_minZCompensationSteps && g_minZCompensationSteps < Printer::queuePositionZLayerCurrent){
+                    //geschmälert um Anteil innerhalb CMP-Ausschleichbereich:
+                    zl =  (g_offsetZCompensationSteps - nNeededZCompensation) * (Printer::queuePositionZLayerCurrent - g_minZCompensationSteps);
+                    div = (g_maxZCompensationSteps - g_minZCompensationSteps) * (Printer::queuePositionZLayerCurrent - Printer::queuePositionZLayerLast);
+                }else{
+                    zl =  (g_offsetZCompensationSteps - nNeededZCompensation);
+                    div = (g_maxZCompensationSteps - g_minZCompensationSteps);
+                }
+                nNeededZEPerc = float(zl) / float(div);
+
                 // the printer is already a bit away from the surface - do the actual compensation -> Hier ist nNeededZCompensation dann nicht mehr der Zeiger auf die Oberfläche, sondern der Zeiger auf die kompensationshöhe:
-                nNeededZCompensation = ((nNeededZCompensation - g_offsetZCompensationSteps) * (g_maxZCompensationSteps - nCurrentPositionSteps[Z_AXIS]))
+                nNeededZCompensation = ((nNeededZCompensation - g_offsetZCompensationSteps) * (g_maxZCompensationSteps - nCurrentPositionStepsZ))
                                                                     / (g_maxZCompensationSteps - g_minZCompensationSteps);
                 nNeededZCompensation += g_offsetZCompensationSteps;
             }
         }
         else
-        {   
+        {
             // after the first layers, only the static offset to the surface must be compensated
             nNeededZCompensation = g_offsetZCompensationSteps;
-            Printer::compensatedPositionOverPercE = 0.0f;
+            
+            if(Printer::queuePositionZLayerLast < g_maxZCompensationSteps && g_maxZCompensationSteps <= Printer::queuePositionZLayerCurrent){
+                //Volle E-Kompensation: geschmälert um Anteil innerhalb CMP-Ausschleichbereich:
+                long zl = (long)(g_offsetZCompensationSteps - getZMatrixDepth_CurrentXY()) * (long)(g_maxZCompensationSteps - Printer::queuePositionZLayerLast);
+                long div = (long)(g_maxZCompensationSteps - g_minZCompensationSteps) * (long)(Printer::queuePositionZLayerCurrent - Printer::queuePositionZLayerLast);
+                nNeededZEPerc = float( zl ) / float( div );
+            /*}else{
+                nNeededZEPerc = 0.0f;*/
+            }
         }
     }
     else
@@ -3353,6 +3375,7 @@ void doHeatBedZCompensation( void )
 
     noInts.protect(true); //HAL::forbidInterrupts();
     Printer::compensatedPositionTargetStepsZ = nNeededZCompensation;
+    Printer::compensatedPositionOverPercE    = nNeededZEPerc;
     noInts.unprotect(); //HAL::allowInterrupts();
 
     return;
@@ -3362,93 +3385,14 @@ void doHeatBedZCompensation( void )
 
 long getHeatBedOffset( void )
 {
-    //Funktion rechnet das Z-Matrix-Korrigierte Offset aus, an der exakten Stelle an der wir stehen.
-    long            nCurrentPositionSteps[2];
-    long            nOffset;
-    unsigned char   nXLeftIndex;
-    unsigned char   nXRightIndex = 0;
-    unsigned char   nYFrontIndex;
-    unsigned char   nYBackIndex = 0;
-    long            nXLeftSteps;
-    long            nXRightSteps = 0;
-    long            nYFrontSteps;
-    long            nYBackSteps= 0;
-    long            nTemp;
-    long            nDeltaX;
-    long            nDeltaY;
-    long            nStepSizeX;
-    long            nStepSizeY;
-    long            nTempXFront;
-    long            nTempXBack;
-    long            i;
-
-
     if( !Printer::doHeatBedZCompensation && !( g_nHeatBedScanStatus || g_ZOSScanStatus ) ) //|| g_ZOSScanStatus brauche ich hier vermutlich nicht. Aber ich lasse es mal drin!
     {
         // we determine the offset to the scanned heat bed only in case the heat bed z compensation is active
         return 0; //vermerk Nibbels: Beim HBS -> adjustCompensationMatrix -> short  deltaZ  = nZ - nOffset; -> mit offset ist das verfälscht!! --> return 0
     }
 
-    InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
-    nCurrentPositionSteps[X_AXIS] = Printer::queuePositionCurrentSteps[X_AXIS];
-    nCurrentPositionSteps[Y_AXIS] = Printer::queuePositionCurrentSteps[Y_AXIS];
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-    nCurrentPositionSteps[X_AXIS] += Printer::directPositionCurrentSteps[X_AXIS];
-    nCurrentPositionSteps[Y_AXIS] += Printer::directPositionCurrentSteps[Y_AXIS];
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-    noInts.unprotect(); //HAL::allowInterrupts();
-
-    // find the rectangle which covers the current position of the extruder
-    nXLeftIndex = 1;
-    nXLeftSteps = (long)((float)g_ZCompensationMatrix[1][0] * Printer::axisStepsPerMM[X_AXIS]);
-
-    for( i=1; i<=g_uZMatrixMax[X_AXIS]; i++ )
-    {
-        nTemp = g_ZCompensationMatrix[i][0];
-        nTemp = (long)((float)nTemp * Printer::axisStepsPerMM[X_AXIS]);
-        if( nCurrentPositionSteps[X_AXIS] <= nTemp )
-        {
-            nXRightIndex = i;
-            nXRightSteps = nTemp;
-            break;
-        }
-        nXLeftIndex = i;
-        nXLeftSteps = nTemp;
-    }
-                    
-    nYFrontIndex = 1;
-    nYFrontSteps = (long)((float)g_ZCompensationMatrix[0][1] * Printer::axisStepsPerMM[Y_AXIS]);
-
-    for( i=1; i<=g_uZMatrixMax[Y_AXIS]; i++ )
-    {
-        nTemp = g_ZCompensationMatrix[0][i];
-        nTemp = (long)((float)nTemp * Printer::axisStepsPerMM[Y_AXIS]);
-        if( nCurrentPositionSteps[Y_AXIS] <= nTemp )
-        {
-            nYBackIndex = i;
-            nYBackSteps = nTemp;
-            break;
-        }
-        nYFrontIndex = i;
-        nYFrontSteps = nTemp;
-    }
-
-    nDeltaX    = nCurrentPositionSteps[X_AXIS] - nXLeftSteps;
-    nDeltaY    = nCurrentPositionSteps[Y_AXIS] - nYFrontSteps;
-    nStepSizeX = nXRightSteps - nXLeftSteps;
-    nStepSizeY = nYBackSteps - nYFrontSteps;
-
-    // we do a linear interpolation in order to find our exact place within the current rectangle
-    nTempXFront = g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex] +
-                  (g_ZCompensationMatrix[nXRightIndex][nYFrontIndex] - g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex]) * nDeltaX / nStepSizeX;
-    nTempXBack  = g_ZCompensationMatrix[nXLeftIndex][nYBackIndex] +
-                  (g_ZCompensationMatrix[nXRightIndex][nYBackIndex] - g_ZCompensationMatrix[nXLeftIndex][nYBackIndex]) * nDeltaX / nStepSizeX;
-    nOffset     = nTempXFront +
-                  (nTempXBack - nTempXFront) * nDeltaY / nStepSizeY;
-
-    return nOffset;
-
+    //Funktion rechnet das Z-Matrix-Korrigierte Offset aus, an der exakten Stelle an der wir stehen.
+    return getZMatrixDepth_CurrentXY();
 } // getHeatBedOffset
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
@@ -4717,28 +4661,6 @@ void scanWorkPart( void )
 
 void doWorkPartZCompensation( void )
 {
-    long            nCurrentPositionSteps[3];
-    unsigned char   nXLeftIndex;
-    unsigned char   nXRightIndex = 0;
-    unsigned char   nYFrontIndex;
-    unsigned char   nYBackIndex = 0;
-    long            nXLeftSteps;
-    long            nXRightSteps = 0;
-    long            nYFrontSteps;
-    long            nYBackSteps = 0;
-    long            nTemp;
-    long            nDeltaX;
-    long            nDeltaY;
-    //long          nDeltaZ;
-    long            nStepSizeX;
-    long            nStepSizeY;
-    long            nNeededZCompensation;
-    long            nTempXFront;
-    long            nTempXBack;
-    //long          nTempZ;
-    long            i;
-
-
     if( !Printer::doWorkPartZCompensation )
     {
         // there is nothing to do at the moment
@@ -4752,95 +4674,17 @@ void doWorkPartZCompensation( void )
     }
  #endif // FEATURE_PAUSE_PRINTING
 
-    InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
-    nCurrentPositionSteps[X_AXIS] = Printer::queuePositionCurrentSteps[X_AXIS];
-    nCurrentPositionSteps[Y_AXIS] = Printer::queuePositionCurrentSteps[Y_AXIS];
-    nCurrentPositionSteps[Z_AXIS] = Printer::queuePositionCurrentSteps[Z_AXIS];
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-    nCurrentPositionSteps[X_AXIS] += Printer::directPositionCurrentSteps[X_AXIS];
-    nCurrentPositionSteps[Y_AXIS] += Printer::directPositionCurrentSteps[Y_AXIS];
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-    noInts.unprotect(); //HAL::allowInterrupts();
+    long nCurrentPositionStepsZ = Printer::queuePositionCurrentSteps[Z_AXIS];
 
 #if DEBUG_WORK_PART_Z_COMPENSATION
-    g_nLastZCompensationPositionSteps[X_AXIS] = nCurrentPositionSteps[X_AXIS];
-    g_nLastZCompensationPositionSteps[Y_AXIS] = nCurrentPositionSteps[Y_AXIS];
-    g_nLastZCompensationPositionSteps[Z_AXIS] = nCurrentPositionSteps[Z_AXIS];
+    g_nLastZCompensationPositionSteps[Z_AXIS] = nCurrentPositionStepsZ;
 #endif // DEBUG_WORK_PART_Z_COMPENSATION
     
-    if( nCurrentPositionSteps[Z_AXIS] )
+    long nNeededZCompensation;
+    if( nCurrentPositionStepsZ )
     {
-        // find the rectangle which covers the current position of the miller
-        nXLeftIndex = 1;
-        nXLeftSteps = (long)((float)g_ZCompensationMatrix[1][0] * Printer::axisStepsPerMM[X_AXIS]);
-        for( i=1; i<=g_uZMatrixMax[X_AXIS]; i++ )
-        {
-            nTemp = g_ZCompensationMatrix[i][0];
-            nTemp = (long)((float)nTemp * Printer::axisStepsPerMM[X_AXIS]);
-            if( nCurrentPositionSteps[X_AXIS] <= nTemp )
-            {
-                nXRightIndex = i;
-                nXRightSteps = nTemp;
-                break;
-            }
-            nXLeftIndex = i;
-            nXLeftSteps = nTemp;
-        }
-                    
-        nYFrontIndex = 1;
-        nYFrontSteps = (long)((float)g_ZCompensationMatrix[0][1] * Printer::axisStepsPerMM[Y_AXIS]);
-        for( i=1; i<=g_uZMatrixMax[Y_AXIS]; i++ )
-        {
-            nTemp = g_ZCompensationMatrix[0][i];
-            nTemp = (long)((float)nTemp * Printer::axisStepsPerMM[Y_AXIS]);
-            if( nCurrentPositionSteps[Y_AXIS] <= nTemp )
-            {
-                nYBackIndex = i;
-                nYBackSteps = nTemp;
-                break;
-            }
-            nYFrontIndex = i;
-            nYFrontSteps = nTemp;
-        }
-
-        nDeltaX    = nCurrentPositionSteps[X_AXIS] - nXLeftSteps;
-        nDeltaY    = nCurrentPositionSteps[Y_AXIS] - nYFrontSteps;
-        nStepSizeX = nXRightSteps - nXLeftSteps;
-        nStepSizeY = nYBackSteps - nYFrontSteps;
-
-        // we do a linear interpolation in order to find our exact place within the current rectangle
-        nTempXFront = g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex] +
-                      (g_ZCompensationMatrix[nXRightIndex][nYFrontIndex] - g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex]) * nDeltaX / nStepSizeX;
-        nTempXBack  = g_ZCompensationMatrix[nXLeftIndex][nYBackIndex] +
-                      (g_ZCompensationMatrix[nXRightIndex][nYBackIndex] - g_ZCompensationMatrix[nXLeftIndex][nYBackIndex]) * nDeltaX / nStepSizeX;
-        nNeededZCompensation = nTempXFront +
-                               (nTempXBack - nTempXFront) * nDeltaY / nStepSizeY;
-                    
+        nNeededZCompensation = getWorkPartOffset();
         nNeededZCompensation += g_staticZSteps;
-
-#if FEATURE_FIND_Z_ORIGIN
-        nNeededZCompensation -= Printer::staticCompensationZ;
-#endif // FEATURE_FIND_Z_ORIGIN
-
-#if DEBUG_WORK_PART_Z_COMPENSATION
-            g_nDelta[X_AXIS]    = nDeltaX;
-            g_nDelta[Y_AXIS]    = nDeltaY;
-            g_nStepSize[X_AXIS] = nStepSizeX;
-            g_nStepSize[Y_AXIS] = nStepSizeY;
-            g_nTempXFront       = nTempXFront;
-            g_nTempXBack        = nTempXBack;
-            g_nNeededZ          = nNeededZCompensation;
-            g_uIndex[0]         = nXLeftIndex;
-            g_uIndex[1]         = nXRightIndex;
-            g_uIndex[2]         = nYFrontIndex;
-            g_uIndex[3]         = nYBackIndex;
-            g_nMatrix[0]        = g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex];
-            g_nMatrix[1]        = g_ZCompensationMatrix[nXRightIndex][nYFrontIndex];
-            g_nMatrix[2]        = g_ZCompensationMatrix[nXLeftIndex][nYBackIndex];
-            g_nMatrix[3]        = g_ZCompensationMatrix[nXRightIndex][nYBackIndex];
-#endif // DEBUG_WORK_PART_Z_COMPENSATION
-
     }
     else
     {
@@ -4869,98 +4713,23 @@ void doWorkPartZCompensation( void )
     }
 #endif // DEBUG_WORK_PART_Z_COMPENSATION
 
-    noInts.protect(); //HAL::forbidInterrupts();
+    InterruptProtectedBlock noInts;
     Printer::compensatedPositionTargetStepsZ = nNeededZCompensation;
-    noInts.unprotect(); //HAL::allowInterrupts();
+    noInts.unprotect();
 
     return;
-
 } // doWorkPartZCompensation
 
 
 long getWorkPartOffset( void )
 {
-    long            nCurrentPositionSteps[2];
-    long            nOffset;
-    unsigned char   nXLeftIndex;
-    unsigned char   nXRightIndex = 1;
-    unsigned char   nYFrontIndex;
-    unsigned char   nYBackIndex = 0;
-    long            nXLeftSteps;
-    long            nXRightSteps = 0;
-    long            nYFrontSteps;
-    long            nYBackSteps = 0;
-    long            nTemp;
-    long            nDeltaX;
-    long            nDeltaY;
-    long            nStepSizeX;
-    long            nStepSizeY;
-    long            nTempXFront;
-    long            nTempXBack;
-    long            i;
-
-
     if( !Printer::doWorkPartZCompensation )
     {
         // we determine the offset to the scanned work part only in case the work part z compensation is active
         return 0;
     }
 
-    InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
-    nCurrentPositionSteps[X_AXIS] = Printer::queuePositionCurrentSteps[X_AXIS] + Printer::directPositionCurrentSteps[X_AXIS];
-    nCurrentPositionSteps[Y_AXIS] = Printer::queuePositionCurrentSteps[Y_AXIS] + Printer::directPositionCurrentSteps[Y_AXIS];
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-    nCurrentPositionSteps[X_AXIS] += Printer::directPositionCurrentSteps[X_AXIS];
-    nCurrentPositionSteps[Y_AXIS] += Printer::directPositionCurrentSteps[Y_AXIS];
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-    noInts.unprotect(); //HAL::allowInterrupts();
-
-    // find the rectangle which covers the current position of the miller
-    nXLeftIndex = 1;
-    nXLeftSteps = (long)((float)g_ZCompensationMatrix[1][0] * Printer::axisStepsPerMM[X_AXIS]);
-    for( i=1; i<=g_uZMatrixMax[X_AXIS]; i++ )
-    {
-        nTemp = g_ZCompensationMatrix[i][0];
-        nTemp = (long)((float)nTemp * Printer::axisStepsPerMM[X_AXIS]);
-        if( nCurrentPositionSteps[X_AXIS] <= nTemp )
-        {
-            nXRightIndex = i;
-            nXRightSteps = nTemp;
-            break;
-        }
-        nXLeftIndex = i;
-        nXLeftSteps = nTemp;
-    }
-                    
-    nYFrontIndex = 1;
-    nYFrontSteps = (long)((float)g_ZCompensationMatrix[0][1] * Printer::axisStepsPerMM[Y_AXIS]);
-    for( i=1; i<=g_uZMatrixMax[Y_AXIS]; i++ )
-    {
-        nTemp = g_ZCompensationMatrix[0][i];
-        nTemp = (long)((float)nTemp * Printer::axisStepsPerMM[Y_AXIS]);
-        if( nCurrentPositionSteps[Y_AXIS] <= nTemp )
-        {
-            nYBackIndex = i;
-            nYBackSteps = nTemp;
-            break;
-        }
-        nYFrontIndex = i;
-        nYFrontSteps = nTemp;
-    }
-
-    nDeltaX    = nCurrentPositionSteps[X_AXIS] - nXLeftSteps;
-    nDeltaY    = nCurrentPositionSteps[Y_AXIS] - nYFrontSteps;
-    nStepSizeX = nXRightSteps - nXLeftSteps;
-    nStepSizeY = nYBackSteps - nYFrontSteps;
-
-    // we do a linear interpolation in order to find our exact place within the current rectangle
-    nTempXFront = g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex] +
-                  (g_ZCompensationMatrix[nXRightIndex][nYFrontIndex] - g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex]) * nDeltaX / nStepSizeX;
-    nTempXBack  = g_ZCompensationMatrix[nXLeftIndex][nYBackIndex] +
-                  (g_ZCompensationMatrix[nXRightIndex][nYBackIndex] - g_ZCompensationMatrix[nXLeftIndex][nYBackIndex]) * nDeltaX / nStepSizeX;
-    nOffset     = nTempXFront +
-                  (nTempXBack - nTempXFront) * nDeltaY / nStepSizeY;
+    long nOffset = getZMatrixDepth_CurrentXY();
 
 /*  Com::printF( PSTR( "getWorkPartOffset();" ), nXLeftIndex );
     Com::printF( Com::tSemiColon, nXRightIndex );
@@ -4970,6 +4739,7 @@ long getWorkPartOffset( void )
     Com::printF( Com::tSemiColon, Printer::staticCompensationZ );
     Com::printFLN( PSTR( "" ) );
 */
+
 #if FEATURE_FIND_Z_ORIGIN
     nOffset -= Printer::staticCompensationZ;
 #endif // FEATURE_FIND_Z_ORIGIN
@@ -4977,79 +4747,6 @@ long getWorkPartOffset( void )
     return nOffset;
 
 } // getWorkPartOffset
-
-
-void determineStaticCompensationZ( void )
-{
-    long    nXLeftIndex;
-    long    nXRightIndex = 0;
-    long    nYFrontIndex;
-    long    nYBackIndex = 0;
-    long    nXLeftSteps;
-    long    nXRightSteps = 0;
-    long    nYFrontSteps;
-    long    nYBackSteps = 0;
-    long    nTemp;
-    long    nDeltaX;
-    long    nDeltaY;
-    //long  nDeltaZ;
-    long    nStepSizeX;
-    long    nStepSizeY;
-    long    nTempXFront;
-    long    nTempXBack;
-    long    i;
-
-
-    // find the rectangle which covers the current position of the tool
-    nXLeftIndex = 1;
-    nXLeftSteps = (long)((float)g_ZCompensationMatrix[1][0] * Printer::axisStepsPerMM[X_AXIS]);
-    for( i=1; i<=g_uZMatrixMax[X_AXIS]; i++ )
-    {
-        nTemp = g_ZCompensationMatrix[i][0];
-        nTemp = (long)((float)nTemp * Printer::axisStepsPerMM[X_AXIS]);
-        if( (g_nZOriginPosition[X_AXIS]) <= nTemp )
-        {
-            nXRightIndex = i;
-            nXRightSteps = nTemp;
-            break;
-        }
-        nXLeftIndex = i;
-        nXLeftSteps = nTemp;
-    }
-                    
-    nYFrontIndex = 1;
-    nYFrontSteps = (long)((float)g_ZCompensationMatrix[0][1] * Printer::axisStepsPerMM[Y_AXIS]);
-    for( i=1; i<=g_uZMatrixMax[Y_AXIS]; i++ )
-    {
-        nTemp = g_ZCompensationMatrix[0][i];
-        nTemp = (long)((float)nTemp * Printer::axisStepsPerMM[Y_AXIS]);
-        if( (g_nZOriginPosition[Y_AXIS]) <= nTemp )
-        {
-            nYBackIndex = i;
-            nYBackSteps = nTemp;
-            break;
-        }
-        nYFrontIndex = i;
-        nYFrontSteps = nTemp;
-    }
-
-    nDeltaX    = g_nZOriginPosition[X_AXIS] - nXLeftSteps;
-    nDeltaY    = g_nZOriginPosition[Y_AXIS] - nYFrontSteps;
-    nStepSizeX = nXRightSteps - nXLeftSteps;
-    nStepSizeY = nYBackSteps - nYFrontSteps;
-
-    // we do a linear interpolation in order to find our exact place within the current rectangle
-    nTempXFront = g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex] +
-                  (g_ZCompensationMatrix[nXRightIndex][nYFrontIndex] - g_ZCompensationMatrix[nXLeftIndex][nYFrontIndex]) * nDeltaX / nStepSizeX;
-    nTempXBack  = g_ZCompensationMatrix[nXLeftIndex][nYBackIndex] +
-                  (g_ZCompensationMatrix[nXRightIndex][nYBackIndex] - g_ZCompensationMatrix[nXLeftIndex][nYBackIndex]) * nDeltaX / nStepSizeX;
-        
-    Printer::staticCompensationZ = nTempXFront +
-                                   (nTempXBack - nTempXFront) * nDeltaY / nStepSizeY;
-    
-    return;
-
-} // determineStaticCompensationZ
 
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
 
@@ -6895,6 +6592,11 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
             {
                 // there is no printing in progress any more, do all clean-up now
                 g_uStopTime = 0;
+            
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+                Printer::queuePositionZLayerLast = 0;
+                Printer::queuePositionZLayerCurrent = 0;
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
 #if FEATURE_MILLING_MODE
                 if ( Printer::operatingMode == OPERATING_MODE_PRINT )

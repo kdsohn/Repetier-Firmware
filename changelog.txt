@@ -1,6 +1,12 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.03.Mod (2018-01-01)
+- added E-Compensation improvement for fist and last stretching-layer within ZCMP.
+- removed one Milling-Bug by unifying the search for interpolated matrix depths. (directPosition was added twice in getworkpartoffset??)
+- added a new menu to level 0 status menus.
+- added layer height detection to the firmware - it is shown in the new menu.
+
 V RF.01.38.02.Mod (2017-12-30)
 - added E-Compensation for Z-Compensation layer expansion.
 

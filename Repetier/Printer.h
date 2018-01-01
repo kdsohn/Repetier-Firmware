@@ -149,6 +149,11 @@ public:
     static volatile float   compensatedPositionOverPercE;
     static volatile float   compensatedPositionCollectTinyE;
     static volatile bool    compensatedPositionPushE;
+    
+    static volatile long    queuePositionZLayerCurrent_cand;
+    static volatile long    queuePositionZLayerCurrent;
+    static volatile long    queuePositionZLayerLast;
+
     static volatile char    endZCompensationStep;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 

@@ -778,6 +778,9 @@ extern short testExtruderTemperature( void );
 // testHeatBedTemperature()
 extern short testHeatBedTemperature( void );
 
+// getZMatrixDepth()
+extern long getZMatrixDepth( long x, long y );
+
 // doHeatBedZCompensation()
 extern void doHeatBedZCompensation( void );
 
@@ -808,9 +811,6 @@ extern void doWorkPartZCompensation( void );
 
 // getWorkPartOffset()
 extern long getWorkPartOffset( void );
-
-// determineStaticCompensationZ()
-extern void determineStaticCompensationZ( void );
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
 
 
