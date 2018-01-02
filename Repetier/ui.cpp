@@ -947,7 +947,7 @@ void UIDisplay::parse(char *txt,bool ram)
             {
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
                 if(c2=='s') {                                                                           // %Fs : Fan speed in Percent
-                    addInt(Printer::getFanSpeed(true), 3); 
+                    addFloat(Printer::getFanSpeed(false)/2.55f,3,1); 
                 }
                 else if(c2=='h') {                                                                      // %Fh : Fan frequency in Hz --> Wert passt grob, ist aber nicht exakt! F_CPU/3906/255*mode...
                     addInt((1 << cooler_pwm_speed)*15, 3); 
@@ -3180,7 +3180,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
         case UI_ACTION_FANSPEED:
         {
-            Commands::setFanSpeed(Printer::getFanSpeed()+increment*3,false);
+            Commands::setFanSpeed(Printer::getFanSpeed()+increment,false);
             break;
         }
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL

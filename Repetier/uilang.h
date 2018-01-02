@@ -324,7 +324,6 @@
 #define UI_TEXT_SET_SCAN_XY_END         "Set XY End"
 #define UI_TEXT_SET_SCAN_DELTA_X        "Set dX: %Dxmm"
 #define UI_TEXT_SET_SCAN_DELTA_Y        "Set dY: %Dymm"
-#define UI_TEXT_STRAIN_GAUGE            "F: %s1 L: %Fs%%%%11F: %s1 V: %om%%%"
 #define UI_TEXT_SERVICE                 "SERVICE"
 #define UI_TEXT_SERVICE_TIME            "Until service"
 #define UI_TEXT_PRINTING_ROOM_LIGHT     "PRL: " 
@@ -411,6 +410,7 @@
 #define UI_TEXT_FLOW_DV                "dFeed:   :%CE%%%"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+    #define UI_TEXT_STRAIN_GAUGE            "F: %s1 L: %Fs%%%%11F: %s1 V: %om%%%"
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min reached unhomed"
     #define UI_TEXT_RGB_LIGHT_MODE          "RGB Light: %li"
@@ -450,11 +450,12 @@
     #define UI_TEXT_OPERATION_DENIED        "Operation denied"
     #define UI_TEXT_TEMPERATURE_WRONG       "Temperature wrong"
 #else   
+    #define UI_TEXT_STRAIN_GAUGE            "F:%s1 L:%Fs%%%%11F: %s1 V: %om%%%"
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F:%s1 V:%om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min reached uho."
     #define UI_TEXT_RGB_LIGHT_MODE          "RGB Light: %li"
     #define UI_TEXT_BAUDRATE                "Baudrate:%oc"
-    #define UI_TEXT_ACTION_FANSPEED         "Fan Speed:%Fs%%%"
+    #define UI_TEXT_ACTION_FANSPEED         "FanSpeed:%Fs%%%"
     #define UI_TEXT_FAN_25                  "Fan to 25%%%"
     #define UI_TEXT_FAN_50                  "Fan to 50%%%"
     #define UI_TEXT_FAN_75                  "Fan to 75%%%"
@@ -694,7 +695,6 @@
 #define UI_TEXT_SET_SCAN_XY_END         "Setze XY Ende"
 #define UI_TEXT_SET_SCAN_DELTA_X        "Setze dX: %Dxmm"
 #define UI_TEXT_SET_SCAN_DELTA_Y        "Setze dY: %Dymm"
-#define UI_TEXT_STRAIN_GAUGE            "F: %s1 L: %Fs%%%"
 #define UI_TEXT_SERVICE                 "WARTUNG"
 #define UI_TEXT_SERVICE_TIME            "N" STR_auml "chster Service"
 #define UI_TEXT_PRINTING_ROOM_LIGHT     "PRL: "
@@ -780,6 +780,7 @@
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 
+    #define UI_TEXT_STRAIN_GAUGE            "F: %s1 L: %Fs%%%%11F: %s1 V: %om%%%"
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min Kontakt unhomed"
     #define UI_TEXT_EXTRUDER_OFFSET_X       "Extruder Abstand X"
@@ -801,7 +802,7 @@
     #define UI_TEXT_FEED_MAX_Z              "Max Z :%fz"
     #define UI_TEXT_JERK                    "X/Y-Ruck :%aj"
     #define UI_TEXT_ZJERK                   "Z-Ruck   :%aJ"
-    #define UI_TEXT_ACTION_FANSPEED         "L" STR_uuml "fter:    %Fs%%%"
+    #define UI_TEXT_ACTION_FANSPEED         "L" STR_uuml "fter: %Fs%%%"
     #define UI_TEXT_FAN_OFF                 "L" STR_uuml "fter aus"
     #define UI_TEXT_FAN_25                  "L" STR_uuml "fter auf  25%%%"
     #define UI_TEXT_FAN_50                  "L" STR_uuml "fter auf  50%%%"
@@ -855,6 +856,7 @@
     
 #else
     
+    #define UI_TEXT_STRAIN_GAUGE            "F:%s1 L:%Fs%%%%11F: %s1 V: %om%%%"
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F:%s1 V:%om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min Kontakt uho."
     #define UI_TEXT_EXTRUDER_OFFSET_X       "Extr. Abstand X"
