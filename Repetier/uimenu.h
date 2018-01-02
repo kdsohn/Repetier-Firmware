@@ -275,7 +275,7 @@ for 2 row displays. You can add additional pages or change the default pages lik
         UI_PAGE4(ui_page_mod2,  "LayerHeight:%LH",
                                 "ECMP%%%:%LP",
                                 "Max:%LMMin:%Lm",
-                                "Z:%x2 Z:%LC"
+                                "Z:%x2/%LC"
                                 )
     #else
         UI_PAGE4(ui_page_mod2,  "LayerHeight:%LH",

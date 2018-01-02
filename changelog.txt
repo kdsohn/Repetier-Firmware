@@ -1,6 +1,13 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.05.Mod (2018-01-02)
+- changed fan speed to display float
+- added auto adjust function for g_minZCompensationSteps to set it to first layer height
+- added auto adjust function for g_maxZCompensationSteps to set it to g_minZCompensationSteps + max 5% comp pro layer.
+- added minimum matrix value to Matrix output M3013
+- changed some functions to return "void", because they did not return anything of value.
+
 V RF.01.38.03.Mod (2018-01-01)
 - added E-Compensation improvement for fist and last stretching-layer within ZCMP.
 - removed one Milling-Bug by unifying the search for interpolated matrix depths. (directPosition was added twice in getworkpartoffset??)

@@ -998,11 +998,11 @@ void EEPROM::readDataFromEEPROM()
     //min = 0 and max = 0 -> means feature off
 #endif // FEATURE_EMERGENCY_PAUSE
 
-#if FEATURE_DIGIT_FLOW_COMPENSATION
+#if FEATURE_DIGIT_FLOW_COMPENSATION && FEATURE_DIGIT_Z_COMPENSATION
     //Standardgrenzen hängen von Pause-Digits ab! Das macht sinn ;)
     g_nDigitFlowCompensation_Fmin = short(abs(g_nEmergencyPauseDigitsMax)*0.7);  //mögliche Standardwerte
     g_nDigitFlowCompensation_Fmax = short(abs(g_nEmergencyPauseDigitsMax)); //mögliche Standardwerte -> z.b. gut wenn das die pause-digits sind.
-#endif // FEATURE_DIGIT_FLOW_COMPENSATION
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION && FEATURE_DIGIT_Z_COMPENSATION
 
 #if FEATURE_MILLING_MODE
     Printer::max_milling_all_axis_acceleration = HAL::eprGetInt16(EPR_RF_MILL_ACCELERATION);

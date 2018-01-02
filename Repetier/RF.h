@@ -582,8 +582,12 @@ extern  unsigned long   g_uStartOfIdle;
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 extern  long            g_offsetZCompensationSteps; // this is the minimal distance between the heat bed and the extruder at the moment when the z-min endstop is hit
+extern  short           g_ZCompensationMax;
 extern  long            g_minZCompensationSteps;
 extern  long            g_maxZCompensationSteps;
+#if AUTOADJUST_MIN_MAX_ZCOMP
+extern  bool            g_auto_minmaxZCompensationSteps;
+#endif //AUTOADJUST_MIN_MAX_ZCOMP
 extern  long            g_diffZCompensationSteps;
 extern  volatile unsigned char  g_nHeatBedScanStatus;
 extern  char            g_nActiveHeatBed;
@@ -855,13 +859,13 @@ extern void initCompensationMatrix( void );
 extern char prepareCompensationMatrix( void );
 
 // determineCompensationOffsetZ()
-extern char determineCompensationOffsetZ( void );
+extern void determineCompensationOffsetZ( void );
 
 // adjustCompensationMatrix()
-extern char adjustCompensationMatrix( short nZ );
+extern void adjustCompensationMatrix( short nZ );
 
 // saveCompensationMatrix()
-extern char saveCompensationMatrix( unsigned int uAddress );
+extern void saveCompensationMatrix( unsigned int uAddress );
 
 // loadCompensationMatrix()
 extern char loadCompensationMatrix( unsigned int uAddress );
@@ -875,7 +879,7 @@ extern void outputPressureMatrix( void );
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
 // clearExternalEEPROM()
-extern char clearExternalEEPROM( void );
+extern void clearExternalEEPROM( void );
 
 // writeByte24C256()
 extern void writeByte24C256( int addressI2C, unsigned int addressEEPROM, unsigned char data );

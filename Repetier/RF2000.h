@@ -1014,6 +1014,10 @@ to activate the quadratic term. Only adds lots of computations and storage usage
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 
+/** \brief Specifies if you want to adjust minimal and maximum compensation steps to first layer */
+#define AUTOADJUST_MIN_MAX_ZCOMP                1
+#define AUTOADJUST_STARTMADEN_AUSSCHLUSS        0.35f
+
 /** \brief Specifies until which height the z compensation must complete
 This value should be roughly the double amount of mm which is detected as error of the heat bed. */
 #define HEAT_BED_Z_COMPENSATION_MAX_MM          3                                                                       // [mm]

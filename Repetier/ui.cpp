@@ -5399,7 +5399,7 @@ void UIDisplay::executeAction(int action)
                 // save the determined values to the EEPROM        
                 if(g_ZMatrixChangedInRam){
                     uid.executeAction(UI_ACTION_TOP_MENU);
-                    saveCompensationMatrix( (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveHeatBed) );     
+                    saveCompensationMatrix( (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveHeatBed) );
                     if( Printer::debugInfo() )
                     {
                         Com::printFLN( PSTR( "Manual Input: the heat bed compensation matrix has been saved" ) );
