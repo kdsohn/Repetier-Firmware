@@ -1415,8 +1415,16 @@ long PrintLine::performPauseCheck(){
             return true;
         }
 #endif //FEATURE_PAUSE_PRINTING
+
         // Pause a bit, if z-compensation is way out of line: this is usefull when starting prints using very deep bed-leveling and custom z-endstop switches which can override a lot.
-        if( abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ ) > ZAXIS_STEPS_PER_MM / 2 && Printer::compensatedPositionTargetStepsZ ){
+        short ZcmpNachlauf = abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ );
+
+        if( ZcmpNachlauf > ZAXIS_STEPS_PER_MM * 0.25f && Printer::compensatedPositionTargetStepsZ ){
+            HAL::forbidInterrupts();
+            return true;
+        }
+        
+        if( ZcmpNachlauf > 0 && !Printer::doHeatBedZCompensation ){
             HAL::forbidInterrupts();
             return true;
         }
@@ -1530,98 +1538,10 @@ long PrintLine::performQueueMove()
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
                 case TASK_ENABLE_Z_COMPENSATION:
                 {
-                    char    Exit = 0;
-
-
-#if FEATURE_MILLING_MODE
-                    if( Printer::operatingMode == OPERATING_MODE_MILL)
-                    {
-#if FEATURE_WORK_PART_Z_COMPENSATION
-                        if( Printer::doWorkPartZCompensation )
-                        {
-                            Exit = 1;
-                        }
-#endif // FEATURE_WORK_PART_Z_COMPENSATION
+                    if( Printer::enableCMPnow( ) ) {
+                        //aktivieren hat geklappt.
                     }
-                    else
-#endif // FEATURE_MILLING_MODE
-
-                    {
-#if FEATURE_HEAT_BED_Z_COMPENSATION
-                        if( Printer::doHeatBedZCompensation )
-                        {
-                            Exit = 1;
-                        }
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION
-                    }
-
-                    if( Exit )
-                    {
-                        // do not enable the z compensation in case it is enabled already
-                        removeCurrentLineForbidInterrupt();
-                        return 1000;
-                    }
-
-                    // enable the z compensation
-                    if( g_ZCompensationMatrix[0][0] == EEPROM_FORMAT )
-                    {
-                        // enable the z compensation only in case we have valid compensation values
-#if FEATURE_MILLING_MODE
-                        if( Printer::operatingMode == OPERATING_MODE_MILL )
-                        {
-#if FEATURE_WORK_PART_Z_COMPENSATION
-                            Printer::doWorkPartZCompensation = 1;
-
-#if DEBUG_WORK_PART_Z_COMPENSATION
-                            g_nLastZCompensationPositionSteps[X_AXIS] = 0;
-                            g_nLastZCompensationPositionSteps[Y_AXIS] = 0;
-                            g_nLastZCompensationPositionSteps[Z_AXIS] = 0;
-                            g_nLastZCompensationTargetStepsZ          = 0;
-                            g_nZCompensationUpdates                   = 0;
-#endif // DEBUG_WORK_PART_Z_COMPENSATION
-
-#if FEATURE_FIND_Z_ORIGIN
-                            if( g_nZOriginPosition[X_AXIS] || g_nZOriginPosition[Y_AXIS] )
-                            {
-                                Printer::staticCompensationZ = getZMatrixDepth(g_nZOriginPosition[X_AXIS], g_nZOriginPosition[Y_AXIS]); //determineStaticCompensationZ();
-                            }
-                            else
-                            {
-                                // we know nothing about a static z-delta in case we do not know the x and y positions at which the z-origin has been determined
-                                Printer::staticCompensationZ = 0;
-                            }
-#else
-                            // we know nothing about a static z-delta when we do not have the automatic search of the z-origin available
-                            Printer::staticCompensationZ = 0;
-#endif // FEATURE_FIND_Z_ORIGIN
-
-#endif // FEATURE_WORK_PART_Z_COMPENSATION
-                        }
-                        else
-#endif // FEATURE_MILLING_MODE
-
-                        {
-#if FEATURE_HEAT_BED_Z_COMPENSATION
-                            Printer::doHeatBedZCompensation = 1;
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION
-
-#if DEBUG_HEAT_BED_Z_COMPENSATION
-                            g_nLastZCompensationPositionSteps[X_AXIS] = 0;
-                            g_nLastZCompensationPositionSteps[Y_AXIS] = 0;
-                            g_nLastZCompensationPositionSteps[Z_AXIS] = 0;
-                            g_nLastZCompensationTargetStepsZ          = 0;
-                            g_nZCompensationUpdates                   = 0;
-#endif // DEBUG_HEAT_BED_Z_COMPENSATION
-
-                        }
-
-                        Printer::resetCompensatedPosition();
-                        
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-                        //Printer::resetDirectPosition();
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-                    }
-            
+                    
                     removeCurrentLineForbidInterrupt();
                     return 1000;
                 }
@@ -1629,25 +1549,7 @@ long PrintLine::performQueueMove()
                 case TASK_DISABLE_Z_COMPENSATION:
                 {
                     // disable the z compensation
-                    Printer::resetCompensatedPosition();
-
-#if FEATURE_MILLING_MODE
-                    if( Printer::operatingMode == OPERATING_MODE_PRINT )
-                    {
-#if FEATURE_HEAT_BED_Z_COMPENSATION
-                        Printer::doHeatBedZCompensation = 0;
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION
-                    }
-                    else
-                    {
-#if FEATURE_WORK_PART_Z_COMPENSATION
-                        Printer::doWorkPartZCompensation = 0;
-                        Printer::staticCompensationZ     = 0;
-#endif // FEATURE_WORK_PART_Z_COMPENSATION
-                    }
-#else
-                    Printer::doHeatBedZCompensation = 0;
-#endif // FEATURE_MILLING_MODE
+                    Printer::disableCMPnow();
 
                     removeCurrentLineForbidInterrupt();
                     return 1000;

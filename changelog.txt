@@ -2,6 +2,10 @@ TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has th
 TODO: Testing, testing ..
 
 V RF.01.38.05.Mod (2018-01-02)
+- div 0 fix for ECMP
+- strategy change for activating and disabling zCMP
+
+V RF.01.38.05.Mod (2018-01-02)
 - changed fan speed to display float
 - added auto adjust function for g_minZCompensationSteps to set it to first layer height
 - added auto adjust function for g_maxZCompensationSteps to set it to g_minZCompensationSteps + max 5% comp pro layer.

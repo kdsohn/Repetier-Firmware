@@ -1235,9 +1235,6 @@ Above this value the z compensation will distribute the roughness of the surface
 
 #if FEATURE_MILLING_MODE
 
-/** \brief Enables debug outputs from the compensation in z direction */
-#define DEBUG_WORK_PART_Z_COMPENSATION      0                                                   // 1 = on, 0 = off
-
 /** \brief Enables debug outputs from the work part scan */
 #define DEBUG_WORK_PART_SCAN                0                                                   // 1 = on, 0 = off
 

@@ -695,24 +695,6 @@ extern  long            g_nZOriginPosition[3];
 extern  int             g_nZOriginSet;
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if DEBUG_HEAT_BED_Z_COMPENSATION || DEBUG_WORK_PART_Z_COMPENSATION
-extern  volatile long   g_nLastZCompensationPositionSteps[3];
-extern  volatile long   g_nLastZCompensationTargetStepsZ;
-extern  volatile long   g_nZCompensationUpdates;
-extern  long            g_nDelta[2];
-extern  long            g_nStepSize[2];
-extern  long            g_nTempXFront;
-extern  long            g_nTempXBack;
-extern  long            g_nNeededZ;
-extern  unsigned char   g_uIndex[4];
-extern  short           g_nMatrix[4];
-extern  long            g_nZDeltaMin;
-extern  long            g_nZDeltaMax;
-extern  long            g_nZCompensationUpdateTime;
-extern volatile long    g_nZCompensationDelayMax;
-extern  long            g_nTooFast;
-#endif // DEBUG_HEAT_BED_Z_COMPENSATION || DEBUG_WORK_PART_Z_COMPENSATION
-
 #if FEATURE_RGB_LIGHT_EFFECTS
 
 extern unsigned char    g_uRGBHeatingR;
@@ -1026,9 +1008,6 @@ extern void setupForMilling( void );
 
 // prepareZCompensation()
 extern void prepareZCompensation( void );
-
-// resetZCompensation()
-extern void resetZCompensation( void );
 
 // isSupportedGCommand()
 extern unsigned char isSupportedGCommand( unsigned int currentGCode, char neededMode, char outputLog = 1 );

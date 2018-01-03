@@ -1252,7 +1252,8 @@ public:
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
     static void performZCompensation( void );
-    static void resetCompensatedPosition( void );
+    static void disableCMPnow( void );
+    static bool enableCMPnow( void );
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
 private:

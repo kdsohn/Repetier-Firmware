@@ -132,12 +132,12 @@ volatile char   Printer::stepperDirection[3];
 volatile char   Printer::blockAll;
 
 #if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
-volatile long   Printer::currentZSteps;
+volatile long   Printer::currentZSteps;  //das ist der Z-Zähler der GCodes zum Zählen des tiefsten Schalterdruckpunkts /Schaltercrash.
 #endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-volatile long   Printer::compensatedPositionTargetStepsZ;
-volatile long   Printer::compensatedPositionCurrentStepsZ;
+volatile long   Printer::compensatedPositionTargetStepsZ = 0;
+volatile long   Printer::compensatedPositionCurrentStepsZ = 0;
 
 volatile float  Printer::compensatedPositionOverPercE = 0.0f;
 volatile float  Printer::compensatedPositionCollectTinyE = 0.0f;
@@ -147,7 +147,7 @@ volatile long   Printer::queuePositionZLayerCurrent_cand = 0;
 volatile long   Printer::queuePositionZLayerCurrent = 0;
 volatile long   Printer::queuePositionZLayerLast = 0;
 
-volatile char   Printer::endZCompensationStep;
+volatile char   Printer::endZCompensationStep = 0;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
@@ -1132,12 +1132,6 @@ void Printer::setup()
     currentZSteps                     = 0;
 #endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 
-#if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-    compensatedPositionTargetStepsZ  =
-    compensatedPositionCurrentStepsZ = 0;
-    endZCompensationStep             = 0;
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     directPositionCurrentSteps[X_AXIS] =
     directPositionCurrentSteps[Y_AXIS] =
@@ -1521,17 +1515,91 @@ void Printer::homeYAxis()
 
 } // homeYAxis
 
+#if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
+bool Printer::enableCMPnow( void ){
+#if FEATURE_MILLING_MODE
+    if( Printer::operatingMode == OPERATING_MODE_MILL)
+    {
+#if FEATURE_WORK_PART_Z_COMPENSATION
+        if( Printer::doWorkPartZCompensation ) return false;
+#endif // FEATURE_WORK_PART_Z_COMPENSATION
+    }
+    else
+#endif // FEATURE_MILLING_MODE
+    {
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+        if( Printer::doHeatBedZCompensation ) return false;
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION
+    }
+
+    // enable the z compensation
+    if( g_ZCompensationMatrix[0][0] != EEPROM_FORMAT )  return false;
+
+    // enable the z compensation only in case we have valid compensation values
+#if FEATURE_MILLING_MODE
+    if( Printer::operatingMode == OPERATING_MODE_MILL )
+    {
+#if FEATURE_WORK_PART_Z_COMPENSATION
+        Printer::doWorkPartZCompensation = 1;
+#if FEATURE_FIND_Z_ORIGIN
+        if( g_nZOriginPosition[X_AXIS] || g_nZOriginPosition[Y_AXIS] )
+        {
+            Printer::staticCompensationZ = getZMatrixDepth(g_nZOriginPosition[X_AXIS], g_nZOriginPosition[Y_AXIS]); //determineStaticCompensationZ();
+        }
+        else
+        {
+            // we know nothing about a static z-delta in case we do not know the x and y positions at which the z-origin has been determined
+            Printer::staticCompensationZ = 0;
+        }
+#else
+        // we know nothing about a static z-delta when we do not have the automatic search of the z-origin available
+        Printer::staticCompensationZ = 0;
+#endif // FEATURE_FIND_Z_ORIGIN
+#endif // FEATURE_WORK_PART_Z_COMPENSATION
+    }
+    else
+#endif // FEATURE_MILLING_MODE
+    {
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+        Printer::doHeatBedZCompensation = 1;
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION
+    }
+    return true;
+
+}
+
+void Printer::disableCMPnow( void ) {
+#if FEATURE_MILLING_MODE
+    if( Printer::operatingMode == OPERATING_MODE_PRINT )
+    {
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+        Printer::doHeatBedZCompensation = 0;
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION
+    }
+    else
+    {
+#if FEATURE_WORK_PART_Z_COMPENSATION
+        Printer::doWorkPartZCompensation = 0;
+        Printer::staticCompensationZ     = 0;
+#endif // FEATURE_WORK_PART_Z_COMPENSATION
+    }
+#else
+    Printer::doHeatBedZCompensation = 0;
+#endif // FEATURE_MILLING_MODE
+    Printer::compensatedPositionTargetStepsZ = 0; //tell CMP to move to 0. TODO: Care for positive matrix beds.
+}
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
 void Printer::homeZAxis()
 {
     long    steps;
-    char    nProcess = 0;
+    //char    nProcess = 1;
     char    nHomeDir;
 
 
 #if FEATURE_MILLING_MODE
 
-    nProcess = 1;
+    //nProcess = 1;
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
         // in operating mode "print" we use the z min endstop
@@ -1547,7 +1615,7 @@ void Printer::homeZAxis()
 
     if ((MIN_HARDWARE_ENDSTOP_Z && Z_MIN_PIN > -1 && Z_HOME_DIR==-1) || (MAX_HARDWARE_ENDSTOP_Z && Z_MAX_PIN > -1 && Z_HOME_DIR==1))
     {
-        nProcess = 1;
+        //nProcess = 1;
         nHomeDir = Z_HOME_DIR;
     }
 
@@ -1560,7 +1628,7 @@ void Printer::homeZAxis()
     }
 #endif
 
-    if( nProcess )
+    if( /*nProcess*/ true )
     {
         UI_STATUS_UPD( UI_TEXT_HOME_Z );
         uid.lock();
@@ -1625,7 +1693,6 @@ void Printer::homeZAxis()
 
         queuePositionLastSteps[Z_AXIS]    = (nHomeDir == -1) ? minSteps[Z_AXIS] : maxSteps[Z_AXIS];
         queuePositionCurrentSteps[Z_AXIS] = queuePositionLastSteps[Z_AXIS];
-
 #if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
         currentZSteps                     = queuePositionLastSteps[Z_AXIS];
 #endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
@@ -1903,24 +1970,6 @@ void Printer::resetDirectPosition( void )
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 void Printer::performZCompensation( void )
 {
-    // the order of the following checks shall not be changed
-#if FEATURE_HEAT_BED_Z_COMPENSATION && FEATURE_WORK_PART_Z_COMPENSATION
-    if( !doHeatBedZCompensation && !doWorkPartZCompensation )
-    {
-        return;
-    }
-#elif FEATURE_HEAT_BED_Z_COMPENSATION
-    if( !doHeatBedZCompensation )
-    {
-        return;
-    }
-#elif FEATURE_WORK_PART_Z_COMPENSATION
-    if( !doWorkPartZCompensation )
-    {
-        return;
-    }
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION && FEATURE_WORK_PART_Z_COMPENSATION
-
     if( blockAll )
     {
         // do not perform any compensation in case the moving is blocked
@@ -2016,28 +2065,5 @@ void Printer::performZCompensation( void )
     }
 
 } // performZCompensation
-
-
-void Printer::resetCompensatedPosition( void )
-{
-    if( compensatedPositionCurrentStepsZ )
-    {
-        queuePositionCurrentSteps[Z_AXIS] += compensatedPositionCurrentStepsZ;
-        queuePositionLastSteps[Z_AXIS]    += compensatedPositionCurrentStepsZ;
-        queuePositionTargetSteps[Z_AXIS]  += compensatedPositionCurrentStepsZ;
-
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
-        currentZSteps                     += compensatedPositionCurrentStepsZ;
-#endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
-
-        queuePositionCommandMM[Z_AXIS]  = 
-        queuePositionLastMM[Z_AXIS]     = (float)(queuePositionLastSteps[Z_AXIS])*invAxisStepsPerMM[Z_AXIS];
-    }
-
-    compensatedPositionTargetStepsZ  = 0;
-    compensatedPositionCurrentStepsZ = 0;
-    endZCompensationStep             = 0;
-
-} // resetCompensatedPosition
 
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION

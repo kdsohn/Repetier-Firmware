@@ -214,9 +214,6 @@ See "configuration of the speed vs. cpu usage" within RF1000.h / RF2000.h
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION 
 
-/** \brief Enables debug outputs from the compensation in z direction */
-#define DEBUG_HEAT_BED_Z_COMPENSATION       0                                                   // 1 = on, 0 = off
-
 /** \brief Enables debug outputs from the heat bed scan */
 #define DEBUG_HEAT_BED_SCAN                 0                                                   // 0 = off, 1 = on, 2 = on with more debug outputs
 
