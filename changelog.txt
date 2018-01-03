@@ -1,6 +1,9 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.08.Mod (2018-01-03)
+- addFloat overlow bugfix for 4+ digits.
+
 V RF.01.38.07.Mod (2018-01-03)
 - Better Init
 - ZOS now uses matrix interpolation instead of matrix node

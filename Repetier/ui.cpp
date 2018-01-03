@@ -709,7 +709,7 @@ void UIDisplay::addLong(long value,char digits)
 } // addLong
 
 
-const float roundingTable[] PROGMEM = {0.5,0.05,0.005,0.0005};
+const float roundingTable[] PROGMEM = {0.5,0.05,0.005,0.0005,0.00005};
 void UIDisplay::addFloat(float number, char fixdigits,uint8_t digits)
 {
     if(col>=MAX_COLS) return;
@@ -721,6 +721,8 @@ void UIDisplay::addFloat(float number, char fixdigits,uint8_t digits)
         number = -number;
         fixdigits--;
     }
+
+    digits = (digits <= 4 ? digits : 4);
     number += pgm_read_float(&roundingTable[digits]); // for correct rounding
 
     // Extract the integer part of the number and print it
@@ -1968,7 +1970,7 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 else if(c2=='P')                                                                        // %LP : ECMP %
                 {
-                    addFloat(Printer::compensatedPositionOverPercE,1,4);
+                    addFloat(Printer::compensatedPositionOverPercE,2,4);
                     break;
                 }
                 else if(c2=='m')                                                                        // %Lm : g_minZCompensationSteps
