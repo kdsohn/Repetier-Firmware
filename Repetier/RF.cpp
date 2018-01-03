@@ -84,11 +84,11 @@ char            g_nActiveHeatBed           = 1;
 //Nibbels: Das ist wie die g_nHeatBedScanStatus, die Schwestervariable, für den ZOS-Scan -> Vorsicht, wenn man sowas einführt müssen die überall vermerkt werden, weil sonst z.B. der G-Code weiter vorgeführt wird.
 // g_ZMatrixChangedInRam soll 1 werden, wenn ZOS, Offsetänderung der Matrix etc. Sonst wäre Sichern der Matrix unnötig.
 volatile unsigned char  g_ZMatrixChangedInRam = 0;
-volatile unsigned char  g_ZOSScanStatus    = 0;     
+volatile unsigned char  g_ZOSScanStatus       = 0;
 //Nibbels:
 unsigned char   g_ZOSTestPoint[2]     = { SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_INDEX_X, SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_INDEX_Y };
-float           g_ZOSlearningRate = 1.0;
-float           g_ZOSlearningGradient = 0.0;
+float           g_ZOSlearningRate     = 1.0f;
+float           g_ZOSlearningGradient = 0.0f;
 long            g_min_nZScanZPosition = 0;
 unsigned char   g_ZOS_Auto_Matrix_Leveling_State = 0; //if 1 do multiple scans to correct matrix. while correcting this is rising for switch cases see state 50+
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
@@ -161,14 +161,8 @@ short           g_ScanPressure[COMPENSATION_MATRIX_MAX_X][COMPENSATION_MATRIX_MA
 long            g_staticZSteps              = 0;
 char            g_debugLevel                = 0;
 char            g_debugLog                  = 0;
-//long          g_debugCounter[20]          = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-//short         g_debugCounter[12]          = { 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 };
-//short         g_debugCounter[6]           = { 0, 0, 0, 0, 0, 0 };
 unsigned long   g_uStopTime                 = 0;
 unsigned long   g_uBlockSDCommands          = 0;
-//short         g_debugInt16                = 0;
-//unsigned short    g_debugUInt16               = 0;
-//long          g_debugInt32                = 0;
 
 #if FEATURE_EXTENDED_BUTTONS
 // other configurable parameters
@@ -454,16 +448,6 @@ void startHeatBedScan( void )
             // start the heat bed scan
             g_nHeatBedScanStatus = 1;
             BEEP_START_HEAT_BED_SCAN
-
-            // when the heat bed is scanned, the z-compensation must be disabled
-            if( Printer::doHeatBedZCompensation )
-            {
-                if( Printer::debugInfo() )
-                {
-                    Com::printFLN( PSTR( "HBS: z comp disabled" ) );
-                }
-                Printer::disableCMPnow();
-            }
         }
     }
     return;
@@ -1972,12 +1956,6 @@ void startZOScan( bool automatrixleveling )
             Com::printFLN( PSTR( "ZOS started" ) );
             BEEP_START_HEAT_BED_SCAN
             g_ZOSScanStatus = 1;
-            // when the heat bed is scanned, the z-compensation must be disabled
-            if( Printer::doHeatBedZCompensation )
-            {
-                if( Printer::debugInfo() ) Com::printFLN( PSTR( "zcomp off" ) );
-                Printer::disableCMPnow();
-            }
             // start the heat bed scan
             g_abortZScan = 0;
             g_retryZScan = 0;
@@ -2127,7 +2105,7 @@ void searchZOScan( void )
                 }
 
                 // start at the home position
-                Printer::homeAxis( true, true, true );
+                Printer::homeAxis( true, true, true ); //home z resets ZCMP
                 Commands::waitUntilEndOfAllMoves();
                 g_ZOSScanStatus = 3;
                 break;
@@ -2364,14 +2342,13 @@ void searchZOScan( void )
             case 50:
             {    
                 // compute number of steps we need to shift the entire matrix by
-                long nZ = g_min_nZScanZPosition - g_ZCompensationMatrix[g_ZOSTestPoint[X_AXIS]][g_ZOSTestPoint[Y_AXIS]];
-                            
-#if DEBUG_HEAT_BED_SCAN == 2
-                Com::printFLN( PSTR( "Matrix-Wert Z = " ), g_ZCompensationMatrix[g_ZOSTestPoint[X_AXIS]][g_ZOSTestPoint[Y_AXIS]] );
-#endif // DEBUG_HEAT_BED_SCAN
+                long matrixwert = getZMatrixDepth_CurrentXY();
+                long nZ = g_min_nZScanZPosition - matrixwert;   //g_ZCompensationMatrix[g_ZOSTestPoint[X_AXIS]][g_ZOSTestPoint[Y_AXIS]]; --> NEU: Mit Interpolation, also können wir überall scannen.
+
+                Com::printFLN( PSTR( "Matrix-Wert Z = " ), matrixwert );
                 Com::printF( PSTR( "Minimum Z = " ), g_min_nZScanZPosition );
                 Com::printFLN( PSTR( " dZ = " ), nZ );
-                            
+
                 // update the matrix: shift by nZ and check for integer overflow
                 bool overflow = false;
                 bool overH = false;
@@ -3362,7 +3339,6 @@ void startAlignExtruders( void )
             || Printer::currentXPosition() < HEAT_BED_SCAN_X_START_MM 
             || Printer::currentZPositionSteps() )
         {
-            if( Printer::doHeatBedZCompensation ) Printer::disableCMPnow();
             Printer::homeAxis( true, true, true );
             PrintLine::moveRelativeDistanceInSteps( HEAT_BED_SCAN_X_CALIBRATION_POINT_STEPS, HEAT_BED_SCAN_Y_CALIBRATION_POINT_STEPS, 0, 0, RMath::min(MAX_FEEDRATE_X,MAX_FEEDRATE_Y), true, true );
         }
@@ -3673,14 +3649,7 @@ void startWorkPartScan( char nMode )
             BEEP_START_WORK_PART_SCAN
 
             // when the work part is scanned, the z-compensation must be disabled
-            if( Printer::doWorkPartZCompensation )
-            {
-                if( Printer::debugInfo() )
-                {
-                    Com::printFLN( PSTR( "startWorkPartScan(): the z compensation has been disabled" ) );
-                }
-                Printer::disableCMPnow();
-            }
+            Printer::disableCMPnow(true); //brauchen wir hier, es gibt einen fall ohne ZHoming
         }
     }
 } // startWorkPartScan
@@ -3697,7 +3666,6 @@ void scanWorkPart( void )
     static long             nY;
     static long             nYDirection;
     static short            nContactPressure = 0;
-    //char                  nLastWorkPartScanStatus = g_nWorkPartScanStatus;
     short                   nTempPressure;
     long                    nTempPosition;
 
@@ -5650,6 +5618,8 @@ char loadCompensationMatrix( unsigned int uAddress )
     float           fMicroStepCorrection;
 
 
+    Printer::disableCMPnow(true); // vorher, nicht nachher ausschalten, sonst arbeitet unter Umständen die alte matrix.
+    
     // check the stored header format
     uTemp = readWord24C256( I2C_ADDRESS_EXTERNAL_EEPROM, EEPROM_OFFSET_HEADER_FORMAT );
 
@@ -5868,7 +5838,6 @@ char loadCompensationMatrix( unsigned int uAddress )
 
     g_ZMatrixChangedInRam = 0; //Nibbels: Marker, dass die Matrix gespeichert werden kann oder eben nicht, weils unverändert keinen Sinn macht.
 
-    Printer::disableCMPnow();
     return 0;
 
 } // loadCompensationMatrix
@@ -6055,7 +6024,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
         }
     }
 
-    if( PrintLine::linesCount > 5 )
+    if( PrintLine::linesCount > 2 )
     {
         // this check shall be done only during the printing (for example, it shall not be done in case filament is extruded manually)
         Printer::setPrinting(true);
@@ -7283,6 +7252,7 @@ void processCommand( GCode* pCommand )
                             {
                                 Com::printFLN( PSTR( "M3001: enabling z compensation" ) );
                             }
+                            Commands::waitUntilEndOfAllMoves();
                             queueTask( TASK_ENABLE_Z_COMPENSATION );
                             Commands::waitUntilEndOfAllMoves();
                         }
@@ -12199,7 +12169,7 @@ void cleanupYPositions( void )
 } // cleanupYPositions
 
 
-void cleanupZPositions( void ) //kill all!
+void cleanupZPositions( void ) //kill all! -> für stepper disabled
 {
     InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
 
@@ -12214,8 +12184,6 @@ void cleanupZPositions( void ) //kill all!
 #endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-    Printer::disableCMPnow();
-    
     Printer::compensatedPositionTargetStepsZ  =
     Printer::compensatedPositionCurrentStepsZ =
     Printer::endZCompensationStep             = 
@@ -12356,43 +12324,8 @@ void startFindZOrigin( void )
             showError( (void*)ui_text_find_z_origin, (void*)ui_text_operation_denied );
             return;
         }
-
-/*      if( PrintLine::linesCount )
-        {
-            // there is some printing in progress at the moment - do not start the search in this case
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( PSTR( "startFindZOrigin(): the search can not be started while the milling is in progress" ) );
-                return;
-            }
-        }
-*/
         // start the search
         g_nFindZOriginStatus = 1;
-
-#if FEATURE_HEAT_BED_Z_COMPENSATION
-        // when the search is running, the z-compensation must be disabled
-        if( Printer::doHeatBedZCompensation )
-        {
-            if( Printer::debugInfo() )
-            {
-                Com::printFLN( PSTR( "FindZOrigin: z comp disabled" ) );
-            }
-            Printer::disableCMPnow();
-        }
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION
-
-#if FEATURE_WORK_PART_Z_COMPENSATION
-        // when the search is running, the z-compensation must be disabled
-        if( Printer::doWorkPartZCompensation )
-        {
-            if( Printer::debugInfo() )
-            {
-                Com::printFLN( PSTR( "FindZOrigin(): z comp disabled" ) );
-            }
-            Printer::disableCMPnow();
-        }
-#endif // FEATURE_WORK_PART_Z_COMPENSATION
     }
 
     return;
@@ -12413,8 +12346,6 @@ void findZOrigin( void )
     {
         // the search has been aborted
         g_abortSearch       = 0;
-        //g_nZOriginPosition[Z_AXIS] = 0; //unnötig siehe Printer::disableZStepper(); -> cleanupZPositions()
-        //g_nZOriginSet       = 0; //unnötig siehe Printer::disableZStepper(); -> cleanupZPositions()
 
         // turn off the engines
         Printer::disableZStepper();
@@ -12474,12 +12405,19 @@ void findZOrigin( void )
                 Printer::enableZStepper();
                 Printer::unsetAllSteppersDisabled();
 
-                g_nFindZOriginStatus = 10;
+                g_nFindZOriginStatus = 2;
 
 #if DEBUG_FIND_Z_ORIGIN
                 Com::printFLN( PSTR( "findZOrigin(): 1->10" ) );
 #endif // DEBUG_FIND_Z_ORIGIN
                 break;
+            }
+            case 2:
+            {
+#if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
+                Printer::disableCMPnow(true);  //schalte Z CMP ab für findZOrigin
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
+                g_nFindZOriginStatus = 10;
             }
             case 10:
             {
@@ -12629,7 +12567,7 @@ void switchOperatingMode( char newOperatingMode )
         return;
     }
     
-    Printer::disableCMPnow();
+    Printer::disableCMPnow(true); //besser aus und warten.
     
 #if FEATURE_MILLING_MODE
     Printer::operatingMode = newOperatingMode;

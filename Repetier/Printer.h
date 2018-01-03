@@ -136,7 +136,7 @@ public:
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
 
     static volatile long    queuePositionCurrentSteps[3];
-    static volatile char    stepperDirection[3];                // this is the current x/y/z-direction from the processing of G-Codes
+    static volatile char    stepperDirection[3];              // this is the current x/y/z-direction from the processing of G-Codes
     static volatile char    blockAll;
 
 #if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
@@ -321,6 +321,7 @@ public:
     /** \brief Disable stepper motor for z direction. */
     static INLINE void disableZStepper()
     {
+        Printer::disableCMPnow(true); //fahre vom heizbett auf 0 bevor stepper aus.
 #if (Z_ENABLE_PIN > -1)
         WRITE(Z_ENABLE_PIN,!Z_ENABLE_ON);
 #endif // (Z_ENABLE_PIN > -1)
@@ -1252,8 +1253,8 @@ public:
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
     static void performZCompensation( void );
-    static void disableCMPnow( void );
-    static bool enableCMPnow( void );
+    static void disableCMPnow( bool wait = false );
+    static void enableCMPnow( void );
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
 private:

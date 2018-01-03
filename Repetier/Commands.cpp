@@ -106,16 +106,19 @@ void Commands::waitUntilEndOfAllMoves()
 {
     char    bWait = 0;
 
-
 #ifdef DEBUG_PRINT
     debugWaitLoop = 8;
 #endif
 
     if( PrintLine::hasLines() )     bWait = 1;
-
 #if FEATURE_FIND_Z_ORIGIN
     if( g_nFindZOriginStatus )      bWait = 1;
 #endif // FEATURE_FIND_Z_ORIGIN
+
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+    //weiß nicht ob wir das brauchen: test
+    if( abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ ) )      bWait = 1;
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
     while( bWait )
     {
@@ -404,9 +407,6 @@ void Commands::reportPrinterUsage()
     }
     else
     {
-        //bool idle = true;
-        //if ( PrintLine::linesCount > 1 ) idle = false;
-
         if( Printer::debugInfo() )
         {
             int32_t seconds =  (HAL::timeInMilliseconds()-Printer::msecondsMilling)/1000 + HAL::eprGetInt32(EPR_MILLING_TIME);

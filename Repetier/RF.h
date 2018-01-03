@@ -767,6 +767,9 @@ extern short testHeatBedTemperature( void );
 // getZMatrixDepth()
 extern long getZMatrixDepth( long x, long y );
 
+// getZMatrixDepth_CurrentXY()
+extern long getZMatrixDepth_CurrentXY( void );
+
 // doHeatBedZCompensation()
 extern void doHeatBedZCompensation( void );
 

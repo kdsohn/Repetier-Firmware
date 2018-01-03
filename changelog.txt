@@ -1,6 +1,15 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.07.Mod (2018-01-03)
+- Better Init
+- ZOS now uses matrix interpolation instead of matrix node
+- homing safely shuts off zcmp and waits for it
+- disable z stepper z shuts off zcmp before shutting off stepper and cleaning up coordinates - seems to be safer??
+- removed disable CMP where it is not needed anymore because of zhome-cmp-off
+- for now if( PrintLine::linesCount > 2 ) is marking "printing" instead of 5. Had some trouble at startmade.
+- Commands::waitUntilEndOfAllMoves() waits for zcomp to reach target too.
+
 V RF.01.38.05.Mod (2018-01-02)
 - div 0 fix for ECMP
 - strategy change for activating and disabling zCMP

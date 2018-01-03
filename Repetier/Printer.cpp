@@ -27,10 +27,10 @@ volatile int    Printer::extruderStepsNeeded;                           ///< Thi
 uint8_t         Printer::unitIsInches = 0;                              ///< 0 = Units are mm, 1 = units are inches.
 
 //Stepper Movement Variables
-float           Printer::axisStepsPerMM[4] = {XAXIS_STEPS_PER_MM,YAXIS_STEPS_PER_MM,ZAXIS_STEPS_PER_MM,1}; ///< Number of steps per mm needed.
-float           Printer::invAxisStepsPerMM[4];                          ///< Inverse of axisStepsPerMM for faster conversion
-float           Printer::maxFeedrate[4] = {MAX_FEEDRATE_X, MAX_FEEDRATE_Y, MAX_FEEDRATE_Z, DIRECT_FEEDRATE_E}; ///< Maximum allowed feedrate. //DIRECT_FEEDRATE_E added by nibbels, wird aber überschrieben.
-float           Printer::homingFeedrate[3];
+float           Printer::axisStepsPerMM[4] = {XAXIS_STEPS_PER_MM,YAXIS_STEPS_PER_MM,ZAXIS_STEPS_PER_MM,1};                   ///< Number of steps per mm needed.
+float           Printer::invAxisStepsPerMM[4] = {1.0f/XAXIS_STEPS_PER_MM,1.0f/YAXIS_STEPS_PER_MM,1.0f/ZAXIS_STEPS_PER_MM,1}; ///< Inverse of axisStepsPerMM for faster conversion
+float           Printer::maxFeedrate[4] = {MAX_FEEDRATE_X, MAX_FEEDRATE_Y, MAX_FEEDRATE_Z, DIRECT_FEEDRATE_E};               ///< Maximum allowed feedrate. //DIRECT_FEEDRATE_E added by nibbels, wird aber überschrieben.
+float           Printer::homingFeedrate[3] = {HOMING_FEEDRATE_X_PRINT,HOMING_FEEDRATE_Y_PRINT,HOMING_FEEDRATE_Z_PRINT};      ///< dass zumindest etwas sinnvolles drin steht, wird überschrieben.
 
 #ifdef RAMP_ACCELERATION
 float           Printer::maxAccelerationMMPerSquareSecond[4] = {MAX_ACCELERATION_UNITS_PER_SQ_SECOND_X,MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Y,MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Z}; ///< X, Y, Z and E max acceleration in mm/s^2 for printing moves or retracts
@@ -48,10 +48,10 @@ unsigned long   Printer::maxTravelAccelerationStepsPerSquareSecond[4];
 uint8_t         Printer::relativeCoordinateMode = false;                ///< Determines absolute (false) or relative Coordinates (true).
 uint8_t         Printer::relativeExtruderCoordinateMode = false;        ///< Determines Absolute or Relative E Codes while in Absolute Coordinates mode. E is always relative in Relative Coordinates mode.
 
-volatile long   Printer::queuePositionLastSteps[4];
-volatile float  Printer::queuePositionLastMM[3];
-volatile float  Printer::queuePositionCommandMM[3];
-volatile long   Printer::queuePositionTargetSteps[4];
+volatile long   Printer::queuePositionLastSteps[4]               = {0,0,0,0};
+volatile float  Printer::queuePositionLastMM[3]                  = {0,0,0};
+volatile float  Printer::queuePositionCommandMM[3]               = {0,0,0};
+volatile long   Printer::queuePositionTargetSteps[4]             = {0,0,0,0};
 float           Printer::originOffsetMM[3] = {0,0,0};
 uint8_t         Printer::flag0 = 0;
 uint8_t         Printer::flag1 = 0;
@@ -80,15 +80,13 @@ long            Printer::advanceExecuted;                               ///< Exe
 volatile int    Printer::advanceStepsSet;
 #endif // USE_ADVANCE
 
-//float         Printer::minimumSpeed;                                  ///< lowest allowed speed to keep integration error small
-//float         Printer::minimumZSpeed;
 long            Printer::maxSteps[3];                                   ///< For software endstops, limit of move in positive direction.
 long            Printer::minSteps[3];                                   ///< For software endstops, limit of move in negative direction.
 float           Printer::lengthMM[3];
 float           Printer::minMM[3];
 float           Printer::feedrate;                                      ///< Last requested feedrate.
-int             Printer::feedrateMultiply;                              ///< Multiplier for feedrate in percent (factor 1 = 100)
-int             Printer::extrudeMultiply;                               ///< Flow multiplier in percdent (factor 1 = 100)
+int             Printer::feedrateMultiply = 1;                              ///< Multiplier for feedrate in percent (factor 1 = 100)
+int             Printer::extrudeMultiply = 1;                               ///< Flow multiplier in percdent (factor 1 = 100)
 float           Printer::extrudeMultiplyError = 0;
 float           Printer::extrusionFactor = 1.0;
 float           Printer::maxJerk;                                       ///< Maximum allowed jerk in mm/s
@@ -119,20 +117,20 @@ int             debugWaitLoop = 0;
 #endif // DEBUG_PRINT
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-volatile char   Printer::doHeatBedZCompensation;
+volatile char   Printer::doHeatBedZCompensation = false;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
-volatile char   Printer::doWorkPartZCompensation;
-volatile long   Printer::staticCompensationZ;
+volatile char   Printer::doWorkPartZCompensation = false;
+volatile long   Printer::staticCompensationZ = 0;
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
 
-volatile long   Printer::queuePositionCurrentSteps[3];
-volatile char   Printer::stepperDirection[3];
-volatile char   Printer::blockAll;
+volatile long   Printer::queuePositionCurrentSteps[3] = {0, 0, 0};
+volatile char   Printer::stepperDirection[3]          = {0, 0, 0};
+volatile char   Printer::blockAll = 0;
 
 #if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
-volatile long   Printer::currentZSteps;  //das ist der Z-Zähler der GCodes zum Zählen des tiefsten Schalterdruckpunkts /Schaltercrash.
+volatile long   Printer::currentZSteps = 0;  //das ist der Z-Zähler der GCodes zum Zählen des tiefsten Schalterdruckpunkts /Schaltercrash.
 #endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
@@ -151,9 +149,9 @@ volatile char   Printer::endZCompensationStep = 0;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-volatile long   Printer::directPositionTargetSteps[4];
-volatile long   Printer::directPositionCurrentSteps[4];
-long            Printer::directPositionLastSteps[4];
+volatile long   Printer::directPositionTargetSteps[4]  = {0, 0, 0, 0};
+volatile long   Printer::directPositionCurrentSteps[4] = {0, 0, 0, 0};
+long            Printer::directPositionLastSteps[4]    = {0, 0, 0, 0};
 char            Printer::waitMove;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
@@ -176,7 +174,7 @@ char            Printer::MillerType;
 #endif // FEATURE_CONFIGURABLE_MILLER_TYPE
 
 #if STEPPER_ON_DELAY
-char            Printer::enabledStepper[3];
+char            Printer::enabledStepper[3] = {0, 0, 0};
 #endif // STEPPER_ON_DELAY
 
 #if FEATURE_BEEPER
@@ -1516,24 +1514,24 @@ void Printer::homeYAxis()
 } // homeYAxis
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-bool Printer::enableCMPnow( void ){
+void Printer::enableCMPnow( void ){
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_MILL)
     {
 #if FEATURE_WORK_PART_Z_COMPENSATION
-        if( Printer::doWorkPartZCompensation ) return false;
+        if( Printer::doWorkPartZCompensation ) return; // false;
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
     }
     else
 #endif // FEATURE_MILLING_MODE
     {
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-        if( Printer::doHeatBedZCompensation ) return false;
+        if( Printer::doHeatBedZCompensation ) return; // false;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
     }
 
     // enable the z compensation
-    if( g_ZCompensationMatrix[0][0] != EEPROM_FORMAT )  return false;
+    if( g_ZCompensationMatrix[0][0] != EEPROM_FORMAT )  return; // false;
 
     // enable the z compensation only in case we have valid compensation values
 #if FEATURE_MILLING_MODE
@@ -1564,11 +1562,10 @@ bool Printer::enableCMPnow( void ){
         Printer::doHeatBedZCompensation = 1;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
     }
-    return true;
-
+    //return true;
 }
 
-void Printer::disableCMPnow( void ) {
+void Printer::disableCMPnow( bool wait ) {
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
@@ -1587,6 +1584,12 @@ void Printer::disableCMPnow( void ) {
     Printer::doHeatBedZCompensation = 0;
 #endif // FEATURE_MILLING_MODE
     Printer::compensatedPositionTargetStepsZ = 0; //tell CMP to move to 0. TODO: Care for positive matrix beds.
+    
+    while( wait && compensatedPositionCurrentStepsZ - compensatedPositionTargetStepsZ ) //warte auf queue befehlsende
+    {
+        HAL::delayMilliseconds( 1 );
+        //checkforperiodical .. possible loop inside scans and homing.
+    }
 }
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
@@ -1649,7 +1652,7 @@ void Printer::homeZAxis()
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         g_nZScanZPosition = 0;
-        queueTask( TASK_DISABLE_Z_COMPENSATION );
+        Printer::disableCMPnow(true); //true == wait for move while HOMING
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
         steps = (maxSteps[Z_AXIS] - minSteps[Z_AXIS]) * nHomeDir;

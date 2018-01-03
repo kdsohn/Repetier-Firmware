@@ -1423,8 +1423,8 @@ long PrintLine::performPauseCheck(){
             HAL::forbidInterrupts();
             return true;
         }
-        
-        if( ZcmpNachlauf > 0 && !Printer::doHeatBedZCompensation ){
+
+        if( ZcmpNachlauf && !Printer::doHeatBedZCompensation ){
             HAL::forbidInterrupts();
             return true;
         }
@@ -1538,10 +1538,7 @@ long PrintLine::performQueueMove()
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
                 case TASK_ENABLE_Z_COMPENSATION:
                 {
-                    if( Printer::enableCMPnow( ) ) {
-                        //aktivieren hat geklappt.
-                    }
-                    
+                    Printer::enableCMPnow( );
                     removeCurrentLineForbidInterrupt();
                     return 1000;
                 }
@@ -1549,8 +1546,7 @@ long PrintLine::performQueueMove()
                 case TASK_DISABLE_Z_COMPENSATION:
                 {
                     // disable the z compensation
-                    Printer::disableCMPnow();
-
+                    Printer::disableCMPnow(); //hier nicht unbedingt warten, das soll im fluss der queue einfach abgeschaltet werden. zu große abstände regelt die performPauseCheck 
                     removeCurrentLineForbidInterrupt();
                     return 1000;
                 }
