@@ -809,7 +809,7 @@ can set it on for safety. */
 
 /** Some fans won't start for low values, but would run if started with higher power at the beginning.
 This defines the full power duration before returning to set value. Time is in milliseconds */
-#define FAN_KICKSTART_TIME  200                                                                 // [ms]
+#define FAN_KICKSTART_TIME  100                                                                 // [ms]
 
 /** Defines the max. fan speed for M106 controlled fans. Normally 255 to use full range, but for
  12V fans on 24V this might help preventing a defect. For all other fans there is a explicit maximum PWM value

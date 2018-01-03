@@ -332,7 +332,7 @@ void Commands::setFanSpeed(int speed,bool wait)
     Com::printFLN(Com::tFanspeed,(trimmedSpeed == 1) ? 2 : trimmedSpeed ); //bei 1 zeigt repetierserver / repetierhost 0% an, was nicht stimmt. Das ist etwas Pfusch, aber nun funktionierts.
     if(fanKickstart == 0 && trimmedSpeed > pwm_pos[NUM_EXTRUDER+2] && trimmedSpeed < 85) {
         if(pwm_pos[NUM_EXTRUDER+2]) fanKickstart = FAN_KICKSTART_TIME / 100;
-        else                        fanKickstart = FAN_KICKSTART_TIME / 10;
+        else                        fanKickstart = FAN_KICKSTART_TIME / 25;
     }
     pwm_pos[NUM_EXTRUDER+2] = trimmedSpeed;
 } // setFanSpeed
