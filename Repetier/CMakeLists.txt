@@ -4,7 +4,7 @@ cmake_minimum_required(VERSION 2.8)
 # and this line should go before call to "cmake/ArduinoToolchain.cmake"
 # this is durty hack and should be fixed somewhen, because it should go to 
 # particular cmake subdirectory
-set(ARDUINO_CPU atmega2560)
+set(ARDUINO_CPU=atmega2560)
 
 set(CMAKE_TOOLCHAIN_FILE cmake/ArduinoToolchain.cmake) # Arduino Toolchain
 
