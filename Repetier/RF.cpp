@@ -3337,7 +3337,7 @@ void startAlignExtruders( void )
         }
 
         if( Printer::doHeatBedZCompensation 
-            || !Printer::isHomed() 
+            || !Printer::areAxisHomed() 
             || Printer::currentYPosition() < HEAT_BED_SCAN_Y_START_MM 
             || Printer::currentXPosition() < HEAT_BED_SCAN_X_START_MM 
             || Printer::currentZPositionSteps() )
