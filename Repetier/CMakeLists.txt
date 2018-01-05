@@ -27,6 +27,10 @@ option(RF1000 "Build for the RF1000 printer" OFF)
 option(RF2000 "Build for the RF2000 printer" OFF)
 option(RF2000v2 "Build for the RF2000v2 printer" OFF)
 
+option(CALIPER "Include Nibbels Caliper Feature" OFF)
+option(SOLO "Overide Extruder to Solo" OFF)
+option(DUAL "Overide Extruder to Dual" OFF)
+
 if( (RF1000 AND RF2000) OR (RF1000 AND RF2000v2) OR (RF2000 AND RF2000v2) OR (RF1000 AND RF2000 AND RF2000v2) OR (NOT RF1000 AND NOT RF2000 AND NOT RF2000v2) )
   message(FATAL_ERROR "Please select to build either for RF1000 or RF2000 / RF2000v2 by setting either '-DRF1000=ON' or '-DRF2000=ON' or '-DRF2000v2=ON'.")
 endif()
@@ -44,6 +48,8 @@ endif()
 
 if(SOLO)
   set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNUM_EXTRUDER=1")
+elseif(DUAL)
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -DNUM_EXTRUDER=2")
 endif()
 
 # Define the source code
