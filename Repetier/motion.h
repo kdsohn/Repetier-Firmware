@@ -592,7 +592,7 @@ public:
         //eigentlich gibts den fall hier nicht anders, wenn keiner umbaut, trotzdem!
         if(!isNoMove()) //x+y+z+e heißt bits 240 .... 1111 0000 -> isXYZ ist 112  und isE ist 128, kommt aufs selbe raus.
         {
-            unmarkAllSteppersDisabled();
+            Printer::unmarkAllSteppersDisabled();
         }
         // Only enable axis that are moving. If the axis doesn't need to move then it can stay disabled depending on configuration.
         if(isXMove())
