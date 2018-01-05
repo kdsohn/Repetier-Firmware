@@ -1346,7 +1346,8 @@ void Commands::executeGCode(GCode *com)
                     maxInactiveTime = 0;
                 break;
             }
-            case 99:    // M99 S<time>
+            case 99:    // M99 S<time> 
+            //Nibbels: 050118 Ich halte den Befehl für tendentiell gefährlich. Man sollte nicht abschalten, sondern Strom senken, oder hat das einen sinn? Vermutlich muss danach Homing und CMP deaktiviert werden!
             {
                 millis_t wait = 10000L;
                 if(com->hasS())

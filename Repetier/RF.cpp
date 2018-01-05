@@ -491,9 +491,7 @@ void scanHeatBed( void )
         Printer::homeAxis( true, true, true );
 
         // turn off the engines
-        Printer::disableXStepper();
-        Printer::disableYStepper();
-        Printer::disableZStepper();
+        Printer::disableAllSteppersNow();
 
         // disable all heaters
         Extruder::setHeatedBedTemperature( 0, false );
@@ -1864,9 +1862,7 @@ void scanHeatBed( void )
             case 150:
             {
                 // turn off the engines
-                Printer::disableXStepper();
-                Printer::disableYStepper();
-                Printer::disableZStepper();
+                Printer::disableAllSteppersNow();
 
                 // disable all heaters
                 Extruder::setHeatedBedTemperature( 0, false );
@@ -2013,8 +2009,6 @@ void searchZOScan( void )
                 //nun zu den settings:
                 if(g_ZOS_Auto_Matrix_Leveling_State <= 1){
                     previousMillisCmd = HAL::timeInMilliseconds();
-                    Printer::enableZStepper();
-                    Printer::unsetAllSteppersDisabled();
                 }
                 //HERE THE FUNCTION MIGHT JUMP IN TO REDO SCANS FOR AUTO_MATRIX_LEVELING
                 switch(g_ZOS_Auto_Matrix_Leveling_State){
@@ -2499,11 +2493,8 @@ void abortSearchHeatBedZOffset( bool reloadMatrix )
     Printer::homeAxis( true, true, true );
 
     // turn off all steppers and extruders
-    Printer::setAllSteppersDisabled();
-    Printer::disableXStepper();
-    Printer::disableYStepper();
-    Printer::disableZStepper();
-    Extruder::disableAllExtruders();
+    Printer::disableAllSteppersNow();
+
     g_ZOS_Auto_Matrix_Leveling_State = 0;
 } /* searchHeatBedZOffset */
 
@@ -3274,22 +3265,34 @@ void doHeatBedZCompensation( void )
             nNeededDigitZCompensationSteps = constrain(nNeededDigitZCompensationSteps, 0, 600);
 
             nNeededZCompensation += nNeededDigitZCompensationSteps;
+        /*
         }else{
             //wie bisher ohne additionszusatz
+        */
         }
     #endif // FEATURE_DIGIT_Z_COMPENSATION
 
-        noInts.protect(true);
-        Printer::compensatedPositionTargetStepsZ = nNeededZCompensation;
-        Printer::compensatedPositionOverPercE    = nNeededZEPerc;
-        noInts.unprotect();
     }else{
-        // nNeededZCompensation += g_staticZSteps; // -> würde das offset global auch ohne CMP gültig machen.
-        InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
-        Printer::compensatedPositionTargetStepsZ = nNeededZCompensation;
-        Printer::compensatedPositionOverPercE    = 0.0f;
-        noInts.unprotect();
+        // nNeededZCompensation += g_staticZSteps; // -> würde das offset global auch ohne CMP gültig machen. mache ich nicht!
+        
+        //zu hohe matrix, zschraube falsch, bekommt ohne dass die CMP an ist automatisch ein offset aufgebrummt, sodass man nicht crashen kann sofern die matrix stimmt.
+        if(g_offsetZCompensationSteps > 0 && Printer::isAxisHomed(Z_AXIS)) nNeededZCompensation += g_offsetZCompensationSteps;
+        //unhoming deaktiviert CMP.
     }
+    
+    //nachprüfung wegen override des schalterdruckpunktes
+    if( Printer::isAxisHomed(Z_AXIS) && Printer::currentZSteps <= -Z_OVERRIDE_MAX ){
+        if(nNeededZCompensation < Printer::compensatedPositionCurrentStepsZ){
+            nNeededZCompensation = Printer::compensatedPositionCurrentStepsZ; //nicht 100% sauber, aber schalterdruckpunkt ist auch nicht perfekt auf den step definiert. Einfach nicht näher rankompensieren, wie wir waren, bis wir aus der eingestellten schalter-todeszone raus sind, dann weiter wie bisher.
+        }
+        //nNeededZEPerc = 0.0; //-> ist hier generell völlig egal. Hmm, eigentlich könnte man in diesem fall automatisch raften,
+        //aber das wäre fast irre, wenn wir einfach mit material auffüllen, nur weil wir mit der düse nicht weiter ranfahren dürfen.
+    }
+    
+    InterruptProtectedBlock noInts; 
+    Printer::compensatedPositionTargetStepsZ = nNeededZCompensation;
+    Printer::compensatedPositionOverPercE    = nNeededZEPerc;
+    noInts.unprotect();
 } // doHeatBedZCompensation
 
 
@@ -3697,9 +3700,7 @@ void scanWorkPart( void )
         }
 
         // turn off the engines
-        Printer::disableXStepper();
-        Printer::disableYStepper();
-        Printer::disableZStepper();
+        Printer::disableAllSteppersNow();
 
         if( Printer::debugInfo() )
         {
@@ -3802,8 +3803,7 @@ void scanWorkPart( void )
             {
                 // move to the first position
                 previousMillisCmd = HAL::timeInMilliseconds();
-                Printer::enableZStepper();
-                Printer::unsetAllSteppersDisabled();
+                Printer::enableZStepper(); //nibbels: ???? vorher homing .. oder ist das hier falls z nicht gehomed und nicht aktiviert wird?
 
                 PrintLine::moveRelativeDistanceInSteps( g_nScanXStartSteps, 0, 0, 0, MAX_FEEDRATE_X, true, true );
                 PrintLine::moveRelativeDistanceInSteps( 0, g_nScanYStartSteps, 0, 0, MAX_FEEDRATE_Y, true, true );
@@ -4390,9 +4390,7 @@ void scanWorkPart( void )
                 }
 
                 // turn off the engines
-                Printer::disableXStepper();
-                Printer::disableYStepper();
-                Printer::disableZStepper();
+                Printer::disableAllSteppersNow();
 
                 g_nWorkPartScanStatus = 65;
 
@@ -6460,11 +6458,8 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
             outputObject();
 #else
             // disable all steppers
-            Printer::setAllSteppersDisabled();
-            Printer::disableXStepper();
-            Printer::disableYStepper();
-            Printer::disableZStepper();
-            Extruder::disableAllExtruders();
+            Printer::disableAllSteppersNow();
+
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
             // disable the fan
             Commands::setFanSpeed(0,false);
@@ -6644,12 +6639,8 @@ void outputObject( void )
     Commands::printCurrentPosition();
     
     // disable all steppers
-    Printer::setAllSteppersDisabled();
-    Printer::disableXStepper();
-    Printer::disableYStepper();
-    Printer::disableZStepper();
-    Extruder::disableAllExtruders();
-
+    Printer::disableAllSteppersNow();
+    
     if( unlock )
     {
         uid.unlock();
@@ -11216,7 +11207,6 @@ void nextPreviousXAction( int8_t increment )
             }
             else
             {
-                Printer::unsetAllSteppersDisabled();
                 Printer::enableXStepper();
 
                 noInts.protect(); //HAL::forbidInterrupts();
@@ -11366,7 +11356,6 @@ void nextPreviousYAction( int8_t increment )
             }
             else
             {
-                Printer::unsetAllSteppersDisabled();
                 Printer::enableYStepper();
 
                 noInts.protect(); //HAL::forbidInterrupts();
@@ -11561,7 +11550,6 @@ void nextPreviousZAction( int8_t increment )
             else
             {
                 previousMillisCmd = HAL::timeInMilliseconds();
-                Printer::unsetAllSteppersDisabled();
                 Printer::enableZStepper();
 
                 noInts.protect(); //HAL::forbidInterrupts();
@@ -12403,7 +12391,6 @@ void findZOrigin( void )
 
                 previousMillisCmd = HAL::timeInMilliseconds();
                 Printer::enableZStepper();
-                Printer::unsetAllSteppersDisabled();
 
                 g_nFindZOriginStatus = 2;
 

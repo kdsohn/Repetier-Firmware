@@ -416,11 +416,7 @@ void Printer::kill(uint8_t only_steppers)
     Commands::setFanSpeed(0,false);
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
-    setAllSteppersDisabled();
-    disableXStepper();
-    disableYStepper();
-    disableZStepper();
-    Extruder::disableAllExtruders();
+    disableAllSteppersNow();
 
 #if FAN_BOARD_PIN>-1
     pwm_pos[NUM_EXTRUDER+1] = 0;
@@ -1110,12 +1106,12 @@ void Printer::setup()
 #endif // ENABLE_BACKLASH_COMPENSATION
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-    doHeatBedZCompensation = 0;
+    doHeatBedZCompensation = 0; //init
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
-    doWorkPartZCompensation = 0;
-    staticCompensationZ     = 0;
+    doWorkPartZCompensation = 0; //init
+    staticCompensationZ     = 0; //init
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
 
     queuePositionCurrentSteps[X_AXIS] = 
@@ -1652,7 +1648,7 @@ void Printer::homeZAxis()
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         g_nZScanZPosition = 0;
-        Printer::disableCMPnow(true); //true == wait for move while HOMING
+        //disable CMP ist bei Z unhome hier drüber schon mit drin. //Printer::disableCMPnow(true); //true == wait for move while HOMING
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
         steps = (maxSteps[Z_AXIS] - minSteps[Z_AXIS]) * nHomeDir;

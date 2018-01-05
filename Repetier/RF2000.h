@@ -751,7 +751,7 @@ can set it on for safety. */
 // The RF2000 has one more stepper and the same 8A-24V power supply as RF1000. We think that this is the reason for lower stepper currents set by conrad renkforce - but dont know. 
 // I increased MAX a little bit over stock settings, but decreased normal settings to fairly low power and noise. Take that into account when tuning in your steppers according your needs.
 */
-#define MOTOR_CURRENT_NORMAL                    {110,110,95,90,90}
+#define MOTOR_CURRENT_NORMAL                    {110,110,105,90,90}
 #define MOTOR_CURRENT_MIN                       EXTRUDER_CURRENT_PAUSED
 
 /** \brief number of analog input signals. Normally 1 for each temperature sensor */
@@ -768,9 +768,6 @@ can set it on for safety. */
 #define Z_ENABLE_ON                         1
 
 /** \brief Disables axis when it's not being used. */
-#define DISABLE_X                           false
-#define DISABLE_Y                           false
-#define DISABLE_Z                           false
 #define DISABLE_E                           false
 
 /** \brief Inverting axis direction */

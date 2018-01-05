@@ -1,6 +1,13 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.09.Mod (2018-01-04)
+- clean up disable / enable steppers
+- disable feature define "disableAllowedStepper()"
+- force zCMP to respect Z_ENDSTOP_DRIVE_OVER  / Z_OVERRIDE_MAX as a limit so no further movement into the z-endstop is made by zCMP
+- increased Z Current to 105 to avoid lost step problems on some printers with mod firmware whose spindles need heavy torque.
+- force zCMP to add an extra offset and move the bed down if the loaded zMatrix is positive while homed(Z). This might avoid crashes when we are homed, not using zCMP, and move X-Y.
+
 V RF.01.38.08.Mod (2018-01-03)
 - addFloat overlow bugfix for 4+ digits.
 

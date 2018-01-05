@@ -321,7 +321,9 @@ public:
     /** \brief Disable stepper motor for z direction. */
     static INLINE void disableZStepper()
     {
-        Printer::disableCMPnow(true); //fahre vom heizbett auf 0 bevor stepper aus.
+        // when the stepper is disabled we loose our home position because somebody else can move our mechanical parts
+        setHomed(false , -1 , -1 , false ); // disable CMP mit wait ist bei unhome Z mit drin. //Printer::disableCMPnow(true); //fahre vom heizbett auf 0 bevor stepper aus.
+
 #if (Z_ENABLE_PIN > -1)
         WRITE(Z_ENABLE_PIN,!Z_ENABLE_ON);
 #endif // (Z_ENABLE_PIN > -1)
@@ -338,8 +340,6 @@ public:
         Printer::lastZDirection = 0;
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
 
-        // when the stepper is disabled we loose our home position because somebody else can move our mechanical parts
-        setHomed(false , -1 , -1 , false );
         setZOriginSet(false);
         cleanupZPositions();
 
@@ -348,6 +348,7 @@ public:
     /** \brief Enable stepper motor for x direction. */
     static INLINE void enableXStepper()
     {
+        unmarkAllSteppersDisabled();
 #if (X_ENABLE_PIN > -1)
         WRITE(X_ENABLE_PIN, X_ENABLE_ON);
 #endif // (X_ENABLE_PIN > -1)
@@ -363,12 +364,12 @@ public:
             HAL::delayMilliseconds( STEPPER_ON_DELAY );
         }
 #endif // STEPPER_ON_DELAY
-
     } // enableXStepper
 
     /** \brief Enable stepper motor for y direction. */
     static INLINE void enableYStepper()
     {
+        unmarkAllSteppersDisabled();
 #if (Y_ENABLE_PIN > -1)
         WRITE(Y_ENABLE_PIN, Y_ENABLE_ON);
 #endif // (Y_ENABLE_PIN > -1)
@@ -389,6 +390,7 @@ public:
     /** \brief Enable stepper motor for z direction. */
     static INLINE void enableZStepper()
     {
+        unmarkAllSteppersDisabled();
 #if (Z_ENABLE_PIN > -1)
         WRITE(Z_ENABLE_PIN, Z_ENABLE_ON);
 #endif // (Z_ENABLE_PIN > -1)
@@ -404,7 +406,6 @@ public:
             HAL::delayMilliseconds( STEPPER_ON_DELAY );
         }
 #endif // STEPPER_ON_DELAY
-
     } // enableZStepper
 
     static INLINE void setXDirection(bool positive)
@@ -568,11 +569,6 @@ public:
         flag0 = (b ? flag0 | PRINTER_FLAG0_SEPERATE_EXTRUDER_INT : flag0 & ~PRINTER_FLAG0_SEPERATE_EXTRUDER_INT);
     } // setAdvanceActivated
 
-    static INLINE uint8_t isHomed()
-    {
-        return flag1 & PRINTER_FLAG1_HOMED;
-    } // isHomed
-
     static INLINE uint8_t isAxisHomed(int8_t b) //X_AXIS 0, Y_AXIS 1, Z_AXIS 2
     {
         switch(b){
@@ -613,6 +609,12 @@ public:
         if(z != -1) flag3 = (z ? flag3 | PRINTER_FLAG3_Z_HOMED : flag3 & ~PRINTER_FLAG3_Z_HOMED);  
         if((flag3 & PRINTER_FLAG3_X_HOMED) && (flag3 & PRINTER_FLAG3_Y_HOMED) && (flag3 & PRINTER_FLAG3_Z_HOMED)) flag1 |= PRINTER_FLAG1_HOMED;
         if(!(flag3 & PRINTER_FLAG3_X_HOMED) && !(flag3 & PRINTER_FLAG3_Y_HOMED) && !(flag3 & PRINTER_FLAG3_Z_HOMED)) flag1 &= ~PRINTER_FLAG1_HOMED;
+        
+#if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
+        if( !isAxisHomed(Z_AXIS) ){
+            Printer::disableCMPnow(true); //true == wait for move while HOMING
+        }
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
     } // setHomed
 
     static INLINE uint8_t isZOriginSet()
@@ -918,24 +920,33 @@ public:
         return flag0 & PRINTER_FLAG0_STEPPER_DISABLED;
     } // areAllSteppersDisabled
 
-    static INLINE void setAllSteppersDisabled()
+    static INLINE void markAllSteppersDisabled()
     {
         flag0 |= PRINTER_FLAG0_STEPPER_DISABLED;
 
         // when the stepper is disabled we loose our home position because somebody else can move our mechanical parts
-        setHomed( false, false, false, false );
+        setHomed( false, false, false, false ); //mag sein, dass wir das nicht brauchen, weil sowieso die einzelnen stepper deaktiviert werden müssen.
         setZOriginSet(false);
-    } // setAllSteppersDisabled
+    } // markAllSteppersDisabled
 
-    static INLINE void unsetAllSteppersDisabled()
+    static INLINE void unmarkAllSteppersDisabled()
     {
         flag0 &= ~PRINTER_FLAG0_STEPPER_DISABLED;
 
 #if FAN_BOARD_PIN>-1
         pwm_pos[NUM_EXTRUDER+1] = 255;
 #endif // FAN_BOARD_PIN
-    } // unsetAllSteppersDisabled
-
+    } // unmarkAllSteppersDisabled
+    
+    static void disableAllSteppersNow()
+    {
+        markAllSteppersDisabled();
+        disableXStepper();
+        disableYStepper();
+        disableZStepper();
+        Extruder::disableAllExtruders();
+    } // disableAllSteppersNow
+    
     static INLINE uint8_t isHoming()
     {
         return flag2 & PRINTER_FLAG2_HOMING;
@@ -1022,13 +1033,6 @@ public:
         return vbase;
 
     } // updateStepsPerTimerCall
-
-    static INLINE void disableAllowedStepper()
-    {
-        if(DISABLE_X) disableXStepper();
-        if(DISABLE_Y) disableYStepper();
-        if(DISABLE_Z) disableZStepper();
-    } // disableAllowedStepper
 
     static INLINE float lastCalculatedXPosition()
     {

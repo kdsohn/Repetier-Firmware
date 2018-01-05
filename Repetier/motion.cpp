@@ -139,7 +139,9 @@ void PrintLine::moveRelativeDistanceInStepsReal(long x,long y,long z,long e,floa
   @param check_endstops Read endstop during move. */
 void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize, float feedrate)
 {
-    Printer::unsetAllSteppersDisabled();
+    Printer::unmarkAllSteppersDisabled(); // ??? hier wird nichts enabled. Nur markiert, auch wenn später oder früher "enablestepper" passiert.
+    //evtl. weil dadurch in jedem fall gleich ein stepper aktiviert werden würde -> darum hier schon als aktiv markieren, weil umumgänglich ist. Aber dann müsste man das (timingsicher) auch schon in den Funktionen über prepareDirectMove erledigt haben.
+
     PrintLine::waitForXFreeLines(1);
 
     uint8_t newPath = PrintLine::insertWaitMovesIfNeeded(pathOptimize, 0);
@@ -305,7 +307,8 @@ void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize, fl
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 void PrintLine::prepareDirectMove(void)
 {
-    Printer::unsetAllSteppersDisabled();
+    Printer::unmarkAllSteppersDisabled(); // ??? hier wird nichts enabled. Nur markiert, auch wenn später oder früher "enablestepper" passiert.
+    //evtl. weil dadurch in jedem fall gleich ein stepper aktiviert werden würde -> darum hier schon als aktiv markieren, weil umumgänglich ist. Aber dann müsste man das (timingsicher) auch schon in den Funktionen über prepareDirectMove erledigt haben.
 
     PrintLine *p = &PrintLine::direct;
 
@@ -2149,7 +2152,6 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
 
             Commands::printCurrentPosition();
         }
-        Printer::disableAllowedStepper();
 
         char    nIdle = 1;
 

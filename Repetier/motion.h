@@ -49,7 +49,7 @@ public:
     static uint8_t      linesWritePos;  // Position where we write the next cached line move
     flag8_t             joinFlags;
     volatile flag8_t    flags;
-    volatile uint8_t    started;
+    volatile uint8_t    started;        //05-01-2018 rf1000 fragen, was macht das genau, warum ist das da. wird aktiviert und wieder deaktiviert, als könnte das nur ein debug gewesen sein. Ist das ein gate gegen unnötige überschreibung, interrupt, knopfsteuerung am panel?
 
 private:
     flag8_t             primaryAxis;
@@ -589,6 +589,11 @@ public:
             return;
         }
 
+        //eigentlich gibts den fall hier nicht anders, wenn keiner umbaut, trotzdem!
+        if(!isNoMove()) //x+y+z+e heißt bits 240 .... 1111 0000 -> isXYZ ist 112  und isE ist 128, kommt aufs selbe raus.
+        {
+            unmarkAllSteppersDisabled();
+        }
         // Only enable axis that are moving. If the axis doesn't need to move then it can stay disabled depending on configuration.
         if(isXMove())
         {
@@ -603,7 +608,6 @@ public:
         if(isZMove())
         {
             Printer::enableZStepper();
-            Printer::unsetAllSteppersDisabled();
             Printer::setZDirection(isZPositiveMove());
         }
         if(isEMove())
