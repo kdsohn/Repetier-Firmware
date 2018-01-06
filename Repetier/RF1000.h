@@ -1244,5 +1244,7 @@ Above this value the z compensation will distribute the roughness of the surface
 
 #endif // FEATURE_MILLING_MODE
 
+/** beta!!! Nibbels/PeterKA only!!! */
+#define FEATURE_CHECK_HOME 0
 
 #endif // RF1000_H

@@ -1,6 +1,9 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.10.Mod (2018-01-06)
+- FEATURE_CHECK_HOME, first beta.
+
 V RF.01.38.09.Mod (2018-01-04)
 - clean up disable / enable steppers
 - disable feature define "disableAllowedStepper()"

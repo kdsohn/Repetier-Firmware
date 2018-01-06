@@ -1324,5 +1324,7 @@ Above this value the z compensation will distribute the roughness of the surface
 
 #endif // FEATURE_RGB_LIGHT_EFFECTS
 
+/** beta!!! Nibbels/PeterKA only!!! */
+#define FEATURE_CHECK_HOME 0
 
 #endif // RF2000_H

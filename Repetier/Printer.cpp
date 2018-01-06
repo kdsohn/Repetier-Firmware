@@ -1702,6 +1702,274 @@ void Printer::homeZAxis()
 
 } // homeZAxis
 
+    
+#if FEATURE_CHECK_HOME
+bool Printer::anyEndstop( uint8_t axis ){
+    int endstop = 0;
+    for(uint8_t i = 1; i <= 3; i++){
+        switch(axis){
+            case X_AXIS: 
+                {
+                    endstop += (Printer::isXMinEndstopHit() || Printer::isXMaxEndstopHit());
+                    break;
+                }
+            case Y_AXIS: 
+                {
+                    endstop += (Printer::isYMinEndstopHit() || Printer::isYMaxEndstopHit());
+                    break;
+                }
+            case Z_AXIS: 
+                {
+                    endstop += (Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit());
+                    break;
+                }
+        }
+    }
+    return (bool)(endstop > 1); //endstop muss sauber gedrückt sein.
+}
+
+void Printer::changeAxisDirection( uint8_t axis, int8_t direction ){
+    switch(axis){
+        case X_AXIS: 
+            {
+                Printer::setXDirection( (direction > 0 ? true : false ) );
+                break;
+            }
+        case Y_AXIS: 
+            {
+                Printer::setYDirection( (direction > 0 ? true : false ) );
+                break;
+            }
+        case Z_AXIS: 
+            {
+                Printer::setZDirection( (direction > 0 ? true : false ) );
+                break;
+            }
+    }
+}
+
+void Printer::startAxisStep( uint8_t axis ){
+    switch(axis){
+        case X_AXIS: 
+            {
+                WRITE(X_STEP_PIN,HIGH);
+                break;
+            }
+        case Y_AXIS: 
+            {
+                WRITE(Y_STEP_PIN,HIGH);
+                break;
+            }
+        case Z_AXIS: 
+            {
+                startZStep( stepperDirection[Z_AXIS] ); //eigentlich dürften wir stepperDirection[Z_AXIS] hiern icht angeben müssen, sondern intern holen.
+                break;
+            }
+    }
+}
+void Printer::endAxisStep(uint8_t axis){
+    switch(axis){
+        case X_AXIS: 
+            {
+                WRITE(X_STEP_PIN,LOW);
+                break;
+            }
+        case Y_AXIS: 
+            {
+                WRITE(Y_STEP_PIN,LOW);
+                break;
+            }
+        case Z_AXIS: 
+            {
+                endZStep();
+                break;
+            }
+    }
+}
+
+void Printer::stepAxisStep(uint8_t axis, uint8_t slower){
+    HAL::delayMicroseconds( XYZ_STEPPER_HIGH_DELAY * slower );
+    Printer::startAxisStep(axis);
+    HAL::delayMicroseconds( XYZ_STEPPER_LOW_DELAY * slower );
+    Printer::endAxisStep(axis);
+}
+
+int8_t Printer::anyHomeDir(uint8_t axis){
+    int8_t nHomeDir = 0;
+    switch(axis){
+        case X_AXIS: 
+            {
+                if( (MIN_HARDWARE_ENDSTOP_X && X_MIN_PIN > -1 && X_HOME_DIR==-1) || (MAX_HARDWARE_ENDSTOP_X && X_MAX_PIN > -1 && X_HOME_DIR==1) )
+                {
+                    nHomeDir = X_HOME_DIR; //-1 -> RFx000.h
+                }
+                break;
+            }
+        case Y_AXIS: 
+            {
+                if( (MIN_HARDWARE_ENDSTOP_Y && Y_MIN_PIN > -1 && Y_HOME_DIR==-1) || (MAX_HARDWARE_ENDSTOP_Y && Y_MAX_PIN > -1 && Y_HOME_DIR==1) )
+                {
+                    nHomeDir = Y_HOME_DIR; //-1 -> RFx000.h
+                }
+                break;
+            }
+        case Z_AXIS: 
+            {
+    #if FEATURE_MILLING_MODE
+                if( Printer::operatingMode == OPERATING_MODE_PRINT && (MIN_HARDWARE_ENDSTOP_Z && Z_MIN_PIN > -1) )
+                {
+                    // in operating mode "print" we use the z min endstop
+                    nHomeDir = -1;
+                }
+                else if( MAX_HARDWARE_ENDSTOP_Z && Z_MAX_PIN > -1 )
+                {
+                    // in operating mode "mill" we use the z max endstop
+                    nHomeDir = 1;
+                }
+    #else
+                if( (MIN_HARDWARE_ENDSTOP_Z && Z_MIN_PIN > -1 && Z_HOME_DIR==-1) || (MAX_HARDWARE_ENDSTOP_Z && Z_MAX_PIN > -1 && Z_HOME_DIR==1) )
+                {
+                    nHomeDir = Z_HOME_DIR; //-1 -> RFx000.h
+                }
+                break;
+    #endif // FEATURE_MILLING_MODE
+            }
+    }
+    return nHomeDir;
+}
+
+
+int8_t Printer::checkHome(int8_t axis) //X_AXIS 0, Y_AXIS 1, Z_AXIS 2
+{
+    //do not allow Z jet because we have to check compensation behaviour
+    Com::printFLN( PSTR( "checkHome: start axis" ), axis );
+    //if(axis == Z_AXIS) return -1; //noch verboten, weil solange das läuft der emergency-Stop nicht funktioniert. funktion wird evtl. wie HBS oder ZOS geteilt.
+    
+    //do not allow checkHome without Home
+    if( !Printer::isAxisHomed(axis) ) return -1;
+    Com::printFLN( PSTR( "ishomed!" ) );
+    
+    //do not allow checkHome when some endstop is already reached
+    if( Printer::anyEndstop(axis) ) return -1; //knopf gedrückt = kein sinnvoller rückfahrweg bzw. nicht vertrauenswürdige coordinaten.
+
+    //get the right homeDirection for moving -> 0 is none.
+    char nHomeDir = Printer::anyHomeDir(axis);
+    Com::printFLN( PSTR( "nHomeDir=" ), nHomeDir );
+    if(!nHomeDir) return -1;
+    
+    //set stepper direction as homing direction
+    Printer::changeAxisDirection( axis, nHomeDir );
+
+    //drive axis towards endstop:
+    long Didsteps = 0;
+    bool finish = false;
+    int mmLoops = Printer::axisStepsPerMM[axis]; //fahre in mm-Blöcken.
+    
+    while(1){
+        /* Pfusch, das hier extra einzufügen? -> ^^ Prototype -> Funktion muss u.U. später gesplittet und mit einer Art M400 geschützt werden. */
+        HAL::tellWatchdogOk(); //ultra ausnahme!! Das gibts normal nur in RF.cpp an einer Stelle. TODO!!
+        Extruder::manageTemperatures();
+        GCode::keepAlive( Processing );
+        
+        for( int i=0; i < mmLoops; i++ )
+        {
+            Printer::stepAxisStep(axis);
+            if( Printer::anyEndstop(axis) ){
+                finish = true;
+            }else{
+                Didsteps += nHomeDir;
+            }
+            //verbot unendlich weiterzufahren, wenn endstop kaputt
+            if( abs(Didsteps) > abs(Printer::maxSteps[axis] - Printer::minSteps[axis])*110/100 ) finish = true;
+            
+            if(finish) break;
+        }
+        if(finish) break;
+    }
+    
+    //steps to log
+    Com::printFLN( PSTR( "didsteps=" ), Didsteps );
+    Com::printFLN( PSTR( "wassteps=" ), (Printer::queuePositionCurrentSteps[axis] + Printer::directPositionCurrentSteps[axis]) );
+    
+    Com::printFLN( PSTR( "recheck endstop:" ) );
+    //check ob endstop da (oder defekt oder nicht erreicht: return)
+    if (!Printer::anyEndstop(axis)) return -1;
+
+    //change stepper direction to drive against homing direction
+    Printer::changeAxisDirection( axis, -1*nHomeDir );
+    //Ein paar steps zurück, bis schalter wieder losgelassen wurde:
+    finish = false; // Neue Abbruchbedingung
+    for( int i=0; i < mmLoops; i++ ) {
+        Printer::stepAxisStep(axis, 20 /*20x langsamer*/);
+        //end if button is not pressed anymore.
+        if(!Printer::anyEndstop(axis)){
+            finish = true;
+        }else{
+            Didsteps += -1*nHomeDir;
+        }
+        if(finish) break;
+    }
+
+    //check ob endstop nach 1mm immernoch gedrückt:
+    if ( Printer::anyEndstop(axis) ) return -1;
+    
+    //merke schalter-aus-punkt für hysteresemessung:
+    long hysterese = Didsteps;
+
+    //Neu und langsamer in den Schalter fahren:    
+    //change stepper direction to drive against homing direction
+    Printer::changeAxisDirection( axis, nHomeDir );
+    finish = false; // Neue Abbruchbedingung
+    for( int i=0; i < mmLoops; i++ ) {
+        Printer::stepAxisStep(axis, 20 /*20x langsamer*/);
+        //end if button is not pressed anymore.
+        if(Printer::anyEndstop(axis)){
+            finish = true;
+        }else{
+            Didsteps += nHomeDir;
+        }
+        if(finish) break;
+    }    
+    //check ob endstop nach 1mm immernoch nicht gedrückt:
+    if ( !Printer::anyEndstop(axis) ) return -1;
+    
+    hysterese -= Didsteps;
+    Com::printFLN( PSTR( "aus-ein-hysterese=" ), hysterese );
+    
+    //check ob steps verloren gehen:
+    long delta;
+    if(axis == Z_AXIS) delta = Printer::currentZSteps; //zählt hoch und runter. alternativ achsen-kosys wie bei x und y, aber wegen zcompensation problematisch, weil verzerrt (??-> noch nicht fertig durchdacht).
+    else               delta = Printer::queuePositionCurrentSteps[axis] + Printer::directPositionCurrentSteps[axis] + Didsteps;
+    
+    Com::printFLN( PSTR( "delta=" ), delta );
+
+    //fahre zurück an Startpunkt:
+    Printer::changeAxisDirection( axis, -1*nHomeDir );
+    
+    Didsteps = abs(Didsteps);
+    while(Didsteps > 0){
+        /* Pfusch, das hier extra einzufügen? -> ^^ Prototype -> Funktion muss u.U. später gesplittet und mit einer Art M400 geschützt werden. */
+        HAL::tellWatchdogOk(); //ultra ausnahme!! Das gibts normal nur in RF.cpp an einer Stelle. TODO!!
+        Extruder::manageTemperatures();
+        GCode::keepAlive( Processing );
+        
+        if(Didsteps >= mmLoops){
+            Didsteps -= mmLoops;
+        }else{
+            mmLoops = Didsteps;
+            Didsteps = 0;
+        }
+        
+        for( int i=0; i < mmLoops; i++ )
+        {
+            Printer::stepAxisStep(axis);
+        }
+    }
+
+    return 1;
+} // checkHome
+#endif // FEATURE_CHECK_HOME
+
 
 void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta printer
 {

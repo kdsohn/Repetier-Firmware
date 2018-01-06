@@ -7915,6 +7915,22 @@ void processCommand( GCode* pCommand )
             }
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
+#if FEATURE_CHECK_HOME
+            case 3028:   // M3028
+            {
+                if( pCommand->hasX() ){
+                    Printer::checkHome(X_AXIS);
+                }
+                if( pCommand->hasY() ){
+                    Printer::checkHome(Y_AXIS);
+                }
+                if( pCommand->hasZ() ){
+                    Printer::checkHome(Z_AXIS);
+                }
+                break;
+            }
+#endif // FEATURE_CHECK_HOME
+
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
             case 3030: // M3030 [S] - configure the fast step size for moving of the heat bed up during the heat bed/work part scan
             {
