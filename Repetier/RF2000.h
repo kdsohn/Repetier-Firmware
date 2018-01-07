@@ -112,7 +112,6 @@ If EEPROM is enabled these values will be overidden with the values in the EEPRO
 of the bed. Maximum coordinate is given by adding the above MAX_LENGTH values. */
 #define X_MIN_POS                           0
 #define Y_MIN_POS                           0
-#define Z_MIN_POS                           0
 
 /** \brief Drive settings for printers with cartesian drive systems */
 /** \brief Number of steps for a 1mm move in x direction.

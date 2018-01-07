@@ -62,7 +62,7 @@ have problems with other modules using the eeprom */
 #define EPR_PRINTING_DISTANCE           129  // Filament length printed
 #define EPR_X_HOME_OFFSET               133
 #define EPR_Y_HOME_OFFSET               137
-#define EPR_Z_HOME_OFFSET               141
+//#define EPR_Z_HOME_OFFSET               141 //z home pos removed by nibbels
 #define EPR_X_LENGTH                    145
 #define EPR_Y_LENGTH                    149
 #define EPR_Z_LENGTH                    153

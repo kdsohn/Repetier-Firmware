@@ -83,7 +83,7 @@ volatile int    Printer::advanceStepsSet;
 long            Printer::maxSteps[3];                                   ///< For software endstops, limit of move in positive direction.
 long            Printer::minSteps[3];                                   ///< For software endstops, limit of move in negative direction.
 float           Printer::lengthMM[3];
-float           Printer::minMM[3];
+float           Printer::minMM[2];
 float           Printer::feedrate;                                      ///< Last requested feedrate.
 int             Printer::feedrateMultiply = 1;                              ///< Multiplier for feedrate in percent (factor 1 = 100)
 int             Printer::extrudeMultiply = 1;                               ///< Flow multiplier in percdent (factor 1 = 100)
@@ -139,7 +139,6 @@ volatile long   Printer::compensatedPositionCurrentStepsZ = 0;
 
 volatile float  Printer::compensatedPositionOverPercE = 0.0f;
 volatile float  Printer::compensatedPositionCollectTinyE = 0.0f;
-volatile bool   Printer::compensatedPositionPushE = false;
 
 volatile long   Printer::queuePositionZLayerCurrent_cand = 0;
 volatile long   Printer::queuePositionZLayerCurrent = 0;
@@ -306,10 +305,10 @@ void Printer::updateDerivedParameter()
 {
     maxSteps[X_AXIS] = (long)(axisStepsPerMM[X_AXIS]*(minMM[X_AXIS]+lengthMM[X_AXIS]));
     maxSteps[Y_AXIS] = (long)(axisStepsPerMM[Y_AXIS]*(minMM[Y_AXIS]+lengthMM[Y_AXIS]));
-    maxSteps[Z_AXIS] = (long)(axisStepsPerMM[Z_AXIS]*(minMM[Z_AXIS]+lengthMM[Z_AXIS]));
+    maxSteps[Z_AXIS] = (long)(axisStepsPerMM[Z_AXIS]*lengthMM[Z_AXIS]);
     minSteps[X_AXIS] = (long)(axisStepsPerMM[X_AXIS]*minMM[X_AXIS]);
     minSteps[Y_AXIS] = (long)(axisStepsPerMM[Y_AXIS]*minMM[Y_AXIS]);
-    minSteps[Z_AXIS] = (long)(axisStepsPerMM[Z_AXIS]*minMM[Z_AXIS]);
+    minSteps[Z_AXIS] = (long)0;
 
     // For which directions do we need backlash compensation
 #if ENABLE_BACKLASH_COMPENSATION
@@ -1117,9 +1116,6 @@ void Printer::setup()
     queuePositionCurrentSteps[X_AXIS] = 
     queuePositionCurrentSteps[Y_AXIS] = 
     queuePositionCurrentSteps[Z_AXIS] = 0;
-    stepperDirection[X_AXIS]          = 
-    stepperDirection[Y_AXIS]          = 
-    stepperDirection[Z_AXIS]          = 0;
     blockAll                          = 0;
 
 #if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
@@ -1160,7 +1156,6 @@ void Printer::setup()
     lengthMM[Z_AXIS] = Z_MAX_LENGTH;
     minMM[X_AXIS] = X_MIN_POS;
     minMM[Y_AXIS] = Y_MIN_POS;
-    minMM[Z_AXIS] = Z_MIN_POS;
 
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
     ZEndstopType          = DEFAULT_Z_ENDSTOP_TYPE;
@@ -1752,17 +1747,17 @@ void Printer::startAxisStep( uint8_t axis ){
     switch(axis){
         case X_AXIS: 
             {
-                WRITE(X_STEP_PIN,HIGH);
+                Printer::startXStep();
                 break;
             }
         case Y_AXIS: 
             {
-                WRITE(Y_STEP_PIN,HIGH);
+                Printer::startYStep();
                 break;
             }
         case Z_AXIS: 
             {
-                startZStep( stepperDirection[Z_AXIS] ); //eigentlich dürften wir stepperDirection[Z_AXIS] hiern icht angeben müssen, sondern intern holen.
+                Printer::startZStep();
                 break;
             }
     }
@@ -1771,17 +1766,17 @@ void Printer::endAxisStep(uint8_t axis){
     switch(axis){
         case X_AXIS: 
             {
-                WRITE(X_STEP_PIN,LOW);
+                Printer::endXStep();
                 break;
             }
         case Y_AXIS: 
             {
-                WRITE(Y_STEP_PIN,LOW);
+                Printer::endYStep();
                 break;
             }
         case Z_AXIS: 
             {
-                endZStep();
+                Printer::endZStep();
                 break;
             }
     }
@@ -2073,16 +2068,16 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
 #if FEATURE_MILLING_MODE
         if( Printer::operatingMode == OPERATING_MODE_PRINT )
         {
-            startZ = Printer::minMM[Z_AXIS];
+            startZ = 0;
         }
         else
         {
-            startZ = Printer::minMM[Z_AXIS]+Printer::lengthMM[Z_AXIS];
+            startZ = Printer::lengthMM[Z_AXIS];
         }
 #else
 
-        if(Z_HOME_DIR<0) startZ = Printer::minMM[Z_AXIS];
-        else startZ = Printer::minMM[Z_AXIS]+Printer::lengthMM[Z_AXIS];
+        if(Z_HOME_DIR<0) startZ = 0;
+        else startZ = Printer::lengthMM[Z_AXIS];
 
 #endif // FEATURE_MILLING_MODE
 
@@ -2249,7 +2244,7 @@ void Printer::performZCompensation( void )
         HAL::delayMicroseconds( STEPPER_HIGH_DELAY );
 #endif // STEPPER_HIGH_DELAY>0
 
-        endZStep();
+        Printer::endZStep();
         compensatedPositionCurrentStepsZ += endZCompensationStep;
         endZCompensationStep = 0;
 
@@ -2276,58 +2271,52 @@ void Printer::performZCompensation( void )
         }
     }
 
-/* das hier ... conrad 1.39, oder meine version : eins drunter??? TODO Nibbels 23.12.2017
+/* das hier ... conrad 1.39, oder meine version : eins drunter??? TODO Nibbels 23.12.2017 */
     if( Printer::directPositionCurrentSteps[Z_AXIS] != Printer::directPositionTargetSteps[Z_AXIS] )
     {
         // do not perform any compensation while there is a direct move into z-direction
         return;
     }
- */
-    
+
+/*  oder meine version? ... directmove zählt immer auf directpositioncurrentsteps, also stimmt das auch! :: edit 07 01 18
     if( PrintLine::direct.isZMove() )
     {
         // do not peform any compensation while there is a direct-move into z-direction
         if( PrintLine::direct.stepsRemaining ) return;
         else PrintLine::direct.setZMoveFinished();
     }
-
+ */
     if( compensatedPositionCurrentStepsZ < compensatedPositionTargetStepsZ )
     {
-        // we must move the heat bed do the bottom
-        if( stepperDirection[Z_AXIS] >= 0 )
+        // here we shall move the z-axis only in case performQueueMove() is not moving into the other direction at the moment
+        if( !stepperDirection[Z_AXIS] )
         {
-            // here we shall move the z-axis only in case performQueueMove() is not moving into the other direction at the moment
-            if( stepperDirection[Z_AXIS] == 0 )
-            {
-                // set the direction only in case it is not set already
-                prepareBedDown();
-                stepperDirection[Z_AXIS] = 1;
-                //return;
-            }
-            startZStep( stepperDirection[Z_AXIS] );
-            endZCompensationStep = stepperDirection[Z_AXIS];
+            // set the direction only in case it is not set already
+            Printer::setZDirection(true);
         }
-
+        // we must move the heat bed do the bottom
+        if( Printer::getZDirectionIsPos() )
+        {
+            Printer::startZStep();
+            endZCompensationStep = 1;
+        }
         return;
     }
 
     if( compensatedPositionCurrentStepsZ > compensatedPositionTargetStepsZ )
     {
-        // we must move the heat bed to the top
-        if( stepperDirection[Z_AXIS] <= 0 )
+        // here we shall move the z-axis only in case performQueueMove() is not moving into the other direction at the moment
+        if( !stepperDirection[Z_AXIS] )
         {
-            // here we shall move the z-axis only in case performQueueMove() is not moving into the other direction at the moment
-            if( stepperDirection[Z_AXIS] == 0 )
-            {
-                // set the direction only in case it is not set already
-                prepareBedUp();
-                stepperDirection[Z_AXIS] = -1;
-                //return;
-            }
-            startZStep( stepperDirection[Z_AXIS] );
-            endZCompensationStep = stepperDirection[Z_AXIS];
+            // set the direction only in case it is not set already
+            Printer::setZDirection(false);
         }
-
+        // we must move the heat bed to the top
+        if( !Printer::getZDirectionIsPos() )
+        {
+            Printer::startZStep();
+            endZCompensationStep = -1;
+        }
         return;
     }
 

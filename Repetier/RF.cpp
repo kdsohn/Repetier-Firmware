@@ -4983,7 +4983,6 @@ void moveZ( int nSteps )
 
     // Warning: this function does not check any end stops
     // choose the direction
-    char DirectionZ            = 0;   // this is the current z-direction during operations like the bed scan or finding of the z-origin
 
     int nMaxLoops;
     if( nSteps >= 0 ) nMaxLoops = nSteps;
@@ -5002,32 +5001,30 @@ void moveZ( int nSteps )
 
         if( nSteps >= 0 )
         {
-            if( READ( Z_DIR_PIN ) != !INVERT_Z_DIR )
+            if( !Printer::getZDirectionIsPos() )
             {
-                prepareBedDown();
+                Printer::setZDirection(true);
                 HAL::delayMicroseconds( XYZ_DIRECTION_CHANGE_DELAY );
                 //Com::printFLN( PSTR( "moveZ: BedDown Z=" ),g_nZScanZPosition );  //kann manchmal verwirrend sein, gleiche richtugnen werden nicht angezeigt. Hoch, etwas runter .... scan ergebnis ... runter für neuanlauf  -> scanergebnis unsichtbar.
             }
-            DirectionZ = 1;
         }
         else
         {
-            if( READ( Z_DIR_PIN ) != INVERT_Z_DIR )
+            if( Printer::getZDirectionIsPos() )
             {
-                prepareBedUp();
+                Printer::setZDirection(false);
                 HAL::delayMicroseconds( XYZ_DIRECTION_CHANGE_DELAY );
                 //Com::printFLN( PSTR( "moveZ: BedUp Z=" ),g_nZScanZPosition );  //kann manchmal verwirrend sein, gleiche richtugnen werden nicht angezeigt. Hoch, etwas runter .... scan ergebnis ... runter für neuanlauf  -> scanergebnis unsichtbar.
             }
-            DirectionZ = -1;
         }
 
         HAL::delayMicroseconds( XYZ_STEPPER_HIGH_DELAY );
-        startZStep( DirectionZ );
+        Printer::startZStep();
 
         HAL::delayMicroseconds( XYZ_STEPPER_LOW_DELAY );
-        endZStep();
+        Printer::endZStep();
         
-        g_nZScanZPosition += DirectionZ;
+        g_nZScanZPosition += (Printer::getZDirectionIsPos() ? 1 : -1);
     }
 
 } // moveZ
@@ -13846,14 +13843,10 @@ void doEmergencyStop( char reason )
     }
 
     // block any further movement
-    Printer::stepperDirection[X_AXIS] = 0;
-    Printer::stepperDirection[Y_AXIS] = 0;
-    Printer::stepperDirection[Z_AXIS] = 0;
     Printer::blockAll                 = 1;
 
     moveZ( int(Printer::axisStepsPerMM[Z_AXIS] * 5) );
-    Printer::stepperDirection[Z_AXIS] = 0;
-   
+
     // we are not going to perform any further operations until the restart of the firmware
     if( sd.sdmode )
     {

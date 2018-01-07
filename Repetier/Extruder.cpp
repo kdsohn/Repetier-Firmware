@@ -605,13 +605,13 @@ float Extruder::getHeatedBedTemperature()
 void Extruder::disableCurrentExtruderMotor()
 {
     if(Extruder::current->enablePin > -1)
-        digitalWrite(Extruder::current->enablePin,!Extruder::current->enableOn);
+        HAL::digitalWrite(Extruder::current->enablePin,!Extruder::current->enableOn);
 
 #if FEATURE_DITTO_PRINTING
     if(Extruder::dittoMode)
     {
         if(extruder[1].enablePin > -1)
-            digitalWrite(extruder[1].enablePin,!extruder[1].enableOn);
+            HAL::digitalWrite(extruder[1].enablePin,!extruder[1].enableOn);
     }
 #endif // FEATURE_DITTO_PRINTING
 
@@ -644,7 +644,7 @@ void Extruder::disableAllExtruders()
             e = &extruder[i];
 
             if(e->enablePin > -1)
-                digitalWrite(e->enablePin,!e->enableOn);
+                HAL::digitalWrite(e->enablePin,!e->enableOn);
 
 #if STEPPER_ON_DELAY
             e->enabled = 0;

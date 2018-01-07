@@ -127,7 +127,6 @@ If EEPROM is enabled these values will be overidden with the values in the EEPRO
 of the bed. Maximum coordinate is given by adding the above MAX_LENGTH values. */
 #define X_MIN_POS                           0
 #define Y_MIN_POS                           0
-#define Z_MIN_POS                           0
 
 /** \brief Drive settings for printers with cartesian drive systems */
 /** \brief Number of steps for a 1mm move in x direction.
@@ -710,7 +709,7 @@ on this endstop. */
 /** \brief If during homing the endstop is reached, how many mm should the printer move back for the second try */
 #define ENDSTOP_X_BACK_MOVE                 5
 #define ENDSTOP_Y_BACK_MOVE                 5
-#define ENDSTOP_Z_BACK_MOVE                 float(0.3f+Z_ENDSTOP_DRIVE_OVER) //0.3mm sind theoretische maximale hysterese beim Schalter loslassen. Original RF2000: 0.01
+#define ENDSTOP_Z_BACK_MOVE                 float(0.3f+Z_ENDSTOP_DRIVE_OVER) //0.3mm sind theoretische maximale hysterese beim Schalter loslassen. Original RF1000: 0.01
 
 /** \brief For higher precision you can reduce the speed for the second test on the endstop
 during homing operation. The homing speed is divided by the value. 1 = same speed, 2 = half speed */

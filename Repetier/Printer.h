@@ -92,12 +92,10 @@ public:
     static volatile float   queuePositionLastMM[3];             // Position in mm from origin.
     static volatile float   queuePositionCommandMM[3];          // Last coordinates send by gcodes
 
-//  static float            minimumSpeed;                       // lowest allowed speed to keep integration error small
-//  static float            minimumZSpeed;                      // lowest allowed speed to keep integration error small
     static long             maxSteps[3];                        // For software endstops, limit of move in positive direction.
     static long             minSteps[3];                        // For software endstops, limit of move in negative direction.
     static float            lengthMM[3];
-    static float            minMM[3];
+    static float            minMM[2];
     static float            feedrate;                           // Last requested feedrate.
     static int              feedrateMultiply;                   // Multiplier for feedrate in percent (factor 1 = 100)
     static int              extrudeMultiply;                    // Flow multiplier in percdent (factor 1 = 100)
@@ -148,7 +146,6 @@ public:
     static volatile long    compensatedPositionCurrentStepsZ;
     static volatile float   compensatedPositionOverPercE;
     static volatile float   compensatedPositionCollectTinyE;
-    static volatile bool    compensatedPositionPushE;
     
     static volatile long    queuePositionZLayerCurrent_cand;
     static volatile long    queuePositionZLayerCurrent;
@@ -410,141 +407,140 @@ public:
 
     static INLINE void setXDirection(bool positive)
     {
-        if( blockAll )
-        {
-            return;
-        }
-
         if(positive)
         {
             // extruder moves to the right
-            if( stepperDirection[X_AXIS] != 1 )
-            {
-                WRITE(X_DIR_PIN,!INVERT_X_DIR);
-
+            WRITE(X_DIR_PIN,!INVERT_X_DIR);
 #if FEATURE_TWO_XSTEPPER
-                WRITE(X2_DIR_PIN,!INVERT_X_DIR);
+            WRITE(X2_DIR_PIN,!INVERT_X_DIR);
 #endif // FEATURE_TWO_XSTEPPER
-
-                stepperDirection[X_AXIS] = 1;
-            }
+            stepperDirection[X_AXIS] = 1;
         }
         else
         {
             // extruder moves to the left
-            if( stepperDirection[X_AXIS] != -1 )
-            {
-                WRITE(X_DIR_PIN,INVERT_X_DIR);
-
+            WRITE(X_DIR_PIN,INVERT_X_DIR);
 #if FEATURE_TWO_XSTEPPER
-                WRITE(X2_DIR_PIN,INVERT_X_DIR);
+            WRITE(X2_DIR_PIN,INVERT_X_DIR);
 #endif // FEATURE_TWO_XSTEPPER
-
-                stepperDirection[X_AXIS] = -1;
-            }
+            stepperDirection[X_AXIS] = -1;
         }
     } // setXDirection
 
     static INLINE void setYDirection(bool positive)
     {
-        if( blockAll )
-        {
-            return;
-        }
-
         if(positive)
         {
             // heat bed moves to the front
-            if( stepperDirection[Y_AXIS] != 1 )
-            {
-                WRITE(Y_DIR_PIN,!INVERT_Y_DIR);
-
+            WRITE(Y_DIR_PIN,!INVERT_Y_DIR);
 #if FEATURE_TWO_YSTEPPER
-                WRITE(Y2_DIR_PIN,!INVERT_Y_DIR);
+            WRITE(Y2_DIR_PIN,!INVERT_Y_DIR);
 #endif // FEATURE_TWO_YSTEPPER
-
-                stepperDirection[Y_AXIS] = 1;
-            }
+            stepperDirection[Y_AXIS] = 1;
         }
         else
         {
             // heat bed moves to the back
-            if( stepperDirection[Y_AXIS] != -1 )
-            {
-                WRITE(Y_DIR_PIN,INVERT_Y_DIR);
-
+            WRITE(Y_DIR_PIN,INVERT_Y_DIR);
 #if FEATURE_TWO_YSTEPPER
-                WRITE(Y2_DIR_PIN,INVERT_Y_DIR);
+            WRITE(Y2_DIR_PIN,INVERT_Y_DIR);
 #endif // FEATURE_TWO_YSTEPPER
-
-                stepperDirection[Y_AXIS] = -1;
-            }
+            stepperDirection[Y_AXIS] = -1;
         }
     } // setYDirection
 
     static INLINE void setZDirection(bool positive)
     {
-        if( blockAll )
-        {
-            return;
-        }
-
         if(positive)
         {
             // heat bed moves to the bottom
             WRITE( Z_DIR_PIN, !INVERT_Z_DIR );
-
 #if FEATURE_TWO_ZSTEPPER
             WRITE( Z2_DIR_PIN, !INVERT_Z_DIR );
 #endif // FEATURE_TWO_YSTEPPER
-
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
-            increaseLastZDirection();
+            lastZDirection = 1;
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
             stepperDirection[Z_AXIS] = 1;
         }
         else
         {
             // heat bed moves to the top
             WRITE( Z_DIR_PIN, INVERT_Z_DIR );
-
 #if FEATURE_TWO_ZSTEPPER
             WRITE( Z2_DIR_PIN, INVERT_Z_DIR );
 #endif // FEATURE_TWO_YSTEPPER
-
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
-            Printer::decreaseLastZDirection();
+            lastZDirection = -1;
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
             stepperDirection[Z_AXIS] = -1;
         }
     } // setZDirection
 
-    static INLINE bool getZDirection()
+    static INLINE void startXStep()
+    {
+        WRITE( X_STEP_PIN, HIGH );
+    #if FEATURE_TWO_XSTEPPER
+        WRITE( X2_STEP_PIN, HIGH );
+    #endif // FEATURE_TWO_XSTEPPER
+    } // startXStep
+
+    static INLINE void startYStep()
+    {
+        WRITE( Y_STEP_PIN, HIGH );
+    #if FEATURE_TWO_YSTEPPER
+        WRITE( Y2_STEP_PIN, HIGH );
+    #endif // FEATURE_TWO_YSTEPPER
+    } // startYStep
+        
+    static INLINE void startZStep()
+    {
+        WRITE( Z_STEP_PIN, HIGH );
+    #if FEATURE_TWO_ZSTEPPER
+        WRITE( Z2_STEP_PIN, HIGH );
+    #endif // FEATURE_TWO_ZSTEPPER
+    #if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
+        Printer::currentZSteps += (Printer::getZDirectionIsPos() ? 1 : -1);
+    #endif //FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
+
+    } // startZStep
+
+    static INLINE void endZStep( void )
+    {
+        WRITE( Z_STEP_PIN, LOW );
+    #if FEATURE_TWO_ZSTEPPER
+        WRITE( Z2_STEP_PIN, LOW );
+    #endif // FEATURE_TWO_ZSTEPPER
+    } // endZStep
+
+    static INLINE void endYStep( void )
+    {
+        WRITE( Y_STEP_PIN, LOW );
+    } // endZStep
+
+    static INLINE void endXStep( void )
+    {
+        WRITE( X_STEP_PIN, LOW );
+    } // endZStep
+
+    static INLINE void endXYZSteps()
+    {
+        endXStep();
+        endYStep();
+        endZStep();
+    } // endXYZSteps
+    
+    static INLINE bool getZDirectionIsPos()
     {
         return ((READ(Z_DIR_PIN)!=0) ^ INVERT_Z_DIR);
-    } // getZDirection
+    } // getZDirectionIsPos
 
-
-#if FEATURE_CONFIGURABLE_Z_ENDSTOPS
-    static INLINE void increaseLastZDirection()
-    {
-        lastZDirection = 1;
-    } // increaseLastZDirection
-
-    static INLINE void decreaseLastZDirection()
-    {
-        lastZDirection = -1;
-    } // decreaseLastZDirection
-#endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
-    static INLINE bool getYDirection()
+    static INLINE bool getYDirectionIsPos()
     {
         return((READ(Y_DIR_PIN)!=0) ^ INVERT_Y_DIR);
     } // getYDirection
 
-    static INLINE bool getXDirection()
+    static INLINE bool getXDirectionIsPos()
     {
         return((READ(X_DIR_PIN)!=0) ^ INVERT_X_DIR);
     } // getXDirection
@@ -989,32 +985,6 @@ public:
     {
         flag0 = (on ? flag0 | PRINTER_FLAG0_MANUAL_MOVE_MODE : flag0 & ~PRINTER_FLAG0_MANUAL_MOVE_MODE);
     } // setManualMoveMode
-
-    static inline void endXYZSteps()
-    {
-        WRITE(X_STEP_PIN,LOW);
-        WRITE(Y_STEP_PIN,LOW);
-        WRITE(Z_STEP_PIN,LOW);
-
-#if FEATURE_TWO_XSTEPPER
-        WRITE(X2_STEP_PIN,LOW);
-#endif // FEATURE_TWO_XSTEPPER
-
-#if FEATURE_TWO_YSTEPPER
-        WRITE(Y2_STEP_PIN,LOW);
-#endif // FEATURE_TWO_YSTEPPER
-
-#if FEATURE_TWO_ZSTEPPER
-        WRITE(Z2_STEP_PIN,LOW);
-#endif // FEATURE_TWO_ZSTEPPER
-
-        ANALYZER_OFF(ANALYZER_CH1);
-        ANALYZER_OFF(ANALYZER_CH2);
-        ANALYZER_OFF(ANALYZER_CH3);
-        ANALYZER_OFF(ANALYZER_CH6);
-        ANALYZER_OFF(ANALYZER_CH7);
-
-    } // endXYZSteps
 
     static INLINE speed_t updateStepsPerTimerCall(speed_t vbase)
     {

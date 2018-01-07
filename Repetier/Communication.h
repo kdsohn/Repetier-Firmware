@@ -198,7 +198,6 @@ public:
     FSTRINGVAR(tEPRMaxJerk)
     FSTRINGVAR(tEPRXHomePos)
     FSTRINGVAR(tEPRYHomePos)
-    FSTRINGVAR(tEPRZHomePos)
     FSTRINGVAR(tEPRXMaxLength)
     FSTRINGVAR(tEPRXMaxLengthMilling)
     FSTRINGVAR(tEPRYMaxLength)

@@ -1,6 +1,18 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.11.Mod (2018-01-07)
+- Testcleanup on stepperdirections
+- Cleanup (maybe to discuss) on Do-Step-Functions like startZStep / ...
+- standardization of functions to prepare z-direction (prepareBedUp / prepareBedDown vs. setZdirection)
+- pinned moveZ to real z direction / pinned performMove to real z direction / pinned directSteps to real z direction -> A test!
+- Tweak for zCMP to dismiss steps in Z when zCMP would do otherwise. We just ignore steps in special cases when queue and zCMP are contra-rotating. I have to think about if this is great or to harsh in some situations.
+- some standardization on port Writes
+- removed minMM[Z_AXIS] because it might be malicious.
+- disabled M42 because it might be dangerous somehow and is not really usefull except you really need it and you are not able to edit the firmware
+- removed blockall where it was bogus.
+- compensatedPositionPushE moved to a private static inside queuemove function
+
 V RF.01.38.10.Mod (2018-01-06)
 - FEATURE_CHECK_HOME, first beta.
 

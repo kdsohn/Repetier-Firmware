@@ -134,7 +134,7 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
     /** \brief Sends the high-signal to the stepper for next extruder step.
     Call this function only, if interrupts are disabled.
     */
-    static inline void step()
+    static INLINE void step()
     {
 #if NUM_EXTRUDER==1
         WRITE(EXT0_STEP_PIN,HIGH);
@@ -202,7 +202,7 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
     /** \brief Sets stepper signal to low for current extruder.
     Call this function only, if interrupts are disabled.
     */
-    static inline void unstep()
+    static INLINE void unstep()
     {
 #if NUM_EXTRUDER==1
         WRITE(EXT0_STEP_PIN,LOW);
@@ -380,13 +380,13 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
 #endif // EXT0_ENABLE_PIN>-1
 #else
         if(Extruder::current->enablePin > -1)
-            digitalWrite(Extruder::current->enablePin,Extruder::current->enableOn);
+            WRITE(Extruder::current->enablePin,Extruder::current->enableOn);
 
 #if FEATURE_DITTO_PRINTING
         if(Extruder::dittoMode)
         {
             if(extruder[1].enablePin > -1)
-                digitalWrite(extruder[1].enablePin,extruder[1].enableOn);
+                WRITE(extruder[1].enablePin,extruder[1].enableOn);
         }
 #endif // FEATURE_DITTO_PRINTING
 #endif // NUM_EXTRUDER==1

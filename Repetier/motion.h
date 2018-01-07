@@ -453,28 +453,6 @@ public:
         return Printer::stepNumber <= accelSteps;
     } // moveAccelerating
 
-    INLINE void startXStep()
-    {
-        ANALYZER_ON(ANALYZER_CH6);
-        ANALYZER_ON(ANALYZER_CH2);
-        WRITE(X_STEP_PIN,HIGH);
-
-#if FEATURE_TWO_XSTEPPER
-        WRITE(X2_STEP_PIN,HIGH);
-#endif // FEATURE_TWO_XSTEPPER
-    } // startXStep
-
-    INLINE void startYStep()
-    {
-        ANALYZER_ON(ANALYZER_CH7);
-        ANALYZER_ON(ANALYZER_CH3);
-        WRITE(Y_STEP_PIN,HIGH);
-
-#if FEATURE_TWO_YSTEPPER
-        WRITE(Y2_STEP_PIN,HIGH);
-#endif // FEATURE_TWO_YSTEPPER
-    } // startYStep
-
     void updateStepsParameter();
     inline float safeSpeed(fast8_t drivingAxis);
     void calculateQueueMove(float axis_diff[],uint8_t pathOptimize, fast8_t drivingAxis, float feedrate
@@ -624,82 +602,25 @@ public:
 
 };
 
-
-inline void prepareBedUp( void )
-{
-    WRITE( Z_DIR_PIN, INVERT_Z_DIR );
-
-#if FEATURE_TWO_ZSTEPPER
-    WRITE( Z2_DIR_PIN, INVERT_Z_DIR );
-#endif // FEATURE_TWO_ZSTEPPER
-
-#if FEATURE_CONFIGURABLE_Z_ENDSTOPS
-    Printer::decreaseLastZDirection();
-#endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
-} // prepareBedUp
-
-
-inline void prepareBedDown( void )
-{
-    WRITE( Z_DIR_PIN, !INVERT_Z_DIR );
-
-#if FEATURE_TWO_ZSTEPPER
-    WRITE( Z2_DIR_PIN, !INVERT_Z_DIR );
-#endif // FEATURE_TWO_ZSTEPPER
-
-#if FEATURE_CONFIGURABLE_Z_ENDSTOPS
-    Printer::increaseLastZDirection();
-#endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
-} // prepareBedDown
-
-
-inline void startZStep( char nDirection )
-{
-    WRITE( Z_STEP_PIN,HIGH );
-
-#if FEATURE_TWO_ZSTEPPER
-    WRITE( Z2_STEP_PIN,HIGH );
-#endif // FEATURE_TWO_ZSTEPPER
-
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
-    Printer::currentZSteps += nDirection;
-#endif //FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
-
-} // startZStep
-
-
-inline void endZStep( void )
-{
-    WRITE( Z_STEP_PIN, LOW );
-
-#if FEATURE_TWO_ZSTEPPER
-    WRITE( Z2_STEP_PIN, LOW );
-#endif // FEATURE_TWO_ZSTEPPER
-
-} // endZStep
-
-inline bool isDirectOrQueueXMove(){
+inline bool isQueueXMove(){
     if( PrintLine::cur ) if( PrintLine::cur->isXMove() ) return true;
-    if( PrintLine::direct.isXMove() ) return true;
     return false;
-} //isDirectOrQueueXMove
-inline bool isDirectOrQueueYMove(){
+} //isQueueXMove
+inline bool isQueueYMove(){
     if( PrintLine::cur ) if( PrintLine::cur->isYMove() ) return true;
-    if( PrintLine::direct.isYMove() ) return true;
     return false;
-} //isDirectOrQueueYMove
+} //isQueueYMove
+inline bool isQueueEMove(){
+    if( PrintLine::cur ) if( PrintLine::cur->isEMove() ) return true;
+    return false;
+} //isQueueEMove
+
 inline bool isDirectOrQueueOrCompZMove(){
     if( PrintLine::cur ) if( PrintLine::cur->isZMove() ) return true;
-    if( PrintLine::direct.isZMove() ) return true;
+    if( Printer::directPositionCurrentSteps[Z_AXIS] != Printer::directPositionTargetSteps[Z_AXIS] ) return true; 
+    // davor version conrad 1.39, auskommentiert version nibbels: if( PrintLine::direct.isZMove() ) return true;
     if( Printer::endZCompensationStep ) return true;
     return false;
 } //isDirectOrQueueOrCompZMove
-inline bool isDirectOrQueueEMove(){
-    if( PrintLine::cur ) if( PrintLine::cur->isEMove() ) return true;
-    if( PrintLine::direct.isEMove() ) return true;
-    return false;
-} //isDirectOrQueueEMove
 
 #endif // MOTION_H

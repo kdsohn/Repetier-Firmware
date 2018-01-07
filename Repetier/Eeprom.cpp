@@ -134,7 +134,6 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
     Printer::lengthMM[Z_AXIS] = Z_MAX_LENGTH;
     Printer::minMM[X_AXIS] = X_MIN_POS;
     Printer::minMM[Y_AXIS] = Y_MIN_POS;
-    Printer::minMM[Z_AXIS] = Z_MIN_POS;
 
 #if ENABLE_BACKLASH_COMPENSATION
     Printer::backlash[X_AXIS] = X_BACKLASH;
@@ -544,7 +543,7 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
 
     HAL::eprSetFloat(EPR_X_HOME_OFFSET,Printer::minMM[X_AXIS]);
     HAL::eprSetFloat(EPR_Y_HOME_OFFSET,Printer::minMM[Y_AXIS]);
-    HAL::eprSetFloat(EPR_Z_HOME_OFFSET,Printer::minMM[Z_AXIS]);
+
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
@@ -809,7 +808,6 @@ void EEPROM::readDataFromEEPROM()
 
     Printer::minMM[X_AXIS] = HAL::eprGetFloat(EPR_X_HOME_OFFSET);
     Printer::minMM[Y_AXIS] = HAL::eprGetFloat(EPR_Y_HOME_OFFSET);
-    Printer::minMM[Z_AXIS] = HAL::eprGetFloat(EPR_Z_HOME_OFFSET);
     
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
@@ -1299,7 +1297,6 @@ void EEPROM::writeSettings()
     writeFloat(EPR_MAX_ZJERK,Com::tEPRMaxZJerk);
     writeFloat(EPR_X_HOME_OFFSET,Com::tEPRXHomePos);
     writeFloat(EPR_Y_HOME_OFFSET,Com::tEPRYHomePos);
-    writeFloat(EPR_Z_HOME_OFFSET,Com::tEPRZHomePos);
     
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
