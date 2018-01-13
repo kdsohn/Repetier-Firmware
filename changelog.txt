@@ -1,6 +1,11 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.12.Mod (2018-01-13)
+- read repetier 1.0.1 and synced some code 
+- removed while in highest commands loop
+- tiny fix for 01.38.11 @ two extruders
+
 V RF.01.38.11.Mod (2018-01-07)
 - Testcleanup on stepperdirections
 - Cleanup (maybe to discuss) on Do-Step-Functions like startZStep / ...
