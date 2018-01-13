@@ -3,6 +3,7 @@ TODO: Testing, testing ..
 
 V RF.01.38.12.Mod (2018-01-13)
 - read repetier 1.0.1 and synced some code 
+- send better readable log message if Heat Bed Scan fails because of endstop limit Z_ENDSTOP_DRIVE_OVER
 - removed while in highest commands loop
 - tiny fix for 01.38.11 @ two extruders
 

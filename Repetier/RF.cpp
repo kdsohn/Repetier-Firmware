@@ -4847,12 +4847,10 @@ void moveZDownSlow(uint8_t acuteness)
 
         if( g_nZScanZPosition < -g_nScanZMaxCompensationSteps || g_nZScanZPosition > HEAT_BED_SCAN_Z_START_STEPS )
         {
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( PSTR( "moveZDownSlow(): the z position went out of range, retries = " ), g_scanRetries );
-                Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition );
-            }
-            
+            Com::printFLN( PSTR( "moveZDownSlow(): the z position went out of range, retries = " ), g_scanRetries );
+            if(g_nZScanZPosition < -g_nScanZMaxCompensationSteps) Com::printFLN( PSTR( "Z-Endstop Limit:" ), Z_ENDSTOP_DRIVE_OVER );
+            Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition );
+
             if( g_scanRetries ) g_retryZScan = 1;
             else                g_abortZScan = 1;
             break;
@@ -4910,12 +4908,10 @@ void moveZUpFast()
 
         if( g_nZScanZPosition < -g_nScanZMaxCompensationSteps || g_nZScanZPosition > HEAT_BED_SCAN_Z_START_STEPS )
         {
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( PSTR( "moveZUpFast(): the z position went out of range, retries = " ), (int)g_scanRetries );
-                Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition );
-            }
-            
+            Com::printFLN( PSTR( "moveZUpFast(): the z position went out of range, retries = " ), (int)g_scanRetries );
+            if(g_nZScanZPosition < -g_nScanZMaxCompensationSteps) Com::printFLN( PSTR( "Z-Endstop Limit:" ), Z_ENDSTOP_DRIVE_OVER );
+            Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition );
+
             if( g_scanRetries ) g_retryZScan = 1;
             else                g_abortZScan = 1;
             break;
@@ -4957,12 +4953,10 @@ void moveZUpSlow( short* pnContactPressure, uint8_t acuteness )
 
         if( g_nZScanZPosition < -g_nScanZMaxCompensationSteps || g_nZScanZPosition > HEAT_BED_SCAN_Z_START_STEPS )
         {
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( PSTR( "moveZUpSlow(): the z position went out of range, retries = " ), g_scanRetries );
-                Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition );
-            }
-            
+            Com::printFLN( PSTR( "moveZUpSlow(): the z position went out of range, retries = " ), g_scanRetries );
+            if(g_nZScanZPosition < -g_nScanZMaxCompensationSteps) Com::printFLN( PSTR( "Z-Endstop Limit:" ), Z_ENDSTOP_DRIVE_OVER );
+            Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition );
+
             if( g_scanRetries ) g_retryZScan = 1;
             else                g_abortZScan = 1;
             break;
