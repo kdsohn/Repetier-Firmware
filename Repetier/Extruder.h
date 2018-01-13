@@ -380,13 +380,13 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
 #endif // EXT0_ENABLE_PIN>-1
 #else
         if(Extruder::current->enablePin > -1)
-            WRITE(Extruder::current->enablePin,Extruder::current->enableOn);
+            HAL::digitalWrite(Extruder::current->enablePin,Extruder::current->enableOn);
 
 #if FEATURE_DITTO_PRINTING
         if(Extruder::dittoMode)
         {
             if(extruder[1].enablePin > -1)
-                WRITE(extruder[1].enablePin,extruder[1].enableOn);
+                HAL::digitalWrite(extruder[1].enablePin,extruder[1].enableOn);
         }
 #endif // FEATURE_DITTO_PRINTING
 #endif // NUM_EXTRUDER==1

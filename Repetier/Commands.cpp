@@ -31,41 +31,31 @@ uint16_t    BedTemp      = 1;       // 0 = Heatbed temperature is lower HEATED_B
 
 void Commands::commandLoop()
 {
-    while(true)
-    {
 #ifdef DEBUG_PRINT
-        debugWaitLoop = 1;
+    debugWaitLoop = 1;
 #endif
-        GCode::readFromSerial();
-        GCode *code = GCode::peekCurrentCommand();
-        UI_MEDIUM; // do check encoder
-
-        if(code)
-        {
-
+    GCode::readFromSerial();
+    GCode *code = GCode::peekCurrentCommand();
+    UI_MEDIUM; // do check encoder
+    if(code)
+    {
 #if SDSUPPORT
-            if(sd.savetosd)
-            {
-                if(!(code->hasM() && code->M == 29))   // still writing to file
-                {
-                    sd.writeCommand(code);
-                }
-                else
-                {
-                    sd.finishWrite();
-                }
-#ifdef ECHO_ON_EXECUTE
-                code->echoCommand();
-#endif
-            }
+        if(sd.savetosd)
+        {
+            if(!(code->hasM() && code->M == 29))   // still writing to file
+                sd.writeCommand(code);
             else
+                sd.finishWrite();
+#ifdef ECHO_ON_EXECUTE
+            code->echoCommand();
 #endif
-                Commands::executeGCode(code);
-            code->popCurrentCommand();
         }
-        Printer::defaultLoopActions();
+        else
+#endif
+            Commands::executeGCode(code);
+        code->popCurrentCommand();
     }
-
+    Printer::defaultLoopActions();
 } // commandLoop
 
 
@@ -125,17 +115,23 @@ void Commands::waitUntilEndOfAllMoves()
 
     while( bWait )
     {
-        GCode::readFromSerial();
         Commands::checkForPeriodicalActions();
         GCode::keepAlive( Processing );
         UI_MEDIUM;
 
         bWait = 0;
         if( PrintLine::hasLines() )     bWait = 1;
-
+        else                            GCode::readFromSerial(); //normalerweise braucht repetiert hier bei PrintLine::haslines kein readserial! aber wenn wir für die anderen wait=1 readserial wollen, evtl. schon. 
+        
 #if FEATURE_FIND_Z_ORIGIN
         if( g_nFindZOriginStatus )      bWait = 1;
 #endif // FEATURE_FIND_Z_ORIGIN
+
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+        //weiß nicht ob wir das brauchen: test
+        if( abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ ) )      bWait = 1;
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION
+
     }
 
 } // waitUntilEndOfAllMoves
@@ -151,7 +147,7 @@ void Commands::waitUntilEndOfAllBuffers(unsigned int maxcodes)
 
     while(PrintLine::hasLines() || (code != NULL))
     {
-        GCode::readFromSerial();
+        //GCode::readFromSerial();
         code = GCode::peekCurrentCommand();
         UI_MEDIUM; // do check encoder
         if(code)
@@ -694,9 +690,8 @@ void Commands::executeGCode(GCode *com)
 
             while((uint32_t)(codenum-HAL::timeInMilliseconds())  < 2000000000 )
             {
-                GCode::readFromSerial();
-                Commands::checkForPeriodicalActions();
                 GCode::keepAlive( Processing );
+                Commands::checkForPeriodicalActions();
             }
             break;
         }
@@ -844,14 +839,16 @@ void Commands::executeGCode(GCode *com)
 
         case 90: // G90
         {
-            //Commands::waitUntilEndOfAllMoves(); https://github.com/RF1000community/Repetier-Firmware/commit/986a246b5faf625357e3202a93b7e8cb38916ce1 evtl. blöd! interne scripte mit G90 gehen dann evtl. nicht mehr.
             Printer::relativeCoordinateMode = false;
+            if(com->internalCommand)
+                Com::printInfoFLN(PSTR("Absolute positioning"));
             break;
         }
         case 91: // G91
         {
-            //Commands::waitUntilEndOfAllMoves(); https://github.com/RF1000community/Repetier-Firmware/commit/986a246b5faf625357e3202a93b7e8cb38916ce1 evtl. blöd! interne scripte mit G91 gehen dann evtl. nicht mehr.
             Printer::relativeCoordinateMode = true;
+            if(com->internalCommand)
+                Com::printInfoFLN(PSTR("Absolute positioning"));
             break;
         }
         case 92: // G92

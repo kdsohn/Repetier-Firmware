@@ -6622,8 +6622,6 @@ void outputObject( void )
 
             uStart = HAL::timeInMilliseconds();
         }
-
-        GCode::readFromSerial();
         Commands::checkForPeriodicalActions();
         UI_MEDIUM;
     }
@@ -10844,19 +10842,15 @@ void queueTask( char task )
     while( PrintLine::linesCount >= MOVE_CACHE_SIZE )
     {
         // wait for a free entry in movement cache
-        GCode::readFromSerial();
         Commands::checkForPeriodicalActions();
     }
   
     PrintLine::queueTask( task );
     return;
-
 } // queueTask
-
 
 extern void processButton( int nAction )
 {
-
     switch( nAction )
     {
 #if FEATURE_EXTENDED_BUTTONS

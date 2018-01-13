@@ -1321,16 +1321,16 @@ void Printer::defaultLoopActions()
     UI_MEDIUM; // do check encoder
     millis_t curtime = HAL::timeInMilliseconds();
 
-    if( PrintLine::hasLines() )
+    if( PrintLine::hasLines() || isMenuMode(MENU_MODE_PRINTING + MENU_MODE_PAUSED) )
     {
         previousMillisCmd = curtime;
     }
     else
     {
         curtime -= previousMillisCmd;
-        if( maxInactiveTime!=0 && curtime > maxInactiveTime ) Printer::kill(false);
+        if( maxInactiveTime != 0 && curtime > maxInactiveTime ) Printer::kill(false);
         else Printer::setAllKilled(false); // prevent repeated kills
-        if( stepperInactiveTime!=0 && curtime > stepperInactiveTime )
+        if( stepperInactiveTime != 0 && curtime > stepperInactiveTime )
         {
             Printer::kill(true);
         }
