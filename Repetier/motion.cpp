@@ -1150,11 +1150,9 @@ processing.
 */
 uint8_t PrintLine::insertWaitMovesIfNeeded(uint8_t pathOptimize, uint8_t waitExtraLines)
 {
-    if(linesCount==0 && waitRelax==0 && pathOptimize)           // First line after some time - warmup needed
+    if(linesCount == 0 && waitRelax == 0 && pathOptimize)           // First line after some time - warmup needed
     {
         uint8_t w = 4;
-
-
         while(w--)
         {
             PrintLine *p = getNextWriteLine();
@@ -1173,7 +1171,7 @@ uint8_t PrintLine::insertWaitMovesIfNeeded(uint8_t pathOptimize, uint8_t waitExt
 
 void PrintLine::waitForXFreeLines(uint8_t b)
 {
-    while(linesCount+b>MOVE_CACHE_SIZE)     // wait for a free entry in movement cache
+    while(linesCount + b > MOVE_CACHE_SIZE)     // wait for a free entry in movement cache
     {
         //GCode::readFromSerial();
         Commands::checkForPeriodicalActions();

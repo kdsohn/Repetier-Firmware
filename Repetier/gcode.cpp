@@ -566,14 +566,12 @@ void GCode::readFromSD()
             if(commandsReceivingWritePosition==binaryCommandSize)
             {
                 GCode *act = &commandsBuffered[bufferWriteIndex];
-                if(act->parseBinary(commandReceiving,false))
-                {
-                    // Success, silently ignore illegal commands
+                if(act->parseBinary(commandReceiving, false))
                     pushCommand();
-//                  Com::printF(PSTR("Current binary from SD: "));
-//                  act->printCommand();
-                }
                 commandsReceivingWritePosition = 0;
+                /*
+                Repetier 1.0.1: if(sd.sdmode == 2) sd.sdmode = 0; -> wir haben noch false und true drin, brauchen wir das also?
+                */
                 return;
             }
         }
@@ -583,62 +581,36 @@ void GCode::readFromSD()
             bool returnChar = ch == '\n' || ch == '\r';
             if(returnChar || sd.filesize == sd.sdpos || (!commentDetected && ch == ':') || commandsReceivingWritePosition >= (MAX_CMD_SIZE - 1) )  // complete line read
             {
-                //Com::printF(PSTR("Parse SD ascii 1 >>>"));
-                //Com::print((char*)commandReceiving);
-                //Com::printFLN(PSTR("<<<"));
-
                 if(returnChar || ch == ':')
-                    commandReceiving[commandsReceivingWritePosition-1]=0;
+                    commandReceiving[commandsReceivingWritePosition - 1] = 0;
                 else
-                    commandReceiving[commandsReceivingWritePosition]=0;
+                    commandReceiving[commandsReceivingWritePosition] = 0;
                 commentDetected = false;
-                if(commandsReceivingWritePosition==1)   // empty line ignore
+                if(commandsReceivingWritePosition == 1)   // empty line ignore
                 {
                     commandsReceivingWritePosition = 0;
-                    memset( commandReceiving, 0, sizeof( commandReceiving ) );
+                    //repetier 1.0.1 hat das nicht drin : memset( commandReceiving, 0, sizeof( commandReceiving ) );
                     continue;
                 }
-
-                //Com::printF(PSTR("Parse SD ascii 2 >>>"));
-                //Com::print((char*)commandReceiving);
-                //Com::printFLN(PSTR("<<<"));
-
                 GCode *act = &commandsBuffered[bufferWriteIndex];
-                if(act->parseAscii((char *)commandReceiving,false))
-                {   
-                    // Success
+                if(act->parseAscii((char *)commandReceiving, false))
                     pushCommand();
-                    //Com::printF(PSTR("Current ASCII from SD: "));
-                    //act->printCommand();
-                }
                 commandsReceivingWritePosition = 0;
-                //memset( commandReceiving, 0, sizeof( commandReceiving ) );
-
-                //Com::printF(PSTR("Verify: "));
-                //act->printCommand();
+                /*repetier 1.0.1  : if(sd.sdmode == 2)                     sd.sdmode = 0; -> wir haben noch false und true drin, brauchen wir das also?*/
                 return;
             }
             else
             {
-/*              Com::printF(PSTR("Parse SD ascii 3 >>>"));
-                Com::print((char*)commandReceiving);
-                Com::printFLN(PSTR("<<<"));
-*/
                 if(ch == ';') commentDetected = true; // ignore new data until lineend
                 if(commentDetected) commandsReceivingWritePosition--;
             }
         }
     }
     sd.sdmode = false;
-
-    if( Printer::debugInfo() )
-    {
-        Com::printFLN(Com::tDonePrinting);
-    }
+    Com::printFLN(Com::tDonePrinting);
     commandsReceivingWritePosition = 0;
     commentDetected = false;
     Printer::setMenuMode(MENU_MODE_SD_PRINTING,false);
-
     BEEP_STOP_PRINTING
 #endif // SDSUPPORT
 

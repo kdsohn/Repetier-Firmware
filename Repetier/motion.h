@@ -536,7 +536,7 @@ public:
 
     static INLINE void previousPlannerIndex(uint8_t &p)
     {
-        p = (p ? p-1 : MOVE_CACHE_SIZE-1);
+        p = (p ? p - 1 : MOVE_CACHE_SIZE - 1);
     } // previousPlannerIndex
 
     static INLINE void nextPlannerIndex(uint8_t& p)
