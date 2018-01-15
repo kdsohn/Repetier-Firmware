@@ -7952,17 +7952,34 @@ void processCommand( GCode* pCommand )
                     Com::printF( PSTR( ":" ) );
                     for(uint8_t row = 0; row < UI_ROWS; row++){
                         for(uint8_t col = 0; col < MAX_COLS+1; col++){
-                            Com::print( (displayCache[row][col] 
-                                ? (isprint(displayCache[row][col]) 
-                                        ? displayCache[row][col] 
-                                        : (displayCache[row][col] == 2 
-                                            ? '\'' 
-                                            : (displayCache[row][col] == 5 
-                                                ? '!' 
-                                                : '_' ) 
-                                          )
-                                   ) 
-                                : ' ') );
+                            if(displayCache[row][col]){
+                                if(isprint(displayCache[row][col])){
+                                    Com::print(displayCache[row][col]);
+                                }else{
+                                    switch(displayCache[row][col]){
+                                        case 2: {
+                                            Com::print('\'');
+                                            break;
+                                        }
+                                        case 5: {
+                                            Com::print('!');
+                                            break;
+                                        }
+                                        case (char)CHAR_SELECTOR: {
+                                            Com::print('>');
+                                            break;
+                                        }
+                                        case (char)CHAR_SELECTED:{
+                                            Com::print('*');
+                                            break;
+                                        }
+                                        default: 
+                                            Com::print('_'); //others?
+                                    }
+                                }
+                            }else{
+                                Com::print(' '); //null as space
+                            }
                         }
                     }
                     Com::println();
