@@ -7952,7 +7952,17 @@ void processCommand( GCode* pCommand )
                     Com::printF( PSTR( ":" ) );
                     for(uint8_t row = 0; row < UI_ROWS; row++){
                         for(uint8_t col = 0; col < MAX_COLS+1; col++){
-                            Com::print( (displayCache[row][col] ? (isprint(displayCache[row][col]) ? displayCache[row][col] : '#') : ' ') );
+                            Com::print( (displayCache[row][col] 
+                                ? (isprint(displayCache[row][col]) 
+                                        ? displayCache[row][col] 
+                                        : (displayCache[row][col] == 2 
+                                            ? '\'' 
+                                            : (displayCache[row][col] == 5 
+                                                ? '!' 
+                                                : '>' ) 
+                                          )
+                                   ) 
+                                : ' ') );
                         }
                     }
                     Com::println();

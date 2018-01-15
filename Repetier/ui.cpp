@@ -455,11 +455,19 @@ void UIDisplay::printRow(uint8_t r,char *txt,char *txt2,uint8_t changeAtCol)
     {
         txt++;
         lcdPutChar(c);
+#if FEATURE_SEE_DISPLAY
+        //cache whatever you write to the display!
+        displayCache[r][col] = c;
+#endif //FEATURE_SEE_DISPLAY
         col++;
     }
     while(col<changeAtCol)
     {
         lcdPutChar(' ');
+#if FEATURE_SEE_DISPLAY
+        //cache whatever you write to the display!
+        displayCache[r][col] = ' ';
+#endif //FEATURE_SEE_DISPLAY
         col++;
     }
     if(txt2!=NULL)
@@ -468,11 +476,19 @@ void UIDisplay::printRow(uint8_t r,char *txt,char *txt2,uint8_t changeAtCol)
         {
             txt2++;
             lcdPutChar(c);
+#if FEATURE_SEE_DISPLAY
+            //cache whatever you write to the display!
+            displayCache[r][col] = c;
+#endif //FEATURE_SEE_DISPLAY
             col++;
         }
         while(col<UI_COLS)
         {
             lcdPutChar(' ');
+#if FEATURE_SEE_DISPLAY
+            //cache whatever you write to the display!
+            displayCache[r][col] = ' ';
+#endif //FEATURE_SEE_DISPLAY
             col++;
         }
     }
