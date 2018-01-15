@@ -7959,7 +7959,7 @@ void processCommand( GCode* pCommand )
                                             ? '\'' 
                                             : (displayCache[row][col] == 5 
                                                 ? '!' 
-                                                : '>' ) 
+                                                : '_' ) 
                                           )
                                    ) 
                                 : ' ') );
