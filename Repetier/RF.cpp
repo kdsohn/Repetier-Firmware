@@ -7920,6 +7920,47 @@ void processCommand( GCode* pCommand )
             }
 #endif // FEATURE_CHECK_HOME
 
+#if FEATURE_SEE_DISPLAY
+            case 3029: // M3029 [P] - See the display text or send Button press per gcode to the printer via [P]Code.
+            {
+                if(pCommand->hasP()){
+                    switch(pCommand->P){
+                        case UI_ACTION_OK: // 1001
+                        case UI_ACTION_NEXT: // 1
+                        case UI_ACTION_PREVIOUS: // 2
+                        case UI_ACTION_BACK: // 1000
+                        case UI_ACTION_RIGHT: // 1129
+#if FEATURE_EXTENDED_BUTTONS
+                        case UI_ACTION_RF_HEAT_BED_UP: // 514
+                        case UI_ACTION_RF_HEAT_BED_DOWN: // 515
+                        case UI_ACTION_RF_EXTRUDER_RETRACT: // 517
+                        case UI_ACTION_RF_EXTRUDER_OUTPUT: // 516
+                        case UI_ACTION_RF_CONTINUE: // 1519
+                        case UI_ACTION_RF_PAUSE: // 1518
+#endif //FEATURE_EXTENDED_BUTTONS
+                        {
+                            Com::printFLN( PSTR( "RequestMenu:Press:" ), pCommand->P );
+                            uid.executeAction(pCommand->P);
+                        }
+                        break;
+                    }
+                }else{
+                    extern char displayCache[UI_ROWS][MAX_COLS+1];
+                    Com::printF( PSTR( "RequestMenu:" ), UI_ROWS );
+                    
+                    Com::printF( PSTR( "," ),MAX_COLS+1 );
+                    Com::printF( PSTR( ":" ) );
+                    for(uint8_t row = 0; row < UI_ROWS; row++){
+                        for(uint8_t col = 0; col < MAX_COLS+1; col++){
+                            Com::print( (displayCache[row][col] ? (isprint(displayCache[row][col]) ? displayCache[row][col] : '#') : ' ') );
+                        }
+                    }
+                    Com::println();
+                }
+                break;
+            }
+#endif // FEATURE_SEE_DISPLAY
+
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
             case 3030: // M3030 [S] - configure the fast step size for moving of the heat bed up during the heat bed/work part scan
             {
