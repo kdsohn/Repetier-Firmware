@@ -1,6 +1,9 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.13.Mod (2018-01-15)
+- Fix Fix Tyreus Lyben was never used but No Overshoot was.
+
 V RF.01.38.12.Mod (2018-01-13)
 - read repetier 1.0.1 and synced some code (mostly gcode parsing)
 - send better readable log message if Heat Bed Scan fails because of endstop limit Z_ENDSTOP_DRIVE_OVER

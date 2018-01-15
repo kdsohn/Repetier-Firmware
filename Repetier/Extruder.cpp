@@ -1432,11 +1432,12 @@ KP = Ku * Maßzahl lt. Tabelle
 see also: http://www.mstarlabs.com/control/znrule.html
 */
                         switch(method){
-                            case 4: //Tyreus-Lyben
+                            case 4: //PID Tyreus-Lyben
                                 Kp = 0.4545f*Ku;      //1/2.2 KRkrit
                                 Ki = Kp/Tu/2.2f;        //2.2 Tkrit
                                 Kd = Kp*Tu/6.3f;      //1/6.3 Tkrit[/code]
                                 Com::printFLN(Com::tAPIDTyreusLyben);
+                            break;
                             case 3: //PID no overshoot
                                Kp = 0.2f*Ku;          //0.2 KRkrit
                                Ki = 2.0f*Kp/Tu;       //0.5 Tkrit
