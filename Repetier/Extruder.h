@@ -30,7 +30,7 @@ extern uint8_t  manageMonitor;
 
 #define TEMPERATURE_CONTROLLER_FLAG_ALARM 1
 /** TemperatureController manages one heater-temperature sensore loop. You can have up to
-4 loops allowing pid/bang bang for up to 3 extruder and the heated bed.
+4 loops allowing pid for up to 3 extruder and the heated bed.
 
 */
 class TemperatureController
@@ -49,7 +49,6 @@ public:
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
 
     uint32_t    lastTemperatureUpdate;  ///< Time in millis of the last temperature update.
-    int8_t      heatManager;            ///< How is temperature controled. 0 = on/off, 1 = PID-Control, 3 = dead time control
 
     float       tempIState;             ///< Temp. var. for PID computation.
     uint8_t     pidDriveMax;            ///< Used for windup in PID calculation.

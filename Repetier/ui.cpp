@@ -1656,19 +1656,6 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
 #endif // RETRACT_DURING_HEATUP
 
-                else if(c2=='h')                                                                        // %Xh : Extruder heat manager (BangBang/PID)
-                {
-                    uint8_t hm = Extruder::current->tempControl.heatManager;
-                    if(hm == 1)
-                        addStringP(PSTR(UI_TEXT_STRING_HM_PID));
-                    else if(hm == 3)
-                        addStringP(PSTR(UI_TEXT_STRING_HM_DEADTIME));
-                    else if(hm == 2)
-                        addStringP(PSTR(UI_TEXT_STRING_HM_SLOWBANG));
-                    else
-                        addStringP(PSTR(UI_TEXT_STRING_HM_BANGBANG));
-                }
-
 #if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
                 else if(c2=='a')
@@ -3955,17 +3942,6 @@ void UIDisplay::nextPreviousAction(int8_t next)
 
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EEPROM::getExtruderOffset(Extruder::current->id)+EPR_EXTRUDER_MAX_START_FEEDRATE,Extruder::current->maxStartFeedrate);
-            EEPROM::updateChecksum();
-#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-
-            break;
-        }
-        case UI_ACTION_EXTR_HEATMANAGER:
-        {
-            INCREMENT_MIN_MAX(Extruder::current->tempControl.heatManager,1,0,3);
-
-#if FEATURE_AUTOMATIC_EEPROM_UPDATE
-            HAL::eprSetFloat(EEPROM::getExtruderOffset(Extruder::current->id)+EPR_EXTRUDER_HEAT_MANAGER,Extruder::current->tempControl.heatManager);
             EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
 

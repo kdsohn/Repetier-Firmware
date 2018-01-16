@@ -1,6 +1,10 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.16.Mod (2018-01-15)
+- fixed some extruder inits
+- removed all heat managers except PID because they work for all RFx000.
+
 V RF.01.38.15.Mod (2018-01-15)
 - New Startscreen
 

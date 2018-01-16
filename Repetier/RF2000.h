@@ -273,13 +273,6 @@ Overridden if EEPROM activated. */
 Overridden if EEPROM activated. */
 #define EXT0_MAX_ACCELERATION               6000
 
-/** \brief Type of heat manager for this extruder.
-- 0 = Simply switch on/off if temperature is reached. Works always.
-- 1 = PID Temperature control. Is better but needs good PID values. Defaults are a good start for most extruder.
-- 3 = Dead-time control. PID_P becomes dead-time in seconds.
- Overridden if EEPROM activated. */
-#define EXT0_HEAT_MANAGER                   1
-
 /** \brief Wait x seconds, after reaching target temperature. Only used for M109.  Overridden if EEPROM activated. */
 #define EXT0_WATCHPERIOD                    20
 
@@ -438,12 +431,6 @@ Overridden if EEPROM activated. */
 Overridden if EEPROM activated. */
 #define EXT1_MAX_ACCELERATION               6000
 
-/** \brief Type of heat manager for this extruder.
-- 0 = Simply switch on/off if temperature is reached. Works always.
-- 1 = PID Temperature control. Is better but needs good PID values. Defaults are a good start for most extruder.
- Overridden if EEPROM activated. */
-#define EXT1_HEAT_MANAGER                   1
-
 /** \brief Wait x seconds, after reaching target temperature. Only used for M109.  Overridden if EEPROM activated. */
 #define EXT1_WATCHPERIOD                    20
 
@@ -566,14 +553,6 @@ set to 0 if you don't have a heated bed */
 
 /** \brief How often the temperature of the heated bed is set (msec) */
 #define HEATED_BED_SET_INTERVAL             5000
-
-/** \brief 
-Heat manager for heated bed:
-0 = Bang Bang, fast update
-1 = PID controlled
-2 = Bang Bang, limited check every HEATED_BED_SET_INTERVAL. Use this with relay-driven beds to save life time
-3 = dead time control */
-#define HEATED_BED_HEAT_MANAGER             1
 
 /** \brief The maximum value, I-gain can contribute to the output.
 The precise values may differ for different nozzle/resistor combination.
