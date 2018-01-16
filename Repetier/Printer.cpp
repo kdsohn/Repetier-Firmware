@@ -1214,14 +1214,14 @@ void Printer::setup()
     extruderStepsNeeded = 0;
 #endif // USE_ADVANCE
 
+    UI_INITIALIZE;
+    
     EEPROM::initBaudrate();
     HAL::serialSetBaudrate(baudrate);
 
     // sending of this information tells the Repetier-Host that the firmware has restarted - never delete or change this to-be-sent information
     Com::println();
     Com::printFLN(Com::tStart); //http://forum.repetier.com/discussion/comment/16949/#Comment_16949
-
-    UI_INITIALIZE;
 
     HAL::showStartReason();
     Extruder::initExtruder();
@@ -1310,7 +1310,6 @@ void Printer::setup()
     }
     HAL::startWatchdog();
 #endif // FEATURE_WATCHDOG
-
 } // setup()
 
 

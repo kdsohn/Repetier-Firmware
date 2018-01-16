@@ -611,9 +611,6 @@ Select the language to use.
 /** \brief How many ms should a single page be shown, until it is switched to the next one.*/
 #define UI_PAGES_DURATION                   4000
 
-/** \brief Delay of start screen in milliseconds */
-#define UI_START_SCREEN_DELAY               1000
-
 /** \brief Uncomment if you don't want automatic page switching. You can still switch the
 info pages with next/previous button/click-encoder */
 #define UI_DISABLE_AUTO_PAGESWITCH          true

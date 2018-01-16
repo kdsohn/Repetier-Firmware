@@ -231,6 +231,86 @@ const long baudrates[] PROGMEM = {9600,14400,19200,28800,38400,56000,57600,76800
                                   460800,500000,921600,1000000,1500000,0
                                  };
 
+
+const byte c1[8] PROGMEM = {
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00001,
+  B00010,
+  B00011,
+  B00011
+};
+
+const byte c2[8] PROGMEM = {
+  B00000,
+  B00000,
+  B00101,
+  B01011,
+  B01111,
+  B10111,
+  B11111,
+  B11110
+};
+
+const byte c3[8] PROGMEM = {
+  B00000,
+  B01001,
+  B10110,
+  B01111,
+  B11111,
+  B11111,
+  B00111,
+  B00011
+};
+
+const byte c4[8] PROGMEM = {
+  B01111,
+  B01011,
+  B01111,
+  B01111,
+  B10111,
+  B10111,
+  B01111,
+  B10111
+};
+
+const byte c7[8] PROGMEM = {
+  B01111,
+  B10111,
+  B01011,
+  B00111,
+  B00001,
+  B00011,
+  B00000,
+  B00000
+};
+
+const byte c8[8] PROGMEM = {
+  B00000,
+  B11000,
+  B11000,
+  B11100,
+  B11110,
+  B11111,
+  B11111,
+  B00111
+};
+
+const byte c9[8] PROGMEM = {
+  B00000,
+  B00000,
+  B00001,
+  B00011,
+  B10111,
+  B11111,
+  B11111,
+  B11110
+};
+
+bool normalchars = false;
+
 #define LCD_ENTRYMODE       0x04                    /**< Set entrymode */
 
 /** @name GENERAL COMMANDS */
@@ -356,8 +436,28 @@ void lcdWriteByte(uint8_t c,uint8_t rs)
 
 } // lcdWriteByte
 
+void initCspecchars(){
+    uid.createChar(1,c1);
+    uid.createChar(2,c2);
+    uid.createChar(3,c3);
+    uid.createChar(4,c4);
+    uid.createChar(5,c7);
+    uid.createChar(6,c8);
+    uid.createChar(7,c9);
+    normalchars = false;
+}
+void initNSpecchars(){
+    uid.createChar(1,character_back);
+    uid.createChar(2,character_degree);
+    uid.createChar(3,character_selected);
+    uid.createChar(4,character_unselected);
+    uid.createChar(5,character_temperature);
+    uid.createChar(6,character_folder);
+    uid.createChar(7,character_ready);
+    normalchars = true; 
+}
 
-void initializeLCD()
+void initializeLCD(bool normal)
 {
     // bring all display pins into a defined state
     SET_INPUT(UI_DISPLAY_D4_PIN);
@@ -422,14 +522,9 @@ void initializeLCD()
     lcdCommand(LCD_INCREASE | LCD_DISPLAYSHIFTOFF); //- Entrymode (Display Shift: off, Increment Address Counter)
     lcdCommand(LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKINGOFF);    //- Display on
     uid.lastSwitch = uid.lastRefresh = HAL::timeInMilliseconds();
-    uid.createChar(1,character_back);
-    uid.createChar(2,character_degree);
-    uid.createChar(3,character_selected);
-    uid.createChar(4,character_unselected);
-    uid.createChar(5,character_temperature);
-    uid.createChar(6,character_folder);
-    uid.createChar(7,character_ready);
-
+    if(normal){
+        initNSpecchars();
+    }
 } // initializeLCD
 
 // ----------- end direct LCD driver
@@ -556,7 +651,8 @@ void UIDisplay::initialize()
 #endif // SDSUPPORT
 
 #if UI_DISPLAY_TYPE>0
-    initializeLCD();
+    initializeLCD(false);
+    initCspecchars();
 
 #if UI_ANIMATION==false || UI_DISPLAY_TYPE==5
 #if UI_DISPLAY_TYPE == 5
@@ -567,11 +663,13 @@ void UIDisplay::initialize()
 #endif // UI_DISPLAY_TYPE == 5
 
         for(uint8_t y=0; y<UI_ROWS; y++) displayCache[y][0] = 0;
-        printRowP(0, versionString);
-        printRowP(1, PSTR(UI_PRINTER_NAME));
-
+        printRowP(0, PSTR(BIGC0) );
+        printRowP(1, PSTR(BIGC1) );
+#if UI_ROWS>3
+        printRowP(UI_ROWS-2, PSTR(BIGC2) );
+#endif // UI_ROWS>3
 #if UI_ROWS>2
-        printRowP(UI_ROWS-1, PSTR(UI_PRINTER_COMPANY));
+        printRowP(UI_ROWS-1, PSTR(BIGC3) );
 #endif // UI_ROWS>2
 
 #if UI_DISPLAY_TYPE == 5
@@ -590,7 +688,6 @@ void UIDisplay::initialize()
 #endif // UI_ROWS>2
 #endif // UI_ANIMATION==false || UI_DISPLAY_TYPE==5
 
-    HAL::delayMilliseconds(UI_START_SCREEN_DELAY);
 #endif // UI_DISPLAY_TYPE>0
 
 #if UI_DISPLAY_I2C_CHIPTYPE==0 && (BEEPER_TYPE==2 || defined(UI_HAS_I2C_KEYS))
@@ -1884,6 +1981,7 @@ void UIDisplay::parse(char *txt,bool ram)
             {
                 if(c2=='1')                                                                             // temperature icon
                 {
+                    if(!normalchars) initNSpecchars();
                     addStringP(PSTR("\005"));
                 }
                 else if(c2=='2')                                                                             // replace line with new line

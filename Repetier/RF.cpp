@@ -295,11 +295,7 @@ void initRF( void )
         BEEP_SERVICE_INTERVALL
         g_nlastServiceTime = HAL::timeInMilliseconds();
     }
-
 #endif // FEATURE_SERVICE_INTERVAL
-
-    return;
-
 } // initRF
 
 

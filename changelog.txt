@@ -1,6 +1,9 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.15.Mod (2018-01-15)
+- New Startscreen
+
 V RF.01.38.14.Mod (2018-01-15)
 - Testing FEATURE_SEE_DISPLAY which can steer the printers button via GCODE and show whats display in the menu.
 - improved display cache for output as serial string.

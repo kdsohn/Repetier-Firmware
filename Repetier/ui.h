@@ -480,8 +480,9 @@ public:
 extern UIDisplay uid;
 
 // initializeLCD()
-void initializeLCD();
-
+void initializeLCD(bool normal = true);
+void initCspecchars();
+void initNSpecchars();
 
 #if MOTHERBOARD == DEVICE_TYPE_RF1000
 #define UI_HAS_KEYS                       1        // 1 = Some keys attached
@@ -491,6 +492,7 @@ void initializeLCD();
 #define UI_COLS                          16        //check MAX_COLS when changed
 #define UI_ROWS                           4        //do not change for RF1000 or RF2000!
 #define UI_DELAYPERCHAR                 320
+#define UI_SPACER                        ""
 #define UI_INVERT_MENU_DIRECTION        false
 #define UI_INVERT_INCREMENT_DIRECTION   true
 
@@ -550,6 +552,7 @@ void ui_check_slow_keys(int &action) {
 #define UI_COLS                          20        //check MAX_COLS when changed
 #define UI_ROWS                           4        //do not change for RF1000 or RF2000!
 #define UI_DELAYPERCHAR                 320
+#define UI_SPACER                        "    "
 #define UI_INVERT_MENU_DIRECTION        false
 #define UI_INVERT_INCREMENT_DIRECTION   true
 
