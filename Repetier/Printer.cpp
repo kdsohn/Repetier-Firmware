@@ -1586,12 +1586,9 @@ void Printer::disableCMPnow( bool wait ) {
 void Printer::homeZAxis()
 {
     long    steps;
-    //char    nProcess = 1;
-    char    nHomeDir;
-
+    char    nHomeDir = 0;
 
 #if FEATURE_MILLING_MODE
-
     //nProcess = 1;
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
@@ -1603,26 +1600,22 @@ void Printer::homeZAxis()
         // in operating mode "mill" we use the z max endstop
         nHomeDir = 1;
     }
-
 #else
-
     if ((MIN_HARDWARE_ENDSTOP_Z && Z_MIN_PIN > -1 && Z_HOME_DIR==-1) || (MAX_HARDWARE_ENDSTOP_Z && Z_MAX_PIN > -1 && Z_HOME_DIR==1))
     {
         //nProcess = 1;
         nHomeDir = Z_HOME_DIR;
     }
-
 #endif // FEATURE_MILLING_MODE
 
-    // if we have circuit-type Z endstops and we don't know at which endstop we currently are, first move down a bit
+    if( nHomeDir )
+    {    
+        // if we have circuit-type Z endstops and we don't know at which endstop we currently are, first move down a bit
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
-    if( Printer::ZEndstopUnknown ) {
-        PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * -1 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
-    }
+        if( Printer::ZEndstopUnknown ) {
+            PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * -1 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
+        }
 #endif
-
-    if( /*nProcess*/ true )
-    {
         UI_STATUS_UPD( UI_TEXT_HOME_Z );
         uid.lock();
 
