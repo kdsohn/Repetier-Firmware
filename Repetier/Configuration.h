@@ -959,10 +959,10 @@ You can activate this to 1 and connect some Button. If you connect ground to pul
 #endif
 
 /** beta!!! Nibbels/PeterKA only!!! -> Testfeature: It can check if you lost steps and test your buttons hysteresis */
-#define FEATURE_CHECK_HOME 0
+#define FEATURE_CHECK_HOME                  0
 
 /** \brief This adds some GCode M3029 to simulate Key-Press by GCode and to read whats inside the printers Display rightnow. */
-#define FEATURE_SEE_DISPLAY 1
+#define FEATURE_SEE_DISPLAY                 1
 
 /** \brief This feature allows you to extrude into thin air to messure the filaments viscosity value using dms sensors */
 #define FEATURE_VISCOSITY_TEST              1
