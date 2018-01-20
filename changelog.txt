@@ -5,6 +5,7 @@ V RF.01.38.16.Mod (2018-01-20)
 - fixed typo in text
 - changed homing functions to use one central home-directions-function
 - removed logic to set global homing flag which was not used anymore -> simplifying code
+- removed formaterrors because they are not used anywhere.
 
 V RF.01.38.16.Mod (2018-01-15)
 - fixed some extruder inits

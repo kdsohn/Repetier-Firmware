@@ -37,7 +37,6 @@ uint32_t GCode::actLineNumber; ///< Line number of current command.
 int8_t   GCode::waitingForResend=-1; ///< Waiting for line to be resend. -1 = no wait.
 volatile uint8_t GCode::bufferLength=0; ///< Number of commands stored in gcode_buffer
 millis_t GCode::timeOfLastDataPacket=0; ///< Time, when we got the last data packet. Used to detect missing uint8_ts.
-uint8_t  GCode::formatErrors=0;
 millis_t GCode::lastBusySignal = 0; ///< When was the last busy signal
 uint32_t GCode::keepAliveInterval = KEEP_ALIVE_INTERVAL;
 
@@ -765,9 +764,7 @@ bool GCode::parseBinary(uint8_t *buffer, bool fromSerial)
             waitUntilAllCommandsAreParsed = true; // Don't destroy string until executed
         }
     }
-    formatErrors = 0;
     return true;
-
 } // parseBinary
 
 
@@ -944,14 +941,6 @@ bool GCode::parseAscii(char *line,bool fromSerial)
         Com::printErrorFLN("Checksum required when switching back to ASCII protocol.");
         return false;
     }
-    if(hasFormatError() /*|| (params & 518) == 0*/)   // Must contain G, M or T command and parameter need to have variables!
-    {
-        formatErrors++;
-        if(Printer::debugErrors())
-            Com::printErrorFLN(Com::tFormatError);
-        if(formatErrors < 3) return false;
-    }
-    else formatErrors = 0;
     return true;
 }
 
