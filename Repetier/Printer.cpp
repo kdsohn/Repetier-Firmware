@@ -1739,7 +1739,6 @@ int8_t Printer::checkHome(int8_t axis) //X_AXIS 0, Y_AXIS 1, Z_AXIS 2
 
 void Printer::homeXAxis()
 {
-    long steps;
     char    nHomeDir = Printer::anyHomeDir(X_AXIS);
 
     if (nHomeDir)
@@ -1762,7 +1761,7 @@ void Printer::homeXAxis()
         UI_STATUS_UPD(UI_TEXT_HOME_X);
         uid.lock();
 
-        steps = (Printer::maxSteps[X_AXIS]-Printer::minSteps[X_AXIS]) * nHomeDir;
+        long steps = (Printer::maxSteps[X_AXIS]-Printer::minSteps[X_AXIS]) * nHomeDir;
         queuePositionLastSteps[X_AXIS] = -steps;
         setHoming(true);
         PrintLine::moveRelativeDistanceInSteps(2*steps,0,0,0,homingFeedrate[X_AXIS],true,true);
@@ -1796,6 +1795,7 @@ void Printer::homeXAxis()
 
         // show that we are active
         previousMillisCmd = HAL::timeInMilliseconds();
+        setHomed( /*false ,*/ true , -1 , -1);
     }
 
 } // homeXAxis
@@ -1803,7 +1803,6 @@ void Printer::homeXAxis()
 
 void Printer::homeYAxis()
 {
-    long steps;
     char    nHomeDir = Printer::anyHomeDir(Y_AXIS);
 
     if (nHomeDir)
@@ -1826,7 +1825,7 @@ void Printer::homeYAxis()
         UI_STATUS_UPD(UI_TEXT_HOME_Y);
         uid.lock();
 
-        steps = (maxSteps[Y_AXIS]-Printer::minSteps[Y_AXIS]) * nHomeDir;
+        long steps = (maxSteps[Y_AXIS]-Printer::minSteps[Y_AXIS]) * nHomeDir;
         queuePositionLastSteps[Y_AXIS] = -steps;
         setHoming(true);
         PrintLine::moveRelativeDistanceInSteps(0,2*steps,0,0,homingFeedrate[Y_AXIS],true,true);
@@ -1860,6 +1859,7 @@ void Printer::homeYAxis()
 
         // show that we are active
         previousMillisCmd = HAL::timeInMilliseconds();
+        setHomed( /*false ,*/ -1 , true , -1);
     }
 
 } // homeYAxis
@@ -1867,7 +1867,6 @@ void Printer::homeYAxis()
 
 void Printer::homeZAxis()
 {
-    long    steps;
     char    nHomeDir = Printer::anyHomeDir(Z_AXIS);
 
     if( nHomeDir )
@@ -1893,14 +1892,14 @@ void Printer::homeZAxis()
         directPositionLastSteps[Z_AXIS]    = 0;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
-        setHomed( false , -1 , -1 , false);
+        setHomed( /*false ,*/ -1 , -1 , false);
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         g_nZScanZPosition = 0;
         //disable CMP ist bei Z unhome hier drüber schon mit drin. //Printer::disableCMPnow(true); //true == wait for move while HOMING
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
-        steps = (maxSteps[Z_AXIS] - minSteps[Z_AXIS]) * nHomeDir;
+        long steps = (maxSteps[Z_AXIS] - minSteps[Z_AXIS]) * nHomeDir;
         queuePositionLastSteps[Z_AXIS] = -steps;
         setHoming(true);
         PrintLine::moveRelativeDistanceInSteps(0,0,2*steps,0,homingFeedrate[Z_AXIS],true,true);
@@ -1947,6 +1946,13 @@ void Printer::homeZAxis()
 
         // show that we are active
         previousMillisCmd = HAL::timeInMilliseconds();
+        setHomed( /*false ,*/ -1 , -1 , true);
+
+        setZOriginSet(false);
+
+#if FEATURE_CONFIGURABLE_Z_ENDSTOPS
+        ZEndstopUnknown = false;
+#endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
     }
 
 } // homeZAxis
@@ -1954,16 +1960,17 @@ void Printer::homeZAxis()
 
 void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta printer
 {
-    float   startX,startY,startZ;
-    char    homingOrder;
     char    unlock = !uid.locked;
     
     //Bei beliebiger user interaktion oder Homing soll G1 etc. erlaubt werden. Dann ist der Drucker nicht abgestürzt, sondern bedient worden.
 #if FEATURE_UNLOCK_MOVEMENT
     g_unlock_movement = 1;
 #endif //FEATURE_UNLOCK_MOVEMENT
+
+    float   startX,startY,startZ;
     lastCalculatedPosition(startX,startY,startZ);
 
+    char    homingOrder;
 #if FEATURE_MILLING_MODE
     if( operatingMode == OPERATING_MODE_PRINT )
     {
@@ -2039,46 +2046,30 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
         }
     }
 
+    //warum das nicht in die x_y_z_homingfunctions verlegen? gemeinsame fahrt? was, wenn das beim einzelhoming fehlt -> schlimm?
+    //könnte ich die definition und das lesen von startx hier runterlegen? oder wird home?Axis einen einfluss drauf haben?
+    //###############################
     if(xaxis)
     {
-        if(X_HOME_DIR<0) startX = Printer::minMM[X_AXIS];
-        else startX = Printer::minMM[X_AXIS]+Printer::lengthMM[X_AXIS];
+        char xhomedir = Printer::anyHomeDir(X_AXIS);
+        if(xhomedir < 0)      startX = Printer::minMM[X_AXIS];
+        else if(xhomedir > 0) startX = Printer::minMM[X_AXIS]+Printer::lengthMM[X_AXIS];
     }
     if(yaxis)
     {
-        if(Y_HOME_DIR<0) startY = Printer::minMM[Y_AXIS];
-        else startY = Printer::minMM[Y_AXIS]+Printer::lengthMM[Y_AXIS];
+        char yhomedir = Printer::anyHomeDir(Y_AXIS);
+        if(yhomedir < 0)      startY = Printer::minMM[Y_AXIS];
+        else if(yhomedir > 0) startY = Printer::minMM[Y_AXIS]+Printer::lengthMM[Y_AXIS];
     }
     if(zaxis)
     {
-#if FEATURE_MILLING_MODE
-        if( Printer::operatingMode == OPERATING_MODE_PRINT )
-        {
-            startZ = 0;
-        }
-        else
-        {
-            startZ = Printer::lengthMM[Z_AXIS];
-        }
-#else
-
-        if(Z_HOME_DIR<0) startZ = 0;
-        else startZ = Printer::lengthMM[Z_AXIS];
-
-#endif // FEATURE_MILLING_MODE
-
-        setZOriginSet(false);
-
-#if FEATURE_CONFIGURABLE_Z_ENDSTOPS
-        ZEndstopUnknown = false;
-#endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
+        char zhomedir = Printer::anyHomeDir(Z_AXIS);
+        if(zhomedir < 0)      startZ = 0;                           //switch is zero. no min Z available in this printer.
+        else if(zhomedir > 0) startZ = Printer::lengthMM[Z_AXIS];   //switch is zero. no min Z available in this printer.
     }
     updateCurrentPosition(true);
-    
-    
-    moveToReal(startX,startY,startZ,IGNORE_COORDINATE,homingFeedrate[X_AXIS]);
-
-    setHomed(true, (xaxis?true:-1), (yaxis?true:-1), (zaxis?true:-1) );
+    moveToReal(startX,startY,startZ,IGNORE_COORDINATE,(zaxis ? homingFeedrate[Z_AXIS] : RMath::min(homingFeedrate[X_AXIS],homingFeedrate[Y_AXIS]) ));
+    //###############################
     
 #if FEATURE_ZERO_DIGITS
     short   nTempPressure = 0;
