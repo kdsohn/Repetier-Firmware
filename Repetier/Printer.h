@@ -592,13 +592,13 @@ public:
         else return 1;
     } // isZHomeSafe
 
+    static int8_t anyHomeDir(uint8_t axis);
 #if FEATURE_CHECK_HOME
     static bool anyEndstop( uint8_t axis );
     static void changeAxisDirection( uint8_t axis, int8_t direction );
     static void startAxisStep( uint8_t axis );
     static void endAxisStep(uint8_t axis);
     static void stepAxisStep(uint8_t axis, uint8_t slower = 1);
-    static int8_t anyHomeDir(uint8_t axis);
     static int8_t checkHome(int8_t axis);
 #endif //FEATURE_CHECK_HOME
 
