@@ -196,6 +196,8 @@ WARNING: Servos can draw a considerable amount of current. Make sure your system
 /** \brief Allows to choose whether pressing of the right menu button shall enter the file menu directly */
 #define FEATURE_RIGHT_BUTTON_MENU           0                                                   // 1 = on, 0 = off
 
+/** \brief Allows to use M42 pin change GCODE. I did not like the Gcode because Functions should be programmed and not written to pins. */
+#define FEATURE_M42_TEMPER_WITH_PINS        0                                                   // 1 = on, 0 = off
 
 // ##########################################################################################
 // ##   common configuration
@@ -213,9 +215,6 @@ See "configuration of the speed vs. cpu usage" within RF1000.h / RF2000.h
 // ##########################################################################################
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION 
-
-/** \brief Enables debug outputs from the compensation in z direction */
-#define DEBUG_HEAT_BED_Z_COMPENSATION       0                                                   // 1 = on, 0 = off
 
 /** \brief Enables debug outputs from the heat bed scan */
 #define DEBUG_HEAT_BED_SCAN                 0                                                   // 0 = off, 1 = on, 2 = on with more debug outputs
@@ -247,12 +246,12 @@ with a dry run, you can test the speed of path computations, which are still per
 /** \brief Writes the free RAM to output, if it is less then at the last test. Should always return
 values >500 for safety, since it doesn't catch every function call. Nice to tweak cache
 usage or for seraching for memory induced errors. Switch it off for production, it costs execution time. */
-//#define DEBUG_FREE_MEMORY
+#define DEBUG_FREE_MEMORY                             0                                         // 1 = on, 0 = off
 
-#ifdef DEBUG_FREE_MEMORY
-#define DEBUG_MEMORY                        Commands::checkFreeMemory();
+#if DEBUG_FREE_MEMORY
+ #define DEBUG_MEMORY                        Commands::checkFreeMemory();
 #else
-#define DEBUG_MEMORY
+ #define DEBUG_MEMORY
 #endif // DEBUG_FREE_MEMORY
 
 /** \brief If enabled, writes the created generic table to serial port at startup. */
@@ -612,9 +611,6 @@ Select the language to use.
 /** \brief How many ms should a single page be shown, until it is switched to the next one.*/
 #define UI_PAGES_DURATION                   4000
 
-/** \brief Delay of start screen in milliseconds */
-#define UI_START_SCREEN_DELAY               1000
-
 /** \brief Uncomment if you don't want automatic page switching. You can still switch the
 info pages with next/previous button/click-encoder */
 #define UI_DISABLE_AUTO_PAGESWITCH          true
@@ -961,6 +957,12 @@ You can activate this to 1 and connect some Button. If you connect ground to pul
 #if FEATURE_READ_CALIPER && FEATURE_USER_INT3
  #error You cannot use FEATURE_READ_CALIPER and FEATURE_USER_INT3 at the same time with stock programming. Please change pins/etc. and remove this errorcheck
 #endif
+
+/** beta!!! Nibbels/PeterKA only!!! -> Testfeature: It can check if you lost steps and test your buttons hysteresis */
+#define FEATURE_CHECK_HOME                  0
+
+/** \brief This adds some GCode M3029 to simulate Key-Press by GCode and to read whats inside the printers Display rightnow. */
+#define FEATURE_SEE_DISPLAY                 1
 
 /** \brief This feature allows you to extrude into thin air to messure the filaments viscosity value using dms sensors */
 #define FEATURE_VISCOSITY_TEST              1

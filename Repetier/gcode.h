@@ -47,6 +47,7 @@ public:
     float           R;
     char*           text;
 
+    bool internalCommand;
 
     inline bool hasM()
     {
@@ -161,19 +162,10 @@ public:
         return (hasP() ? P : def);
     } // getP
 
-    inline void setFormatError()
-    {
-        params2 |= 32768;
-    } // setFormatError
-
-    inline bool hasFormatError()
-    {
-        return ((params2 & 32768)!=0);
-    } // hasFormatError
 
     void printCommand();
-    bool parseBinary(uint8_t *buffer);
-    bool parseAscii(char *line);
+    bool parseBinary(uint8_t *buffer,bool fromSerial);
+    bool parseAscii(char *line,bool fromSerial);
     void popCurrentCommand();
     void echoCommand();
     static GCode *peekCurrentCommand();
@@ -198,16 +190,18 @@ private:
     inline float parseFloatValue(char *s)
     {
         char *endPtr;
+        while(*s == 32) s++; // skip spaces
         float f = (strtod(s, &endPtr));
-        if(s == endPtr) setFormatError();
+        if(s == endPtr) f=0.0; // treat empty string "x " as "x0"
         return f;
     } // parseFloatValue
 
     inline long parseLongValue(char *s)
     {
         char *endPtr;
+        while(*s == 32) s++; // skip spaces
         long l = (strtol(s, &endPtr, 10));
-        if(s == endPtr) setFormatError();
+        if(s == endPtr) l=0; // treat empty string argument "p " as "p0"
         return l;
     } // parseLongValue
 
@@ -225,7 +219,6 @@ private:
     static uint32_t actLineNumber;                      ///< Line number of current command.
     static volatile uint8_t bufferLength;               ///< Number of commands stored in gcode_buffer
     static millis_t timeOfLastDataPacket;               ///< Time, when we got the last data packet. Used to detect missing uint8_ts.
-    static uint8_t formatErrors;                        ///< Number of sequential format errors
     static millis_t lastBusySignal;                     ///< When was the last busy signal
 
 public:

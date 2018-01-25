@@ -582,8 +582,12 @@ extern  unsigned long   g_uStartOfIdle;
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 extern  long            g_offsetZCompensationSteps; // this is the minimal distance between the heat bed and the extruder at the moment when the z-min endstop is hit
+extern  short           g_ZCompensationMax;
 extern  long            g_minZCompensationSteps;
 extern  long            g_maxZCompensationSteps;
+#if AUTOADJUST_MIN_MAX_ZCOMP
+extern  bool            g_auto_minmaxZCompensationSteps;
+#endif //AUTOADJUST_MIN_MAX_ZCOMP
 extern  long            g_diffZCompensationSteps;
 extern  volatile unsigned char  g_nHeatBedScanStatus;
 extern  char            g_nActiveHeatBed;
@@ -691,24 +695,6 @@ extern  long            g_nZOriginPosition[3];
 extern  int             g_nZOriginSet;
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if DEBUG_HEAT_BED_Z_COMPENSATION || DEBUG_WORK_PART_Z_COMPENSATION
-extern  volatile long   g_nLastZCompensationPositionSteps[3];
-extern  volatile long   g_nLastZCompensationTargetStepsZ;
-extern  volatile long   g_nZCompensationUpdates;
-extern  long            g_nDelta[2];
-extern  long            g_nStepSize[2];
-extern  long            g_nTempXFront;
-extern  long            g_nTempXBack;
-extern  long            g_nNeededZ;
-extern  unsigned char   g_uIndex[4];
-extern  short           g_nMatrix[4];
-extern  long            g_nZDeltaMin;
-extern  long            g_nZDeltaMax;
-extern  long            g_nZCompensationUpdateTime;
-extern volatile long    g_nZCompensationDelayMax;
-extern  long            g_nTooFast;
-#endif // DEBUG_HEAT_BED_Z_COMPENSATION || DEBUG_WORK_PART_Z_COMPENSATION
-
 #if FEATURE_RGB_LIGHT_EFFECTS
 
 extern unsigned char    g_uRGBHeatingR;
@@ -778,6 +764,12 @@ extern short testExtruderTemperature( void );
 // testHeatBedTemperature()
 extern short testHeatBedTemperature( void );
 
+// getZMatrixDepth()
+extern long getZMatrixDepth( long x, long y );
+
+// getZMatrixDepth_CurrentXY()
+extern long getZMatrixDepth_CurrentXY( void );
+
 // doHeatBedZCompensation()
 extern void doHeatBedZCompensation( void );
 
@@ -808,9 +800,6 @@ extern void doWorkPartZCompensation( void );
 
 // getWorkPartOffset()
 extern long getWorkPartOffset( void );
-
-// determineStaticCompensationZ()
-extern void determineStaticCompensationZ( void );
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
 
 
@@ -855,13 +844,13 @@ extern void initCompensationMatrix( void );
 extern char prepareCompensationMatrix( void );
 
 // determineCompensationOffsetZ()
-extern char determineCompensationOffsetZ( void );
+extern void determineCompensationOffsetZ( void );
 
 // adjustCompensationMatrix()
-extern char adjustCompensationMatrix( short nZ );
+extern void adjustCompensationMatrix( short nZ );
 
 // saveCompensationMatrix()
-extern char saveCompensationMatrix( unsigned int uAddress );
+extern void saveCompensationMatrix( unsigned int uAddress );
 
 // loadCompensationMatrix()
 extern char loadCompensationMatrix( unsigned int uAddress );
@@ -875,7 +864,7 @@ extern void outputPressureMatrix( void );
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
 // clearExternalEEPROM()
-extern char clearExternalEEPROM( void );
+extern void clearExternalEEPROM( void );
 
 // writeByte24C256()
 extern void writeByte24C256( int addressI2C, unsigned int addressEEPROM, unsigned char data );
@@ -987,10 +976,10 @@ extern void startFindZOrigin( void );
 extern void findZOrigin( void );
 #endif // FEATURE_FIND_Z_ORIGIN
 
-
-#if FEATURE_MILLING_MODE
 // switchOperatingMode()
 extern void switchOperatingMode( char newOperatingMode );
+
+#if FEATURE_MILLING_MODE
 
 // switchActiveWorkPart()
 extern void switchActiveWorkPart( char newActiveWorkPart );
@@ -1022,9 +1011,6 @@ extern void setupForMilling( void );
 
 // prepareZCompensation()
 extern void prepareZCompensation( void );
-
-// resetZCompensation()
-extern void resetZCompensation( void );
 
 // isSupportedGCommand()
 extern unsigned char isSupportedGCommand( unsigned int currentGCode, char neededMode, char outputLog = 1 );

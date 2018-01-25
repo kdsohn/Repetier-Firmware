@@ -112,7 +112,6 @@ If EEPROM is enabled these values will be overidden with the values in the EEPRO
 of the bed. Maximum coordinate is given by adding the above MAX_LENGTH values. */
 #define X_MIN_POS                           0
 #define Y_MIN_POS                           0
-#define Z_MIN_POS                           0
 
 /** \brief Drive settings for printers with cartesian drive systems */
 /** \brief Number of steps for a 1mm move in x direction.
@@ -274,13 +273,6 @@ Overridden if EEPROM activated. */
 Overridden if EEPROM activated. */
 #define EXT0_MAX_ACCELERATION               6000
 
-/** \brief Type of heat manager for this extruder.
-- 0 = Simply switch on/off if temperature is reached. Works always.
-- 1 = PID Temperature control. Is better but needs good PID values. Defaults are a good start for most extruder.
-- 3 = Dead-time control. PID_P becomes dead-time in seconds.
- Overridden if EEPROM activated. */
-#define EXT0_HEAT_MANAGER                   1
-
 /** \brief Wait x seconds, after reaching target temperature. Only used for M109.  Overridden if EEPROM activated. */
 #define EXT0_WATCHPERIOD                    20
 
@@ -439,12 +431,6 @@ Overridden if EEPROM activated. */
 Overridden if EEPROM activated. */
 #define EXT1_MAX_ACCELERATION               6000
 
-/** \brief Type of heat manager for this extruder.
-- 0 = Simply switch on/off if temperature is reached. Works always.
-- 1 = PID Temperature control. Is better but needs good PID values. Defaults are a good start for most extruder.
- Overridden if EEPROM activated. */
-#define EXT1_HEAT_MANAGER                   1
-
 /** \brief Wait x seconds, after reaching target temperature. Only used for M109.  Overridden if EEPROM activated. */
 #define EXT1_WATCHPERIOD                    20
 
@@ -568,14 +554,6 @@ set to 0 if you don't have a heated bed */
 /** \brief How often the temperature of the heated bed is set (msec) */
 #define HEATED_BED_SET_INTERVAL             5000
 
-/** \brief 
-Heat manager for heated bed:
-0 = Bang Bang, fast update
-1 = PID controlled
-2 = Bang Bang, limited check every HEATED_BED_SET_INTERVAL. Use this with relay-driven beds to save life time
-3 = dead time control */
-#define HEATED_BED_HEAT_MANAGER             1
-
 /** \brief The maximum value, I-gain can contribute to the output.
 The precise values may differ for different nozzle/resistor combination.
  Overridden if EEPROM activated. */
@@ -695,10 +673,8 @@ on this endstop. */
 /** \brief Sets direction of endstops when homing; 1=MAX, -1=MIN */
 #define X_HOME_DIR                          -1
 #define Y_HOME_DIR                          -1
-
-#if !FEATURE_MILLING_MODE
+//gets inverted when searching home dir in milling mode:
 #define Z_HOME_DIR                          -1
-#endif // !FEATURE_MILLING_MODE
 
 /** \brief If true, axis won't move to coordinates less than zero. */
 #define min_software_endstop_x              false
@@ -751,7 +727,7 @@ can set it on for safety. */
 // The RF2000 has one more stepper and the same 8A-24V power supply as RF1000. We think that this is the reason for lower stepper currents set by conrad renkforce - but dont know. 
 // I increased MAX a little bit over stock settings, but decreased normal settings to fairly low power and noise. Take that into account when tuning in your steppers according your needs.
 */
-#define MOTOR_CURRENT_NORMAL                    {110,110,95,90,90}
+#define MOTOR_CURRENT_NORMAL                    {110,110,105,90,90}
 #define MOTOR_CURRENT_MIN                       EXTRUDER_CURRENT_PAUSED
 
 /** \brief number of analog input signals. Normally 1 for each temperature sensor */
@@ -768,9 +744,6 @@ can set it on for safety. */
 #define Z_ENABLE_ON                         1
 
 /** \brief Disables axis when it's not being used. */
-#define DISABLE_X                           false
-#define DISABLE_Y                           false
-#define DISABLE_Z                           false
 #define DISABLE_E                           false
 
 /** \brief Inverting axis direction */
@@ -818,7 +791,7 @@ can set it on for safety. */
 
 /** Some fans won't start for low values, but would run if started with higher power at the beginning.
 This defines the full power duration before returning to set value. Time is in milliseconds */
-#define FAN_KICKSTART_TIME  200                                                                 // [ms]
+#define FAN_KICKSTART_TIME  100                                                                 // [ms]
 
 /** Defines the max. fan speed for M106 controlled fans. Normally 255 to use full range, but for
  12V fans on 24V this might help preventing a defect. For all other fans there is a explicit maximum PWM value
@@ -1013,6 +986,10 @@ to activate the quadratic term. Only adds lots of computations and storage usage
 // ##########################################################################################
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
+
+/** \brief Specifies if you want to adjust minimal and maximum compensation steps to first layer */
+#define AUTOADJUST_MIN_MAX_ZCOMP                1
+#define AUTOADJUST_STARTMADEN_AUSSCHLUSS        0.35f
 
 /** \brief Specifies until which height the z compensation must complete
 This value should be roughly the double amount of mm which is detected as error of the heat bed. */
@@ -1242,9 +1219,6 @@ Above this value the z compensation will distribute the roughness of the surface
 
 #if FEATURE_MILLING_MODE
 
-/** \brief Enables debug outputs from the compensation in z direction */
-#define DEBUG_WORK_PART_Z_COMPENSATION      0                                                   // 1 = on, 0 = off
-
 /** \brief Enables debug outputs from the work part scan */
 #define DEBUG_WORK_PART_SCAN                0                                                   // 1 = on, 0 = off
 
@@ -1325,6 +1299,5 @@ Above this value the z compensation will distribute the roughness of the surface
 #define RGB_MANUAL_B                        255
 
 #endif // FEATURE_RGB_LIGHT_EFFECTS
-
 
 #endif // RF2000_H

@@ -231,6 +231,86 @@ const long baudrates[] PROGMEM = {9600,14400,19200,28800,38400,56000,57600,76800
                                   460800,500000,921600,1000000,1500000,0
                                  };
 
+
+const byte c1[8] PROGMEM = {
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00001,
+  B00010,
+  B00011,
+  B00011
+};
+
+const byte c2[8] PROGMEM = {
+  B00000,
+  B00000,
+  B00101,
+  B01011,
+  B01111,
+  B10111,
+  B11111,
+  B11110
+};
+
+const byte c3[8] PROGMEM = {
+  B00000,
+  B01001,
+  B10110,
+  B01111,
+  B11111,
+  B11111,
+  B00111,
+  B00011
+};
+
+const byte c4[8] PROGMEM = {
+  B01111,
+  B01011,
+  B01111,
+  B01111,
+  B10111,
+  B10111,
+  B01111,
+  B10111
+};
+
+const byte c7[8] PROGMEM = {
+  B01111,
+  B10111,
+  B01011,
+  B00111,
+  B00001,
+  B00011,
+  B00000,
+  B00000
+};
+
+const byte c8[8] PROGMEM = {
+  B00000,
+  B11000,
+  B11000,
+  B11100,
+  B11110,
+  B11111,
+  B11111,
+  B00111
+};
+
+const byte c9[8] PROGMEM = {
+  B00000,
+  B00000,
+  B00001,
+  B00011,
+  B10111,
+  B11111,
+  B11111,
+  B11110
+};
+
+bool normalchars = false;
+
 #define LCD_ENTRYMODE       0x04                    /**< Set entrymode */
 
 /** @name GENERAL COMMANDS */
@@ -356,8 +436,28 @@ void lcdWriteByte(uint8_t c,uint8_t rs)
 
 } // lcdWriteByte
 
+void initCspecchars(){
+    uid.createChar(1,c1);
+    uid.createChar(2,c2);
+    uid.createChar(3,c3);
+    uid.createChar(4,c4);
+    uid.createChar(5,c7);
+    uid.createChar(6,c8);
+    uid.createChar(7,c9);
+    normalchars = false;
+}
+void initNSpecchars(){
+    uid.createChar(1,character_back);
+    uid.createChar(2,character_degree);
+    uid.createChar(3,character_selected);
+    uid.createChar(4,character_unselected);
+    uid.createChar(5,character_temperature);
+    uid.createChar(6,character_folder);
+    uid.createChar(7,character_ready);
+    normalchars = true; 
+}
 
-void initializeLCD()
+void initializeLCD(bool normal)
 {
     // bring all display pins into a defined state
     SET_INPUT(UI_DISPLAY_D4_PIN);
@@ -422,14 +522,9 @@ void initializeLCD()
     lcdCommand(LCD_INCREASE | LCD_DISPLAYSHIFTOFF); //- Entrymode (Display Shift: off, Increment Address Counter)
     lcdCommand(LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKINGOFF);    //- Display on
     uid.lastSwitch = uid.lastRefresh = HAL::timeInMilliseconds();
-    uid.createChar(1,character_back);
-    uid.createChar(2,character_degree);
-    uid.createChar(3,character_selected);
-    uid.createChar(4,character_unselected);
-    uid.createChar(5,character_temperature);
-    uid.createChar(6,character_folder);
-    uid.createChar(7,character_ready);
-
+    if(normal){
+        initNSpecchars();
+    }
 } // initializeLCD
 
 // ----------- end direct LCD driver
@@ -455,11 +550,19 @@ void UIDisplay::printRow(uint8_t r,char *txt,char *txt2,uint8_t changeAtCol)
     {
         txt++;
         lcdPutChar(c);
+#if FEATURE_SEE_DISPLAY
+        //cache whatever you write to the display!
+        displayCache[r][col] = c;
+#endif //FEATURE_SEE_DISPLAY
         col++;
     }
     while(col<changeAtCol)
     {
         lcdPutChar(' ');
+#if FEATURE_SEE_DISPLAY
+        //cache whatever you write to the display!
+        displayCache[r][col] = ' ';
+#endif //FEATURE_SEE_DISPLAY
         col++;
     }
     if(txt2!=NULL)
@@ -468,11 +571,19 @@ void UIDisplay::printRow(uint8_t r,char *txt,char *txt2,uint8_t changeAtCol)
         {
             txt2++;
             lcdPutChar(c);
+#if FEATURE_SEE_DISPLAY
+            //cache whatever you write to the display!
+            displayCache[r][col] = c;
+#endif //FEATURE_SEE_DISPLAY
             col++;
         }
         while(col<UI_COLS)
         {
             lcdPutChar(' ');
+#if FEATURE_SEE_DISPLAY
+            //cache whatever you write to the display!
+            displayCache[r][col] = ' ';
+#endif //FEATURE_SEE_DISPLAY
             col++;
         }
     }
@@ -540,7 +651,8 @@ void UIDisplay::initialize()
 #endif // SDSUPPORT
 
 #if UI_DISPLAY_TYPE>0
-    initializeLCD();
+    initializeLCD(false);
+    initCspecchars();
 
 #if UI_ANIMATION==false || UI_DISPLAY_TYPE==5
 #if UI_DISPLAY_TYPE == 5
@@ -551,11 +663,13 @@ void UIDisplay::initialize()
 #endif // UI_DISPLAY_TYPE == 5
 
         for(uint8_t y=0; y<UI_ROWS; y++) displayCache[y][0] = 0;
-        printRowP(0, versionString);
-        printRowP(1, PSTR(UI_PRINTER_NAME));
-
+        printRowP(0, PSTR(BIGC0) );
+        printRowP(1, PSTR(BIGC1) );
+#if UI_ROWS>3
+        printRowP(UI_ROWS-2, PSTR(BIGC2) );
+#endif // UI_ROWS>3
 #if UI_ROWS>2
-        printRowP(UI_ROWS-1, PSTR(UI_PRINTER_COMPANY));
+        printRowP(UI_ROWS-1, PSTR(BIGC3) );
 #endif // UI_ROWS>2
 
 #if UI_DISPLAY_TYPE == 5
@@ -574,7 +688,6 @@ void UIDisplay::initialize()
 #endif // UI_ROWS>2
 #endif // UI_ANIMATION==false || UI_DISPLAY_TYPE==5
 
-    HAL::delayMilliseconds(UI_START_SCREEN_DELAY);
 #endif // UI_DISPLAY_TYPE>0
 
 #if UI_DISPLAY_I2C_CHIPTYPE==0 && (BEEPER_TYPE==2 || defined(UI_HAS_I2C_KEYS))
@@ -709,7 +822,7 @@ void UIDisplay::addLong(long value,char digits)
 } // addLong
 
 
-const float roundingTable[] PROGMEM = {0.5,0.05,0.005,0.0005};
+const float roundingTable[] PROGMEM = {0.5,0.05,0.005,0.0005,0.00005};
 void UIDisplay::addFloat(float number, char fixdigits,uint8_t digits)
 {
     if(col>=MAX_COLS) return;
@@ -721,6 +834,8 @@ void UIDisplay::addFloat(float number, char fixdigits,uint8_t digits)
         number = -number;
         fixdigits--;
     }
+
+    digits = (digits <= 4 ? digits : 4);
     number += pgm_read_float(&roundingTable[digits]); // for correct rounding
 
     // Extract the integer part of the number and print it
@@ -947,7 +1062,7 @@ void UIDisplay::parse(char *txt,bool ram)
             {
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
                 if(c2=='s') {                                                                           // %Fs : Fan speed in Percent
-                    addInt(Printer::getFanSpeed(true), 3); 
+                    addFloat(Printer::getFanSpeed(false)/2.55f,3,1); 
                 }
                 else if(c2=='h') {                                                                      // %Fh : Fan frequency in Hz --> Wert passt grob, ist aber nicht exakt! F_CPU/3906/255*mode...
                     addInt((1 << cooler_pwm_speed)*15, 3); 
@@ -1052,7 +1167,7 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 else if(c2=='a' && col<MAX_COLS)                                                                             // %ha : all homed      
                 {
-                    if(Printer::flag3 & PRINTER_FLAG3_X_HOMED && Printer::flag3 & PRINTER_FLAG3_Y_HOMED && Printer::flag3 & PRINTER_FLAG3_Z_HOMED && Printer::flag1 & PRINTER_FLAG1_HOMED) printCols[col++]='*';
+                    if(Printer::flag3 & PRINTER_FLAG3_X_HOMED && Printer::flag3 & PRINTER_FLAG3_Y_HOMED && Printer::flag3 & PRINTER_FLAG3_Z_HOMED) printCols[col++]='*';
                 }
                 break;
             }
@@ -1541,19 +1656,6 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
 #endif // RETRACT_DURING_HEATUP
 
-                else if(c2=='h')                                                                        // %Xh : Extruder heat manager (BangBang/PID)
-                {
-                    uint8_t hm = Extruder::current->tempControl.heatManager;
-                    if(hm == 1)
-                        addStringP(PSTR(UI_TEXT_STRING_HM_PID));
-                    else if(hm == 3)
-                        addStringP(PSTR(UI_TEXT_STRING_HM_DEADTIME));
-                    else if(hm == 2)
-                        addStringP(PSTR(UI_TEXT_STRING_HM_SLOWBANG));
-                    else
-                        addStringP(PSTR(UI_TEXT_STRING_HM_BANGBANG));
-                }
-
 #if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
                 else if(c2=='a')
@@ -1866,6 +1968,7 @@ void UIDisplay::parse(char *txt,bool ram)
             {
                 if(c2=='1')                                                                             // temperature icon
                 {
+                    if(!normalchars) initNSpecchars();
                     addStringP(PSTR("\005"));
                 }
                 else if(c2=='2')                                                                             // replace line with new line
@@ -1947,6 +2050,40 @@ void UIDisplay::parse(char *txt,bool ram)
                     addInt((int)g_nDigitFlowCompensation_speed_intense,3);
                 }
 #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+                break;
+            }
+            case 'L':
+            {
+                if(c2=='L')                                                                             // %LL : Last Layer (Direct + Queue + Extr. Zoffset)
+                {
+                    addFloat(float(Printer::queuePositionZLayerLast*Printer::invAxisStepsPerMM[Z_AXIS]),3,2);
+                    break;
+                }
+                else if(c2=='C')                                                                        // %LC : Current Layer (Direct + Queue + Extr. Zoffset)
+                {
+                    addFloat(float(Printer::queuePositionZLayerCurrent*Printer::invAxisStepsPerMM[Z_AXIS]),3,2);
+                    break;
+                }
+                else if(c2=='H')                                                                        // %LH : Layer Height
+                {
+                    addFloat(float(Printer::queuePositionZLayerCurrent-Printer::queuePositionZLayerLast)*Printer::invAxisStepsPerMM[Z_AXIS],1,2);
+                    break;
+                }
+                else if(c2=='P')                                                                        // %LP : ECMP %
+                {
+                    addFloat(Printer::compensatedPositionOverPercE,2,4);
+                    break;
+                }
+                else if(c2=='m')                                                                        // %Lm : g_minZCompensationSteps
+                {
+                    addFloat(float(g_minZCompensationSteps*Printer::invAxisStepsPerMM[Z_AXIS]),1,2);
+                    break;
+                }
+                else if(c2=='M')                                                                        // %LM : g_maxZCompensationSteps
+                {
+                    addFloat(float(g_maxZCompensationSteps*Printer::invAxisStepsPerMM[Z_AXIS]),1,2);
+                    break;
+                }
                 break;
             }
             case 'Z':                                                                                   // %Z1-Z4: Page5 service intervall, %Z5-Z8: Page4 printing/milling time
@@ -3146,7 +3283,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
         case UI_ACTION_FANSPEED:
         {
-            Commands::setFanSpeed(Printer::getFanSpeed()+increment*3,false);
+            Commands::setFanSpeed(Printer::getFanSpeed()+increment,false);
             break;
         }
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
@@ -3805,17 +3942,6 @@ void UIDisplay::nextPreviousAction(int8_t next)
 
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EEPROM::getExtruderOffset(Extruder::current->id)+EPR_EXTRUDER_MAX_START_FEEDRATE,Extruder::current->maxStartFeedrate);
-            EEPROM::updateChecksum();
-#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-
-            break;
-        }
-        case UI_ACTION_EXTR_HEATMANAGER:
-        {
-            INCREMENT_MIN_MAX(Extruder::current->tempControl.heatManager,1,0,3);
-
-#if FEATURE_AUTOMATIC_EEPROM_UPDATE
-            HAL::eprSetFloat(EEPROM::getExtruderOffset(Extruder::current->id)+EPR_EXTRUDER_HEAT_MANAGER,Extruder::current->tempControl.heatManager);
             EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
 
@@ -5365,7 +5491,7 @@ void UIDisplay::executeAction(int action)
                 // save the determined values to the EEPROM        
                 if(g_ZMatrixChangedInRam){
                     uid.executeAction(UI_ACTION_TOP_MENU);
-                    saveCompensationMatrix( (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveHeatBed) );     
+                    saveCompensationMatrix( (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveHeatBed) );
                     if( Printer::debugInfo() )
                     {
                         Com::printFLN( PSTR( "Manual Input: the heat bed compensation matrix has been saved" ) );
