@@ -49,6 +49,7 @@ public:
     static uint8_t      linesWritePos;  // Position where we write the next cached line move
     flag8_t             joinFlags;
     volatile flag8_t    flags;
+    volatile uint8_t    started;
 
 private:
     flag8_t             primaryAxis;
@@ -588,6 +589,7 @@ public:
 #endif
                   Extruder::setDirection(isEPositiveMove());
         }
+        started = 1;
     } // enableSteppers
 
 };

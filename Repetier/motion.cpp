@@ -759,6 +759,7 @@ void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize,
     if (pathOptimize) waitRelax = 70;
     DEBUG_MEMORY;
 
+    started = 0;
     task    = TASK_NO_TASK;
 
 } // calculateDirectMove
@@ -1617,31 +1618,34 @@ long PrintLine::performQueueMove()
 long directError;
 long PrintLine::performDirectMove()
 {
-    if(direct.isBlocked())   // This step is in computation - shouldn't happen
-    {
-        return 2000;
-    }
-    direct.enableSteppers(); //set Z direction etc.
-    direct.fixStartAndEndSpeed();
+    if(direct.started == 0){
+        if(direct.isBlocked())   // This step is in computation - shouldn't happen
+        {
+            return 2000;
+        }
+        direct.enableSteppers(); //set Z direction etc.
+        direct.fixStartAndEndSpeed();
 
-    HAL::allowInterrupts(); //Nibbels todo: prüfen ob das unsinnig ist. unterfunktionen checken. vgl oben 3 zeilen
-    directError = direct.delta[direct.primaryAxis];
-    if(!direct.areParameterUpToDate())  // should never happen, but with bad timings???
-    {
-        direct.updateStepsParameter();
-    }
-    Printer::vMaxReached = direct.vStart;
-    Printer::stepNumber = 0;
-    Printer::timer = 0;
-    HAL::forbidInterrupts();
+        HAL::allowInterrupts(); //Nibbels todo: prüfen ob das unsinnig ist. unterfunktionen checken. vgl oben 3 zeilen
+        directError = direct.delta[direct.primaryAxis];
+        if(!direct.areParameterUpToDate())  // should never happen, but with bad timings???
+        {
+            direct.updateStepsParameter();
+        }
+        Printer::vMaxReached = direct.vStart;
+        Printer::stepNumber = 0;
+        Printer::timer = 0;
+        HAL::forbidInterrupts();
 
 #if USE_ADVANCE
-#ifdef ENABLE_QUADRATIC_ADVANCE
-    Printer::advanceExecuted = direct.advanceStart;
-#endif // ENABLE_QUADRATIC_ADVANCE
+ #ifdef ENABLE_QUADRATIC_ADVANCE
+        Printer::advanceExecuted = direct.advanceStart;
+ #endif // ENABLE_QUADRATIC_ADVANCE
 
-    direct.updateAdvanceSteps(direct.vStart, 0, false);
+        direct.updateAdvanceSteps(direct.vStart, 0, false);
 #endif // USE_ADVANCE
+        return Printer::interval; //wait to next interrupt.
+    }
 
     return performMove(&direct, false);
 } // performDirectMove
