@@ -92,7 +92,7 @@
 #define UI_ACTION_EXTR_START_FEEDRATE       1068
 //#define UI_ACTION_EXTR_HEATMANAGER          1069
 #define UI_ACTION_EXTR_WATCH_PERIOD         1070
-#define UI_ACTION_ADVANCE_K                 1072
+//#define UI_ACTION_ADVANCE_K                 1072
 #define UI_ACTION_DEBUG_ECHO                1074
 #define UI_ACTION_DEBUG_INFO                1075
 #define UI_ACTION_DEBUG_ERROR               1076
@@ -113,7 +113,7 @@
 #define UI_ACTION_SET_E_ORIGIN              1091
 #define UI_ACTION_EXTRUDER_RELATIVE         1092
 #define UI_ACTION_SELECT_EXTRUDER0          1093
-#define UI_ACTION_ADVANCE_L                 1094
+//#define UI_ACTION_ADVANCE_L                 1094
 #define UI_ACTION_PREHEAT_ABS               1095
 #define UI_ACTION_FLOWRATE_MULTIPLY         1096
 #define UI_ACTION_EXTR_WAIT_RETRACT_TEMP    1100

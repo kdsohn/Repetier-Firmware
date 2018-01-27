@@ -3879,6 +3879,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         {
             float step = (extruder[0].advanceL < 20.0f) ? 1.0f : ((extruder[0].advanceL < 50.0f) ? 5.0f : 10.0f);
             INCREMENT_MIN_MAX(extruder[0].advanceL,step,0.0f,250.0f); //Nibbels TODO gute Werte zulassen? Ist Step 1 ok? -> 60 war zu wenig.
+             Printer::updateAdvanceFlags();
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EEPROM::getExtruderOffset(0)+EPR_EXTRUDER_ADVANCE_L,extruder[0].advanceL);
             EEPROM::updateChecksum();
@@ -3890,6 +3891,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         {
             float step = (extruder[1].advanceL < 20.0f) ? 1.0f : ((extruder[1].advanceL < 50.0f) ? 5.0f : 10.0f);
             INCREMENT_MIN_MAX(extruder[1].advanceL,step,0.0f,250.0f); //Nibbels TODO gute Werte zulassen? Ist Step 1 ok? -> 60 war zu wenig.
+             Printer::updateAdvanceFlags();
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EEPROM::getExtruderOffset(1)+EPR_EXTRUDER_ADVANCE_L,extruder[1].advanceL);
             EEPROM::updateChecksum();
@@ -3983,33 +3985,6 @@ void UIDisplay::nextPreviousAction(int8_t next)
             break;
         }
 #endif // RETRACT_DURING_HEATUP
-
-#if USE_ADVANCE
-#ifdef ENABLE_QUADRATIC_ADVANCE
-        case UI_ACTION_ADVANCE_K:
-        {
-            INCREMENT_MIN_MAX(Extruder::current->advanceK,1,0,200);
-
-#if FEATURE_AUTOMATIC_EEPROM_UPDATE
-            HAL::eprSetFloat(EEPROM::getExtruderOffset(Extruder::current->id)+EPR_EXTRUDER_ADVANCE_K,Extruder::current->advanceK);
-            EEPROM::updateChecksum();
-#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-            break;
-        }
-#endif // ENABLE_QUADRATIC_ADVANCE
-
-        case UI_ACTION_ADVANCE_L:
-        {
-            INCREMENT_MIN_MAX(Extruder::current->advanceL,5,0,600);
-
-#if FEATURE_AUTOMATIC_EEPROM_UPDATE
-            HAL::eprSetFloat(EEPROM::getExtruderOffset(Extruder::current->id)+EPR_EXTRUDER_ADVANCE_L,Extruder::current->advanceL);
-            EEPROM::updateChecksum();
-#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-
-            break;
-        }
-#endif // USE_ADVANCE
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
         case UI_ACTION_RF_SET_Z_MATRIX_WORK_PART:

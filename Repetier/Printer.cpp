@@ -447,10 +447,9 @@ void Printer::kill(uint8_t only_steppers)
 void Printer::updateAdvanceFlags()
 {
     Printer::setAdvanceActivated(false);
-
 #if USE_ADVANCE
     for(uint8_t i = 0; i < NUM_EXTRUDER; i++) {
-        if(extruder[i].advanceL!=0) {
+        if(extruder[i].advanceL != 0) {
             Printer::setAdvanceActivated(true);
         }
 #ifdef ENABLE_QUADRATIC_ADVANCE
@@ -458,7 +457,6 @@ void Printer::updateAdvanceFlags()
 #endif // ENABLE_QUADRATIC_ADVANCE
     }
 #endif // USE_ADVANCE
-
 } // updateAdvanceFlags
 
 

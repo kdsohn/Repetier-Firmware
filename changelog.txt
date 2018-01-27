@@ -1,6 +1,14 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.19.Mod (2018-01-20)
+- Test: Better Z-Naht? (due to changed slow speed constraint at E<->YXZAxis transitions and E-direction transitions)
+- Test: do we need "direct.start"? -> removed it.
+- Test: changed #define EXT1_MAX_START_FEEDRATE 18 to #define EXT1_MAX_START_FEEDRATE 12 (Repetier uses 10 or 12 as standard within his configuration.h. If you wanna test this values against 18 then change it in your eeprom as well!)
+- Added Printer::updateAdvanceFlags(); to Advance menu function
+- removed old advanceL and advanceK menu hooks
+- some more tiny cleanup and sync of syntax to repetier 1.0.1
+
 V RF.01.38.18.Mod (2018-01-20)
 - some checks and comments
 - FEATURE_CHECK_HOME and FEATURE_SEE_DISPLAY are now in configuration.h instead of RF1000.h / RF2000.h

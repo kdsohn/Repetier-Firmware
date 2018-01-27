@@ -49,7 +49,6 @@ public:
     static uint8_t      linesWritePos;  // Position where we write the next cached line move
     flag8_t             joinFlags;
     volatile flag8_t    flags;
-    volatile uint8_t    started;        //05-01-2018 rf1000 fragen, was macht das genau, warum ist das da. wird aktiviert und wieder deaktiviert, als könnte das nur ein debug gewesen sein. Ist das ein gate gegen unnötige überschreibung, interrupt, knopfsteuerung am panel?
 
 private:
     flag8_t             primaryAxis;
@@ -391,41 +390,34 @@ public:
         if(!Printer::isAdvanceActivated()) return;
 #ifdef ENABLE_QUADRATIC_ADVANCE
         long advanceTarget = Printer::advanceExecuted;
-        if(accelerate)
-        {
-            for(uint8_t loop = 0; loop<max_loops; loop++) advanceTarget += advanceRate;
-            if(advanceTarget>advanceFull)
+        if(accelerate) {
+            for(uint8_t loop = 0; loop < max_loops; loop++) advanceTarget += advanceRate;
+            if(advanceTarget > advanceFull)
                 advanceTarget = advanceFull;
-        }
-        else
-        {
-            for(uint8_t loop = 0; loop<max_loops; loop++) advanceTarget -= advanceRate;
-            if(advanceTarget<advanceEnd)
+        } else {
+            for(uint8_t loop = 0; loop < max_loops; loop++) advanceTarget -= advanceRate;
+            if(advanceTarget < advanceEnd)
                 advanceTarget = advanceEnd;
         }
-        long h = HAL::mulu16xu16to32(v,advanceL);
+        long h = HAL::mulu16xu16to32(v, advanceL);
         int tred = ((advanceTarget + h) >> 16);
-
         HAL::forbidInterrupts();
-        Printer::extruderStepsNeeded += tred-Printer::advanceStepsSet;
-        if(tred>0 && Printer::advanceStepsSet<=0)
+        Printer::extruderStepsNeeded += tred - Printer::advanceStepsSet;
+        if(tred > 0 && Printer::advanceStepsSet <= 0)
             Printer::extruderStepsNeeded += Extruder::current->advanceBacklash;
-        else if(tred<0 && Printer::advanceStepsSet>=0)
+        else if(tred < 0 && Printer::advanceStepsSet >= 0)
             Printer::extruderStepsNeeded -= Extruder::current->advanceBacklash;
-
         Printer::advanceStepsSet = tred;
         HAL::allowInterrupts();
         Printer::advanceExecuted = advanceTarget;
 #else
-        int tred = HAL::mulu6xu16shift16(v,advanceL);
+        int tred = HAL::mulu6xu16shift16(v, advanceL);
         HAL::forbidInterrupts();
         Printer::extruderStepsNeeded += tred - Printer::advanceStepsSet;
-
-        if(tred>0 && Printer::advanceStepsSet<=0)
+        if(tred > 0 && Printer::advanceStepsSet <= 0)
             Printer::extruderStepsNeeded += (Extruder::current->advanceBacklash << 1);
-        else if(tred<0 && Printer::advanceStepsSet>=0)
+        else if(tred < 0 && Printer::advanceStepsSet >= 0)
             Printer::extruderStepsNeeded -= (Extruder::current->advanceBacklash << 1);
-
         Printer::advanceStepsSet = tred;
         HAL::allowInterrupts();
         (void)max_loops;
@@ -596,8 +588,6 @@ public:
 #endif
                   Extruder::setDirection(isEPositiveMove());
         }
-        started = 1;
-
     } // enableSteppers
 
 };

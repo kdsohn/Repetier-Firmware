@@ -1679,26 +1679,13 @@ void Commands::executeGCode(GCode *com)
             {
                 if(com->hasY())
                     Extruder::current->advanceL = com->Y;
-
-                if( Printer::debugInfo() )
-                {
-                    Com::printF(Com::tLinearLColon,Extruder::current->advanceL);
-                }
+                Com::printF(Com::tLinearLColon,Extruder::current->advanceL);
 #ifdef ENABLE_QUADRATIC_ADVANCE
                 if(com->hasX())
                     Extruder::current->advanceK = com->X;
-
-                if( Printer::debugInfo() )
-                {
-                    Com::printF(Com::tQuadraticKColon,Extruder::current->advanceK);
-                }
+                Com::printF(Com::tQuadraticKColon,Extruder::current->advanceK);
 #endif // ENABLE_QUADRATIC_ADVANCE
-
-                if( Printer::debugInfo() )
-                {
-                    Com::println();
-                }
-
+                Com::println();
                 Printer::updateAdvanceFlags();
                 break;
             }
