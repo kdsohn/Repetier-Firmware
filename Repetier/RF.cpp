@@ -348,7 +348,7 @@ short readStrainGauge( unsigned char uAddress ) //readStrainGauge dauert etwas u
             noInts.unprotect();
             nSensibleCompensationSum = (long)g_nDigitZCompensationDigits * 3; //(nSensibleCompensationSum >> 1) + (nSensibleCompensationSum >> 2);--> sign-extension?? //nSensibleCompensationSum*0.75 
             nSensibleCompensationChecks -= 1; //*=0.75 bei 4 ist 3
-#if FEATURE_DIGIT_FLOW_COMPENSATION
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
             if(g_nDigitFlowCompensation_intense != 0){
                 short active_summed_digits = abs(static_cast<short>(g_nDigitZCompensationDigits));
                 /*
@@ -392,7 +392,7 @@ short readStrainGauge( unsigned char uAddress ) //readStrainGauge dauert etwas u
                                                                              /(g_nDigitFlowCompensation_Fmax - g_nDigitFlowCompensation_Fmin);
                 }
                 g_nDigitFlowCompensation_feedmulti += (goal == g_nDigitFlowCompensation_feedmulti ? 0.0f : 
-                                                       (goal > g_nDigitFlowCompensation_feedmulti ? 0.001f : -0.001f)
+                                                       (goal > g_nDigitFlowCompensation_feedmulti ? 0.010f : -0.010f)
                                                        );
             }else{
                 g_nDigitFlowCompensation_feedmulti = 1.0f;
@@ -400,7 +400,7 @@ short readStrainGauge( unsigned char uAddress ) //readStrainGauge dauert etwas u
  #endif // FEATURE_DIGIT_FLOW_COMPENSATION
  
         }else{
-#if FEATURE_DIGIT_FLOW_COMPENSATION
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
             g_nDigitFlowCompensation_flowmulti = 1.0f;
             g_nDigitFlowCompensation_feedmulti = 1.0f;
  #endif // FEATURE_DIGIT_FLOW_COMPENSATION
@@ -409,6 +409,15 @@ short readStrainGauge( unsigned char uAddress ) //readStrainGauge dauert etwas u
             noInts.unprotect();
         }
     }
+        
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+    if(g_nDigitFlowCompensation_feedmulti == 1.0f || !Printer::doHeatBedZCompensation){
+        Printer::interval_mod = 0; //0 = off / 1024 = off but 0 saves calc in interrupt.
+    } else {
+        float speed_feed_modifier = 1024.0f / g_nDigitFlowCompensation_feedmulti; //1024 = 100% -> 234% speed, heißt interval kürzer. 56% speed heißt interval länger.
+        Printer::interval_mod = (unsigned long)speed_feed_modifier;
+    }
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
 #endif // FEATURE_DIGIT_Z_COMPENSATION
     g_nLastDigits = Result;
     return Result;
@@ -10585,7 +10594,7 @@ void processCommand( GCode* pCommand )
                                         }
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
                                         g_staticZSteps = ((Printer::ZOffset+g_nSensiblePressureOffset) * Printer::axisStepsPerMM[Z_AXIS]) / 1000; //offset-stepps neu berechnen
-                                    }   
+                                    }
                                     g_ZMatrixChangedInRam = 1;
                                 }
                             }
@@ -10598,9 +10607,9 @@ void processCommand( GCode* pCommand )
                             Com::printFLN( PSTR( "M3902: ERROR::Matrix Initialisation Error!" ) );
                             Com::printFLN( PSTR( "M3902: INFO Die Z-Matrix konnte nicht aus dem EEPROM gelesen werden." ) );
                             Com::printFLN( PSTR( "M3902: INFO Vermutlich nie einen Heat-Bed-Scan gemacht." ) );
-                        }   
+                        }
                     }
-                    
+
                     //NMM Funktion 3 - S=Save,Sichern der Matrix an spezielle EEPROM-Position
                     if( pCommand->hasS() )
                     {
@@ -10625,89 +10634,74 @@ void processCommand( GCode* pCommand )
             }
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
-#if FEATURE_SENSIBLE_PRESSURE
+#if FEATURE_SENSIBLE_PRESSURE && FEATURE_AUTOMATIC_EEPROM_UPDATE
             case 3909: // M3909 [P]PressureDigits - configure the sensible pressure value threshold || by Wessix and Nibbels
             {
                 if( isSupportedMCommand( pCommand->M, OPERATING_MODE_PRINT ) )
                 {
-                    //Statusänderung per M3909 P10000 (for 10000 [digits])
-                    Commands::waitUntilEndOfAllMoves();
-                    if (pCommand->hasP() ){
+                    bool error = false;
+                    //Statusänderung P10000 ([digits])
+                    if ( pCommand->hasP() ){
+                        if ( pCommand->P > 32767 ) pCommand->P = 32767;
                         if ( pCommand->P >= 0 && pCommand->P < EMERGENCY_PAUSE_DIGITS_MAX )
                         {
-                            if(pCommand->P > 32767) pCommand->P = 32767;
-                            g_nSensiblePressureDigits = pCommand->P;
-                            if(g_nSensiblePressureDigits){
-                                Com::printFLN( PSTR( "M3909: SensiblePressure Pmax="),g_nSensiblePressureDigits );
-#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                            if( pCommand->P ){
+                                Com::printFLN( PSTR( "M3909: SensiblePressure Pmax="), pCommand->P );
                                 short oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_DIGITS);
-                                if(oldval != g_nSensiblePressureDigits){
-                                   HAL::eprSetInt16( EPR_RF_MOD_SENSEOFFSET_DIGITS, g_nSensiblePressureDigits );
+                                if( oldval != pCommand->P ){
+                                   Com::printFLN( PSTR( "M3909: P change") );
+                                   HAL::eprSetInt16( EPR_RF_MOD_SENSEOFFSET_DIGITS, pCommand->P );
                                    EEPROM::updateChecksum(); //deshalb die prüfung
                                 }
-#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-                            }
-                            else{
+                            } else {
+                                g_nSensiblePressureDigits = 0;
+                                error = true;
                                 Com::printFLN( PSTR( "M3909: SensiblePressure disabled") );
                             }
                         }else{
-                            Com::printFLN( PSTR( "M3909: ERROR Parameter [P]") );
-                        }
-                    }else{
-                        //if possible read from EEPROM
-                        short oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_DIGITS);
-                        if ( oldval > 0 && oldval < EMERGENCY_PAUSE_DIGITS_MAX ){
-                            Com::printFLN( PSTR( "M3909: SensiblePressure EEPROM: Pmax="), oldval);
-                            g_nSensiblePressureDigits = oldval;
+                            Com::printFLN( PSTR( "M3909: wrong [P]") );
+                            error = true;
                         }
                     }
 
-                    if (pCommand->hasS() ){
+                    if ( pCommand->hasS() ){
                         if ( pCommand->S > 0 && pCommand->S <= 300 )
                         {
                             //max darf nie 0 werden!! div/0 bei zeile ~5600
                             g_nSensiblePressureOffsetMax = (short)pCommand->S;
-                            Com::printFLN( PSTR( "M3909: SensiblePressure [S]max. Offset changed to "),g_nSensiblePressureOffsetMax );
-#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                            Com::printFLN( PSTR( "M3909: SensiblePressure max. [S]Offset changed to "),g_nSensiblePressureOffsetMax );
                             short oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_OFFSET_MAX);
-                            if(oldval != g_nSensiblePressureOffsetMax){
+                            if( oldval != g_nSensiblePressureOffsetMax ){
+                               Com::printFLN( PSTR( "M3909: S change") );
                                HAL::eprSetInt16( EPR_RF_MOD_SENSEOFFSET_OFFSET_MAX, g_nSensiblePressureOffsetMax );
                                EEPROM::updateChecksum(); //deshalb die prüfung
                             }
-#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-                        }else{
+                        } else {
                             Com::printFLN( PSTR( "M3909: ERROR::>0.3mm=S300 - This function is ment to compensate minimal amounts of too close distance.") );
-                            Com::printFLN( PSTR( "M3909: ERROR::>0.3mm=S300 - Diese Funktion soll nur minimal justieren.") );
                             Com::printFLN( PSTR( "M3909: INFO::If you have to auto-compensate your offset to high, clean your nozzle, rise your temp, lower your speed.") );
                             Com::printFLN( PSTR( "M3909: INFO::This function should lower the chance of an accidential emergency block on the first layer. It cannot help you to avoid calibration!") );
+                            error = true;
                         }
                     }
 
                     //Statusausgabe per M3909
-                    if(g_nSensiblePressureDigits){
-                        Com::printF( PSTR( "M3909: INFO SensiblePressure threshold is active. [P]PressureDigit = +-"), g_nSensiblePressureDigits );
-                        Com::printFLN( PSTR( " [digits] (Standard: use positive `Normal Digits`+20%)") );           
+                    if( g_nSensiblePressureDigits ){
+                        Com::printF( PSTR( "M3909: INFO SensiblePressure active. [P]PressureDigit = +-"), g_nSensiblePressureDigits );
+                        Com::printFLN( PSTR( " [digits] (Standard: use `standard print digits` +20%)") );
                         Com::printF( PSTR( "M3909: INFO SensiblePressures [S]max. offset is "), g_nSensiblePressureOffsetMax );   
-                        Com::printFLN( PSTR( " [um] (Standard: 180um, Min: 1um, Max: 300um)") );            
-                    }else{
-                        Com::printFLN( PSTR( "M3909: INFO SensiblePressure is currently disabled. [P]PressureDigit = OFF (Standard: use positive `Normal Digits`+20%" ) );
-                        Com::printF( PSTR( "M3909: INFO SensiblePressures [S]max. offset is "), g_nSensiblePressureOffsetMax );   
-                        Com::printFLN( PSTR( " [um] (Standard: 180um)") );      
+                        Com::printFLN( PSTR( " [um] (Standard: 180um, Max: 300um)") );
+                    } else {
+                        Com::printFLN( PSTR( "M3909: INFO SensiblePressure is currently disabled." ) );
                     }
-                    if (!pCommand->hasS() && !pCommand->hasP()) Com::printFLN( PSTR( "M3909: INFO Example: M3909 P8000 S180 (8000digits and offset limited to 0,18mm)") );
+
+                    if(!error) queueTask( TASK_ENABLE_SENSE_OFFSET );
                 }
                 break;
             }
-#else
-            case 3909: // 3909 [P]PressureDigits - configure the sensible pressure value threshold || by Wessix and Nibbels
-            {
-                Com::printFLN( PSTR( "M3909 is disabled : inactive Feature FEATURE_EMERGENCY_PAUSE || FEATURE_HEAT_BED_Z_COMPENSATION" ) );
-                break;
-            }
-#endif // FEATURE_SENSIBLE_PRESSURE
+#endif // FEATURE_SENSIBLE_PRESSURE && FEATURE_AUTOMATIC_EEPROM_UPDATE
 
 #if FEATURE_DIGIT_FLOW_COMPENSATION
-            case 3911: // 3911 [S]Inc/Dec - Testfunction for AtlonXP's DigitFlowCompensation
+            case 3911: // M3911 [S]Inc/Dec - Testfunction for AtlonXP's DigitFlowCompensation
             {
                 if ( pCommand->hasS() && pCommand->hasP() ){
                     short min = abs( static_cast<short>(pCommand->S) );
@@ -10743,6 +10737,99 @@ void processCommand( GCode* pCommand )
                 break;
             }
 #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+
+#if FEATURE_STARTLINE
+            case 3912:
+            {
+                if( Printer::areAxisHomed() && Printer::doHeatBedZCompensation ){
+
+                    Com::printFLN( PSTR( "Auto-Startmade" ) );
+                    short min = 1500;
+                    short max = 4500;
+                    
+                    //dirty hack
+                    short save_g_nDigitFlowCompensation_Fmin = g_nDigitFlowCompensation_Fmin;
+                    short save_g_nDigitFlowCompensation_Fmax = g_nDigitFlowCompensation_Fmax;
+                    short save_g_nDigitFlowCompensation_speed_intense = g_nDigitFlowCompensation_speed_intense;
+                    bool save_relativeExtruderCoordinateMode = Printer::relativeExtruderCoordinateMode;
+                    
+                    if ( pCommand->hasS() && pCommand->hasP() ){
+                        min = abs( static_cast<short>(pCommand->S) );
+                        max = abs( static_cast<short>(pCommand->P) );
+                        if(min > max) {
+                            min = abs( static_cast<short>(pCommand->P) );
+                            max = abs( static_cast<short>(pCommand->S) );
+                        }
+                        if(min < 500) min = 500; //weniger ist in jedem fall sinnfrei, selbst mit ninjaflex und digit homing
+                        if(max < min) max = min; //geht: flowsprung.
+                    }
+                    
+                    uint8_t Extrusion = 20;
+                    uint8_t Lines = 2;
+                    
+                    if (pCommand->hasE() ){
+                        Extrusion = (uint8_t)pCommand->E;
+                        if(Extrusion < 10) Extrusion = 10; //sinnvoll war bei mir ca. 10..30 pro linie.
+                        if(Extrusion > 30) Extrusion = 30;
+                    }
+                    
+                    uint8_t lineFeedrate = 18;
+                    if (pCommand->hasF() ){
+                        lineFeedrate = (uint8_t)pCommand->F;
+                        if(lineFeedrate < 5) lineFeedrate = 5; //sinnvoll war bei mir ca. 10..30 pro linie.
+                        if(lineFeedrate > 50) lineFeedrate = 50;
+                    }
+
+                    if (pCommand->hasI() ){
+                        Lines = (uint8_t)pCommand->I;
+                        if(Lines < 1) Lines = 1;
+                        if(Lines > 5) Lines = 5;
+                    }
+                    
+                    //M3411 S P F-95:
+                    g_nDigitFlowCompensation_Fmin = min;
+                    g_nDigitFlowCompensation_Fmax = max;
+                    g_nDigitFlowCompensation_speed_intense = -95;
+                    //M82:
+                    Printer::relativeExtruderCoordinateMode = false;
+                    //G92 E0:
+                    Printer::queuePositionCurrentSteps[E_AXIS] = Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0;
+                    
+                    const float spacerX = 10.0f;
+                    
+                    float x = spacerX;
+                    float y = 23.0f; /*+Printer::minMM[Y_AXIS]*/
+                    float e =  0.0f;
+
+                    Printer::moveToReal(x, y, AUTOADJUST_STARTMADEN_AUSSCHLUSS, IGNORE_COORDINATE, RMath::min(Printer::homingFeedrate[X_AXIS], Printer::homingFeedrate[Y_AXIS]) );
+                    
+                    for(uint8_t i = 1; i <= Lines; i++){
+                        if(i % 2 != 0){ //ungerade zahl.
+                            x += (/*Printer::minMM[X_AXIS]+*/Printer::lengthMM[X_AXIS]) - 2*spacerX;
+                            y += 5.0f;
+                            e += (float)Extrusion * ((/*Printer::minMM[X_AXIS]+*/Printer::lengthMM[X_AXIS]) - 2*spacerX)/200;
+                        }else{
+                            x -= (/*Printer::minMM[X_AXIS]+*/Printer::lengthMM[X_AXIS]) - 2*spacerX;
+                            y -= 5.0f;
+                            e += (float)Extrusion * ((/*Printer::minMM[X_AXIS]+*/Printer::lengthMM[X_AXIS]) - 2*spacerX)/200;
+                        }
+                        Printer::moveToReal(x, y, IGNORE_COORDINATE, e, lineFeedrate);
+                        y += 2.0f;
+                        Printer::moveToReal(IGNORE_COORDINATE, y, IGNORE_COORDINATE, IGNORE_COORDINATE, Printer::homingFeedrate[Y_AXIS] );
+                    }
+                    Commands::waitUntilEndOfAllMoves();
+                    g_nDigitFlowCompensation_Fmin = save_g_nDigitFlowCompensation_Fmin;
+                    g_nDigitFlowCompensation_Fmax = save_g_nDigitFlowCompensation_Fmax;
+                    g_nDigitFlowCompensation_speed_intense = save_g_nDigitFlowCompensation_speed_intense;
+                    Printer::queuePositionCurrentSteps[E_AXIS] = Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0;
+                    Printer::relativeExtruderCoordinateMode = save_relativeExtruderCoordinateMode;
+                    Printer::updateCurrentPosition();
+                }else{
+                    Com::printFLN( PSTR( "M3912 error missing homing or zCMP" ) );
+                }
+                break;
+            }
+#endif //FEATURE_STARTLINE
 
             case 3919: // 3919 [S]mikrometer - Testfunction for Dip-Down-Hotend beim T1: Einstellen des extruderspezifischen Z-Offsets
             {

@@ -1,9 +1,19 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.21.Mod (2018-01-28) 
+- New M3912 to automatically draw a start line to clean nozzle within start code.
+  Example: M3912 I2 E20 F18
+  I2 -> 2 Lines
+  E20 -> Extrusion width value
+  F18 -> 18mm/s
+  The nice feature is that high digits slow down the speed automatically. This startline adopts to your type of filaments/nozzle.
+- DMS-Features: Digit-Flow-CMP -> dFeed now has an instant effect on your printers speed. The problem that the speed was set with the path cache is now gone.
+- Enabling SenseOffset now happens in move cache queue (, not instantly as it was). Thatwhy we can drop some M400 in our startcodes.
+
 V RF.01.38.20.Mod (2018-01-27) (Alpha!)
 - Test: Better Z-Naht? (due to changed slow speed constraint at E<->YXZAxis transitions and E-direction transitions)
-- Test: do we need "direct.start"? -> removed it. Added it again for safer upload.
+- Test: do we need "direct.start"? -> removed it. Added it again for safer upload. -> Pause is way faster with "started". So it stays for now.
 - Test: changed #define EXT1_MAX_START_FEEDRATE 18 to #define EXT1_MAX_START_FEEDRATE 12 (Repetier uses 10 or 12 as standard within his configuration.h. If you wanna test this values against 18 then change it in your eeprom as well!)
 - Added Printer::updateAdvanceFlags(); to Advance menu function
 - removed old advanceL and advanceK menu hooks

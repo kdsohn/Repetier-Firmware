@@ -395,11 +395,7 @@ void PrintLine::stopDirectMove( void ) //Funktion ist bereits zur ausführzeit v
 void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, fast8_t drivingAxis, float feedrate)
 {
     long    axisInterval[4];
-    float timeForMove = (float)(F_CPU) * distance / feedrate
-#if FEATURE_DIGIT_FLOW_COMPENSATION
-                                                                      / g_nDigitFlowCompensation_feedmulti
-#endif // FEATURE_DIGIT_FLOW_COMPENSATION
-    ; // time is in ticks
+    float timeForMove = (float)(F_CPU) * distance / feedrate; // time is in ticks
     
     if(linesCount < MOVE_CACHE_LOW && timeForMove < LOW_TICKS_PER_MOVE)   // Limit speed to keep cache full.
     {
@@ -497,16 +493,8 @@ void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, 
     fAcceleration = 262144.0*(float)accelerationPrim / F_CPU; // will overflow without float!
     accelerationDistance2 = 2.0 * distance * slowestAxisPlateauTimeRepro * fullSpeed / ((float)F_CPU);  // mm^2/s^2
     startSpeed = endSpeed = minSpeed = safeSpeed(drivingAxis);
-    if(startSpeed > feedrate
- #if FEATURE_DIGIT_FLOW_COMPENSATION
-                                      * g_nDigitFlowCompensation_feedmulti
- #endif // FEATURE_DIGIT_FLOW_COMPENSATION
-    ){
-        startSpeed = endSpeed = minSpeed = feedrate
- #if FEATURE_DIGIT_FLOW_COMPENSATION
-                                      * g_nDigitFlowCompensation_feedmulti
- #endif // FEATURE_DIGIT_FLOW_COMPENSATION
-        ;
+    if(startSpeed > feedrate){
+        startSpeed = endSpeed = minSpeed = feedrate;
     }
     // Can accelerate to full speed within the line
     if (startSpeed * startSpeed + accelerationDistance2 >= fullSpeed * fullSpeed)
@@ -693,16 +681,8 @@ void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize,
     fAcceleration = 262144.0*(float)accelerationPrim/F_CPU;                                         // will overflow without float!
     accelerationDistance2 = 2.0*distance*slowestAxisPlateauTimeRepro*fullSpeed/((float)F_CPU);  // mm^2/s^2
     startSpeed = endSpeed = minSpeed = safeSpeed(drivingAxis);
-    if(startSpeed > (isXOrYMove() ? DIRECT_FEEDRATE_XY : isZMove() ? DIRECT_FEEDRATE_Z : DIRECT_FEEDRATE_E)
- #if FEATURE_DIGIT_FLOW_COMPENSATION
-                                      * g_nDigitFlowCompensation_feedmulti
- #endif // FEATURE_DIGIT_FLOW_COMPENSATION
-    ){
-        startSpeed = endSpeed = minSpeed = (isXOrYMove() ? DIRECT_FEEDRATE_XY : isZMove() ? DIRECT_FEEDRATE_Z : DIRECT_FEEDRATE_E)
- #if FEATURE_DIGIT_FLOW_COMPENSATION
-                                      * g_nDigitFlowCompensation_feedmulti
- #endif // FEATURE_DIGIT_FLOW_COMPENSATION
-        ;
+    if( startSpeed > (isXOrYMove() ? DIRECT_FEEDRATE_XY : isZMove() ? DIRECT_FEEDRATE_Z : DIRECT_FEEDRATE_E) ){
+        startSpeed = endSpeed = minSpeed = (isXOrYMove() ? DIRECT_FEEDRATE_XY : isZMove() ? DIRECT_FEEDRATE_Z : DIRECT_FEEDRATE_E);
     }
     // Can accelerate to full speed within the line
     if (startSpeed * startSpeed + accelerationDistance2 >= fullSpeed * fullSpeed)
@@ -1526,20 +1506,29 @@ long PrintLine::performQueueMove()
 #endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-                case TASK_ENABLE_Z_COMPENSATION:
+                case TASK_ENABLE_Z_COMPENSATION: //M3001 M3141
                 {
-                    Printer::enableCMPnow( );
+                    Printer::enableCMPnow();
                     removeCurrentLineForbidInterrupt();
                     return 1000;
                 }
 
-                case TASK_DISABLE_Z_COMPENSATION:
+                case TASK_DISABLE_Z_COMPENSATION: //M3000 M3140
                 {
                     // disable the z compensation
                     Printer::disableCMPnow(); //hier nicht unbedingt warten, das soll im fluss der queue einfach abgeschaltet werden. zu große abstände regelt die performPauseCheck 
                     removeCurrentLineForbidInterrupt();
                     return 1000;
                 }
+
+ #if FEATURE_SENSIBLE_PRESSURE
+                case TASK_ENABLE_SENSE_OFFSET: //M3909
+                {
+                    Printer::enableSenseOffsetnow();
+                    removeCurrentLineForbidInterrupt();
+                    return 1000;
+                }
+ #endif // FEATURE_SENSIBLE_PRESSURE
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
                 default:
@@ -2132,7 +2121,7 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
     Printer::stepsPerTimerCall = 1;
     Printer::interval = move->fullInterval; // without RAMPS always use full speed
 #endif // RAMP_ACCELERATION
-    long interval = Printer::interval;
+    unsigned long interval = Printer::interval;
     if( move->stepsRemaining <= 0 || move->isNoMove() )  // line finished
     {
         if( move->stepsRemaining <= 0 ) //Wenn keine Steps mehr da, sollten alle Achsen die benutzt wurden wieder freigegeben werden. Bei Z ist der Sonderfall, dass die Z-Kompensation sich reinschummeln könnte.
@@ -2203,6 +2192,15 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
         interval = Printer::interval = interval >> 1; // 50% of time to next call to do cur=0
         DEBUG_MEMORY;
     } // line finished
+
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+    if(Printer::interval_mod){
+        //if we have to add some time because we need live adjusting then add it. But we should not calculate with * and / here so we have to prepare some delay. The preparation might be inprecise. So check it.
+        //min 50% speed -> max 200% interval.
+        interval *= Printer::interval_mod; //1024 == 100%
+        interval >>= 10; // geteilt durch 1024 = 2^10
+    }
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
 
     return interval;
 } // performMove

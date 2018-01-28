@@ -869,15 +869,16 @@ void Commands::executeGCode(GCode *com)
             {
                 Printer::queuePositionLastSteps[E_AXIS] = Printer::convertToMM(com->E)*Printer::axisStepsPerMM[E_AXIS];
                 
+                //?? Printer::queuePositionCurrentSteps[E_AXIS] = Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = Printer::convertToMM(com->E)*Printer::axisStepsPerMM[E_AXIS];
+                
                 /* Repetier: https://github.com/repetier/Repetier-Firmware/commit/a63c660289b760faf033fdfd86bbc69c1050cfc9 ?
                   Printer::destinationSteps[E_AXIS] = Printer::currentPositionSteps[E_AXIS] = Printer::convertToMM(com->E) * Printer::axisStepsPerMM[E_AXIS];
                 wissen:
                 Printer::queuePositionTargetSteps[axis] <---> Printer::destinationSteps[axis]
-                Printer::currentPositionSteps[axis] <---> Printer::directPositionCurrentSteps[axis]
+                Printer::currentPositionSteps[axis] <---> Printer::queuePositionCurrentSteps[axis]
                 -> vermutlich in dieser firmware korrekt:
 
                 Printer::queuePositionCurrentSteps[E_AXIS] = Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = Printer::convertToMM(com->E) * Printer::axisStepsPerMM[E_AXIS];
-
                 */
             }
         }

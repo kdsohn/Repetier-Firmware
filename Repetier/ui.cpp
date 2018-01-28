@@ -1817,7 +1817,7 @@ void UIDisplay::parse(char *txt,bool ram)
                         else addStringP( PSTR( "@" ));
                         addInt((int)g_nSensiblePressureDigits,5);
                     }else{
-                        addStringP(ui_text_off);                
+                        addStringP(ui_text_off);
                     }
 #endif // FEATURE_SENSIBLE_PRESSURE
                 }

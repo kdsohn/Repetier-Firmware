@@ -68,9 +68,12 @@ uint8_t         Printer::stepsPerTimerCall = 1;
 uint16_t        Printer::stepsDoublerFrequency = STEP_DOUBLER_FREQUENCY;
 uint8_t         Printer::menuMode = 0;
 
-unsigned long   Printer::interval;                                      ///< Last step duration in ticks.
+volatile unsigned long   Printer::interval;                             ///< Last step duration in ticks.
 unsigned long   Printer::timer;                                         ///< used for acceleration/deceleration timing
 unsigned long   Printer::stepNumber;                                    ///< Step number in current move.
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+unsigned long   Printer::interval_mod = 0;                              ///< additional step duration in ticks to slow the printer down live
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
 
 #if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
@@ -1366,6 +1369,16 @@ void Printer::GoToMemoryPosition(bool x,bool y,bool z,bool e,float feed)
 
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
+
+#if FEATURE_SENSIBLE_PRESSURE
+void Printer::enableSenseOffsetnow( void ){
+        short oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_DIGITS);
+        if ( oldval > 0 && oldval < EMERGENCY_PAUSE_DIGITS_MAX ){
+            g_nSensiblePressureDigits = oldval;
+        }
+    }
+#endif // FEATURE_SENSIBLE_PRESSURE
+
 void Printer::enableCMPnow( void ){
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_MILL)
@@ -1414,7 +1427,6 @@ void Printer::enableCMPnow( void ){
         Printer::doHeatBedZCompensation = 1;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
     }
-    //return true;
 }
 
 void Printer::disableCMPnow( bool wait ) {

@@ -83,9 +83,13 @@ public:
     static uint8_t          flag3;
     static uint8_t          stepsPerTimerCall;
     static uint16_t         stepsDoublerFrequency;
-    static unsigned long    interval;                           // Last step duration in ticks.
+    static volatile unsigned long interval;                           // Last step duration in ticks.
     static unsigned long    timer;                              // used for acceleration/deceleration timing
     static unsigned long    stepNumber;                         // Step number in current move.
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+    static unsigned long    interval_mod;                          // additional step duration in ticks to slow the printer down live
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
+
     static float            originOffsetMM[3];
     static volatile long    queuePositionTargetSteps[4];        // Target position in steps.
     static volatile long    queuePositionLastSteps[4];          // Position in steps from origin.
@@ -1237,8 +1241,11 @@ public:
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
     static void performZCompensation( void );
-    static void disableCMPnow( bool wait = false );
+#if FEATURE_SENSIBLE_PRESSURE
+    static void enableSenseOffsetnow( void );
+#endif // FEATURE_SENSIBLE_PRESSURE
     static void enableCMPnow( void );
+    static void disableCMPnow( bool wait = false );
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
 private:

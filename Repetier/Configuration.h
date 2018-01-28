@@ -970,4 +970,7 @@ You can activate this to 1 and connect some Button. If you connect ground to pul
 /** \brief This is some testing function for reading the stepper drivers status bits while operation */
 #define FEATURE_READ_STEPPER_STATUS         0
 
+/** \brief Automatic Startline */
+#define FEATURE_STARTLINE                   1
+
 #endif // CONFIGURATION_H
