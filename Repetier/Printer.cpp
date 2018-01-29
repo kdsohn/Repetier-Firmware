@@ -1395,6 +1395,10 @@ void Printer::enableCMPnow( void ){
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
     }
 
+    if( !Printer::areAxisHomed() ){
+        return; // false;
+    }
+                    
     // enable the z compensation
     if( g_ZCompensationMatrix[0][0] != EEPROM_FORMAT )  return; // false;
 

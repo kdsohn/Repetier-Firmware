@@ -6853,6 +6853,7 @@ void continuePrint( void )
     g_uStartOfIdle    = 0;
     UI_STATUS_UPD( UI_TEXT_CONTINUING );
     BEEP_CONTINUE
+    uid.executeAction(UI_ACTION_TOP_MENU);
 #if FEATURE_MILLING_MODE
     bool nPrintingMode = ( Printer::operatingMode == OPERATING_MODE_PRINT );
 #else
@@ -7215,53 +7216,31 @@ void processCommand( GCode* pCommand )
                 {
                     if( Printer::doHeatBedZCompensation )
                     {
-                        if( Printer::debugInfo() )
-                        {
-                            Com::printFLN( PSTR( "M3001: z compensation is enabled already" ) );
-                        }
+                        Com::printFLN( PSTR( "M3001: z compensation is enabled already" ) );
+                        break;
+                    }
+    
+                    if( g_ZCompensationMatrix[0][0] != EEPROM_FORMAT )
+                    {
+                        // we try to load the z compensation matrix before its first usage because this can take some time
+                        prepareZCompensation();
+                    }
+                    
+                    if( g_ZCompensationMatrix[0][0] != EEPROM_FORMAT )
+                    {
+                        Com::printF( PSTR( "M3001: z compensation can not be enabled. Heat bed compensation matrix not valid ( " ), g_ZCompensationMatrix[0][0] );
+                        Com::printF( PSTR( " / " ), EEPROM_FORMAT );
+                        Com::printFLN( PSTR( " )" ) );
                         break;
                     }
 
-                    if( Printer::areAxisHomed() )
-                    {
-                        if( g_ZCompensationMatrix[0][0] != EEPROM_FORMAT )
-                        {
-                            // we load the z compensation matrix before its first usage because this can take some time
-                            prepareZCompensation();
-                        }
-
-                        if( g_ZCompensationMatrix[0][0] == EEPROM_FORMAT )
-                        {
-                            // enable the z compensation only in case we have valid compensation values
-                            if( Printer::debugInfo() )
-                            {
-                                Com::printFLN( PSTR( "M3001: enabling z compensation" ) );
-                            }
-                            Commands::waitUntilEndOfAllMoves();
-                            queueTask( TASK_ENABLE_Z_COMPENSATION );
-                            Commands::waitUntilEndOfAllMoves();
-                        }
-                        else
-                        {
-                            if( Printer::debugErrors() )
-                            {
-                                Com::printF( PSTR( "M3001: z compensation can not be enabled. Heat bed compensation matrix not valid ( " ), g_ZCompensationMatrix[0][0] );
-                                Com::printF( PSTR( " / " ), EEPROM_FORMAT );
-                                Com::printFLN( PSTR( " )" ) );
-                            }
-
-                            showError( (void*)ui_text_z_compensation, (void*)ui_text_invalid_matrix );
-                        }
-                    }
-                    else
-                    {
-                        if( Printer::debugErrors() )
-                        {
-                            Com::printFLN( PSTR( "M3001: z compensation can not be enabled. Home position is unknown" ) );
-                        }
-
+                    if( !Printer::areAxisHomed() ){
+                        Com::printFLN( PSTR( "M3001: z compensation can not be enabled. Home position is unknown" ) );
                         showError( (void*)ui_text_z_compensation, (void*)ui_text_home_unknown );
+                        break;
                     }
+
+                    queueTask( TASK_ENABLE_Z_COMPENSATION );
                 }
                 break;
             }
@@ -10741,6 +10720,7 @@ void processCommand( GCode* pCommand )
 #if FEATURE_STARTLINE
             case 3912:
             {
+                Commands::waitUntilEndOfAllMoves();
                 if( Printer::areAxisHomed() && Printer::doHeatBedZCompensation ){
 
                     Com::printFLN( PSTR( "Auto-Startmade" ) );

@@ -5608,12 +5608,12 @@ void UIDisplay::slowAction()
 #endif // UI_HAS_KEYS==1
 
 #if UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER
-    if(menuLevel>0 && g_nAutoReturnTime && g_nAutoReturnTime<time)
+    if(menuLevel > 0 && g_nAutoReturnTime && g_nAutoReturnTime<time)
     {
         if( menu[menuLevel] != &ui_menu_message || g_nAutoReturnMessage )
         {
             lastSwitch = time;
-            menuLevel=0;
+            menuLevel = 0;
             activeAction = 0;
             g_nAutoReturnMessage = false;
         }
@@ -5621,27 +5621,25 @@ void UIDisplay::slowAction()
     }
 #endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER
 
-    if(menuLevel==0 && time>4000)
+    if(menuLevel == 0 && time > 4000)
     {
-        if(time-lastSwitch>UI_PAGES_DURATION)
+        if(time - lastSwitch > UI_PAGES_DURATION)
         {
             lastSwitch = time;
-
 #if !defined(UI_DISABLE_AUTO_PAGESWITCH) || !UI_DISABLE_AUTO_PAGESWITCH
             menuPos[0]++;
-            if(menuPos[0]>=UI_NUM_PAGES)
-                menuPos[0]=0;
+            if(menuPos[0] >= UI_NUM_PAGES)
+                menuPos[0] = 0;
 #endif // !defined(UI_DISABLE_AUTO_PAGESWITCH) || !UI_DISABLE_AUTO_PAGESWITCH
-
             refresh = 1;
         }
-        else if(time-lastRefresh>=1000) refresh=1;
+        else if(time - lastRefresh >= 1000) refresh=1;
     }
-    else if(time-lastRefresh>=800)
+    else if(time - lastRefresh >= 800)
     {
-        UIMenu *men = (UIMenu*)menu[menuLevel];
-        uint8_t mtype = pgm_read_byte((void*)&(men->menuType));
-        (void)mtype; //ignore unused error Nibbels
+        //UIMenu *men = (UIMenu*)menu[menuLevel];
+        //uint8_t mtype = pgm_read_byte((void*)&(men->menuType));
+        //(void)mtype; //ignore unused error Nibbels -> ignore all by repetier  https://github.com/repetier/Repetier-Firmware/commit/57c21814d8f8946852fa27af2a7c31831b493ec1
         refresh=1;
     }
 
