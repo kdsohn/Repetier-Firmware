@@ -446,7 +446,6 @@ public:
     void finishAction(int action);
     void slowAction();
     void fastAction();
-    void mediumAction();
     void showMessage(bool refresh);
     void pushMenu(void *men,bool refresh);
     void adjustMenuPos();
@@ -639,7 +638,6 @@ void ui_check_slow_keys(int &action) {
 
 #define UI_INITIALIZE uid.initialize();
 #define UI_FAST if(pwm_count_heater & 4) {uid.fastAction();}
-#define UI_MEDIUM uid.mediumAction();
 #define UI_SLOW uid.slowAction();
 #define UI_STATUS(status) uid.setStatusP(PSTR(status));
 #define UI_STATUS_UPD(status) {uid.setStatusP(PSTR(status));uid.refreshPage();}
@@ -653,7 +651,6 @@ void ui_check_slow_keys(int &action) {
 #else
 #define UI_INITIALIZE {}
 #define UI_FAST {}
-#define UI_MEDIUM {}
 #define UI_SLOW {}
 #define UI_STATUS(status) {}
 #define UI_STATUS_RAM(status) {}

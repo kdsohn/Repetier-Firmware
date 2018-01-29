@@ -592,13 +592,8 @@ void UIDisplay::printRow(uint8_t r,char *txt,char *txt2,uint8_t changeAtCol)
     lcdStopWrite();
 #endif // UI_DISPLAY_TYPE==3
 
-#if UI_HAS_KEYS==1 && UI_HAS_I2C_ENCODER>0
-    ui_check_slow_encoder();
-#endif // UI_HAS_KEYS==1 && UI_HAS_I2C_ENCODER>0
-
 } // printRow
 #endif // UI_DISPLAY_TYPE<4
-
 
 char printCols[MAX_COLS+1];
 UIDisplay::UIDisplay()
@@ -5516,21 +5511,10 @@ void UIDisplay::executeAction(int action)
 
 } // executeAction
 
-
-void UIDisplay::mediumAction()
-{
-#if UI_HAS_I2C_ENCODER>0
-    ui_check_slow_encoder();
-#endif // UI_HAS_I2C_ENCODER>0
-
-} // mediumAction
-
-
 void UIDisplay::slowAction()
 {
     millis_t  time    = HAL::timeInMilliseconds();
     uint8_t   refresh = 0;
-
 
 #if UI_HAS_KEYS==1
     // Update key buffer

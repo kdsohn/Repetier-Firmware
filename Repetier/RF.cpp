@@ -2784,8 +2784,7 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
         {
             allReached = true;
             Commands::printTemperatures();
-            Commands::checkForPeriodicalActions();
-            GCode::keepAlive( WaitHeater );
+            Commands::checkForPeriodicalActions( WaitHeater );
 
             for( uint8_t h=0; h<NUM_TEMPERATURE_LOOPS; h++ )
             {
@@ -2914,8 +2913,7 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
             {
                 allReached = true;
                 Commands::printTemperatures();
-                Commands::checkForPeriodicalActions();
-                GCode::keepAlive( WaitHeater );
+                Commands::checkForPeriodicalActions( WaitHeater );
 
                 for( uint8_t h=0; h<NUM_TEMPERATURE_LOOPS; h++ )
                 {
@@ -4674,7 +4672,7 @@ short readIdlePressure( short* pnIdlePressure )
         // wait some extra amount of time in case our results were not constant enough
         HAL::delayMilliseconds( 500 );
         
-        Commands::checkForPeriodicalActions(); 
+        Commands::checkForPeriodicalActions( Processing ); 
     }
 
     if( Printer::debugInfo() )
@@ -4767,9 +4765,8 @@ short readAveragePressure( short* pnAveragePressure )
         }
     
         // wait some extra amount of time in case our results were not constant enough
-        HAL::delayMilliseconds( 100 );
-        
-        Commands::checkForPeriodicalActions(); 
+        HAL::delayMilliseconds( 100 );        
+        Commands::checkForPeriodicalActions( Processing );
     }
 
     if( Printer::debugErrors() )
@@ -4794,8 +4791,7 @@ void moveZDownFast()
 
     moveZ( g_nScanHeatBedDownFastSteps );
 
-    Commands::checkForPeriodicalActions(); 
-    GCode::keepAlive( Processing );
+    Commands::checkForPeriodicalActions( Processing ); 
 
     if( readAveragePressure( &nTempPressure ) )
     {
@@ -4841,9 +4837,7 @@ void moveZDownSlow(uint8_t acuteness)
 
         moveZ( (g_nScanHeatBedDownSlowSteps/acuteness ? g_nScanHeatBedDownSlowSteps/acuteness : 1) );
 
-        Commands::checkForPeriodicalActions(); 
-        GCode::keepAlive( Processing );
-        //runStandardTasks();
+        Commands::checkForPeriodicalActions( Processing ); 
 
         if( g_abortZScan )
         {
@@ -4903,8 +4897,7 @@ void moveZUpFast()
 
         moveZ( g_nScanHeatBedUpFastSteps );
 
-        Commands::checkForPeriodicalActions(); 
-        GCode::keepAlive( Processing );
+        Commands::checkForPeriodicalActions( Processing ); 
 
         if( g_abortZScan )
         {
@@ -4948,8 +4941,7 @@ void moveZUpSlow( short* pnContactPressure, uint8_t acuteness )
 
         moveZ( (g_nScanHeatBedUpSlowSteps / acuteness ? g_nScanHeatBedUpSlowSteps / acuteness : 1 ) );
 
-        Commands::checkForPeriodicalActions(); 
-        GCode::keepAlive( Processing );
+        Commands::checkForPeriodicalActions( Processing ); 
 
         if( g_abortZScan )
         {
@@ -5895,7 +5887,7 @@ void clearExternalEEPROM( void )
     for( i=0; i<uMax; i++ )
     {
         writeByte24C256( I2C_ADDRESS_EXTERNAL_EEPROM, i, 0 );
-        Commands::checkForPeriodicalActions();
+        Commands::checkForPeriodicalActions( Processing );
 
         if( Printer::debugInfo() )
         {
@@ -5907,7 +5899,6 @@ void clearExternalEEPROM( void )
                 uLast = uTemp;
             }
         }
-        GCode::keepAlive( Processing );
     }
 
     if( Printer::debugInfo() )
@@ -6621,8 +6612,7 @@ void outputObject( void )
 
             uStart = HAL::timeInMilliseconds();
         }
-        Commands::checkForPeriodicalActions();
-        UI_MEDIUM;
+        Commands::checkForPeriodicalActions( Processing );
     }
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS && DEBUG_CONFIGURABLE_Z_ENDSTOPS
 
@@ -6762,9 +6752,7 @@ inline void waitforPauseStatus_fromButton(char Status){
     // performQueueMove sees that pauseStatus is altered and switches to strategy + calculates direct move which has to end later + sets pause status to PAUSE_STATUS_PAUSED
     while( g_pauseStatus != PAUSE_STATUS_PAUSED || PrintLine::direct.stepsRemaining ) //warte auf queue befehlsende
     {
-        HAL::delayMilliseconds( 1 );
-        Commands::checkForPeriodicalActions();
-        GCode::keepAlive( Paused );
+        Commands::checkForPeriodicalActions( Paused );
     }
 }
 
@@ -6947,9 +6935,7 @@ void continuePrint( void )
             // the printing won't continue in case there is nothing else to do
             break;
         }
-        HAL::delayMilliseconds( 1 );
-        Commands::checkForPeriodicalActions();
-        GCode::keepAlive( Paused );
+        Commands::checkForPeriodicalActions( Paused );
 
         if( (HAL::timeInMilliseconds() - startTime) > 5000 )
         {
@@ -7154,9 +7140,7 @@ void waitUntilContinue( void )
     while ( g_pauseStatus != PAUSE_STATUS_NONE )
     {
         GCode::readFromSerial();
-        Commands::checkForPeriodicalActions();
-        GCode::keepAlive( Paused );
-        UI_MEDIUM;
+        Commands::checkForPeriodicalActions( Paused );
     }
 } // waitUntilContinue
 #endif // FEATURE_PAUSE_PRINTING
@@ -10964,12 +10948,7 @@ void processCommand( GCode* pCommand )
 
 void queueTask( char task )
 {
-    while( PrintLine::linesCount >= MOVE_CACHE_SIZE )
-    {
-        // wait for a free entry in movement cache
-        Commands::checkForPeriodicalActions();
-    }
-  
+    PrintLine::waitForXFreeLines(1);  
     PrintLine::queueTask( task );
     return;
 } // queueTask

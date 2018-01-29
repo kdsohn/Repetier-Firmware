@@ -404,7 +404,6 @@ void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, 
         //OUT_P_F_LN("Slow ",time_for_move);
     }
     timeInTicks = timeForMove;
-    UI_MEDIUM;                      // do check encoder
     // Compute the solwest allowed interval (ticks/step), so maximum feedrate is not violated
     int32_t limitInterval0;
     int32_t limitInterval = limitInterval0 = timeForMove/stepsRemaining; // until not violated by other constraints it is your target speed
@@ -533,7 +532,6 @@ void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, 
     }
  #endif // USE_ADVANCE
 
-    UI_MEDIUM;          // do check encoder
     updateTrapezoids();
     // how much steps on primary axis do we need to reach target feedrate
     // p->plateauSteps = (long) (((float)p->acceleration *0.5f / slowestAxisPlateauTimeRepro + p->vMin) *1.01f/slowestAxisPlateauTimeRepro);
@@ -562,7 +560,6 @@ void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize,
     float   timeForMove = (float)(F_CPU)*distance / (isXOrYMove() ? DIRECT_FEEDRATE_XY : isZMove() ? DIRECT_FEEDRATE_Z : DIRECT_FEEDRATE_E);    // time is in ticks
 
     timeInTicks = timeForMove;
-    UI_MEDIUM;                      // do check encoder
 
     // Compute the solwest allowed interval (ticks/step), so maximum feedrate is not violated
     long limitInterval = timeForMove/stepsRemaining; // until not violated by other constraints it is your target speed
@@ -722,7 +719,6 @@ void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize,
     }
  #endif // USE_ADVANCE
 
-    UI_MEDIUM;          // do check encoder
     updateTrapezoids();
     // how much steps on primary axis do we need to reach target feedrate
     // p->plateauSteps = (long) (((float)p->acceleration *0.5f / slowestAxisPlateauTimeRepro + p->vMin) *1.01f/slowestAxisPlateauTimeRepro);
@@ -1144,7 +1140,7 @@ void PrintLine::waitForXFreeLines(uint8_t b)
     while(linesCount + b > MOVE_CACHE_SIZE)     // wait for a free entry in movement cache
     {
         //GCode::readFromSerial();
-        Commands::checkForPeriodicalActions();
+        Commands::checkForPeriodicalActions( Processing );
     }
 
 } // waitForXFreeLines
@@ -1263,9 +1259,7 @@ void PrintLine::arc(float *position, float *target, float *offset, float radius,
     {
         if((count & 4) == 0)
         {
-            //GCode::readFromSerial();
-            Commands::checkForPeriodicalActions();
-            UI_MEDIUM; // do check encoder
+            Commands::checkForPeriodicalActions( Processing );
         }
 
         if (count < N_ARC_CORRECTION)  //25 pieces

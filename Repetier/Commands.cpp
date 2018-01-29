@@ -36,7 +36,6 @@ void Commands::commandLoop()
 #endif
     GCode::readFromSerial();
     GCode *code = GCode::peekCurrentCommand();
-    UI_MEDIUM; // do check encoder
     if(code)
     {
 #if SDSUPPORT
@@ -59,10 +58,14 @@ void Commands::commandLoop()
 } // commandLoop
 
 
-void Commands::checkForPeriodicalActions()
+void Commands::checkForPeriodicalActions(enum FirmwareState state)
 {
     bool buttonactive = ((HAL::timeInMilliseconds() - uid.lastButtonStart < 15000) ? true : false);
-
+    
+    if( state != NotBusy ){
+        GCode::keepAlive( state );
+    }
+    
     if(execute10msPeriodical){ //set by PWM-Timer
       execute10msPeriodical=0;
 
@@ -72,8 +75,8 @@ void Commands::checkForPeriodicalActions()
     }
 
     if(execute16msPeriodical){ //set by internal Watchdog-Timer
-       execute16msPeriodical = 0;
-       if(buttonactive) UI_SLOW;
+      execute16msPeriodical = 0;
+      if(buttonactive) UI_SLOW;
 
     }
 
@@ -115,9 +118,7 @@ void Commands::waitUntilEndOfAllMoves()
 
     while( bWait )
     {
-        Commands::checkForPeriodicalActions();
-        GCode::keepAlive( Processing );
-        UI_MEDIUM;
+        Commands::checkForPeriodicalActions( Processing );
 
         bWait = 0;
         if( PrintLine::hasLines() )     bWait = 1;
@@ -149,7 +150,6 @@ void Commands::waitUntilEndOfAllBuffers(unsigned int maxcodes)
     {
         //GCode::readFromSerial();
         code = GCode::peekCurrentCommand();
-        UI_MEDIUM; // do check encoder
         if(code)
         {
 #if SDSUPPORT
@@ -178,8 +178,7 @@ void Commands::waitUntilEndOfAllBuffers(unsigned int maxcodes)
                 break;
             }
         }
-        Commands::checkForPeriodicalActions();
-        UI_MEDIUM;
+        Commands::checkForPeriodicalActions( Processing );
     }
 
 } // waitUntilEndOfAllBuffers
@@ -194,10 +193,8 @@ void Commands::waitUntilEndOfZOS()
     while( bWait )
     {
         GCode::readFromSerial();
-        Commands::checkForPeriodicalActions();
-        GCode::keepAlive( Processing );
-        UI_MEDIUM;
-        
+        Commands::checkForPeriodicalActions( Processing );
+
         bWait = 0;
         if( g_ZOSScanStatus )       bWait = 1;
     }
@@ -690,8 +687,7 @@ void Commands::executeGCode(GCode *com)
 
             while((uint32_t)(codenum-HAL::timeInMilliseconds())  < 2000000000 )
             {
-                GCode::keepAlive( Processing );
-                Commands::checkForPeriodicalActions();
+                Commands::checkForPeriodicalActions( Processing );
             }
             break;
         }
@@ -1117,8 +1113,7 @@ void Commands::executeGCode(GCode *com)
                     {
                         currentTime = HAL::timeInMilliseconds();
                         Commands::printTemperatures();
-                        Commands::checkForPeriodicalActions();
-                        GCode::keepAlive( WaitHeater );
+                        Commands::checkForPeriodicalActions( WaitHeater );
 #if RETRACT_DURING_HEATUP
                         if (actExtruder == Extruder::current && actExtruder->waitRetractUnits > 0 && !retracted && dirRising && actExtruder->tempControl.currentTemperatureC > actExtruder->waitRetractTemperature)
                         {
@@ -1193,8 +1188,7 @@ void Commands::executeGCode(GCode *com)
                     while(heatedBedController.currentTemperatureC+TEMP_TOLERANCE < heatedBedController.targetTemperatureC)
                     {
                         Commands::printTemperatures();
-                        Commands::checkForPeriodicalActions();
-                        GCode::keepAlive( WaitHeater );
+                        Commands::checkForPeriodicalActions( WaitHeater );
                     }
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
@@ -1218,8 +1212,7 @@ void Commands::executeGCode(GCode *com)
                         {
                             allReached = true;
                             Commands::printTemperatures();
-                            Commands::checkForPeriodicalActions();
-                            GCode::keepAlive( WaitHeater );
+                            Commands::checkForPeriodicalActions( WaitHeater );
 
                             for( uint8_t h=0; h<NUM_TEMPERATURE_LOOPS; h++ )
                             {
