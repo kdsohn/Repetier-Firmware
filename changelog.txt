@@ -1,6 +1,9 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.23.Mod (2018-01-31) 
+- Strange behaviour of ZOS Scan: Debugging and one idea for a fix: Limit going up to retry if digits drive away on cold printers with filament warming up.
+
 V RF.01.38.22.Mod (2018-01-29) 
 - Extruder pause delay changed from 30 to 60 s
 - some cleanup 

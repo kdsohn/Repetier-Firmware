@@ -2237,6 +2237,8 @@ void searchZOScan( void )
                 Com::printFLN( PSTR( "Approaching HeatBed" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 // move to the surface
+                long oldZsteps = g_nZScanZPosition;
+
                 moveZUpFast(); // ------
                 HAL::delayMilliseconds( g_nScanSlowStepDelay );
 
@@ -2245,23 +2247,30 @@ void searchZOScan( void )
                 if( readAveragePressure( &nTempPressure ) ){
                     if(g_scanRetries > 0) g_abortZScan = 0; //funktion soll wenn retrys übrig sind nie abbrechen, das g_abortZScan kommt aus readAveragePressure() -> hat einfluss auf HBS-Abort!!
                     g_retryZScan = 1;
-                } 
-                
-                // move 2 intervals back away from the surface
-                moveZ( 2*abs(g_nScanHeatBedUpFastSteps) ); // ++
+                }
+
+                long didZsteps = abs(g_nZScanZPosition - oldZsteps);
+                Com::printFLN( PSTR( "FastUp:" ), didZsteps );
+
+                // move 2 intervals (but not more that you went down!) back away from the surface
+                long revertZsteps = (didZsteps > 2*abs(g_nScanHeatBedUpFastSteps) ? 2*abs(g_nScanHeatBedUpFastSteps) : didZsteps );
+                Com::printFLN( PSTR( "RevertDown:" ), revertZsteps );
+                moveZ( revertZsteps ); // ++
 
                 HAL::delayMilliseconds( g_nScanSlowStepDelay );
-
+                //rescan force and look if you reverted the contact pressure to the old state:
                 short   nTempPressureUp;
                 if( readAveragePressure( &nTempPressureUp ) ){
                     if(g_scanRetries > 0) g_abortZScan = 0; //funktion soll wenn retrys übrig sind nie abbrechen, das g_abortZScan kommt aus readAveragePressure() -> hat einfluss auf HBS-Abort!!
                     g_retryZScan = 1;
                 } 
-
+                //check if the old pressure state is reached again, retry if not. If not you measured some melted plastic or your DMS is driving away.
                 if(abs(nTempPressureUp - nTempPressure) < SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA){
                     if(g_scanRetries > 0) g_abortZScan = 0; //funktion soll wenn retrys übrig sind nie abbrechen, das g_abortZScan kommt aus readAveragePressure() -> hat einfluss auf HBS-Abort!!
                     g_retryZScan = 1;
                 }
+                Com::printF( PSTR( "RevertPdelta:" ), abs(nTempPressureUp - nTempPressure) );
+                Com::printFLN( PSTR( "/" ), SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA );
 
                 if(g_scanRetries > 0 && g_retryZScan){
                     g_retryZScan = 0;
@@ -2297,16 +2306,28 @@ void searchZOScan( void )
                       Com::printF( PSTR( " " ), (i+1) );
                       Com::printFLN( PSTR( "x" ) );
 #endif // DEBUG_HEAT_BED_SCAN
-
+                      long Z = g_nZScanZPosition;
                       // move from moveZUpFast() down again -> für neuen anlauf
                       moveZ( 2*abs(g_nScanHeatBedUpSlowSteps)/acuteness ); // +++..
+                      
+                      Com::printFLN( PSTR( "DownFine:" ), (g_nZScanZPosition-Z) );
+                      Z = g_nZScanZPosition;
+                      
                       HAL::delayMilliseconds( g_nScanSlowStepDelay );
 
                       // move slowly to the surface
                       short nTempPressure;
                       
+                      
                       moveZUpSlow( &nTempPressure, acuteness ); // -
+                      
+                      Com::printFLN( PSTR( "UpFine:" ), (g_nZScanZPosition-Z) );
+                      Z = g_nZScanZPosition;
+                      
                       moveZDownSlow(acuteness*4); // +
+                      
+                      Com::printFLN( PSTR( "DownFine:" ), (g_nZScanZPosition-Z) );
+                      Z = g_nZScanZPosition;
                       
                       acuteness++;
                       if(g_scanRetries > 0 && g_retryZScan){
