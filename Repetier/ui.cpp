@@ -2296,7 +2296,7 @@ void UIDisplay::parse(char *txt,bool ram)
 
 void UIDisplay::setStatusP(PGM_P txt,bool error)
 {
-    if( locked )                    
+    if( locked )
     {
         // we shall not update the display
         return;
@@ -4613,10 +4613,8 @@ void UIDisplay::executeAction(int action)
             }
             case UI_ACTION_SET_XY_ORIGIN:
             {
-                if( Printer::setOrigin(-Printer::queuePositionLastMM[X_AXIS],-Printer::queuePositionLastMM[Y_AXIS],Printer::originOffsetMM[Z_AXIS]) )
-                {
-                    BEEP_ACCEPT_SET_POSITION
-                }
+                Printer::setOrigin(-Printer::queuePositionLastMM[X_AXIS],-Printer::queuePositionLastMM[Y_AXIS],Printer::originOffsetMM[Z_AXIS]);
+                BEEP_ACCEPT_SET_POSITION
                 break;
             }
             case UI_ACTION_DEBUG_ECHO:

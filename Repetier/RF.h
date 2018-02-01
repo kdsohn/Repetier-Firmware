@@ -895,7 +895,6 @@ extern void parkPrinter( void );
 #endif // FEATURE_PARK
 
 #if FEATURE_PAUSE_PRINTING
-
 extern bool processingDirectMove();
 extern void checkPauseStatus_fromTask();
 extern void waitforPauseStatus_fromButton();
@@ -913,9 +912,6 @@ extern void determineZPausePositionForPrint( void );
 
 // determineZPausePositionForMill()
 extern void determineZPausePositionForMill( void );
-
-// waitUntilContinue
-extern void waitUntilContinue( void );
 #endif // FEATURE_PAUSE_PRINTING
 
 // setExtruderCurrent()

@@ -1214,7 +1214,7 @@ public:
     static void moveTo(float x,float y,float z,float e,float feedrate);
     static void moveToReal(float x,float y,float z,float e,float feedrate);
     static void homeAxis(bool xaxis,bool yaxis,bool zaxis); /// Home axis
-    static uint8_t setOrigin(float xOff,float yOff,float zOff);
+    static void setOrigin(float xOff,float yOff,float zOff);
     static bool isPositionAllowed(float x,float y,float z);
 
     static INLINE int getFanSpeed(bool percent = false)

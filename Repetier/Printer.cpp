@@ -508,33 +508,35 @@ void Printer::moveToReal(float x,float y,float z,float e,float feedrate)
 } // moveToReal
 
 
-uint8_t Printer::setOrigin(float xOff,float yOff,float zOff)
+void Printer::setOrigin(float xOff,float yOff,float zOff)
 {
+    Com::printF( PSTR("setOrigin():") );
+    if(isAxisHomed(X_AXIS)){
+        originOffsetMM[X_AXIS] = xOff;
+        Com::printF( PSTR("x="), originOffsetMM[X_AXIS] );
+    }else{
+        Com::printF( PSTR("x-fail") );
+    }
+    if(isAxisHomed(Y_AXIS)){
+        originOffsetMM[Y_AXIS] = yOff;
+        Com::printF( PSTR(" y="), originOffsetMM[Y_AXIS] );
+    }else{
+        Com::printF( PSTR(" y-fail") );
+    }
+    if(isAxisHomed(Z_AXIS)){
+        originOffsetMM[Z_AXIS] = zOff;
+        Com::printF( PSTR(" z="), originOffsetMM[Z_AXIS] );
+    }else{
+        Com::printF( PSTR(" z-fail") );
+    }
+    Com::println();
+    
     if( !areAxisHomed() )
     {
-        if( debugErrors() )
-        {
-            // we can not set the origin when we do not know the home position
-            Com::printFLN( PSTR("setOrigin(): home position is unknown") );
-        }
-
+        // we can not set the origin when we do not know the home position
+        Com::printFLN( PSTR("WARNING: home positions were unknown and ignored!") );
         showError( (void*)ui_text_set_origin, (void*)ui_text_home_unknown );
-        return 0;
     }
-
-    originOffsetMM[X_AXIS] = xOff;
-    originOffsetMM[Y_AXIS] = yOff;
-    originOffsetMM[Z_AXIS] = zOff;
-
-    if( debugInfo() )
-    {
-        // output the new origin offsets
-        Com::printF( PSTR("setOrigin(): x="), originOffsetMM[X_AXIS] );
-        Com::printF( PSTR("; y="), originOffsetMM[Y_AXIS] );
-        Com::printFLN( PSTR("; z="), originOffsetMM[Z_AXIS] );
-    }
-    return 1;
-
 } // setOrigin
 
 

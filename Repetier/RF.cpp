@@ -7144,26 +7144,6 @@ void determineZPausePositionForMill( void )
     return;
 
 } // determineZPausePositionForMill
-
-void waitUntilContinue( void ) 
-//Nibbels: Verstehe ich nicht! Man sollte Pause und Continue nutzen?? Aber warum das? Wegen der Gcode-Queue? Aber Pause hält auch die Queue an. .... 
-//TODO-> 03.09.2017 Das ist ein Warte-GCode 3071 der aufs Auflösen der Pause wartet, aber auch andere GCodes blockt. Kann mir nur gerade keine Anwendung dafür ausdenken.
-//29_12_2017 -> Das ist fürs Fräsen -> warten auf anschalten des millers
-{
-    if( g_pauseStatus == PAUSE_STATUS_NONE )
-    {
-        // we are not paused at the moment
-        return;
-    }
-    
-    UI_STATUS_UPD( UI_TEXT_START_MILL );
-    
-    while ( g_pauseStatus != PAUSE_STATUS_NONE )
-    {
-        GCode::readFromSerial();
-        Commands::checkForPeriodicalActions( Paused );
-    }
-} // waitUntilContinue
 #endif // FEATURE_PAUSE_PRINTING
 
 
@@ -8275,42 +8255,33 @@ void processCommand( GCode* pCommand )
 #if FEATURE_PAUSE_PRINTING
             case 3070: // M3070 [S] - pause the print as if the "Pause" button would have been pressed
             {
-                if( pCommand->hasS() )
-                {
-                    // test and take over the specified value
-                    nTemp = pCommand->S;
-                    if( nTemp < 1 )     nTemp = 1;
-                    if( nTemp > 2 )     nTemp = 2;
-
-                    if( nTemp == 1 )
-                    {
-                        // we shall pause the printing
-                        queueTask( TASK_PAUSE_PRINT );
-                    }
-                    if( nTemp == 2 )
-                    {
-                        // we shall pause the printing and we shall move away
-                        queueTask( TASK_PAUSE_PRINT_AND_MOVE );
-                    }
-                }
-                //else if( pCommand->hasR() ){
-                //    continuePrint(); //doesnt work with this version of gcode processing while paused.
-                //}
-                else
-                {
-                    queueTask( TASK_PAUSE_PRINT );
-                }
-                //dont want this in interrupt - maybe shown to early but pause will come for sure!
+                //tell octoprint and repetier-server / -host to stop sending because of pause.
                 Com::printFLN( PSTR("RequestPause:") ); //repetier
                 Com::printFLN( PSTR( "// action:pause" ) ); //octoprint
-                UI_STATUS_UPD( UI_TEXT_PAUSED );
-                uid.refreshPage();
+                //put pause task into MOVE_CACHE
+                if( pCommand->hasS() && pCommand->S > 1)
+                {
+                    // we shall pause the printing and we shall move away
+                    queueTask( TASK_PAUSE_PRINT_AND_MOVE );
+                }
+                else
+                {
+                    // we shall pause within print queue and stay where we are
+                    queueTask( TASK_PAUSE_PRINT );
+                }
+                //tell menu that we are now in pause mode
                 Printer::setMenuMode( MENU_MODE_PAUSED, true );
-                break;
-            }
-            case 3071: // M3071 - wait until the print has been continued via the "Continue" button
-            {
-                waitUntilContinue();
+                //stop filling up MOVE_CACHE any further, process pending moves 
+                Commands::waitUntilEndOfAllMoves();
+                //say "Pause" when reaching TASK_PAUSE_PRINT in MOVE_CACHE:
+                UI_STATUS_UPD( UI_TEXT_PAUSED ); //override this with "M3117 TEXT" if needed!
+                uid.refreshPage();
+                //now just wait for the user to press continue
+                while ( g_pauseStatus != PAUSE_STATUS_NONE )
+                {
+                    GCode::readFromSerial();
+                    Commands::checkForPeriodicalActions( Paused );
+                }
                 break;
             }
 #endif // FEATURE_PAUSE_PRINTING
