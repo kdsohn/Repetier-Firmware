@@ -1,6 +1,9 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.25.Mod (2018-02-04) 
+- only adjust print speed according to Digit-Flow-CMP setting if the move is for Gcode queue
+
 V RF.01.38.24.Mod (2018-02-01) 
 - GCODE-Pause: automatically wait for queue position of "pause" and block further Gcodes until continue was pressed.
 - Tweaking setOrigin (Origin of gcode coordinates / G92 XYZ) so that it can origin axes that are homed without the need of having everything homed.

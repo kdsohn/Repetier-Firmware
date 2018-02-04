@@ -2188,7 +2188,7 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
     } // line finished
 
 #if FEATURE_DIGIT_FLOW_COMPENSATION
-    if(Printer::interval_mod){
+    if(forQueue && Printer::interval_mod){
         //if we have to add some time because we need live adjusting then add it. But we should not calculate with * and / here so we have to prepare some delay. The preparation might be inprecise. So check it.
         //min 50% speed -> max 200% interval.
         interval *= Printer::interval_mod; //1024 == 100%
