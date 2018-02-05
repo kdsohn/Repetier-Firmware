@@ -415,7 +415,7 @@ short readStrainGauge( unsigned char uAddress ) //readStrainGauge dauert etwas u
         Printer::interval_mod = 0; //0 = off / 1024 = off but 0 saves calc in interrupt.
     } else {
         float speed_feed_modifier = 1024.0f / g_nDigitFlowCompensation_feedmulti; //1024 = 100% -> 234% speed, heißt interval kürzer. 56% speed heißt interval länger.
-        Printer::interval_mod = (unsigned long)speed_feed_modifier;
+        Printer::interval_mod = (unsigned short)speed_feed_modifier;
     }
  #endif // FEATURE_DIGIT_FLOW_COMPENSATION
 #endif // FEATURE_DIGIT_Z_COMPENSATION
@@ -10681,7 +10681,7 @@ void processCommand( GCode* pCommand )
                 if ( pCommand->hasF() ){
                     int8_t f = static_cast<int8_t>(pCommand->F);
                     if(f > 99) f = 99;
-                    if(f < -99) f = -99;
+                    if(f < -90) f = -90;
                     g_nDigitFlowCompensation_speed_intense = f;
                 }
 
@@ -10742,10 +10742,10 @@ void processCommand( GCode* pCommand )
                         if(Lines > 5) Lines = 5;
                     }
                     
-                    //M3411 S P F-95:
+                    //bezogen auf : M3411 S P F-90 -> Flow CMP Speed einstellungen werden kurz substituiert und dann resubstituiert
                     g_nDigitFlowCompensation_Fmin = min;
                     g_nDigitFlowCompensation_Fmax = max;
-                    g_nDigitFlowCompensation_speed_intense = -95;
+                    g_nDigitFlowCompensation_speed_intense = -90;
                     //M82:
                     Printer::relativeExtruderCoordinateMode = false;
                     //G92 E0:

@@ -1390,6 +1390,15 @@ void UIDisplay::parse(char *txt,bool ram)
                     ,3);
                     break;
                 }
+                if(c2=='v')                                                                             // %ov : Active Speed
+                {
+                    addFloat(Printer::v
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_feedmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+                    ,3,2);
+                    break;
+                }
                 if(c2=='p')                                                                             // %op : Is single double or quadstepping?
                 {
                     switch(Printer::stepsPerTimerCall){
@@ -2066,7 +2075,7 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 else if(c2=='P')                                                                        // %LP : ECMP %
                 {
-                    addFloat(Printer::compensatedPositionOverPercE,2,4);
+                    addFloat(Printer::compensatedPositionOverPercE*100,1,2);
                     break;
                 }
                 else if(c2=='m')                                                                        // %Lm : g_minZCompensationSteps
@@ -2076,7 +2085,7 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 else if(c2=='M')                                                                        // %LM : g_maxZCompensationSteps
                 {
-                    addFloat(float(g_maxZCompensationSteps*Printer::invAxisStepsPerMM[Z_AXIS]),1,2);
+                    addFloat(float(g_maxZCompensationSteps*Printer::invAxisStepsPerMM[Z_AXIS]),2,2);
                     break;
                 }
                 break;
@@ -4242,7 +4251,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
         case UI_ACTION_FLOW_DV:
         {
-            INCREMENT_MIN_MAX(g_nDigitFlowCompensation_speed_intense,1,-99,99);
+            INCREMENT_MIN_MAX(g_nDigitFlowCompensation_speed_intense,1,-90,99);
             //feedmulti wird zur laufzeit geändert, anhand von steigung intense
             break;
         }

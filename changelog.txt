@@ -1,8 +1,15 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
-V RF.01.38.25.Mod (2018-02-04) 
+V RF.01.38.25.Mod (2018-02-05) 
 - only adjust print speed according to Digit-Flow-CMP setting if the move is for Gcode queue
+- clean up acceleration/deceleration code
+- clean up new menu with ecmp
+- ecmp value now got factor *100 (in display) to show up as fill-up % while compensating z. Formerly the number was a plain add_steps_per_step and looked like 0.0234, now it is displayed as 2.34%
+- show printing speed beneath layer height in ecmp-menu
+- g_maxZCompensationSteps got one more space in display
+- limit start line speed decrease to minimum 10% (-90%) instead of 5%
+- removed ALLOW_QUADSTEPPING from RFx000.h because it is just there to be used.
 
 V RF.01.38.24.Mod (2018-02-01) 
 - GCODE-Pause: automatically wait for queue position of "pause" and block further Gcodes until continue was pressed.
@@ -11,6 +18,7 @@ V RF.01.38.24.Mod (2018-02-01)
 
 V RF.01.38.23.Mod (2018-01-31) 
 - Strange behaviour of ZOS Scan: Debugging and one idea for a fix: Limit going up to retry if digits drive away on cold printers with filament warming up.
+(2018-02-05: at least until now we did not see the bug anymore, means that we still dont know if we fixed the bug with 01.38.23 but it looks good.)
 
 V RF.01.38.22.Mod (2018-01-29) 
 - Extruder pause delay changed from 30 to 60 s

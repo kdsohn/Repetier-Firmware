@@ -1574,9 +1574,11 @@ long PrintLine::performQueueMove()
             cur->updateStepsParameter();
         }
         Printer::vMaxReached = cur->vStart;
-        Printer::stepNumber=0;
+        Printer::stepNumber = 0;
         Printer::timer = 0;
         HAL::forbidInterrupts();
+
+        Printer::v = cur->fullSpeed;
 
 #if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
@@ -1586,7 +1588,7 @@ long PrintLine::performQueueMove()
         cur->updateAdvanceSteps(cur->vStart,0,false);
 #endif // USE_ADVANCE
 
-        return Printer::interval;
+        return (Printer::interval >> 1); //wait 50% to next interrupt.
     }
 
     return performMove(cur, true);
@@ -1620,14 +1622,16 @@ long PrintLine::performDirectMove()
         Printer::timer = 0;
         HAL::forbidInterrupts();
 
+        Printer::v = direct.fullSpeed;
+
 #if USE_ADVANCE
  #ifdef ENABLE_QUADRATIC_ADVANCE
         Printer::advanceExecuted = direct.advanceStart;
  #endif // ENABLE_QUADRATIC_ADVANCE
 
         direct.updateAdvanceSteps(direct.vStart, 0, false);
-#endif // USE_ADVANCE
-        return Printer::interval; //wait to next interrupt.
+#endif // USE_ADVANCE        
+        return (Printer::interval >> 1); //wait 50% to next interrupt.
     }
 
     return performMove(&direct, false);
@@ -2052,70 +2056,90 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
         Printer::endXYZSteps();
     } // for loop
     HAL::allowInterrupts(); // Allow interrupts for other types, timer1 is still disabled
-
+    
+    /***
+    Printer::interval -> printers interval
+    interval          -> actual sent interval that might be manipulated 
+    v                 -> not manipulated active speed
+    ***/
+    unsigned int v;
 #if RAMP_ACCELERATION
+    Printer::stepNumber += max_loops;
+    Printer::timer      += (max_loops == 1 ?  Printer::interval       : 
+                           (max_loops == 2 ? (Printer::interval << 1) : 
+                           (max_loops == 4 ? (Printer::interval << 2) : 
+                                             (Printer::interval * max_loops)
+                            )));
+
     //If acceleration is enabled on this move and we are in the acceleration segment, calculate the current interval
     if (move->moveAccelerating())   // we are accelerating
     {
-        Printer::vMaxReached = HAL::ComputeV(Printer::timer,move->fAcceleration)+move->vStart;
-        if(Printer::vMaxReached > move->vMax) Printer::vMaxReached = move->vMax;
-        unsigned int v = Printer::updateStepsPerTimerCall(Printer::vMaxReached);
-        Printer::interval = HAL::CPUDivU2(v);
-        Printer::timer+=Printer::interval;
-#if USE_ADVANCE
-        move->updateAdvanceSteps(Printer::vMaxReached, max_loops, true);
-#endif // USE_ADVANCE
-        Printer::stepNumber += max_loops; // is only used by moveAccelerating --> Nibbels TODO: Check if this is maybe right here: source repetier development
+        v = HAL::ComputeV(Printer::timer, move->fAcceleration);
+        v += move->vStart; //bewegung fängt mit jerkstartspeed an.
+        if(v > move->vMax) v = move->vMax;
+        Printer::vMaxReached = v;
+ #if USE_ADVANCE
+        move->updateAdvanceSteps(v, max_loops, true);
+ #endif // USE_ADVANCE
     }
     else if (move->moveDecelerating())     // time to slow down
     {
-        unsigned int v = HAL::ComputeV(Printer::timer,move->fAcceleration);
-        if (v > Printer::vMaxReached)   // if deceleration goes too far it can become too large
+        // Printer::timer got reset the first time reaching here.
+        //dieses v ist hier erst gegenbeschleunigend und wird dann gleich abgezogen -> das ist die korrektur.
+        unsigned int v_inv = HAL::ComputeV(Printer::timer, move->fAcceleration); //hier negativgeschleunigung positiv ausgerechnet.
+        if (v_inv > Printer::vMaxReached)   // if deceleration goes too far it can become too large -> schneller vorab-limiter, eigentlich Printer::vMaxReached - move-vEnd, aber wie programmiert scheints egal und schneller zu sein.
             v = move->vEnd;
         else
         {
-            v = Printer::vMaxReached - v;
+            v = Printer::vMaxReached - v_inv; //flip positive calculation to decelerated speed.
             if (v < move->vEnd) v = move->vEnd; // extra steps at the end of desceleration due to rounding errors
         }
-#if USE_ADVANCE
+ #if USE_ADVANCE
         move->updateAdvanceSteps(v, max_loops, false); // needs original v
-#endif // USE_ADVANCE
-        v = Printer::updateStepsPerTimerCall(v);
-        Printer::interval = HAL::CPUDivU2(v);
-        Printer::timer += Printer::interval;
+ #endif // USE_ADVANCE
     }
     else // full speed reached
     {
         // If we had acceleration, we need to use the latest vMaxReached and interval
         // If we started full speed, we need to use move->fullInterval and vMax
-#if USE_ADVANCE
-        move->updateAdvanceSteps((!move->accelSteps ? move->vMax : Printer::vMaxReached), 0, true);
-#endif // USE_ADVANCE
-        if(!move->accelSteps) {
-            if(move->vMax > Printer::stepsDoublerFrequency) {
-#if ALLOW_QUADSTEPPING
-                if(move->vMax > Printer::stepsDoublerFrequency * 2) {
-                    Printer::stepsPerTimerCall = 4;
-                    Printer::interval = move->fullInterval << 2;
-                } else {
-                    Printer::stepsPerTimerCall = 2;
-                    Printer::interval = move->fullInterval << 1;
-                }
-#else // ALLOW_QUADSTEPPING
-                Printer::stepsPerTimerCall = 2;
-                Printer::interval = move->fullInterval << 1;
-#endif // ALLOW_QUADSTEPPING
-            } else {
-                Printer::stepsPerTimerCall = 1;
-                Printer::interval = move->fullInterval;
-            }
-        }
+        v = (!move->accelSteps ? move->vMax : Printer::vMaxReached);
+ #if USE_ADVANCE
+        move->updateAdvanceSteps(v, 0, true);
+ #endif // USE_ADVANCE
     }
-#else
-    Printer::stepsPerTimerCall = 1;
+    Printer::interval = HAL::CPUDivU2(v);
+#else // RAMP_ACCELERATION
+    v = move->vMax;
     Printer::interval = move->fullInterval; // without RAMPS always use full speed
 #endif // RAMP_ACCELERATION
+
+    //RETURN manipulated value:
     unsigned long interval = Printer::interval;
+
+    //Now manipulate step-width=interval according to double- or quadstepping needs:
+    //we know that next time will be a double or quad step so we let pass twice the time and set the stepsPerTimerCall accordingly.
+    if(v > Printer::stepsDoublerFrequency) {
+        if(v > Printer::stepsDoublerFrequency << 1) {
+            Printer::stepsPerTimerCall = 4;
+            interval <<= 2; //speed div 4
+        } else {
+            Printer::stepsPerTimerCall = 2;
+            interval <<= 1; //speed div 2
+        }
+    } else {
+        Printer::stepsPerTimerCall = 1;
+    }
+
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+    if(Printer::interval_mod){
+        //if we have to add some time because we need live adjusting then add it. But we should not calculate with * and / here so we have to prepare some delay. The preparation might be inprecise. So check it.
+        if(forQueue && move->primaryAxis <= Y_AXIS){
+            interval *= Printer::interval_mod; //1024 == 100%
+            interval >>= 10; // geteilt durch 1024 = 2^10
+        }
+    }
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
+
     if( move->stepsRemaining <= 0 || move->isNoMove() )  // line finished
     {
         if( move->stepsRemaining <= 0 ) //Wenn keine Steps mehr da, sollten alle Achsen die benutzt wurden wieder freigegeben werden. Bei Z ist der Sonderfall, dass die Z-Kompensation sich reinschummeln könnte.
@@ -2181,20 +2205,12 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
         if(linesCount == 0 && nIdle)
         {
             g_uStartOfIdle = HAL::timeInMilliseconds();
+            Printer::v = 0;
         }
 
-        interval = Printer::interval = interval >> 1; // 50% of time to next call to do cur=0
+        interval >>= 1; // 50% of time to next call to do cur=0, which will fire another interrupt at 50% of the active Printer::interval step time. This works like "move 1 end -> 50% -> prepare move 2 -> 50% -> move 2 begin"
         DEBUG_MEMORY;
     } // line finished
-
-#if FEATURE_DIGIT_FLOW_COMPENSATION
-    if(forQueue && Printer::interval_mod){
-        //if we have to add some time because we need live adjusting then add it. But we should not calculate with * and / here so we have to prepare some delay. The preparation might be inprecise. So check it.
-        //min 50% speed -> max 200% interval.
-        interval *= Printer::interval_mod; //1024 == 100%
-        interval >>= 10; // geteilt durch 1024 = 2^10
-    }
-#endif // FEATURE_DIGIT_FLOW_COMPENSATION
 
     return interval;
 } // performMove

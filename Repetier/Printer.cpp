@@ -69,10 +69,11 @@ uint16_t        Printer::stepsDoublerFrequency = STEP_DOUBLER_FREQUENCY;
 uint8_t         Printer::menuMode = 0;
 
 volatile unsigned long   Printer::interval;                             ///< Last step duration in ticks.
+volatile float  Printer::v = 0;                                         ///< Last planned printer speed.
 unsigned long   Printer::timer;                                         ///< used for acceleration/deceleration timing
 unsigned long   Printer::stepNumber;                                    ///< Step number in current move.
 #if FEATURE_DIGIT_FLOW_COMPENSATION
-unsigned long   Printer::interval_mod = 0;                              ///< additional step duration in ticks to slow the printer down live
+unsigned short  Printer::interval_mod = 0;                              ///< additional step duration in ticks to slow the printer down live
 #endif // FEATURE_DIGIT_FLOW_COMPENSATION
 
 #if USE_ADVANCE

@@ -431,7 +431,7 @@ public:
     {
         if(stepsRemaining <= static_cast<int32_t>(decelSteps))
         {
-            if (!(flags & FLAG_DECELERATING))
+            if (!(flags & FLAG_DECELERATING)) //reset "timer" only once.
             {
                 Printer::timer = 0;
                 flags |= FLAG_DECELERATING;

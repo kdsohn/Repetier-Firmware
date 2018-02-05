@@ -83,11 +83,12 @@ public:
     static uint8_t          flag3;
     static uint8_t          stepsPerTimerCall;
     static uint16_t         stepsDoublerFrequency;
-    static volatile unsigned long interval;                           // Last step duration in ticks.
+    static volatile unsigned long interval;                     // Last step duration in ticks.
+    static volatile float   v;                                  // Last planned printer speed.
     static unsigned long    timer;                              // used for acceleration/deceleration timing
     static unsigned long    stepNumber;                         // Step number in current move.
 #if FEATURE_DIGIT_FLOW_COMPENSATION
-    static unsigned long    interval_mod;                          // additional step duration in ticks to slow the printer down live
+    static unsigned short   interval_mod;                       // additional step duration in ticks to slow the printer down live
 #endif // FEATURE_DIGIT_FLOW_COMPENSATION
 
     static float            originOffsetMM[3];
@@ -989,34 +990,6 @@ public:
     {
         flag0 = (on ? flag0 | PRINTER_FLAG0_MANUAL_MOVE_MODE : flag0 & ~PRINTER_FLAG0_MANUAL_MOVE_MODE);
     } // setManualMoveMode
-
-    static INLINE speed_t updateStepsPerTimerCall(speed_t vbase)
-    {
-        if( vbase > Printer::stepsDoublerFrequency )
-        {
-#if ALLOW_QUADSTEPPING
-            if( vbase > Printer::stepsDoublerFrequency * 2 )
-            {
-                Printer::stepsPerTimerCall = 4;
-                return vbase>>2;
-            }
-            else
-            {
-                Printer::stepsPerTimerCall = 2;
-                return vbase>>1;
-            }
-#else
-            Printer::stepsPerTimerCall = 2;
-            return vbase>>1;
-#endif // ALLOW_QUADSTEPPING
-        }
-        else
-        {
-            Printer::stepsPerTimerCall = 1;
-        }
-        return vbase;
-
-    } // updateStepsPerTimerCall
 
     static INLINE float lastCalculatedXPosition()
     {

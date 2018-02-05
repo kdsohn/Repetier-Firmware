@@ -884,10 +884,6 @@ additional stepper interrupts with all it's overhead. As a result you can go as 
 40000Hz. STEP_DOUBLER_FREQUENCY should be in range 5000-12000 for RFx000 but 8000 is much for RF2000 (with ADVANCE?).*/
 #define STEP_DOUBLER_FREQUENCY              7000
 
-/** \brief If you need frequencies off more then 30000 you definitely need to enable this. If you have only 1/8 stepping
-enabling this may cause to stall your moves when 20000Hz is reached. */
-#define ALLOW_QUADSTEPPING                  true
-
 /** \brief If you reach STEP_DOUBLER_FREQUENCY the firmware will do 2 or 4 steps with nearly no delay. That can be too fast
 for some printers causing an early stall. */
 #define DOUBLE_STEP_DELAY                   0                                                   // [us] was 1, NIBBELS: Repetier set this to 0 when removing half stepping
