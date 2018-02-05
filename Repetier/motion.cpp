@@ -2142,8 +2142,7 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
 
     if( move->stepsRemaining <= 0 || move->isNoMove() )  // line finished
     {
-        if( move->stepsRemaining <= 0 ) //Wenn keine Steps mehr da, sollten alle Achsen die benutzt wurden wieder freigegeben werden. Bei Z ist der Sonderfall, dass die Z-Kompensation sich reinschummeln könnte.
-        {
+        if( move->stepsRemaining <= 0 ) { //Wenn keine Steps mehr da, sollten alle Achsen die benutzt wurden wieder freigegeben werden. Bei Z ist der Sonderfall, dass die Z-Kompensation sich reinschummeln könnte.
             move->setXMoveFinished();
             move->setYMoveFinished();
             move->setZMoveFinished(); //Wichtig, das die Z-Kompensation wieder weiterarbeiten kann, auch wichtig bei PrintLine::direct! 
@@ -2152,58 +2151,34 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
             move->setEMoveFinished();
         }
 
-        if( forQueue )
-        {
+        if( forQueue ) {
             removeCurrentLineForbidInterrupt();
-        }
-        else
-        {
+        } else { //forDirect:
             move->stepsRemaining = 0;
             move->task           = TASK_NO_TASK;
-
             Printer::directPositionTargetSteps[X_AXIS] = Printer::directPositionLastSteps[X_AXIS] = Printer::directPositionCurrentSteps[X_AXIS];
             Printer::directPositionTargetSteps[Y_AXIS] = Printer::directPositionLastSteps[Y_AXIS] = Printer::directPositionCurrentSteps[Y_AXIS];
             Printer::directPositionTargetSteps[Z_AXIS] = Printer::directPositionLastSteps[Z_AXIS] = Printer::directPositionCurrentSteps[Z_AXIS];
             Printer::directPositionTargetSteps[E_AXIS] = Printer::directPositionLastSteps[E_AXIS] = Printer::directPositionCurrentSteps[E_AXIS];
-
             Commands::printCurrentPosition();
         }
 
         char    nIdle = 1;
-
 #if FEATURE_MILLING_MODE
-        if( Printer::operatingMode == OPERATING_MODE_PRINT )
-        {
-#if FEATURE_HEAT_BED_Z_COMPENSATION
-            if( g_nHeatBedScanStatus || g_ZOSScanStatus )
-            {
-                // we are not idle because the heat bed scan is going on at the moment
-                nIdle = 0;
-            }
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION
+        if( Printer::operatingMode == OPERATING_MODE_PRINT ) {
+#endif // FEATURE_MILLING_MODE
+ #if FEATURE_HEAT_BED_Z_COMPENSATION
+            if( g_nHeatBedScanStatus || g_ZOSScanStatus ) nIdle = 0; // we are not idle because the heat bed scan is going on at the moment
+ #endif // FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_MILLING_MODE
+        } else {
+ #if FEATURE_WORK_PART_Z_COMPENSATION
+            if( g_nWorkPartScanStatus ) nIdle = 0; // we are not idle because the work part scan is going on at the moment
+ #endif // FEATURE_WORK_PART_Z_COMPENSATION
         }
-        else
-        {
-#if FEATURE_WORK_PART_Z_COMPENSATION
-            if( g_nWorkPartScanStatus )
-            {
-                // we are not idle because the work part scan is going on at the moment
-                nIdle = 0;
-            }
-#endif // FEATURE_WORK_PART_Z_COMPENSATION
-        }
-#else
-#if FEATURE_HEAT_BED_Z_COMPENSATION
-        if( g_nHeatBedScanStatus || g_ZOSScanStatus )
-        {
-            // we are not idle because the heat bed scan is going on at the moment
-            nIdle = 0;
-        }
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION
 #endif // FEATURE_MILLING_MODE
 
-        if(linesCount == 0 && nIdle)
-        {
+        if(linesCount == 0 && nIdle) {
             g_uStartOfIdle = HAL::timeInMilliseconds();
             Printer::v = 0;
         }
