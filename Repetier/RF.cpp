@@ -11045,11 +11045,6 @@ extern void processButton( int nAction )
                 if( Extruder::current->tempControl.currentTemperatureC < UI_SET_MIN_EXTRUDER_TEMP )
                 {
                     // we do not allow to move the extruder in case it is not heated up enough
-                    if( Printer::debugErrors() )
-                    {
-                        Com::printFLN( PSTR( "processButton(): extruder output: aborted" ) );
-                    }
-
                     showError( (void*)ui_text_extruder, (void*)ui_text_operation_denied );
                     break;
                 }
@@ -11070,7 +11065,7 @@ extern void processButton( int nAction )
                     if( Printer::debugInfo() )
                     {
                         Com::printF( PSTR( "Button: E-steps: +" ), (int)g_nManualSteps[E_AXIS] );
-                        Com::printFLN( PSTR( " [steps] = " ), (int)Printer::directPositionTargetSteps[E_AXIS] );
+                        Com::printFLN( PSTR( "=" ), (int)Printer::directPositionTargetSteps[E_AXIS] );
                     }
                     
                     //In case of double pause and in case we tempered with the retract, we dont want to drive the E-Axis back to some old location - that much likely causes emergency block.
@@ -11092,11 +11087,6 @@ extern void processButton( int nAction )
     #if !EXTRUDER_ALLOW_COLD_MOVE
                 if( Extruder::current->tempControl.currentTemperatureC < UI_SET_MIN_EXTRUDER_TEMP )
                 {
-                    // we do not allow to move the extruder in case it is not heated up enough
-                    if( Printer::debugErrors() )
-                    {
-                        Com::printFLN( PSTR( "processButton(): extruder retract: aborted" ) );
-                    }
                     showError( (void*)ui_text_extruder, (void*)ui_text_operation_denied );
                     break;
                 }
@@ -11108,12 +11098,6 @@ extern void processButton( int nAction )
                 if( (unsigned long)abs(Printer::directPositionTargetSteps[E_AXIS] - Printer::directPositionCurrentSteps[E_AXIS]) <= g_nManualSteps[E_AXIS] )
                 {
                     // we are printing at the moment - use direct steps
-                    if( Printer::debugInfo() )
-                    {
-                        Com::printF( PSTR( "processButton(): extruder retract: " ), (int)g_nManualSteps[E_AXIS] );
-                        Com::printFLN( PSTR( " [steps]" ) );
-                    }
-
                     InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
                     Printer::unmarkAllSteppersDisabled(); //doesnt fit into Extruder::enable() because of forward declare -> TODO
                     Extruder::enable();
@@ -11122,10 +11106,10 @@ extern void processButton( int nAction )
 
                     if( Printer::debugInfo() )
                     {
-                        Com::printF( PSTR( "processButton(): current manual E steps: " ), (int)Printer::directPositionTargetSteps[E_AXIS] );
-                        Com::printFLN( PSTR( " [steps]" ) );
+                        Com::printF( PSTR( "Button: E-steps: -" ), (int)g_nManualSteps[E_AXIS] );
+                        Com::printFLN( PSTR( "=" ), (int)Printer::directPositionTargetSteps[E_AXIS] );
                     }
-                    
+
                     //In case of double pause and in case we tempered with the retract, we dont want to drive the E-Axis back to some old location - that much likely causes emergency block.
                     g_nContinueSteps[E_AXIS] = 0;
                 }
