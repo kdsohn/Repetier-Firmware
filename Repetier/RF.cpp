@@ -11061,20 +11061,16 @@ extern void processButton( int nAction )
                 if( (unsigned long)abs(Printer::directPositionTargetSteps[E_AXIS] - Printer::directPositionCurrentSteps[E_AXIS]) <= g_nManualSteps[E_AXIS] )
                 {
                     // we are printing at the moment - use direct steps
-                    if( Printer::debugInfo() )
-                    {
-                        Com::printF( PSTR( "processButton(): extruder output: " ), (int)g_nManualSteps[E_AXIS] );
-                        Com::printFLN( PSTR( " [steps]" ) );
-                    }
                     InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
+                    Printer::unmarkAllSteppersDisabled(); //doesnt fit into Extruder::enable() because of forward declare -> TODO
                     Extruder::enable();
                     Printer::directPositionTargetSteps[E_AXIS] += g_nManualSteps[E_AXIS];
                     noInts.unprotect(); //HAL::allowInterrupts();
 
                     if( Printer::debugInfo() )
                     {
-                        Com::printF( PSTR( "Button: E-steps: " ), (int)Printer::directPositionTargetSteps[E_AXIS] );
-                        Com::printFLN( PSTR( " [steps]" ) );
+                        Com::printF( PSTR( "Button: E-steps: +" ), (int)g_nManualSteps[E_AXIS] );
+                        Com::printFLN( PSTR( " [steps] = " ), (int)Printer::directPositionTargetSteps[E_AXIS] );
                     }
                     
                     //In case of double pause and in case we tempered with the retract, we dont want to drive the E-Axis back to some old location - that much likely causes emergency block.
@@ -11119,6 +11115,7 @@ extern void processButton( int nAction )
                     }
 
                     InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
+                    Printer::unmarkAllSteppersDisabled(); //doesnt fit into Extruder::enable() because of forward declare -> TODO
                     Extruder::enable();
                     Printer::directPositionTargetSteps[E_AXIS] -= g_nManualSteps[E_AXIS];
                     noInts.unprotect(); //HAL::allowInterrupts();

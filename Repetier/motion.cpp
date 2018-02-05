@@ -1567,25 +1567,21 @@ long PrintLine::performQueueMove()
         cur->enableSteppers(); //set Z direction etc.
         cur->fixStartAndEndSpeed();
 
-        HAL::allowInterrupts();
         queueError = cur->delta[cur->primaryAxis];
-        if(!cur->areParameterUpToDate())  // should never happen, but with bad timings???
-        {
-            cur->updateStepsParameter();
-        }
+        if(!cur->areParameterUpToDate()) cur->updateStepsParameter(); // should never happen, but with bad timings???
         Printer::vMaxReached = cur->vStart;
         Printer::stepNumber = 0;
         Printer::timer = 0;
-        HAL::forbidInterrupts();
-
         Printer::v = cur->fullSpeed;
+
+        HAL::forbidInterrupts();
 
 #if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
         Printer::advanceExecuted = cur->advanceStart;
 #endif // ENABLE_QUADRATIC_ADVANCE
 
-        cur->updateAdvanceSteps(cur->vStart,0,false);
+        cur->updateAdvanceSteps(cur->vStart,0,false); //startet advance extruder "etwas" vor der ersten bewegung: gut? ist Printer::interval immer klein genug?
 #endif // USE_ADVANCE
 
         return (Printer::interval >> 1); //wait 50% to next interrupt.
@@ -1611,26 +1607,24 @@ long PrintLine::performDirectMove()
         direct.enableSteppers(); //set Z direction etc.
         direct.fixStartAndEndSpeed();
 
-        HAL::allowInterrupts(); //Nibbels todo: prüfen ob das unsinnig ist. unterfunktionen checken. vgl oben 3 zeilen
+        HAL::allowInterrupts();
+        
         directError = direct.delta[direct.primaryAxis];
-        if(!direct.areParameterUpToDate())  // should never happen, but with bad timings???
-        {
-            direct.updateStepsParameter();
-        }
+        if(!direct.areParameterUpToDate()) direct.updateStepsParameter(); // should never happen, but with bad timings???
         Printer::vMaxReached = direct.vStart;
         Printer::stepNumber = 0;
         Printer::timer = 0;
-        HAL::forbidInterrupts();
-
         Printer::v = direct.fullSpeed;
+
+        HAL::forbidInterrupts();
 
 #if USE_ADVANCE
  #ifdef ENABLE_QUADRATIC_ADVANCE
         Printer::advanceExecuted = direct.advanceStart;
  #endif // ENABLE_QUADRATIC_ADVANCE
 
-        direct.updateAdvanceSteps(direct.vStart, 0, false);
-#endif // USE_ADVANCE        
+        direct.updateAdvanceSteps(direct.vStart, 0, false); //startet advance extruder "etwas" vor der ersten bewegung: gut? ist Printer::interval immer klein genug?
+#endif // USE_ADVANCE
         return (Printer::interval >> 1); //wait 50% to next interrupt.
     }
 

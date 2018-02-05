@@ -10,6 +10,8 @@ V RF.01.38.25.Mod (2018-02-05)
 - g_maxZCompensationSteps got one more space in display
 - limit start line speed decrease to minimum 10% (-90%) instead of 5%
 - removed ALLOW_QUADSTEPPING from RFx000.h because it is just there to be used.
+- cleanup Printer::unmarkAllSteppersDisabled(); into "stepper.enable"
+- removed one allow-interrupt because it was double.
 
 V RF.01.38.24.Mod (2018-02-01) 
 - GCODE-Pause: automatically wait for queue position of "pause" and block further Gcodes until continue was pressed.
