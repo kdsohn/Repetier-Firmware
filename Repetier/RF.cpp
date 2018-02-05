@@ -9470,8 +9470,7 @@ void processCommand( GCode* pCommand )
                         case 11:
                         {
 #if FEATURE_MILLING_MODE
-                            Com::printF( PSTR( "operating mode= "), Printer::operatingMode );
-                            Com::printFLN( PSTR( "") );
+                            Com::printFLN( PSTR( "operating mode= "), Printer::operatingMode );
 #endif // FEATURE_MILLING_MODE
 
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
@@ -9586,10 +9585,7 @@ void processCommand( GCode* pCommand )
                         }
                         case 18:
                         {
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
                             Com::printF( PSTR( "Z;" ), Printer::currentZSteps );
-#endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
-
                             Com::printFLN( Com::tSemiColon, Printer::currentZPositionSteps() );
                             break;
                         }
@@ -12251,9 +12247,7 @@ void cleanupZPositions( void ) //kill all! -> für stepper disabled
     Printer::queuePositionLastMM[Z_AXIS]       =
     Printer::queuePositionCommandMM[Z_AXIS]    = 
 
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
     Printer::currentZSteps                     = 0;
-#endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
     Printer::compensatedPositionTargetStepsZ  =
@@ -12343,10 +12337,7 @@ void setZOrigin( void )
     Printer::originOffsetMM[Z_AXIS]             = 0;
     
     g_nZScanZPosition                           = 0;
-    
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
     Printer::currentZSteps                      = 0;
-#endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 
     Printer::updateDerivedParameter();
     Printer::updateCurrentPosition(true);

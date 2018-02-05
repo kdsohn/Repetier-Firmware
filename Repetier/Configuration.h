@@ -75,9 +75,6 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 /** \brief Enables automatic compensation in z direction for the operationg mode "print" */
 #define FEATURE_HEAT_BED_Z_COMPENSATION     1                                                   // 1 = on, 0 = off
 
-/** \brief Allows/disallows to override Z-min via G0 and G1 */
-#define FEATURE_Z_MIN_OVERRIDE_VIA_GCODE    1                                                   // 1 = on, 0 = off
-
 /** \brief Enables/disables the output of the finished object feature */
 #define FEATURE_OUTPUT_FINISHED_OBJECT      1                                                   // 1 = on, 0 = off
 

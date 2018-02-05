@@ -1,6 +1,10 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.26.Mod (2018-02-05) 
+- FEATURE_Z_MIN_OVERRIDE_VIA_GCODE cannot be switched off anymore. This feature is mandatory for safe printing.
+- added z-check for driving down Z against bottom. "Printer::currentZSteps > Printer::maxSteps[Z_AXIS] + 2x length of Z_OVERRIDE_MAX" is now a softlimit for moves which check endstop.
+
 V RF.01.38.25.Mod (2018-02-05) 
 - only adjust print speed according to Digit-Flow-CMP setting if the move is for Gcode queue
 - clean up acceleration/deceleration code

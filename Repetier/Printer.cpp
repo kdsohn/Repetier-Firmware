@@ -133,9 +133,7 @@ volatile long   Printer::queuePositionCurrentSteps[3] = {0, 0, 0};
 volatile char   Printer::stepperDirection[3]          = {0, 0, 0};
 volatile char   Printer::blockAll = 0;
 
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 volatile long   Printer::currentZSteps = 0;  //das ist der Z-Zähler der GCodes zum Zählen des tiefsten Schalterdruckpunkts /Schaltercrash.
-#endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 volatile long   Printer::compensatedPositionTargetStepsZ = 0;
@@ -1122,9 +1120,7 @@ void Printer::setup()
     queuePositionCurrentSteps[Z_AXIS] = 0;
     blockAll                          = 0;
 
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
     currentZSteps                     = 0;
-#endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     directPositionCurrentSteps[X_AXIS] =
@@ -1524,7 +1520,6 @@ int8_t Printer::anyHomeDir(uint8_t axis){
                         }
                     #endif // FEATURE_MILLING_MODE
                 */
-    
             }
     }
     return nHomeDir;
@@ -1890,6 +1885,7 @@ void Printer::homeZAxis()
         // if we have circuit-type Z endstops and we don't know at which endstop we currently are, first move down a bit
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
         if( Printer::ZEndstopUnknown ) {
+            Com::printFLN( PSTR( "HomeZ1=" ), currentZSteps );
             PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * -1 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
         }
 #endif
@@ -1908,8 +1904,6 @@ void Printer::homeZAxis()
         directPositionLastSteps[Z_AXIS]    = 0;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
-        setHomed( /*false ,*/ -1 , -1 , false);
-
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         g_nZScanZPosition = 0;
         //disable CMP ist bei Z unhome hier drüber schon mit drin. //Printer::disableCMPnow(true); //true == wait for move while HOMING
@@ -1918,7 +1912,8 @@ void Printer::homeZAxis()
         long steps = (maxSteps[Z_AXIS] - minSteps[Z_AXIS]) * nHomeDir;
         queuePositionLastSteps[Z_AXIS] = -steps;
         setHoming(true);
-        PrintLine::moveRelativeDistanceInSteps(0,0,2*steps,0,homingFeedrate[Z_AXIS],true,true);
+         PrintLine::moveRelativeDistanceInSteps(0,0,2*steps,0,homingFeedrate[Z_AXIS],true,true);
+         Com::printFLN( PSTR( "HomeZ2=" ), currentZSteps );
         setHoming(false);
         queuePositionLastSteps[Z_AXIS] = (nHomeDir == -1) ? minSteps[Z_AXIS] : maxSteps[Z_AXIS];
         //ENDSTOP_Z_BACK_MOVE größer als 32768+wenig ist eigentlich nicht möglich, nicht sinnvoll und würde, da das überfahren bei 32microsteps von der z-matrix >-12,7mm abhängig ist verboten sein.
@@ -1928,9 +1923,11 @@ void Printer::homeZAxis()
             if(Printer::isZMinEndstopHit()){
                 //schalter noch gedrückt, wir müssen weiter zurück, aber keinesfalls mehr als ENDSTOP_Z_BACK_MOVE
                 PrintLine::moveRelativeDistanceInSteps(0,0, 0.1f*axisStepsPerMM[Z_AXIS] * -1 * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR * 5,true,false);
+                Com::printFLN( PSTR( "HomeZ3=" ), currentZSteps );
             }else{ //wir sind aus dem schalterbereich raus, müssten also nicht weiter zurücksetzen:
                 //rest drüberfahren, der über die schalterüberfahrung drübersteht: dann ende der for{}
                 PrintLine::moveRelativeDistanceInSteps(0,0, axisStepsPerMM[Z_AXIS] * (ENDSTOP_Z_BACK_MOVE - Z_ENDSTOP_DRIVE_OVER)* -1 * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR * 2,true,false);
+                Com::printFLN( PSTR( "HomeZ3=" ), currentZSteps );
                 break; 
             }
         }
@@ -1938,6 +1935,7 @@ void Printer::homeZAxis()
         setHoming(true);
         //der fährt nur bis zum schalter, aber ENDSTOP_Z_BACK_MOVE + wenig ist maximum.
         PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * (0.1f + ENDSTOP_Z_BACK_MOVE) * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,true);
+        Com::printFLN( PSTR( "HomeZ4=" ), currentZSteps );
         setHoming(false);
 
 #if FEATURE_MILLING_MODE
@@ -1945,20 +1943,22 @@ void Printer::homeZAxis()
         if( Printer::operatingMode == OPERATING_MODE_MILL )
         {
             PrintLine::moveRelativeDistanceInSteps(0,0,LEAVE_Z_MAX_ENDSTOP_AFTER_HOME,0,homingFeedrate[Z_AXIS],true,false);
+            Com::printFLN( PSTR( "HomeZ5=" ), currentZSteps );
         }
 #else
 
 #if defined(ENDSTOP_Z_BACK_ON_HOME)
-        if(ENDSTOP_Z_BACK_ON_HOME > 0)
+        if(ENDSTOP_Z_BACK_ON_HOME > 0){
             PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS]*-ENDSTOP_Z_BACK_ON_HOME * nHomeDir,0,homingFeedrate[Z_AXIS],true,false);
+            Com::printFLN( PSTR( "HomeZ6=" ), currentZSteps );
+        }
 #endif // defined(ENDSTOP_Z_BACK_ON_HOME)
 #endif // FEATURE_MILLING_MODE
 
         queuePositionLastSteps[Z_AXIS]    = (nHomeDir == -1) ? minSteps[Z_AXIS] : maxSteps[Z_AXIS];
         queuePositionCurrentSteps[Z_AXIS] = queuePositionLastSteps[Z_AXIS];
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
+
         currentZSteps                     = queuePositionLastSteps[Z_AXIS];
-#endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 
         // show that we are active
         previousMillisCmd = HAL::timeInMilliseconds();

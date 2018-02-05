@@ -142,9 +142,7 @@ public:
     static volatile char    stepperDirection[3];              // this is the current x/y/z-direction from the processing of G-Codes
     static volatile char    blockAll;
 
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
     static volatile long    currentZSteps;
-#endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
     static volatile long    compensatedPositionTargetStepsZ;
@@ -506,10 +504,7 @@ public:
     #if FEATURE_TWO_ZSTEPPER
         WRITE( Z2_STEP_PIN, HIGH );
     #endif // FEATURE_TWO_ZSTEPPER
-    #if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
         Printer::currentZSteps += (Printer::getZDirectionIsPos() ? 1 : -1);
-    #endif //FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
-
     } // startZStep
 
     static INLINE void endZStep( void )
@@ -833,23 +828,19 @@ public:
     {
 #if Z_MAX_PIN>-1 && MAX_HARDWARE_ENDSTOP_Z
 
-#if FEATURE_CONFIGURABLE_Z_ENDSTOPS
+ #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
 
         if( ZEndstopType == ENDSTOP_TYPE_SINGLE )
         {
-#if FEATURE_MILLING_MODE
+  #if FEATURE_MILLING_MODE
             if( operatingMode == OPERATING_MODE_MILL )
             {
                 // in case there is only one z-endstop and we are in operating mode "mill", the z-max endstop must be connected
                 return READ(Z_MAX_PIN) != ENDSTOP_Z_MAX_INVERTING;
             }
-
+  #endif // FEATURE_MILLING_MODE
             // in case there is only one z-endstop and we are in operating mode "print", the z-max endstop is not connected and can not be detected
             return false;
-#else
-            // in case there is only one z-endstop and we are in operating mode "print", the z-max endstop is not connected and can not be detected
-            return false;
-#endif // FEATURE_MILLING_MODE
         }
 
         // we end up here in case the z-min and z-max endstops are connected in a circuit
@@ -882,25 +873,20 @@ public:
 
             if( Printer::isAxisHomed(Z_AXIS) )
             {
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
                 if( currentZSteps < Z_MIN_DISTANCE )
-#else
-                if( currentZPositionSteps() < Z_MIN_DISTANCE )
-#endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
                 {
                     // we are close to z-min, so z-max can not become hit right now
-#if DEBUG_CONFIGURABLE_Z_ENDSTOPS
+  #if DEBUG_CONFIGURABLE_Z_ENDSTOPS
                     Com::printF( PSTR( "Z-Max not hit") );
-#endif // DEBUG_CONFIGURABLE_Z_ENDSTOPS
-
+  #endif // DEBUG_CONFIGURABLE_Z_ENDSTOPS
                     return false;
                 }
             }
 
             // the last z-direction is unknown or the heat bed has been moved downwards, thus we have to assume that the z-max endstop is hit
-#if FEATURE_CONFIGURABLE_Z_ENDSTOPS && DEBUG_CONFIGURABLE_Z_ENDSTOPS
+  #if FEATURE_CONFIGURABLE_Z_ENDSTOPS && DEBUG_CONFIGURABLE_Z_ENDSTOPS
             Com::printF( PSTR( "Z-Max hit") );
-#endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS && DEBUG_CONFIGURABLE_Z_ENDSTOPS
+  #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS && DEBUG_CONFIGURABLE_Z_ENDSTOPS
 
             endstopZMinHit = ENDSTOP_NOT_HIT;
             endstopZMaxHit = ENDSTOP_IS_HIT;
@@ -919,9 +905,9 @@ public:
         ZEndstopUnknown = 0;
         return false;
 
-#else
+ #else
         return READ(Z_MAX_PIN) != ENDSTOP_Z_MAX_INVERTING;
-#endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
+ #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
 
 #else
         return false;
