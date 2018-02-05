@@ -11264,16 +11264,13 @@ void nextPreviousXAction( int8_t increment )
     {
         case MOVE_MODE_SINGLE_STEPS:
         {
-            long    Temp;
-
-
             steps = g_nManualSteps[X_AXIS] * increment;
 
-            InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
-            Temp =  Printer::directPositionTargetSteps[X_AXIS] + steps;
+            InterruptProtectedBlock noInts; 
+            long Temp = Printer::directPositionTargetSteps[X_AXIS] + steps;
             Temp += Printer::queuePositionCurrentSteps[X_AXIS];
-
-            noInts.unprotect(); //HAL::allowInterrupts();
+            noInts.unprotect();
+            
             if( increment < 0 && Temp < 0 )
             {
                 // do not allow to drive the head against the left border
@@ -11289,9 +11286,9 @@ void nextPreviousXAction( int8_t increment )
             {
                 Printer::enableXStepper();
 
-                noInts.protect(); //HAL::forbidInterrupts();
+                noInts.protect();
                 Printer::directPositionTargetSteps[X_AXIS] += steps;
-                noInts.unprotect(); //HAL::allowInterrupts();
+                noInts.unprotect();
 
                 if( Printer::debugInfo() )
                 {
@@ -11413,16 +11410,13 @@ void nextPreviousYAction( int8_t increment )
     {
         case MOVE_MODE_SINGLE_STEPS:
         {
-            long    Temp;
-
-
             steps = g_nManualSteps[Y_AXIS] * increment;
 
-            InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
-            Temp =  Printer::directPositionTargetSteps[Y_AXIS] + steps;
+            InterruptProtectedBlock noInts;
+            long Temp = Printer::directPositionTargetSteps[Y_AXIS] + steps;
             Temp += Printer::queuePositionCurrentSteps[Y_AXIS];
-
-            noInts.unprotect(); //HAL::allowInterrupts();
+            noInts.unprotect();
+            
             if( increment < 0 && Temp < 0 )
             {
                 // do not allow to drive the bed against the back border
@@ -11438,9 +11432,9 @@ void nextPreviousYAction( int8_t increment )
             {
                 Printer::enableYStepper();
 
-                noInts.protect(); //HAL::forbidInterrupts();
+                noInts.protect();
                 Printer::directPositionTargetSteps[Y_AXIS] += steps;
-                noInts.unprotect(); //HAL::allowInterrupts();
+                noInts.unprotect();
 
                 if( Printer::debugInfo() )
                 {
@@ -11609,18 +11603,16 @@ void nextPreviousZAction( int8_t increment )
     {
         case MOVE_MODE_SINGLE_STEPS:
         {
-            long    Temp; //bringt nur was wenn homed
             steps = g_nManualSteps[Z_AXIS] * increment;
 
-            InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
-            Temp =  Printer::directPositionTargetSteps[Z_AXIS] + steps;
+            InterruptProtectedBlock noInts;
+            long Temp = Printer::directPositionTargetSteps[Z_AXIS] + steps;
             Temp += Printer::queuePositionCurrentSteps[Z_AXIS];
-
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
             Temp += Printer::compensatedPositionCurrentStepsZ;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-
-            noInts.unprotect(); //HAL::allowInterrupts();
+            noInts.unprotect();
+            
             if( increment < 0 && Temp < -Z_OVERRIDE_MAX && Printer::isZMinEndstopHit() )
             {
                 // do not allow to drive the bed into the extruder
@@ -11632,33 +11624,9 @@ void nextPreviousZAction( int8_t increment )
                 previousMillisCmd = HAL::timeInMilliseconds();
                 Printer::enableZStepper();
 
-                noInts.protect(); //HAL::forbidInterrupts();
+                noInts.protect();
                 Printer::directPositionTargetSteps[Z_AXIS] += steps;
-                
-                //Nibbels: Diese Eingrenzung scheint mir völlig sinnlos und fehl am Platz:
-                //Wir sind hier bei Single-Steps und mit Homing gibts Z_OVERRIDE_MAX
-                //Ohne Homing gibts den Z-Endstop Min. Diese Zahl Z=.... stimmt ohne Homing nicht!
-                /*if( increment < 0 && Printer::directPositionTargetSteps[Z_AXIS] < EXTENDED_BUTTONS_Z_MIN )
-                {
-                    Printer::directPositionTargetSteps[Z_AXIS] = EXTENDED_BUTTONS_Z_MIN;
-
-                    if( Printer::debugErrors() )
-                    {
-                        Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (min reached)" ) );
-                    }
-                    showError( (void*)ui_text_z_axis, (void*)ui_text_min_reached );
-                }
-                if( increment > 0 && Printer::directPositionTargetSteps[Z_AXIS] > EXTENDED_BUTTONS_Z_MAX )
-                {
-                    Printer::directPositionTargetSteps[Z_AXIS] = EXTENDED_BUTTONS_Z_MAX;
-
-                    if( Printer::debugErrors() )
-                    {
-                        Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (max reached)" ) );
-                    }
-                    showError( (void*)ui_text_z_axis, (void*)ui_text_max_reached );
-                }*/
-                noInts.unprotect(); //HAL::allowInterrupts();
+                noInts.unprotect();
 
                 if( Printer::debugInfo() )
                 {
