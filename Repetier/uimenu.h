@@ -275,13 +275,13 @@ for 2 row displays. You can add additional pages or change the default pages lik
         UI_PAGE4(ui_page_mod2,  "LayerHeight:%LH", /*12+LH(4)*/
                                 "Speed:%ovmm/s",   /*10+%ov(6)*/
                                 "zCMP:%Lm..%LM",   /*7+5+4*/
-                                "eCMP%LP%%%@%LC"   /*6+6+4*/
+                                "eCMP%LP%%%@%LC"   /*4+LP%5+@1+6*/
                                 )
     #else
         UI_PAGE4(ui_page_mod2,  "Layer Height: %LHmm",
                                 "Speed:    %ovmm/s",
                                 "zCMP: %Lm..%LM mm",   /*7+5+4*/
-                                "eCMP: %LP%%% @gZ:%LC" /*6+6+4+1g+1+2leer:*/
+                                "eCMP: %LP%%%@Z:%LC" /*6+LP%5+"@Z:"3+6:*/
                                 )
     #endif
     #define UI_MOD2_PAGES , &ui_page_mod2
