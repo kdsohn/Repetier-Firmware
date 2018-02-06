@@ -229,8 +229,7 @@ void SDCard::abortPrint()
     // wait until all moves are done
     while( PrintLine::linesCount )
     {
-        HAL::delayMilliseconds( 1 );
-        Commands::checkForPeriodicalActions();
+        Commands::checkForPeriodicalActions( Processing );
     }
 
     if( Printer::debugInfo() )

@@ -68,9 +68,13 @@ uint8_t         Printer::stepsPerTimerCall = 1;
 uint16_t        Printer::stepsDoublerFrequency = STEP_DOUBLER_FREQUENCY;
 uint8_t         Printer::menuMode = 0;
 
-unsigned long   Printer::interval;                                      ///< Last step duration in ticks.
+volatile unsigned long   Printer::interval;                             ///< Last step duration in ticks.
+volatile float  Printer::v = 0;                                         ///< Last planned printer speed.
 unsigned long   Printer::timer;                                         ///< used for acceleration/deceleration timing
 unsigned long   Printer::stepNumber;                                    ///< Step number in current move.
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+unsigned short  Printer::interval_mod = 0;                              ///< additional step duration in ticks to slow the printer down live
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
 
 #if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
@@ -129,9 +133,7 @@ volatile long   Printer::queuePositionCurrentSteps[3] = {0, 0, 0};
 volatile char   Printer::stepperDirection[3]          = {0, 0, 0};
 volatile char   Printer::blockAll = 0;
 
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 volatile long   Printer::currentZSteps = 0;  //das ist der Z-Zähler der GCodes zum Zählen des tiefsten Schalterdruckpunkts /Schaltercrash.
-#endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 volatile long   Printer::compensatedPositionTargetStepsZ = 0;
@@ -447,10 +449,9 @@ void Printer::kill(uint8_t only_steppers)
 void Printer::updateAdvanceFlags()
 {
     Printer::setAdvanceActivated(false);
-
 #if USE_ADVANCE
     for(uint8_t i = 0; i < NUM_EXTRUDER; i++) {
-        if(extruder[i].advanceL!=0) {
+        if(extruder[i].advanceL != 0) {
             Printer::setAdvanceActivated(true);
         }
 #ifdef ENABLE_QUADRATIC_ADVANCE
@@ -458,7 +459,6 @@ void Printer::updateAdvanceFlags()
 #endif // ENABLE_QUADRATIC_ADVANCE
     }
 #endif // USE_ADVANCE
-
 } // updateAdvanceFlags
 
 
@@ -507,33 +507,35 @@ void Printer::moveToReal(float x,float y,float z,float e,float feedrate)
 } // moveToReal
 
 
-uint8_t Printer::setOrigin(float xOff,float yOff,float zOff)
+void Printer::setOrigin(float xOff,float yOff,float zOff)
 {
+    Com::printF( PSTR("setOrigin():") );
+    if(isAxisHomed(X_AXIS)){
+        originOffsetMM[X_AXIS] = xOff;
+        Com::printF( PSTR("x="), originOffsetMM[X_AXIS] );
+    }else{
+        Com::printF( PSTR("x-fail") );
+    }
+    if(isAxisHomed(Y_AXIS)){
+        originOffsetMM[Y_AXIS] = yOff;
+        Com::printF( PSTR(" y="), originOffsetMM[Y_AXIS] );
+    }else{
+        Com::printF( PSTR(" y-fail") );
+    }
+    if(isAxisHomed(Z_AXIS)){
+        originOffsetMM[Z_AXIS] = zOff;
+        Com::printF( PSTR(" z="), originOffsetMM[Z_AXIS] );
+    }else{
+        Com::printF( PSTR(" z-fail") );
+    }
+    Com::println();
+    
     if( !areAxisHomed() )
     {
-        if( debugErrors() )
-        {
-            // we can not set the origin when we do not know the home position
-            Com::printFLN( PSTR("setOrigin(): home position is unknown") );
-        }
-
+        // we can not set the origin when we do not know the home position
+        Com::printFLN( PSTR("WARNING: home positions were unknown and ignored!") );
         showError( (void*)ui_text_set_origin, (void*)ui_text_home_unknown );
-        return 0;
     }
-
-    originOffsetMM[X_AXIS] = xOff;
-    originOffsetMM[Y_AXIS] = yOff;
-    originOffsetMM[Z_AXIS] = zOff;
-
-    if( debugInfo() )
-    {
-        // output the new origin offsets
-        Com::printF( PSTR("setOrigin(): x="), originOffsetMM[X_AXIS] );
-        Com::printF( PSTR("; y="), originOffsetMM[Y_AXIS] );
-        Com::printFLN( PSTR("; z="), originOffsetMM[Z_AXIS] );
-    }
-    return 1;
-
 } // setOrigin
 
 
@@ -1118,9 +1120,7 @@ void Printer::setup()
     queuePositionCurrentSteps[Z_AXIS] = 0;
     blockAll                          = 0;
 
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
     currentZSteps                     = 0;
-#endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     directPositionCurrentSteps[X_AXIS] =
@@ -1317,7 +1317,6 @@ void Printer::defaultLoopActions()
 {
     Commands::checkForPeriodicalActions();  //check heater every n milliseconds
 
-    UI_MEDIUM; // do check encoder
     millis_t curtime = HAL::timeInMilliseconds();
 
     if( PrintLine::hasLines() || isMenuMode(MENU_MODE_PRINTING + MENU_MODE_PAUSED) )
@@ -1368,6 +1367,16 @@ void Printer::GoToMemoryPosition(bool x,bool y,bool z,bool e,float feed)
 
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
+
+#if FEATURE_SENSIBLE_PRESSURE
+void Printer::enableSenseOffsetnow( void ){
+        short oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_DIGITS);
+        if ( oldval > 0 && oldval < EMERGENCY_PAUSE_DIGITS_MAX ){
+            g_nSensiblePressureDigits = oldval;
+        }
+    }
+#endif // FEATURE_SENSIBLE_PRESSURE
+
 void Printer::enableCMPnow( void ){
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_MILL)
@@ -1384,6 +1393,10 @@ void Printer::enableCMPnow( void ){
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
     }
 
+    if( !Printer::areAxisHomed() ){
+        return; // false;
+    }
+                    
     // enable the z compensation
     if( g_ZCompensationMatrix[0][0] != EEPROM_FORMAT )  return; // false;
 
@@ -1416,7 +1429,6 @@ void Printer::enableCMPnow( void ){
         Printer::doHeatBedZCompensation = 1;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
     }
-    //return true;
 }
 
 void Printer::disableCMPnow( bool wait ) {
@@ -1508,7 +1520,6 @@ int8_t Printer::anyHomeDir(uint8_t axis){
                         }
                     #endif // FEATURE_MILLING_MODE
                 */
-    
             }
     }
     return nHomeDir;
@@ -1874,6 +1885,7 @@ void Printer::homeZAxis()
         // if we have circuit-type Z endstops and we don't know at which endstop we currently are, first move down a bit
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
         if( Printer::ZEndstopUnknown ) {
+            Com::printFLN( PSTR( "HomeZ1=" ), currentZSteps );
             PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * -1 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
         }
 #endif
@@ -1902,7 +1914,8 @@ void Printer::homeZAxis()
         long steps = (maxSteps[Z_AXIS] - minSteps[Z_AXIS]) * nHomeDir;
         queuePositionLastSteps[Z_AXIS] = -steps;
         setHoming(true);
-        PrintLine::moveRelativeDistanceInSteps(0,0,2*steps,0,homingFeedrate[Z_AXIS],true,true);
+         PrintLine::moveRelativeDistanceInSteps(0,0,2*steps,0,homingFeedrate[Z_AXIS],true,true);
+         Com::printFLN( PSTR( "HomeZ2=" ), currentZSteps );
         setHoming(false);
         queuePositionLastSteps[Z_AXIS] = (nHomeDir == -1) ? minSteps[Z_AXIS] : maxSteps[Z_AXIS];
         //ENDSTOP_Z_BACK_MOVE größer als 32768+wenig ist eigentlich nicht möglich, nicht sinnvoll und würde, da das überfahren bei 32microsteps von der z-matrix >-12,7mm abhängig ist verboten sein.
@@ -1912,9 +1925,11 @@ void Printer::homeZAxis()
             if(Printer::isZMinEndstopHit()){
                 //schalter noch gedrückt, wir müssen weiter zurück, aber keinesfalls mehr als ENDSTOP_Z_BACK_MOVE
                 PrintLine::moveRelativeDistanceInSteps(0,0, 0.1f*axisStepsPerMM[Z_AXIS] * -1 * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR * 5,true,false);
+                Com::printFLN( PSTR( "HomeZ3=" ), currentZSteps );
             }else{ //wir sind aus dem schalterbereich raus, müssten also nicht weiter zurücksetzen:
                 //rest drüberfahren, der über die schalterüberfahrung drübersteht: dann ende der for{}
                 PrintLine::moveRelativeDistanceInSteps(0,0, axisStepsPerMM[Z_AXIS] * (ENDSTOP_Z_BACK_MOVE - Z_ENDSTOP_DRIVE_OVER)* -1 * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR * 2,true,false);
+                Com::printFLN( PSTR( "HomeZ3=" ), currentZSteps );
                 break; 
             }
         }
@@ -1922,6 +1937,7 @@ void Printer::homeZAxis()
         setHoming(true);
         //der fährt nur bis zum schalter, aber ENDSTOP_Z_BACK_MOVE + wenig ist maximum.
         PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * (0.1f + ENDSTOP_Z_BACK_MOVE) * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,true);
+        Com::printFLN( PSTR( "HomeZ4=" ), currentZSteps );
         setHoming(false);
 
 #if FEATURE_MILLING_MODE
@@ -1929,20 +1945,22 @@ void Printer::homeZAxis()
         if( Printer::operatingMode == OPERATING_MODE_MILL )
         {
             PrintLine::moveRelativeDistanceInSteps(0,0,LEAVE_Z_MAX_ENDSTOP_AFTER_HOME,0,homingFeedrate[Z_AXIS],true,false);
+            Com::printFLN( PSTR( "HomeZ5=" ), currentZSteps );
         }
 #else
 
 #if defined(ENDSTOP_Z_BACK_ON_HOME)
-        if(ENDSTOP_Z_BACK_ON_HOME > 0)
+        if(ENDSTOP_Z_BACK_ON_HOME > 0){
             PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS]*-ENDSTOP_Z_BACK_ON_HOME * nHomeDir,0,homingFeedrate[Z_AXIS],true,false);
+            Com::printFLN( PSTR( "HomeZ6=" ), currentZSteps );
+        }
 #endif // defined(ENDSTOP_Z_BACK_ON_HOME)
 #endif // FEATURE_MILLING_MODE
 
         queuePositionLastSteps[Z_AXIS]    = (nHomeDir == -1) ? minSteps[Z_AXIS] : maxSteps[Z_AXIS];
         queuePositionCurrentSteps[Z_AXIS] = queuePositionLastSteps[Z_AXIS];
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
+
         currentZSteps                     = queuePositionLastSteps[Z_AXIS];
-#endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
 
         // show that we are active
         previousMillisCmd = HAL::timeInMilliseconds();
@@ -2048,6 +2066,7 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
 
     //warum das nicht in die x_y_z_homingfunctions verlegen? gemeinsame fahrt? was, wenn das beim einzelhoming fehlt -> schlimm?
     //könnte ich die definition und das lesen von startx hier runterlegen? oder wird home?Axis einen einfluss drauf haben?
+    // ---> Weil homeZAxis etc. private ist kein problem.
     //###############################
     if(xaxis)
     {

@@ -41,6 +41,7 @@ List of placeholder:
 %os : Status message
 %oB : Buffer length
 %om : Speed multiplier
+%ov : active Speed
 %op : Is double or quadstepping?
 %of : flow multiplier
 %oc : Connection baudrate
@@ -271,16 +272,16 @@ for 2 row displays. You can add additional pages or change the default pages lik
     #define UI_MOD_COUNT 1
     
     #if UI_COLS<=16
-        UI_PAGE4(ui_page_mod2,  "LayerHeight:%LH",
-                                "ECMP%%%:   %LP",
-                                "Max:%LMMin:%Lm",
-                                "Z:%x2/%LC"
+        UI_PAGE4(ui_page_mod2,  "LayerHeight:%LH", /*12+LH(4)*/
+                                "Speed:%ovmm/s",   /*10+%ov(6)*/
+                                "zCMP:%Lm..%LM",   /*7+5+4*/
+                                "eCMP%LP%%%@%LC"   /*4+LP%5+@1+6*/
                                 )
     #else
-        UI_PAGE4(ui_page_mod2,  "LayerHeight:%LH",
-                                "ECMP%%%:   %LP",
-                                "CMPMax:%LM Min:%Lm",
-                                "Z:%x2 Z:%LC"
+        UI_PAGE4(ui_page_mod2,  "Layer Height: %LHmm",
+                                "Speed:    %ovmm/s",
+                                "zCMP: %Lm..%LM mm",   /*7+5+4*/
+                                "eCMP: %LP%%%@Z:%LC" /*6+LP%5+"@Z:"3+6:*/
                                 )
     #endif
     #define UI_MOD2_PAGES , &ui_page_mod2

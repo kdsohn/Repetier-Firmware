@@ -1249,8 +1249,7 @@ void TemperatureController::waitForTargetTemperature(uint8_t plus_temp_tolerance
     }
     while(true) {
         Commands::printTemperatures();
-        Commands::checkForPeriodicalActions();
-        GCode::keepAlive(WaitHeater);
+        Commands::checkForPeriodicalActions( WaitHeater );
         if( fabs(targetTemperatureC - currentTemperatureC) <= TEMP_TOLERANCE + plus_temp_tolerance ) {
             return;
         }
@@ -1309,8 +1308,7 @@ void TemperatureController::autotunePID(float temp, uint8_t controllerId, int ma
 
     for(;;)
     {
-        Commands::checkForPeriodicalActions(); // update heaters etc. https://github.com/repetier/Repetier-Firmware/commit/241c550ac004023842d6886c6e0db15a1f6b56d7
-        GCode::keepAlive( WaitHeater );
+        Commands::checkForPeriodicalActions( WaitHeater ); // update heaters etc. https://github.com/repetier/Repetier-Firmware/commit/241c550ac004023842d6886c6e0db15a1f6b56d7
         updateCurrentTemperature();
         currentTemp = currentTemperatureC;
 
@@ -1441,8 +1439,6 @@ see also: http://www.mstarlabs.com/control/znrule.html
             }
             return;
         }
-        UI_MEDIUM;
-        UI_SLOW;
     }
 } // autotunePID
 

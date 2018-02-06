@@ -282,7 +282,7 @@ Overridden if EEPROM activated. */
 
 /** \brief Feedrate from halted extruder in mm/s
 Overridden if EEPROM activated. */
-#define EXT0_MAX_START_FEEDRATE             18
+#define EXT0_MAX_START_FEEDRATE             12
 
 /** \brief Acceleration in mm/s^2
 Overridden if EEPROM activated. */
@@ -440,7 +440,7 @@ Overridden if EEPROM activated. */
 
 /** \brief Feedrate from halted extruder in mm/s
 Overridden if EEPROM activated. */
-#define EXT1_MAX_START_FEEDRATE             18
+#define EXT1_MAX_START_FEEDRATE             12
 
 /** \brief Acceleration in mm/s^2
 Overridden if EEPROM activated. */
@@ -760,7 +760,6 @@ can set it on for safety. */
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
 
 
-#define XYZ_DIRECTION_CHANGE_DELAY          250                                                 // [us]
 #define XYZ_STEPPER_HIGH_DELAY              100                                                 // [us]
 #define XYZ_STEPPER_LOW_DELAY               100                                                 // [us]
 #define LOOP_INTERVAL                       2000                                                // [ms]
@@ -875,10 +874,6 @@ additional stepper interrupts with all it's overhead. As a result you can go as 
 40000Hz. STEP_DOUBLER_FREQUENCY should be in range 5000-12000 for RFx000 but 8000 is much for RF2000 (with ADVANCE?).*/
 #define STEP_DOUBLER_FREQUENCY              7000
 
-/** \brief If you need frequencies off more then 30000 you definitely need to enable this. If you have only 1/8 stepping
-enabling this may cause to stall your moves when 20000Hz is reached. */
-#define ALLOW_QUADSTEPPING                  true
-
 /** \brief If you reach STEP_DOUBLER_FREQUENCY the firmware will do 2 or 4 steps with nearly no delay. That can be too fast
 for some printers causing an early stall. */
 #define DOUBLE_STEP_DELAY                   0                                                   // [us] was 1, NIBBELS: Repetier set this to 0 when removing half stepping
@@ -964,7 +959,7 @@ it 0 as default. */
 Without a correct adjusted advance algorithm, you get blobs at points, where acceleration changes. The
 effect increases with speed and acceleration difference. Using the advance method decreases this effect.
 For more informations, read the wiki. */
-#define USE_ADVANCE 1
+#define USE_ADVANCE                         1
 
 /** \brief enables quadratic component.
 Uncomment to allow a quadratic advance dependency. Linear is the dominant value, so no real need

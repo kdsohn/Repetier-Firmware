@@ -75,9 +75,6 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 /** \brief Enables automatic compensation in z direction for the operationg mode "print" */
 #define FEATURE_HEAT_BED_Z_COMPENSATION     1                                                   // 1 = on, 0 = off
 
-/** \brief Allows/disallows to override Z-min via G0 and G1 */
-#define FEATURE_Z_MIN_OVERRIDE_VIA_GCODE    1                                                   // 1 = on, 0 = off
-
 /** \brief Enables/disables the output of the finished object feature */
 #define FEATURE_OUTPUT_FINISHED_OBJECT      1                                                   // 1 = on, 0 = off
 
@@ -329,7 +326,7 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 #endif // !FEATURE_HEAT_BED_Z_COMPENSATION && !FEATURE_WORK_PART_Z_COMPENSATION
 
 /** \brief Specifies the time interval after the pausing of the print at which the extruder current is reduced */
-#define EXTRUDER_CURRENT_PAUSE_DELAY        30000                                                // [ms] or 0, in order to disable the lowering of the extruder current
+#define EXTRUDER_CURRENT_PAUSE_DELAY        60000                                                // [ms] or 0, in order to disable the lowering of the extruder current
 #endif // FEATURE_PAUSE_PRINTING
 
 /** \brief Specifies the extruder current which shall be use after pausing of the print and before continuing of the print */
@@ -959,7 +956,7 @@ You can activate this to 1 and connect some Button. If you connect ground to pul
 #endif
 
 /** beta!!! Nibbels/PeterKA only!!! -> Testfeature: It can check if you lost steps and test your buttons hysteresis */
-#define FEATURE_CHECK_HOME                  0
+#define FEATURE_CHECK_HOME                  1
 
 /** \brief This adds some GCode M3029 to simulate Key-Press by GCode and to read whats inside the printers Display rightnow. */
 #define FEATURE_SEE_DISPLAY                 1
@@ -969,5 +966,8 @@ You can activate this to 1 and connect some Button. If you connect ground to pul
 
 /** \brief This is some testing function for reading the stepper drivers status bits while operation */
 #define FEATURE_READ_STEPPER_STATUS         0
+
+/** \brief Automatic Startline */
+#define FEATURE_STARTLINE                   1
 
 #endif // CONFIGURATION_H
