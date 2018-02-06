@@ -767,7 +767,6 @@ can set it on for safety. */
 #endif // FEATURE_MILLING_MODE
 
 
-#define XYZ_DIRECTION_CHANGE_DELAY          250                                                 // [us]
 #define XYZ_STEPPER_HIGH_DELAY              100                                                 // [us]
 #define XYZ_STEPPER_LOW_DELAY               100                                                 // [us]
 #define LOOP_INTERVAL                       2000                                                // [ms]

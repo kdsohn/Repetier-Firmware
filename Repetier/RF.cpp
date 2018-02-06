@@ -5011,12 +5011,18 @@ void moveZ( int nSteps )
         if( g_abortSearch ) break; // do not continue here in case the current operation has been cancelled
 #endif // FEATURE_FIND_Z_ORIGIN
 
+#if FEATURE_MILLING_MODE
+        if( Printer::operatingMode == OPERATING_MODE_PRINT ) // nur printing-mode. Beim millingmode könnte das falsch sein. Test TODO daher nur printing-mode, da stimmts.
+#endif //FEATURE_MILLING_MODE
+        {
+            if( Printer::isAxisHomed(Z_AXIS) && Printer::currentZSteps <= -Z_OVERRIDE_MAX ) break; // doppelcheck auf crash des sensors
+        }
+
         if( nSteps >= 0 )
         {
             if( !Printer::getZDirectionIsPos() )
             {
                 Printer::setZDirection(true);
-                HAL::delayMicroseconds( XYZ_DIRECTION_CHANGE_DELAY );
                 //Com::printFLN( PSTR( "moveZ: BedDown Z=" ),g_nZScanZPosition );  //kann manchmal verwirrend sein, gleiche richtugnen werden nicht angezeigt. Hoch, etwas runter .... scan ergebnis ... runter für neuanlauf  -> scanergebnis unsichtbar.
             }
         }
@@ -5025,7 +5031,6 @@ void moveZ( int nSteps )
             if( Printer::getZDirectionIsPos() )
             {
                 Printer::setZDirection(false);
-                HAL::delayMicroseconds( XYZ_DIRECTION_CHANGE_DELAY );
                 //Com::printFLN( PSTR( "moveZ: BedUp Z=" ),g_nZScanZPosition );  //kann manchmal verwirrend sein, gleiche richtugnen werden nicht angezeigt. Hoch, etwas runter .... scan ergebnis ... runter für neuanlauf  -> scanergebnis unsichtbar.
             }
         }
@@ -10719,20 +10724,20 @@ void processCommand( GCode* pCommand )
                     uint8_t Extrusion = 20;
                     uint8_t Lines = 2;
                     
-                    if (pCommand->hasE() ){
+                    if ( pCommand->hasE() ){
                         Extrusion = (uint8_t)pCommand->E;
                         if(Extrusion < 10) Extrusion = 10; //sinnvoll war bei mir ca. 10..30 pro linie.
                         if(Extrusion > 30) Extrusion = 30;
                     }
                     
                     uint8_t lineFeedrate = 18;
-                    if (pCommand->hasF() ){
+                    if ( pCommand->hasF() ){
                         lineFeedrate = (uint8_t)pCommand->F;
                         if(lineFeedrate < 5) lineFeedrate = 5; //sinnvoll war bei mir ca. 10..30 pro linie.
                         if(lineFeedrate > 50) lineFeedrate = 50;
                     }
 
-                    if (pCommand->hasI() ){
+                    if ( pCommand->hasI() ){
                         Lines = (uint8_t)pCommand->I;
                         if(Lines < 1) Lines = 1;
                         if(Lines > 5) Lines = 5;
@@ -10751,6 +10756,11 @@ void processCommand( GCode* pCommand )
                     
                     float x = spacerX;
                     float y = 23.0f; /*+Printer::minMM[Y_AXIS]*/
+                    if ( pCommand->hasY() ){ //override y with user value
+                        y = (float)pCommand->Y;
+                        if(y > Printer::maxMM[Y_AXIS]*0.5) y = Printer::maxMM[Y_AXIS]*0.5;
+                        if(y < 0.0f) y = 0.0f;
+                    }
                     float e =  0.0f;
 
                     Printer::moveToReal(x, y, AUTOADJUST_STARTMADEN_AUSSCHLUSS, IGNORE_COORDINATE, RMath::min(Printer::homingFeedrate[X_AXIS], Printer::homingFeedrate[Y_AXIS]) );
