@@ -10708,6 +10708,7 @@ void processCommand( GCode* pCommand )
                     short save_g_nDigitFlowCompensation_Fmin = g_nDigitFlowCompensation_Fmin;
                     short save_g_nDigitFlowCompensation_Fmax = g_nDigitFlowCompensation_Fmax;
                     short save_g_nDigitFlowCompensation_speed_intense = g_nDigitFlowCompensation_speed_intense;
+                    //short save_g_nDigitFlowCompensation_intense = g_nDigitFlowCompensation_intense;
                     bool save_relativeExtruderCoordinateMode = Printer::relativeExtruderCoordinateMode;
                     
                     if ( pCommand->hasS() && pCommand->hasP() ){
@@ -10747,6 +10748,7 @@ void processCommand( GCode* pCommand )
                     g_nDigitFlowCompensation_Fmin = min;
                     g_nDigitFlowCompensation_Fmax = max;
                     g_nDigitFlowCompensation_speed_intense = -90;
+                    //g_nDigitFlowCompensation_intense = -75; 
                     //M82:
                     Printer::relativeExtruderCoordinateMode = false;
                     //G92 E0:
@@ -10758,7 +10760,7 @@ void processCommand( GCode* pCommand )
                     float y = 23.0f; /*+Printer::minMM[Y_AXIS]*/
                     if ( pCommand->hasY() ){ //override y with user value
                         y = (float)pCommand->Y;
-                        if(y > Printer::maxMM[Y_AXIS]*0.5) y = Printer::maxMM[Y_AXIS]*0.5;
+                        if(y > Printer::lengthMM[Y_AXIS]*0.5) y = Printer::lengthMM[Y_AXIS]*0.5;
                         if(y < 0.0f) y = 0.0f;
                     }
                     float e =  0.0f;
@@ -10783,6 +10785,7 @@ void processCommand( GCode* pCommand )
                     g_nDigitFlowCompensation_Fmin = save_g_nDigitFlowCompensation_Fmin;
                     g_nDigitFlowCompensation_Fmax = save_g_nDigitFlowCompensation_Fmax;
                     g_nDigitFlowCompensation_speed_intense = save_g_nDigitFlowCompensation_speed_intense;
+                    //g_nDigitFlowCompensation_intense = save_g_nDigitFlowCompensation_intense;
                     Printer::queuePositionCurrentSteps[E_AXIS] = Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0;
                     Printer::relativeExtruderCoordinateMode = save_relativeExtruderCoordinateMode;
                     Printer::updateCurrentPosition();
