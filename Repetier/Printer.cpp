@@ -283,26 +283,6 @@ void Printer::constrainDirectDestinationCoords()
 #endif //FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 } // constrainDirectDestinationCoords
 
-
-bool Printer::isPositionAllowed(float x,float y,float z)
-{
-    if(isNoDestinationCheck())  return true;
-    bool allowed = true;
-    //Nibbels 11.01.17: Die Funktion ist so wie sie ist etwas unnötig und prüft nix... blende warnings aus.
-    (void)x;
-    (void)y;
-    (void)z;
-    
-    if(!allowed)
-    {
-        Printer::updateCurrentPosition(true);
-        Commands::printCurrentPosition();
-    }
-    return allowed;
-
-} // isPositionAllowed
-
-
 void Printer::updateDerivedParameter()
 {
     maxSteps[X_AXIS] = (long)(axisStepsPerMM[X_AXIS]*(minMM[X_AXIS]+lengthMM[X_AXIS]));
@@ -425,8 +405,7 @@ void Printer::kill(uint8_t only_steppers)
 
     if(!only_steppers)
     {
-        for(uint8_t i=0; i<NUM_TEMPERATURE_LOOPS; i++)
-            Extruder::setTemperatureForExtruder(0,i);
+        Extruder::setTemperatureForAllExtruders(0, false);
         Extruder::setHeatedBedTemperature(0);
         UI_STATUS_UPD(UI_TEXT_KILLED);
 
@@ -672,11 +651,6 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
             Printer::feedrate = com->F * (float)feedrateMultiply * 0.00016666666f;
     }
 
-    if(!Printer::isPositionAllowed(x,y,z))
-    {
-        queuePositionLastSteps[E_AXIS] = queuePositionTargetSteps[E_AXIS];
-        return false; // ignore move
-    }
     return !com->hasNoXYZ() || (com->hasE() && queuePositionTargetSteps[E_AXIS] != queuePositionLastSteps[E_AXIS]); // ignore unproductive moves
 
 } // setDestinationStepsFromGCode
@@ -727,15 +701,6 @@ uint8_t Printer::setDestinationStepsFromMenu( float relativeX, float relativeY, 
     else
     {
         queuePositionTargetSteps[Z_AXIS] = queuePositionLastSteps[Z_AXIS];
-    }
-
-    if( !Printer::isPositionAllowed( x, y, z ) )
-    {
-        if( Printer::debugErrors() )
-        {
-            //Com::printFLN( PSTR( "We should not be here." ) );
-        }
-        return false; // ignore move
     }
 
     PrintLine::prepareQueueMove(ALWAYS_CHECK_ENDSTOPS, true, Printer::feedrate);
@@ -1319,7 +1284,7 @@ void Printer::defaultLoopActions()
 
     millis_t curtime = HAL::timeInMilliseconds();
 
-    if( PrintLine::hasLines() || isMenuMode(MENU_MODE_PRINTING + MENU_MODE_PAUSED) )
+    if( PrintLine::hasLines() || Printer::isPrinting() || isMenuMode(MENU_MODE_PAUSED) )
     {
         previousMillisCmd = curtime;
     }
@@ -1925,15 +1890,14 @@ void Printer::homeZAxis()
             if(Printer::isZMinEndstopHit()){
                 //schalter noch gedrückt, wir müssen weiter zurück, aber keinesfalls mehr als ENDSTOP_Z_BACK_MOVE
                 PrintLine::moveRelativeDistanceInSteps(0,0, 0.1f*axisStepsPerMM[Z_AXIS] * -1 * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR * 5,true,false);
-                Com::printFLN( PSTR( "HomeZ3=" ), currentZSteps );
+                Com::printFLN( PSTR( "HomeZ3a=" ), currentZSteps );
             }else{ //wir sind aus dem schalterbereich raus, müssten also nicht weiter zurücksetzen:
                 //rest drüberfahren, der über die schalterüberfahrung drübersteht: dann ende der for{}
                 PrintLine::moveRelativeDistanceInSteps(0,0, axisStepsPerMM[Z_AXIS] * (ENDSTOP_Z_BACK_MOVE - Z_ENDSTOP_DRIVE_OVER)* -1 * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR * 2,true,false);
-                Com::printFLN( PSTR( "HomeZ3=" ), currentZSteps );
+                Com::printFLN( PSTR( "HomeZ3b=" ), currentZSteps );
                 break; 
             }
         }
-        //PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * -1 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR*2,true,false);
         setHoming(true);
         //der fährt nur bis zum schalter, aber ENDSTOP_Z_BACK_MOVE + wenig ist maximum.
         PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * (0.1f + ENDSTOP_Z_BACK_MOVE) * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,true);
@@ -1979,7 +1943,8 @@ void Printer::homeZAxis()
 void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta printer
 {
     char    unlock = !uid.locked;
-    
+    g_uStartOfIdle = 0;
+
     //Bei beliebiger user interaktion oder Homing soll G1 etc. erlaubt werden. Dann ist der Drucker nicht abgestürzt, sondern bedient worden.
 #if FEATURE_UNLOCK_MOVEMENT
     g_unlock_movement = 1;
@@ -2084,7 +2049,7 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
     {
         char zhomedir = Printer::anyHomeDir(Z_AXIS);
         if(zhomedir < 0)      startZ = 0;                           //switch is zero. no min Z available in this printer.
-        else if(zhomedir > 0) startZ = Printer::lengthMM[Z_AXIS];   //switch is zero. no min Z available in this printer.
+        else if(zhomedir > 0) startZ = Printer::lengthMM[Z_AXIS];
     }
     updateCurrentPosition(true);
     moveToReal(startX,startY,startZ,IGNORE_COORDINATE,(zaxis ? homingFeedrate[Z_AXIS] : RMath::min(homingFeedrate[X_AXIS],homingFeedrate[Y_AXIS]) ));
@@ -2267,21 +2232,12 @@ void Printer::performZCompensation( void )
         }
     }
 
-/* das hier ... conrad 1.39, oder meine version : eins drunter??? TODO Nibbels 23.12.2017 */
     if( Printer::directPositionCurrentSteps[Z_AXIS] != Printer::directPositionTargetSteps[Z_AXIS] )
     {
         // do not perform any compensation while there is a direct move into z-direction
         return;
     }
 
-/*  oder meine version? ... directmove zählt immer auf directpositioncurrentsteps, also stimmt das auch! :: edit 07 01 18
-    if( PrintLine::direct.isZMove() )
-    {
-        // do not peform any compensation while there is a direct-move into z-direction
-        if( PrintLine::direct.stepsRemaining ) return;
-        else PrintLine::direct.setZMoveFinished();
-    }
- */
     if( compensatedPositionCurrentStepsZ < compensatedPositionTargetStepsZ )
     {
         // here we shall move the z-axis only in case performQueueMove() is not moving into the other direction at the moment
@@ -2319,3 +2275,75 @@ void Printer::performZCompensation( void )
 } // performZCompensation
 
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
+
+void Printer::stopPrint() //function for aborting USB and SD-Prints
+{
+    g_uBlockCommands = 1; //keine gcodes mehr ausführen bis beenden beendet.
+    g_uStartOfIdle = 0;     //jetzt nicht in showidle() gehen; output object setzt das wieder
+    UI_STATUS_UPD( UI_TEXT_STOP_PRINT );
+
+    if( Printer::isPrinting() && !Printer::isMenuMode(MENU_MODE_SD_PRINTING) ) //prüfung auf !sdmode sollte hier eigenlicht nicht mehr nötig sein, aber ..
+    {
+        Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetierserver to stop.
+        Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
+        Com::printFLN( PSTR("USB print stopped.") );
+    }else{
+        Com::printFLN( PSTR("SD print stopped.") );
+        sd.sdmode = false;
+        sd.filesize = 0;
+        sd.sdpos    = 0;
+    }
+
+    InterruptProtectedBlock noInts;
+    PrintLine::resetPathPlanner();
+    PrintLine::cur = NULL;
+    // we have to tell the firmware about its real current position
+    Printer::queuePositionLastSteps[X_AXIS] = Printer::queuePositionTargetSteps[X_AXIS] = Printer::queuePositionCurrentSteps[X_AXIS];
+    Printer::queuePositionLastSteps[Y_AXIS] = Printer::queuePositionTargetSteps[Y_AXIS] = Printer::queuePositionCurrentSteps[Y_AXIS];
+    Printer::queuePositionLastSteps[Z_AXIS] = Printer::queuePositionTargetSteps[Z_AXIS] = Printer::queuePositionCurrentSteps[Z_AXIS];
+    //G92 E0:
+    Printer::queuePositionCurrentSteps[E_AXIS] = Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0;
+    Printer::updateCurrentPosition(true);
+    noInts.unprotect();
+    Commands::printCurrentPosition();
+
+#if FEATURE_PAUSE_PRINTING
+    if( g_pauseStatus != PAUSE_STATUS_NONE )
+    {
+        // the printing is paused at the moment
+        noInts.protect();
+
+        g_uPauseTime  = 0;
+        g_pauseStatus = PAUSE_STATUS_NONE;
+        g_pauseMode   = PAUSE_MODE_NONE;
+
+        g_nContinueSteps[X_AXIS] = 0;
+        g_nContinueSteps[Y_AXIS] = 0;
+        g_nContinueSteps[Z_AXIS] = 0;
+        g_nContinueSteps[E_AXIS] = 0;
+
+        noInts.unprotect();
+    }
+    Printer::setMenuMode(MENU_MODE_PAUSED,false);
+#endif // FEATURE_PAUSE_PRINTING
+
+    //unaufgeräumtes beenden: Es wird sowieso der Stepper deaktiviert.
+    g_nZOSScanStatus = 0;
+    g_nHeatBedScanStatus = 0;
+    //g_nAlignExtrudersStatus = 0;
+    g_nDrawStartLineStatus = 0;
+#if FEATURE_FIND_Z_ORIGIN
+    g_nFindZOriginStatus = 0;
+#endif // FEATURE_FIND_Z_ORIGIN
+#if FEATURE_MILLING_MODE && FEATURE_WORK_PART_Z_COMPENSATION
+    g_nWorkPartScanStatus = 0;
+#endif // FEATURE_MILLING_MODE && FEATURE_WORK_PART_Z_COMPENSATION
+
+    Com::printFLN(PSTR("Stop complete"));
+    Printer::setPrinting(false);
+
+    BEEP_STOP_PRINTING
+
+    g_uStopTime = HAL::timeInMilliseconds(); //starts output object in combination with g_uBlockCommands
+
+} // stopPrint

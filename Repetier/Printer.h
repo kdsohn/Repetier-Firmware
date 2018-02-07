@@ -690,10 +690,13 @@ public:
         return flag3 & PRINTER_FLAG3_PRINTING;
     }
 
-    static INLINE void setPrinting(uint8_t b)
+    static INLINE void setPrinting(bool b)
     {
         flag3 = (b ? flag3 | PRINTER_FLAG3_PRINTING : flag3 & ~PRINTER_FLAG3_PRINTING);
-        if(!Printer::isMenuMode(MENU_MODE_SD_PRINTING) || !b) Printer::setMenuMode(MENU_MODE_PRINTING, b);
+        if(!b){
+            Printer::setMenuMode(MENU_MODE_SD_PRINTING, b);
+        }
+        Printer::setMenuMode(MENU_MODE_PRINTING, b);
     }
 
     static INLINE void toggleAnimation()
@@ -1176,7 +1179,6 @@ public:
     static void moveToReal(float x,float y,float z,float e,float feedrate);
     static void homeAxis(bool xaxis,bool yaxis,bool zaxis); /// Home axis
     static void setOrigin(float xOff,float yOff,float zOff);
-    static bool isPositionAllowed(float x,float y,float z);
 
     static INLINE int getFanSpeed(bool percent = false)
     {
@@ -1209,6 +1211,8 @@ public:
     static void disableCMPnow( bool wait = false );
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
+    static void stopPrint();
+    
 private:
     static void homeXAxis();
     static void homeYAxis();

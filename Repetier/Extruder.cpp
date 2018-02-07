@@ -495,6 +495,9 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
 
 } // setTemperatureForExtruder
 
+void Extruder::setTemperatureForAllExtruders(float temperatureInCelsius, bool beep){
+    for(uint8_t extrNr = 0; extrNr < NUM_EXTRUDER; extrNr++) Extruder::setTemperatureForExtruder(0, extrNr, beep);
+}
 
 void Extruder::setHeatedBedTemperature(float temperatureInCelsius,bool beep)
 {
@@ -1241,12 +1244,12 @@ void Extruder::disableAllHeater()
 void TemperatureController::waitForTargetTemperature(uint8_t plus_temp_tolerance) {
     if(targetTemperatureC < 30) return;
     if(Printer::debugDryrun()) return;
-    g_uStartOfIdle = 0;
     if(targetTemperatureC < currentTemperatureC){
         UI_STATUS_UPD( UI_TEXT_COOLING_DOWN );
     }else{
         UI_STATUS_UPD( UI_TEXT_HEATING_UP );
     }
+    g_uStartOfIdle = 0;
     while(true) {
         Commands::printTemperatures();
         Commands::checkForPeriodicalActions( WaitHeater );

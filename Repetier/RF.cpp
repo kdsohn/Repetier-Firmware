@@ -77,14 +77,14 @@ bool            g_auto_minmaxZCompensationSteps = true;
 long            g_minZCompensationSteps    = HEAT_BED_Z_COMPENSATION_MIN_STEPS;
 long            g_maxZCompensationSteps    = HEAT_BED_Z_COMPENSATION_MAX_STEPS;
 long            g_diffZCompensationSteps   = HEAT_BED_Z_COMPENSATION_MAX_STEPS - HEAT_BED_Z_COMPENSATION_MIN_STEPS;
-volatile unsigned char  g_nHeatBedScanStatus       = 0;
+volatile unsigned char g_nHeatBedScanStatus = 0;
 char            g_nActiveHeatBed           = 1;
 
 //ZOS
 //Nibbels: Das ist wie die g_nHeatBedScanStatus, die Schwestervariable, für den ZOS-Scan -> Vorsicht, wenn man sowas einführt müssen die überall vermerkt werden, weil sonst z.B. der G-Code weiter vorgeführt wird.
 // g_ZMatrixChangedInRam soll 1 werden, wenn ZOS, Offsetänderung der Matrix etc. Sonst wäre Sichern der Matrix unnötig.
 volatile unsigned char  g_ZMatrixChangedInRam = 0;
-volatile unsigned char  g_ZOSScanStatus       = 0;
+volatile unsigned char  g_nZOSScanStatus       = 0;
 //Nibbels:
 unsigned char   g_ZOSTestPoint[2]     = { SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_INDEX_X, SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_INDEX_Y };
 float           g_ZOSlearningRate     = 1.0f;
@@ -94,7 +94,7 @@ unsigned char   g_ZOS_Auto_Matrix_Leveling_State = 0; //if 1 do multiple scans t
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
-char            g_nWorkPartScanStatus = 0;
+volatile unsigned char g_nWorkPartScanStatus = 0;
 char            g_nWorkPartScanMode   = 0;
 char            g_nActiveWorkPart     = 1;
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
@@ -162,7 +162,7 @@ long            g_staticZSteps              = 0;
 char            g_debugLevel                = 0;
 char            g_debugLog                  = 0;
 unsigned long   g_uStopTime                 = 0;
-unsigned long   g_uBlockSDCommands          = 0;
+unsigned long   g_uBlockCommands          = 0;
 
 #if FEATURE_EXTENDED_BUTTONS
 // other configurable parameters
@@ -218,12 +218,21 @@ bool            g_nDigitZCompensationDigits_active = true;
 unsigned long   uLastZPressureTime_IgnoreUntil = 0;
 #endif // FEATURE_EMERGENCY_STOP_ALL
 
+#if FEATURE_STARTLINE
+volatile unsigned char g_nDrawStartLineStatus = 0;
+#endif // FEATURE_STARTLINE
+
 #if FEATURE_FIND_Z_ORIGIN
-volatile char   g_nFindZOriginStatus        = 0;
+volatile unsigned char g_nFindZOriginStatus = 0;
 long            g_nZOriginPosition[3]       = { 0, 0, 0 };
 int             g_nZOriginSet               = 0;
-char            g_abortSearch               = 0;
+char            g_abortSearchZOrigin               = 0;
 #endif // FEATURE_FIND_Z_ORIGIN
+
+#if FEATURE_ALIGN_EXTRUDERS
+volatile unsigned char g_nAlignExtrudersStatus = 0;
+char            g_abortAlignExtruders       = 0;
+#endif // FEATURE_ALIGN_EXTRUDERS
 
 #if FEATURE_RGB_LIGHT_EFFECTS
 unsigned char   g_uRGBHeatingR              = RGB_HEATING_R;
@@ -254,10 +263,6 @@ unsigned long   g_nlastServiceTime  = 0;
 int             g_nEnteredService   = 0;
 #endif // FEATURE_SERVICE_INTERVAL
 
-#if FEATURE_ALIGN_EXTRUDERS
- unsigned char  g_nAlignExtrudersStatus = 0;
- char           g_abortAlignExtruders   = 0;
-#endif // FEATURE_ALIGN_EXTRUDERS
 
 void initRF( void )
 {
@@ -461,7 +466,7 @@ void startHeatBedScan( void )
 
 void scanHeatBed( void )
 {
-    if(g_ZOSScanStatus) return;
+    if(g_nZOSScanStatus) return;
 
     static unsigned char    nIndexX;
     static unsigned char    nIndexY;
@@ -500,10 +505,7 @@ void scanHeatBed( void )
 
         // disable all heaters
         Extruder::setHeatedBedTemperature( 0, false );
-        Extruder::setTemperatureForExtruder( 0, 0, false );
-#if NUM_EXTRUDER == 2
-        Extruder::setTemperatureForExtruder( 0, 1, false );
-#endif // NUM_EXTRUDER == 2
+        Extruder::setTemperatureForAllExtruders(0, false);
 
         if( Printer::debugInfo() )
         {
@@ -606,20 +608,12 @@ void scanHeatBed( void )
                 if( g_nHeatBedScanMode == HEAT_BED_SCAN_MODE_PLA )
                 {
                     Extruder::setHeatedBedTemperature( PRECISE_HEAT_BED_SCAN_BED_TEMP_PLA, false);
-                    Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_SCAN, 0, false);
-
-#if NUM_EXTRUDER == 2
-                    Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_SCAN, 1, false);
-#endif // NUM_EXTRUDER == 2
+                    Extruder::setTemperatureForAllExtruders(PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_SCAN, false);
                 }
                 else if( g_nHeatBedScanMode == HEAT_BED_SCAN_MODE_ABS )
                 {
                     Extruder::setHeatedBedTemperature( PRECISE_HEAT_BED_SCAN_BED_TEMP_ABS, false);
-                    Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_SCAN, 0, false);
-
-#if NUM_EXTRUDER == 2
-                    Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_SCAN, 1, false);
-#endif // NUM_EXTRUDER == 2
+                    Extruder::setTemperatureForAllExtruders(PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_SCAN, false);
                 }
 #endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
@@ -1189,19 +1183,12 @@ void scanHeatBed( void )
                 {
                     // disable all heaters
                     Extruder::setHeatedBedTemperature( 0, false );
-                    Extruder::setTemperatureForExtruder( 0, 0, false );
-#if NUM_EXTRUDER > 1
-                    Extruder::setTemperatureForExtruder( 0, 1, false );
-#endif // NUM_EXTRUDER > 1
+                    Extruder::setTemperatureForAllExtruders(0, false);
                 }
 #else
                 // disable all heaters
                 Extruder::setHeatedBedTemperature( 0, false );
-                Extruder::setTemperatureForExtruder( 0, 0, false );
-
-#if NUM_EXTRUDER > 1
-                Extruder::setTemperatureForExtruder( 0, 1, false );
-#endif // NUM_EXTRUDER > 1
+                Extruder::setTemperatureForAllExtruders(0, false);
 #endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
                 g_nHeatBedScanStatus = 65;
@@ -1616,17 +1603,11 @@ void scanHeatBed( void )
 #if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( g_nHeatBedScanMode == HEAT_BED_SCAN_MODE_PLA )
                 {
-                    Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA, 0, false);
-#if NUM_EXTRUDER == 2
-                    Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA, 1, false);
-#endif // NUM_EXTRUDER == 2
+                    Extruder::setTemperatureForAllExtruders(PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA, false);
                 }
                 else if ( g_nHeatBedScanMode == HEAT_BED_SCAN_MODE_ABS )
                 {
-                    Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS, 0, false);
-#if NUM_EXTRUDER == 2
-                    Extruder::setTemperatureForExtruder( PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS, 1, false);
-#endif // NUM_EXTRUDER == 2
+                    Extruder::setTemperatureForAllExtruders(PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS, false);
                 }
 #endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
@@ -1871,10 +1852,7 @@ void scanHeatBed( void )
 
                 // disable all heaters
                 Extruder::setHeatedBedTemperature( 0, false );
-                Extruder::setTemperatureForExtruder( 0, 0, false );
-#if NUM_EXTRUDER == 2
-                Extruder::setTemperatureForExtruder( 0, 1, false );
-#endif // NUM_EXTRUDER == 2
+                Extruder::setTemperatureForAllExtruders(0, false);
 
                 g_nHeatBedScanStatus = 160;
 
@@ -1932,7 +1910,7 @@ void startZOScan( bool automatrixleveling )
         || g_nWorkPartScanStatus
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
         ) return;
-    if( g_ZOSScanStatus )
+    if( g_nZOSScanStatus )
     {
         // abort the heat bed scan
         if( Printer::debugInfo() )
@@ -1956,7 +1934,7 @@ void startZOScan( bool automatrixleveling )
         {
             Com::printFLN( PSTR( "ZOS started" ) );
             BEEP_START_HEAT_BED_SCAN
-            g_ZOSScanStatus = 1;
+            g_nZOSScanStatus = 1;
             // start the heat bed scan
             g_abortZScan = 0;
             g_retryZScan = 0;
@@ -1970,24 +1948,27 @@ void startZOScan( bool automatrixleveling )
 
 void searchZOScan( void )
 {
-    if(g_ZOSScanStatus == 0) return;
+    if(g_nZOSScanStatus == 0) return;
+    
+    g_uStartOfIdle = 0; //zeige nicht gleich wieder Printer Ready an.
+    
     if(g_nHeatBedScanStatus 
 #if FEATURE_WORK_PART_Z_COMPENSATION
         || g_nWorkPartScanStatus
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
         ){
-      g_ZOSScanStatus = 0;
+      g_nZOSScanStatus = 0;
       g_ZOS_Auto_Matrix_Leveling_State = 0;
       return;
     }
 
-    switch( g_ZOSScanStatus )
+    switch( g_nZOSScanStatus )
         {
             case 1:
             {
                 Com::printFLN( PSTR( "ZOS init" ) ); 
                 // when the heat bed Z offset is searched, the z-compensation must be disabled
-                g_ZOSScanStatus = 2;
+                g_nZOSScanStatus = 2;
                 g_min_nZScanZPosition = HEAT_BED_SCAN_Z_START_STEPS; //nur nutzen wenn kleiner.
                 g_scanRetries = 0; // never retry   TODO allow retries?
                 g_abortZScan = 0;  // will be set in case of error inside moveZUpFast/Slow
@@ -2106,7 +2087,7 @@ void searchZOScan( void )
                 // start at the home position
                 Printer::homeAxis( true, true, true ); //home z resets ZCMP
                 Commands::waitUntilEndOfAllMoves();
-                g_ZOSScanStatus = 3;
+                g_nZOSScanStatus = 3;
                 break;
             }
             case 3:
@@ -2120,9 +2101,8 @@ void searchZOScan( void )
 
                 // move a bit away from the heat bed in order to achieve better measurements in case of hardware configurations where the extruder is very close to the heat bed after the z-homing     
                 UI_STATUS_UPD( UI_TEXT_ZCALIB );
-                g_uStartOfIdle = 0; //zeige nicht gleich wieder Printer Ready an.
                 GCode::keepAlive( Processing );
-                g_ZOSScanStatus = 4;
+                g_nZOSScanStatus = 4;
                 break;
             }
             case 4:
@@ -2147,7 +2127,7 @@ void searchZOScan( void )
                   abortSearchHeatBedZOffset(false);
                   break;
                 }
-                g_ZOSScanStatus = 5;
+                g_nZOSScanStatus = 5;
                 break;
             }
             case 5:
@@ -2174,14 +2154,14 @@ void searchZOScan( void )
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 PrintLine::moveRelativeDistanceInSteps( xScanPosition, yScanPosition, 0, 0, RMath::min(MAX_FEEDRATE_X,MAX_FEEDRATE_Y), true, true );
                 GCode::keepAlive( Processing );
-                g_ZOSScanStatus = 6;
+                g_nZOSScanStatus = 6;
                 break;
             }
             case 6:
             {
                 g_scanRetries = 20; //für 9, 10, 20
                 GCode::keepAlive( Processing );
-                g_ZOSScanStatus = 9;
+                g_nZOSScanStatus = 9;
                 break;
             }
 
@@ -2190,7 +2170,7 @@ void searchZOScan( void )
                 HAL::delayMilliseconds( HEAT_BED_SCAN_DELAY );
                 GCode::keepAlive( Processing );
                 moveZDownFast();
-                g_ZOSScanStatus = 9;
+                g_nZOSScanStatus = 9;
                 break;
             }
             case 9:
@@ -2201,7 +2181,7 @@ void searchZOScan( void )
                 if( readIdlePressure( &g_nCurrentIdlePressure ) ) {
                   //Problem mit Digits, die wackeln:
                   if(g_scanRetries-- > 0){
-                    g_ZOSScanStatus = 7;
+                    g_nZOSScanStatus = 7;
                     break;
                   }else{
                     Com::printFLN( PSTR( "ERROR::the idle pressure could not be determined" ) );
@@ -2228,7 +2208,7 @@ void searchZOScan( void )
                     Com::printFLN( PSTR( " g_nMaxPressureIdle = " ), g_nMaxPressureIdle );
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 GCode::keepAlive( Processing );
-                g_ZOSScanStatus = 10;
+                g_nZOSScanStatus = 10;
                 break;
             }
             case 10:
@@ -2277,7 +2257,7 @@ void searchZOScan( void )
                     g_scanRetries--;
                     Com::printFLN( PSTR( "Bettsuchproblem 10 -> 7 :" ), g_scanRetries );
                     GCode::keepAlive( Processing );
-                    g_ZOSScanStatus = 7;
+                    g_nZOSScanStatus = 7;
                     break;
                 }
                
@@ -2290,7 +2270,7 @@ void searchZOScan( void )
                 }
 
                 GCode::keepAlive( Processing );
-                g_ZOSScanStatus = 20;
+                g_nZOSScanStatus = 20;
                 break;
             }
             case 20:
@@ -2335,7 +2315,7 @@ void searchZOScan( void )
                         g_scanRetries--;
                         Com::printFLN( PSTR( "Suchproblem 20 -> 7:" ), g_scanRetries );
                         GCode::keepAlive( Processing );
-                        g_ZOSScanStatus = 7;
+                        g_nZOSScanStatus = 7;
                         prebreak = true; break;
                       }
                       // check for error
@@ -2355,7 +2335,7 @@ void searchZOScan( void )
                       GCode::keepAlive( Processing );
                 }
                 if(prebreak) break;
-                g_ZOSScanStatus = 50;
+                g_nZOSScanStatus = 50;
                 break;
                 
             }
@@ -2448,7 +2428,7 @@ void searchZOScan( void )
                 determineCompensationOffsetZ();
                 g_ZMatrixChangedInRam = 1; //man kan die matrix mit diesem marker nun sichern.
                 
-                g_ZOSScanStatus = 51;
+                g_nZOSScanStatus = 51;
                 break;
             }
             case 51:
@@ -2457,12 +2437,12 @@ void searchZOScan( void )
                 switch(g_ZOS_Auto_Matrix_Leveling_State){
                     case 0:
                         {
-                        g_ZOSScanStatus = 100; // No AUTO_MATRIX_LEVELING
+                        g_nZOSScanStatus = 100; // No AUTO_MATRIX_LEVELING
                         }
                     break;
                     default: 
                         {
-                        g_ZOSScanStatus = 2; // Goto next AUTO_MATRIX_LEVELING Setting
+                        g_nZOSScanStatus = 2; // Goto next AUTO_MATRIX_LEVELING Setting
                         g_ZOS_Auto_Matrix_Leveling_State++;
                         moveZ( Printer::axisStepsPerMM[Z_AXIS] );
                         Printer::homeAxis( true, true, false );
@@ -2474,8 +2454,7 @@ void searchZOScan( void )
             }
             case 100:
             {
-                g_ZOSScanStatus = 0;
-                g_uStartOfIdle = 0;
+                g_nZOSScanStatus = 0;
                 if( calculateZScrewCorrection() ){
                    UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN );
                    showMyPage( (void*)ui_text_heat_bed_zoffset_search_status, (void*)ui_text_heat_bed_zoffset_fix_z1, (void*)ui_text_heat_bed_zoffset_fix_z2, (void*)ui_text_statusmsg );
@@ -2506,7 +2485,7 @@ void abortSearchHeatBedZOffset( bool reloadMatrix )
 {
     if(reloadMatrix) loadCompensationMatrix( (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveHeatBed) ); 
     
-    g_ZOSScanStatus = 0;
+    g_nZOSScanStatus = 0;
     g_retryZScan = 0;
     g_abortZScan = 0;
 
@@ -2522,6 +2501,7 @@ void abortSearchHeatBedZOffset( bool reloadMatrix )
     Printer::disableAllSteppersNow();
 
     g_ZOS_Auto_Matrix_Leveling_State = 0;
+    g_uStartOfIdle = HAL::timeInMilliseconds();
 } /* searchHeatBedZOffset */
 
 float g_ZSchraubenSollDrehungenWarm_U = 0;
@@ -3322,7 +3302,7 @@ void doHeatBedZCompensation( void )
 
 long getHeatBedOffset( void )
 {
-    if( !Printer::doHeatBedZCompensation && !g_nHeatBedScanStatus && !g_ZOSScanStatus ) //|| g_ZOSScanStatus brauche ich hier vermutlich nicht. Aber ich lasse es mal drin!
+    if( !Printer::doHeatBedZCompensation && !g_nHeatBedScanStatus && !g_nZOSScanStatus ) //|| g_nZOSScanStatus brauche ich hier vermutlich nicht. Aber ich lasse es mal drin!
     {
         // we determine the offset to the scanned heat bed only in case the heat bed z compensation is active
         return 0; //vermerk Nibbels: Beim HBS -> adjustCompensationMatrix -> short  deltaZ  = nZ - nOffset; -> mit offset ist das verfälscht!! --> return 0
@@ -3684,7 +3664,7 @@ void startWorkPartScan( char nMode )
 
 void scanWorkPart( void )
 {
-    if(g_ZOSScanStatus) return;
+    if(g_nZOSScanStatus) return;
 
     static unsigned char    nIndexX;
     static unsigned char    nIndexY;
@@ -5006,9 +4986,8 @@ void moveZ( int nSteps )
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         if( g_abortZScan ) break; // do not continue here in case the current operation has been cancelled
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-
 #if FEATURE_FIND_Z_ORIGIN
-        if( g_abortSearch ) break; // do not continue here in case the current operation has been cancelled
+        if( g_abortSearchZOrigin ) break; // do not continue here in case the current operation has been cancelled
 #endif // FEATURE_FIND_Z_ORIGIN
 
 #if FEATURE_MILLING_MODE
@@ -6062,7 +6041,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
         {
             scanHeatBed();
         }
-        if( g_ZOSScanStatus )
+        if( g_nZOSScanStatus )
         {
             searchZOScan();
         }
@@ -6085,7 +6064,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
     {
         scanHeatBed();
     }
-    if( g_ZOSScanStatus )
+    if( g_nZOSScanStatus )
     {
         searchZOScan();
     }
@@ -6337,7 +6316,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
         {
             uLastPressureTime = uTime;
 
-            if( g_pauseStatus == PAUSE_STATUS_NONE && g_pauseMode == PAUSE_MODE_NONE && Printer::isPrinting() )
+            if( !Printer::isMenuMode(MENU_MODE_PAUSED) && Printer::isPrinting() )
             {
                 // this check shall be done only during the printing (for example, it shall not be done in case filament is extruded manually)
                 nPressureSum    += pressure;
@@ -6444,10 +6423,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 #endif // FEATURE_MILLING_MODE
                     // disable all heaters
                     Extruder::setHeatedBedTemperature( 0, false );
-                    Extruder::setTemperatureForExtruder( 0, 0, false );
-#if NUM_EXTRUDER == 2
-                    Extruder::setTemperatureForExtruder( 0, 1, false );
-#endif // #if NUM_EXTRUDER == 2
+                    Extruder::setTemperatureForAllExtruders(0, false);
 #if FEATURE_MILLING_MODE
                 }
                 else if ( Printer::operatingMode == OPERATING_MODE_MILL )
@@ -6456,21 +6432,22 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                 }
 #endif // FEATURE_MILLING_MODE
 
-                g_uBlockSDCommands = HAL::timeInMilliseconds();
+                g_uBlockCommands = HAL::timeInMilliseconds();
             }
         }
     }
 
-    if( g_uBlockSDCommands > 1 ) //=1 scheint zu blocken, dann muss StopTIme aktiv sein und hier drüber erst eine Uhrzeit reinsetzen.
+    if( g_uBlockCommands > 1 ) //=1 scheint zu blocken, dann muss StopTIme aktiv sein und hier drüber erst eine Uhrzeit reinsetzen.
     {
-        if( (uTime - g_uBlockSDCommands) > COMMAND_BLOCK_DELAY ) //jede 1 sekunden wäre standard nach config
+        if( (uTime - g_uBlockCommands) > COMMAND_BLOCK_DELAY ) //jede 1 sekunden wäre standard nach config
         {
-            g_uBlockSDCommands = 0;
+            g_uBlockCommands = 0;
 #if FEATURE_OUTPUT_FINISHED_OBJECT
             // output the object
             outputObject();
 #else
             // disable all steppers
+            g_uStartOfIdle = HAL::timeInMilliseconds();
             Printer::disableAllSteppersNow();
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
@@ -6483,16 +6460,11 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
     }
     
 #if FEATURE_ABORT_PRINT_AFTER_TEMPERATURE_ERROR
-    if( Printer::isAnyTempsensorDefect() && sd.sdmode && PrintLine::linesCount )
+    if( Printer::isAnyTempsensorDefect() && Printer::isPrinting() )
     {
         // we are printing from the SD card and a temperature sensor got defect - abort the current printing
-        if( Printer::debugErrors() )
-        {
-            Com::printFLN( PSTR( "loopRF(): aborting print because of a temperature sensor defect" ) );
-        }
-        Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetierserver to stop.
-        Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
-        sd.abortPrint();
+        Com::printFLN( PSTR( "ERROR: a temperature sensor defect. aborting print" ) );
+        Printer::stopPrint();
     }
 #endif // FEATURE_ABORT_PRINT_AFTER_TEMPERATURE_ERROR
 
@@ -6566,48 +6538,28 @@ void outputObject( void )
 {
     char    unlock = !uid.locked;
 
-
     if( PrintLine::linesCount )
     {
-        // there is some printing in progress at the moment - do not park the printer in this case
-        if( Printer::debugErrors() )
-        {
-            Com::printFLN( PSTR( "outputObject(): the object can not be output while the printing is in progress" ) );
-        }
-
         showError( (void*)ui_text_output_object, (void*)ui_text_operation_denied );
         return;
     }
-
     if( !Printer::areAxisHomed() )
     {
-        // the printer does not know its home position, thus we can not output the object
-        if( Printer::debugErrors() )
-        {
-            Com::printFLN( PSTR( "outputObject(): the object can not be output because the home position is unknown" ) );
-        }
-
         showError( (void*)ui_text_output_object, (void*)ui_text_home_unknown );
         return;
     }
 
+    Com::printFLN( PSTR( "outputObject()" ) );
+    Commands::printCurrentPosition();
+    uLastZPressureTime_IgnoreUntil = HAL::timeInMilliseconds()+10000L;
     UI_STATUS_UPD( UI_TEXT_OUTPUTTING_OBJECT );
     uid.lock();
-
-    if( Printer::debugInfo() )
-    {
-        Com::printFLN( PSTR( "outputObject()" ) );
-    }
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     // disable the fan
     Commands::setFanSpeed(0,false);
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
-    Commands::printCurrentPosition();
-
-    uLastZPressureTime_IgnoreUntil = HAL::timeInMilliseconds()+10000L;
-    
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_MILL )
     {
@@ -6620,36 +6572,11 @@ void outputObject( void )
 #else
     GCode::executeFString(Com::tOutputObjectPrint);
 #endif // FEATURE_MILLING_MODE
-
-#if FEATURE_CONFIGURABLE_Z_ENDSTOPS && DEBUG_CONFIGURABLE_Z_ENDSTOPS
-    unsigned long   uStart = HAL::timeInMilliseconds();
-    while( PrintLine::hasLines() )
-    {
-        if( (HAL::timeInMilliseconds() - uStart) > 250 )
-        {
-            Com::printF( PSTR( "Z endstop type= "), Printer::ZEndstopType );
-            Com::printF( PSTR( ", Z-Min= "), Printer::isZMinEndstopHit() );
-            Com::printF( PSTR( ", Z-Max= "), Printer::isZMaxEndstopHit() );
-            Com::printF( PSTR( ", lastZDirection= "), Printer::lastZDirection );
-            Com::printF( PSTR( ", endstopZMinHit= "), Printer::endstopZMinHit );
-            Com::printF( PSTR( ", endstopZMaxHit= "), Printer::endstopZMaxHit );
-            Com::printF( PSTR( ", ZEndstopUnknown= "), Printer::ZEndstopUnknown );
-            Com::printFLN( PSTR( "") );
-
-            uStart = HAL::timeInMilliseconds();
-        }
-        Commands::checkForPeriodicalActions( Processing );
-    }
-#endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS && DEBUG_CONFIGURABLE_Z_ENDSTOPS
-
     Commands::waitUntilEndOfAllMoves();
-    
-    uLastZPressureTime_IgnoreUntil = 0;
-    
-    Commands::printCurrentPosition();
-    
+
     // disable all steppers
     Printer::disableAllSteppersNow();
+    uLastZPressureTime_IgnoreUntil = 0;
     
     if( unlock )
     {
@@ -9345,8 +9272,7 @@ void processCommand( GCode* pCommand )
                                     case  1:    BEEP_SHORT                  break;
                                     case  2:    BEEP_LONG                   break;
                                     case  3:    BEEP_START_PRINTING         break;
-                                    case  4:    BEEP_ABORT_PRINTING         break;
-                                    case  5:    BEEP_STOP_PRINTING          break;
+                                    case  4:    BEEP_STOP_PRINTING         break;
                                     case  6:    BEEP_PAUSE                  break;
                                     case  7:    BEEP_CONTINUE               break;
                                     case  8:    BEEP_START_HEAT_BED_SCAN    break;
@@ -10765,6 +10691,8 @@ void processCommand( GCode* pCommand )
                     }
                     float e =  0.0f;
 
+                    g_nDrawStartLineStatus = 1; //mache die funktion abbrechbar.
+
                     Printer::moveToReal(x, y, AUTOADJUST_STARTMADEN_AUSSCHLUSS, IGNORE_COORDINATE, RMath::min(Printer::homingFeedrate[X_AXIS], Printer::homingFeedrate[Y_AXIS]) );
                     
                     for(uint8_t i = 1; i <= Lines; i++){
@@ -10786,8 +10714,10 @@ void processCommand( GCode* pCommand )
                                                  y_0 + (y - y_0)*i,
                                                  IGNORE_COORDINATE,
                                                  e_0 + (e - e_0)*i, lineFeedrate);
+                            if(!g_nDrawStartLineStatus) break; //mache die funktion abbrechbar.
                         } 
                         y += 2.0f;
+                        if(!g_nDrawStartLineStatus) break; //mache die funktion abbrechbar.
                         Printer::moveToReal(IGNORE_COORDINATE, y, IGNORE_COORDINATE, IGNORE_COORDINATE, Printer::homingFeedrate[Y_AXIS] );
                     }
                     Commands::waitUntilEndOfAllMoves();
@@ -10798,6 +10728,7 @@ void processCommand( GCode* pCommand )
                     Printer::queuePositionCurrentSteps[E_AXIS] = Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0;
                     Printer::relativeExtruderCoordinateMode = save_relativeExtruderCoordinateMode;
                     Printer::updateCurrentPosition();
+                    g_nDrawStartLineStatus = 0; //mache die funktion abbrechbar.
                 }else{
                     Com::printFLN( PSTR( "M3912 error missing homing or zCMP" ) );
                 }
@@ -12355,14 +12286,14 @@ void startFindZOrigin( void )
 {
     if( g_nFindZOriginStatus )
     {
-        if( !g_abortSearch )
+        if( !g_abortSearchZOrigin )
         {
             // abort the finding of the z-origin
             if( Printer::debugInfo() )
             {
                 Com::printFLN( PSTR( "startFindZOrigin(): the search has been cancelled" ) );
             }
-            g_abortSearch = 1;
+            g_abortSearchZOrigin = 1;
         }
     }
     else
@@ -12395,10 +12326,10 @@ void findZOrigin( void )
     unsigned long   uCurrentTime;
 
 
-    if( g_abortSearch )
+    if( g_abortSearchZOrigin )
     {
         // the search has been aborted
-        g_abortSearch       = 0;
+        g_abortSearchZOrigin       = 0;
 
         // turn off the engines
         Printer::disableZStepper();
@@ -12426,7 +12357,7 @@ void findZOrigin( void )
         {
             case 1:
             {
-                g_abortSearch       = 0;
+                g_abortSearchZOrigin       = 0;
                 g_nZOriginPosition[Z_AXIS] = 0;
 
                 if( Printer::debugInfo() )
@@ -12441,7 +12372,7 @@ void findZOrigin( void )
                     {
                         Com::printFLN( PSTR( "findZOrigin(): start pressure not determined" ) );
                     }
-                    g_abortSearch = 1;
+                    g_abortSearchZOrigin = 1;
                     return;
                 }
 
@@ -12497,7 +12428,7 @@ void findZOrigin( void )
                         {
                             Com::printFLN( PSTR( "findZOrigin(): the z-min endstop has been reached" ) );
                         }
-                        g_abortSearch = 1;
+                        g_abortSearchZOrigin = 1;
                         return;
                     }
 
@@ -12511,7 +12442,7 @@ void findZOrigin( void )
                         return;
                     }
 
-                    if( g_abortSearch )
+                    if( g_abortSearchZOrigin )
                     {
                         break;
                     }
@@ -12545,7 +12476,7 @@ void findZOrigin( void )
                         {
                             Com::printFLN( PSTR( "findZOrigin(): the z-max endstop has been reached" ) );
                         }
-                        g_abortSearch = 1;
+                        g_abortSearchZOrigin = 1;
                         return;
                     }
 
@@ -12559,7 +12490,7 @@ void findZOrigin( void )
                         return;
                     }
 
-                    if( g_abortSearch )
+                    if( g_abortSearchZOrigin )
                     {
                         break;
                     }
@@ -13156,8 +13087,6 @@ void setupForPrinting( void )
     Printer::setMenuMode( MENU_MODE_PRINTER, true );
     
     g_uStartOfIdle = HAL::timeInMilliseconds();
-    return;
-
 } // setupForPrinting
 
 
@@ -13201,7 +13130,7 @@ void setupForMilling( void )
 
     // disable all heaters
     Extruder::setHeatedBedTemperature( 0, false );
-    Extruder::setTemperatureForExtruder( 0, 0, false );
+    Extruder::setTemperatureForAllExtruders(0, false);
 
 #if EEPROM_MODE
     Printer::lengthMM[X_AXIS] = HAL::eprGetFloat(EPR_X_LENGTH_MILLING);
@@ -13228,8 +13157,6 @@ void setupForMilling( void )
     Printer::setMenuMode( MENU_MODE_MILLER, true );
     
     g_uStartOfIdle = HAL::timeInMilliseconds();
-    return;
-
 } // setupForMilling
 
 
@@ -13380,7 +13307,7 @@ unsigned char isMovingAllowed( const char* pszCommand, char outputLog )
     }
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-    if( g_nHeatBedScanStatus || g_ZOSScanStatus )
+    if( g_nHeatBedScanStatus || g_nZOSScanStatus )
     {
         // do not allow manual movements while the heat bed scan is in progress
         if( Printer::debugErrors() && outputLog )
@@ -13440,7 +13367,7 @@ unsigned char isMovingAllowed( const char* pszCommand, char outputLog )
 unsigned char isHomingAllowed( GCode* com, char outputLog )
 {
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-    if( g_nHeatBedScanStatus || g_ZOSScanStatus )
+    if( g_nHeatBedScanStatus || g_nZOSScanStatus )
     {
         // do not allow homing while the heat bed scan is in progress
         if( Printer::debugErrors() && outputLog )
@@ -13880,6 +13807,9 @@ void showMyPage( const void* line1, const void* line2, const void* line3, const 
 
 void doEmergencyStop( char reason )
 {
+    // block any further movement
+    Printer::blockAll                 = 1;
+    
     showError( (void*)ui_text_emergency_stop );
     Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetierserver to stop.
     Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
@@ -13894,16 +13824,12 @@ void doEmergencyStop( char reason )
         Com::printFLN( PSTR( " (Z-Block)" ) );
     }
 
-    // block any further movement
-    Printer::blockAll                 = 1;
 
     moveZ( int(Printer::axisStepsPerMM[Z_AXIS] * 5) );
 
     // we are not going to perform any further operations until the restart of the firmware
-    if( sd.sdmode )
-    {
-        sd.abortPrint();
-    }
+    Printer::stopPrint();
+
     Printer::kill( false );
     return;
 

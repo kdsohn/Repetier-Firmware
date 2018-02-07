@@ -109,14 +109,9 @@ void PrintLine::moveRelativeDistanceInStepsReal(long x,long y,long z,long e,floa
 {
     float   newPosition[3];
 
-
     newPosition[X_AXIS] = Printer::queuePositionCommandMM[X_AXIS] + x * Printer::invAxisStepsPerMM[X_AXIS];
     newPosition[Y_AXIS] = Printer::queuePositionCommandMM[Y_AXIS] + y * Printer::invAxisStepsPerMM[Y_AXIS];
     newPosition[Z_AXIS] = Printer::queuePositionCommandMM[Z_AXIS] + z * Printer::invAxisStepsPerMM[Z_AXIS];
-    if(!Printer::isPositionAllowed( newPosition[X_AXIS], newPosition[Y_AXIS], newPosition[Z_AXIS]))
-    {
-        return; // ignore this move
-    }
 
     Printer::queuePositionCommandMM[X_AXIS] = newPosition[X_AXIS];
     Printer::queuePositionCommandMM[Y_AXIS] = newPosition[Y_AXIS];
@@ -2162,7 +2157,7 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
         if( Printer::operatingMode == OPERATING_MODE_PRINT ) {
 #endif // FEATURE_MILLING_MODE
  #if FEATURE_HEAT_BED_Z_COMPENSATION
-            if( g_nHeatBedScanStatus || g_ZOSScanStatus ) nIdle = 0; // we are not idle because the heat bed scan is going on at the moment
+            if( g_nHeatBedScanStatus || g_nZOSScanStatus ) nIdle = 0; // we are not idle because the heat bed scan is going on at the moment
  #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 #if FEATURE_MILLING_MODE
         } else {

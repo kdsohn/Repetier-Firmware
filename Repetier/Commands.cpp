@@ -148,7 +148,6 @@ void Commands::waitUntilEndOfAllBuffers(unsigned int maxcodes)
 
     while(PrintLine::hasLines() || (code != NULL))
     {
-        //GCode::readFromSerial();
         code = GCode::peekCurrentCommand();
         if(code)
         {
@@ -188,7 +187,7 @@ void Commands::waitUntilEndOfZOS()
 {
     char    bWait = 0;
 
-    if( g_ZOSScanStatus )       bWait = 1;
+    if( g_nZOSScanStatus )       bWait = 1;
 
     while( bWait )
     {
@@ -196,7 +195,7 @@ void Commands::waitUntilEndOfZOS()
         Commands::checkForPeriodicalActions( Processing );
 
         bWait = 0;
-        if( g_ZOSScanStatus )       bWait = 1;
+        if( g_nZOSScanStatus )       bWait = 1;
     }
 
 } // waitUntilEndOfZOS
@@ -1381,13 +1380,7 @@ void Commands::executeGCode(GCode *com)
                 }
                 if(Printer::debugDryrun())   // simulate movements without printing
                 {
-                    Extruder::setTemperatureForExtruder(0,0);
-#if NUM_EXTRUDER>1
-                    Extruder::setTemperatureForExtruder(0,1);
-#endif // NUM_EXTRUDER>1
-#if HEATED_BED_TYPE!=0
-                    target_bed_raw = 0;
-#endif // HEATED_BED_TYPE!=0
+                    Extruder::setTemperatureForAllExtruders(0, false);
                 }
                 break;
             }

@@ -1,6 +1,15 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.30.Mod (2018-02-07) 
+- cleaned up "StopPrint" to make one single function responsible for SD and USB prints which stop or get aborted.
+- faster "StopPrint" if you abort via menu Quicksettings -> Stop Print (I now reset the line buffer and block new codes after you told the printer to stop)
+- removed isPositionAllowed instead of patching it to repetiers state. Because we have constrain-functions for queue and direct. Therefore this function was not necessary anymore and never had any effect at all.
+- always reset E-Axis before executing output object retract.
+- Extruder::setTemperatureForAllExtruders() now replaced a dozen of places where all extruders have been deactivated by multiple Extruder::setTemperatureForExtruder().
+- Fix: if you switch to milling mode all extruders are set to 0°C, not only the first.
+- Fix: Printer::kill() does not iterate too high anymore when turning off heaters.
+
 V RF.01.38.29.Mod (2018-02-07) 
 - insert decrease of flow (with high digits) to M3912 auto start line. Ninjaflex likes that alot. PETG might like that too. (prevent overpressure because of startline)
 
