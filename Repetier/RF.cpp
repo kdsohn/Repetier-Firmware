@@ -10708,7 +10708,7 @@ void processCommand( GCode* pCommand )
                     short save_g_nDigitFlowCompensation_Fmin = g_nDigitFlowCompensation_Fmin;
                     short save_g_nDigitFlowCompensation_Fmax = g_nDigitFlowCompensation_Fmax;
                     short save_g_nDigitFlowCompensation_speed_intense = g_nDigitFlowCompensation_speed_intense;
-                    //short save_g_nDigitFlowCompensation_intense = g_nDigitFlowCompensation_intense;
+                    short save_g_nDigitFlowCompensation_intense = g_nDigitFlowCompensation_intense;
                     bool save_relativeExtruderCoordinateMode = Printer::relativeExtruderCoordinateMode;
                     
                     if ( pCommand->hasS() && pCommand->hasP() ){
@@ -10748,7 +10748,7 @@ void processCommand( GCode* pCommand )
                     g_nDigitFlowCompensation_Fmin = min;
                     g_nDigitFlowCompensation_Fmax = max;
                     g_nDigitFlowCompensation_speed_intense = -90;
-                    //g_nDigitFlowCompensation_intense = -75; 
+                    g_nDigitFlowCompensation_intense = -75; 
                     //M82:
                     Printer::relativeExtruderCoordinateMode = false;
                     //G92 E0:
@@ -10768,6 +10768,9 @@ void processCommand( GCode* pCommand )
                     Printer::moveToReal(x, y, AUTOADJUST_STARTMADEN_AUSSCHLUSS, IGNORE_COORDINATE, RMath::min(Printer::homingFeedrate[X_AXIS], Printer::homingFeedrate[Y_AXIS]) );
                     
                     for(uint8_t i = 1; i <= Lines; i++){
+                        float x_0 = x;
+                        float y_0 = y;
+                        float e_0 = e;
                         if(i % 2 != 0){ //ungerade zahl.
                             x += (/*Printer::minMM[X_AXIS]+*/Printer::lengthMM[X_AXIS]) - 2*spacerX;
                             y += 5.0f;
@@ -10777,7 +10780,13 @@ void processCommand( GCode* pCommand )
                             y -= 5.0f;
                             e += (float)Extrusion * ((/*Printer::minMM[X_AXIS]+*/Printer::lengthMM[X_AXIS]) - 2*spacerX)/200;
                         }
-                        Printer::moveToReal(x, y, IGNORE_COORDINATE, e, lineFeedrate);
+                        for(float i = 0.01f; i <= 1.0f; i+=0.01f){
+                            //split full line into 100 small pieces so that we can adjust flow like speed.
+                            Printer::moveToReal( x_0 + (x - x_0)*i,
+                                                 y_0 + (y - y_0)*i,
+                                                 IGNORE_COORDINATE,
+                                                 e_0 + (e - e_0)*i, lineFeedrate);
+                        } 
                         y += 2.0f;
                         Printer::moveToReal(IGNORE_COORDINATE, y, IGNORE_COORDINATE, IGNORE_COORDINATE, Printer::homingFeedrate[Y_AXIS] );
                     }
@@ -10785,7 +10794,7 @@ void processCommand( GCode* pCommand )
                     g_nDigitFlowCompensation_Fmin = save_g_nDigitFlowCompensation_Fmin;
                     g_nDigitFlowCompensation_Fmax = save_g_nDigitFlowCompensation_Fmax;
                     g_nDigitFlowCompensation_speed_intense = save_g_nDigitFlowCompensation_speed_intense;
-                    //g_nDigitFlowCompensation_intense = save_g_nDigitFlowCompensation_intense;
+                    g_nDigitFlowCompensation_intense = save_g_nDigitFlowCompensation_intense;
                     Printer::queuePositionCurrentSteps[E_AXIS] = Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0;
                     Printer::relativeExtruderCoordinateMode = save_relativeExtruderCoordinateMode;
                     Printer::updateCurrentPosition();

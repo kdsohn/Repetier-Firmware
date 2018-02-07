@@ -1,6 +1,9 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.29.Mod (2018-02-07) 
+- insert decrease of flow (with high digits) to M3912 auto start line. Ninjaflex likes that alot. PETG might like that too. (prevent overpressure because of startline)
+
 V RF.01.38.27.Mod (2018-02-06) 
 - hypothetical patch for being able to crash the z-min-endstop when you are homed + lower than Z=0 and driving moveZ into minus-Z. This prevention is only suitable for "z-homed" use and only for printing mode. Maybe it helps some day.
 - removed senseless dir change delay XYZ_DIRECTION_CHANGE_DELAY which was only used in one point and did not make much sense there.
