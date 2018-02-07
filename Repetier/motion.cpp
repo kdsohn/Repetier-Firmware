@@ -107,15 +107,9 @@ void PrintLine::moveRelativeDistanceInSteps(long x,long y,long z,long e,float fe
 
 void PrintLine::moveRelativeDistanceInStepsReal(long x,long y,long z,long e,float feedrate,bool waitEnd)
 {
-    float   newPosition[3];
-
-    newPosition[X_AXIS] = Printer::queuePositionCommandMM[X_AXIS] + x * Printer::invAxisStepsPerMM[X_AXIS];
-    newPosition[Y_AXIS] = Printer::queuePositionCommandMM[Y_AXIS] + y * Printer::invAxisStepsPerMM[Y_AXIS];
-    newPosition[Z_AXIS] = Printer::queuePositionCommandMM[Z_AXIS] + z * Printer::invAxisStepsPerMM[Z_AXIS];
-
-    Printer::queuePositionCommandMM[X_AXIS] = newPosition[X_AXIS];
-    Printer::queuePositionCommandMM[Y_AXIS] = newPosition[Y_AXIS];
-    Printer::queuePositionCommandMM[Z_AXIS] = newPosition[Z_AXIS];
+    Printer::queuePositionCommandMM[X_AXIS] = Printer::queuePositionCommandMM[X_AXIS] + x * Printer::invAxisStepsPerMM[X_AXIS];
+    Printer::queuePositionCommandMM[Y_AXIS] = Printer::queuePositionCommandMM[Y_AXIS] + y * Printer::invAxisStepsPerMM[Y_AXIS];
+    Printer::queuePositionCommandMM[Z_AXIS] = Printer::queuePositionCommandMM[Z_AXIS] + z * Printer::invAxisStepsPerMM[Z_AXIS];
 
     Printer::moveToReal(Printer::queuePositionCommandMM[X_AXIS],Printer::queuePositionCommandMM[Y_AXIS],Printer::queuePositionCommandMM[Z_AXIS],
                         (Printer::queuePositionLastSteps[E_AXIS] + e) * Printer::invAxisStepsPerMM[E_AXIS],feedrate);

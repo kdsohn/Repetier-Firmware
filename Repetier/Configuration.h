@@ -649,7 +649,6 @@ Values must be in range 1..255 */
 #define BEEPER_SHORT_SEQUENCE                   2,2
 #define BEEPER_LONG_SEQUENCE                    8,8
 #define BEEPER_START_PRINTING_SEQUENCE          100,2
-#define BEEPER_ABORT_PRINTING_SEQUENCE          250,5
 #define BEEPER_STOP_PRINTING_SEQUENCE           100,3
 #define BEEPER_PAUSE_SEQUENCE                   50,3
 #define BEEPER_CONTINUE_SEQUENCE                50,2
