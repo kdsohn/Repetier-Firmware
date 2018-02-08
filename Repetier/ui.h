@@ -126,8 +126,8 @@
 #define UI_ACTION_LIGHTS_ONOFF              1107
 //#define UI_ACTION_SD_STOP                   1108
 #define UI_ACTION_STOP_ACK                  1109
-#define UI_ACTION_ZPOSITION_NOTEST          1110
-#define UI_ACTION_ZPOSITION_FAST_NOTEST     1111
+//#define UI_ACTION_ZPOSITION_NOTEST          1110
+//#define UI_ACTION_ZPOSITION_FAST_NOTEST     1111
 #define UI_ACTION_MAX_INACTIVE              1113
 #define UI_ACTION_BEEPER                    1114
 #define UI_ACTION_UNMOUNT_FILAMENT          1115

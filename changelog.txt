@@ -1,6 +1,14 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.31.Mod (2018-02-08) 
+- big Heat Bed Scan Update. If an error occurs the HBS is not allowed to home Z over heated bed anymore. (Wanted this for a long time now.)
+  The HBS Scan now has to move the bed down, home Y, home Z, Move the bed down again and then move back to the right Y position.
+  We should avoid crashing the heated bed several (3x?) times if the HBS wants to retry homing on to high beds.
+  These faulty Z-homings have been happening whenever the measurement goes out of range. Typically this is wrong z screw or a bed which is not aligned within the PEEK holders correctly.
+- removed all MAX_FEEDRATE settings within moves and replaced them with "homingFeedrate" which might be some more moderate.
+- made all MAX_FEEDRATE feedrates adjustable due to the fact that "homingFeedrate" is adjustable. Removed the Constants. (HBS, ...)
+
 V RF.01.38.30.Mod (2018-02-07) 
 - cleaned up "StopPrint" to make one single function responsible for SD and USB prints which stop or get aborted.
 - faster "StopPrint" if you abort via menu Quicksettings -> Stop Print (I now reset the line buffer and block new codes after you told the printer to stop)

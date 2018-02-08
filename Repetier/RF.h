@@ -889,7 +889,7 @@ extern void loopRF( void );
 
 #if FEATURE_OUTPUT_FINISHED_OBJECT
 // outputObject()
-extern void outputObject( void );
+extern void outputObject( bool showerrors = true );
 #endif // FEATURE_OUTPUT_FINISHED_OBJECT
 
 #if FEATURE_PARK

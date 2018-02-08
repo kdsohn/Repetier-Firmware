@@ -3385,6 +3385,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif // EXTRUDER_ALLOW_COLD_MOVE
             break;
         }
+/*
         case UI_ACTION_ZPOSITION_NOTEST:
         {
             Printer::setNoDestinationCheck(true);
@@ -3412,6 +3413,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
             Printer::setNoDestinationCheck(false);
             break;
         }
+*/
         case UI_ACTION_HEATED_BED_TEMP:
         {
 #if HAVE_HEATED_BED==true
