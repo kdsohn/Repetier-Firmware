@@ -450,6 +450,7 @@ void startHeatBedScan( void )
 #endif //FEATURE_WORK_PART_Z_COMPENSATION
 #if FEATURE_FIND_Z_ORIGIN
     if( g_nFindZOriginStatus ) return;
+#endif //FEATURE_FIND_Z_ORIGIN
     if( g_nHeatBedScanStatus )
     {
         // abort the heat bed scan
@@ -466,6 +467,7 @@ void startHeatBedScan( void )
             // there is some printing in progress at the moment - do not start the heat bed scan in this case
             if( Printer::debugErrors() )
             {
+                Com::printFLN( Com::tPrintingIsInProcessError );
             }
 
             showError( (void*)ui_text_heat_bed_scan, (void*)ui_text_operation_denied );
