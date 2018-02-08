@@ -194,10 +194,12 @@ public:
     {
         if(isCheckEndstops())
         {
+            //Min-Axis:
             if(isXNegativeMove() && Printer::isXMinEndstopHit())
                 setXMoveFinished();
             if(isYNegativeMove() && Printer::isYMinEndstopHit())
                 setYMoveFinished();
+            //Max-Axis:
             if(isXPositiveMove() && Printer::isXMaxEndstopHit()){
                 setXMoveFinished();
                 if(forQueue){
@@ -205,7 +207,7 @@ public:
                 }else{
                   Printer::directPositionLastSteps[X_AXIS] = Printer::directPositionTargetSteps[X_AXIS] = Printer::directPositionCurrentSteps[X_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
                 }
-                Printer::updateCurrentPosition();
+                Printer::updateCurrentPosition(true);
             }
             if(isYPositiveMove() && Printer::isYMaxEndstopHit()){
                 setYMoveFinished();
@@ -214,11 +216,21 @@ public:
                 }else{
                   Printer::directPositionLastSteps[Y_AXIS] = Printer::directPositionTargetSteps[Y_AXIS] = Printer::directPositionCurrentSteps[Y_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
                 }
-                Printer::updateCurrentPosition();
+                Printer::updateCurrentPosition(true);
+            }
+            if(isZPositiveMove() && (Printer::isZMaxEndstopHit() || Printer::currentZSteps > (Printer::maxSteps[Z_AXIS] /*- Printer::minSteps[Z_AXIS]*/) + abs(Z_OVERRIDE_MAX * 2) ))
+            {
+                setZMoveFinished();
+                if(forQueue){
+                  Printer::queuePositionLastSteps[Z_AXIS] = Printer::queuePositionTargetSteps[Z_AXIS] = Printer::queuePositionCurrentSteps[Z_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
+                }else{
+                  Printer::directPositionLastSteps[Z_AXIS] = Printer::directPositionTargetSteps[Z_AXIS] = Printer::directPositionCurrentSteps[Z_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
+                }
+                Printer::updateCurrentPosition(true);
             }
         }
 
-        // Test Z-Axis every step if necessary, otherwise it could easyly ruin your printer!
+        // Test Z-Axis every step, otherwise it could easyly ruin your printer!
         if(isZNegativeMove() && Printer::isZMinEndstopHit())
         {
             if( Printer::isAxisHomed(Z_AXIS) && PrintLine::direct.task != TASK_MOVE_FROM_BUTTON)
@@ -232,16 +244,6 @@ public:
                 }
             }
             setZMoveFinished();
-        }
-        if(isZPositiveMove() && (Printer::isZMaxEndstopHit() || Printer::currentZSteps > (Printer::maxSteps[Z_AXIS] /*- Printer::minSteps[Z_AXIS]*/) + abs(Z_OVERRIDE_MAX * 2) ))
-        {
-            setZMoveFinished();
-            if(forQueue){
-              Printer::queuePositionLastSteps[Z_AXIS] = Printer::queuePositionTargetSteps[Z_AXIS] = Printer::queuePositionCurrentSteps[Z_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
-            }else{
-              Printer::directPositionLastSteps[Z_AXIS] = Printer::directPositionTargetSteps[Z_AXIS] = Printer::directPositionCurrentSteps[Z_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
-            }
-            Printer::updateCurrentPosition();
         }
     } // checkEndstops
 
@@ -377,12 +379,6 @@ public:
         linesPos = linesWritePos;
     } // resetPathPlanner
 
-    inline static void resetLineBuffer()
-    {
-        cur = NULL;
-        memset( lines, 0, sizeof( PrintLine ) * MOVE_CACHE_SIZE );
-    } // resetLineBuffer
-
 #if USE_ADVANCE
     inline void updateAdvanceSteps(speed_t v,uint8_t max_loops,bool accelerate)
     {
@@ -487,7 +483,7 @@ public:
         nextPlannerIndex(linesWritePos);
         InterruptProtectedBlock noInts;
         linesCount++;
-        g_uStartOfIdle = 0; //line not here in newest repetier
+        g_uStartOfIdle = 0; //tell the printer work is being done.
     } // pushLine
 
     static PrintLine *getNextWriteLine()

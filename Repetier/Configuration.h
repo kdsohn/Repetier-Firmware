@@ -310,7 +310,7 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 #if FEATURE_OUTPUT_FINISHED_OBJECT
 
 /** \brief The following script allows to configure the exact behavior of the automatic object output */
-#define OUTPUT_OBJECT_SCRIPT_PRINT          "G21\nG91\nG1 E-" xstr(SCRIPT_RETRACT_MM) "\nG1 Z200 F5000\nG1 Y245 F7500"
+#define OUTPUT_OBJECT_SCRIPT_PRINT          "G21\nG91\nG1 E-" xstr(SCRIPT_RETRACT_MM) "\nG90\nG1 Z200 F5000\nG1 Y245 F7500"
 #define OUTPUT_OBJECT_SCRIPT_MILL           "G28 Z0\nG21\nG91\nG1 Y245 F7500"
 
 #endif // FEATURE_OUTPUT_FINISHED_OBJECT
@@ -649,7 +649,6 @@ Values must be in range 1..255 */
 #define BEEPER_SHORT_SEQUENCE                   2,2
 #define BEEPER_LONG_SEQUENCE                    8,8
 #define BEEPER_START_PRINTING_SEQUENCE          100,2
-#define BEEPER_ABORT_PRINTING_SEQUENCE          250,5
 #define BEEPER_STOP_PRINTING_SEQUENCE           100,3
 #define BEEPER_PAUSE_SEQUENCE                   50,3
 #define BEEPER_CONTINUE_SEQUENCE                50,2
@@ -956,7 +955,7 @@ You can activate this to 1 and connect some Button. If you connect ground to pul
 #endif
 
 /** beta!!! Nibbels/PeterKA only!!! -> Testfeature: It can check if you lost steps and test your buttons hysteresis */
-#define FEATURE_CHECK_HOME                  1
+#define FEATURE_CHECK_HOME                  0
 
 /** \brief This adds some GCode M3029 to simulate Key-Press by GCode and to read whats inside the printers Display rightnow. */
 #define FEATURE_SEE_DISPLAY                 1

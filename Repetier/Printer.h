@@ -589,7 +589,8 @@ public:
         if( Extruder::current->zOffset ) problematisch = true; //wenn rechtes gefedertes Hotend tiefer, dann evtl. kollision
         if( g_offsetZCompensationSteps > 0 ) problematisch = true; //wenn matrix positiv, dann evtl. problem
         if( isAxisHomed(Y_AXIS) && Printer::queuePositionCurrentSteps[Y_AXIS] + Printer::directPositionCurrentSteps[Y_AXIS] <= 5*YAXIS_STEPS_PER_MM ) problematisch = false; //vorherige Probleme egal, wenn bett nach hinten gefahren
-
+        if( g_nAlignExtrudersStatus ) problematisch = false; //das homing passiert in Z einzeln, liegt aber neben dem Bett.
+        if( g_nHeatBedScanStatus ) problematisch = false; //das homing passiert in Z einzeln, liegt aber neben dem Bett.
         if(problematisch) return 0; //während Z-Scan gibts einen homeZ, der ist aber nicht relevant, den case gibts nicht!
         else return 1;
     } // isZHomeSafe
@@ -690,10 +691,13 @@ public:
         return flag3 & PRINTER_FLAG3_PRINTING;
     }
 
-    static INLINE void setPrinting(uint8_t b)
+    static INLINE void setPrinting(bool b)
     {
         flag3 = (b ? flag3 | PRINTER_FLAG3_PRINTING : flag3 & ~PRINTER_FLAG3_PRINTING);
-        if(!Printer::isMenuMode(MENU_MODE_SD_PRINTING) || !b) Printer::setMenuMode(MENU_MODE_PRINTING, b);
+        if(!b){
+            Printer::setMenuMode(MENU_MODE_SD_PRINTING, b);
+        }
+        Printer::setMenuMode(MENU_MODE_PRINTING, b);
     }
 
     static INLINE void toggleAnimation()
@@ -1176,7 +1180,6 @@ public:
     static void moveToReal(float x,float y,float z,float e,float feedrate);
     static void homeAxis(bool xaxis,bool yaxis,bool zaxis); /// Home axis
     static void setOrigin(float xOff,float yOff,float zOff);
-    static bool isPositionAllowed(float x,float y,float z);
 
     static INLINE int getFanSpeed(bool percent = false)
     {
@@ -1209,6 +1212,8 @@ public:
     static void disableCMPnow( bool wait = false );
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
+    static void stopPrint();
+    
 private:
     static void homeXAxis();
     static void homeYAxis();

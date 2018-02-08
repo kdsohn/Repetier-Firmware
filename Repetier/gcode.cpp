@@ -248,6 +248,8 @@ void GCode::checkAndPushCommand()
 
 void GCode::pushCommand()
 {
+    if(g_uBlockCommands) return;                           // no further commands from the SD card/Host shall be processed
+
 #if !ECHO_ON_EXECUTE
     commandsBuffered[bufferWriteIndex].echoCommand();
 #endif
@@ -262,7 +264,6 @@ GCode *GCode::peekCurrentCommand()
 {
     if(bufferLength==0) return NULL; // No more data
     return &commandsBuffered[bufferReadIndex];
-
 } // peekCurrentCommand
 
 
@@ -513,9 +514,6 @@ void GCode::readFromSD()
     if(!sd.sdmode || commandsReceivingWritePosition!=0)     // not reading or incoming serial command
         return;
 
-    if(g_uBlockSDCommands)                                  // no further commands from the SD card shall be processed
-        return;
-
     if(!PrintLine::checkForXFreeLines(2))
     {
         // we do not read G-Codes from the SD card until the cache is full -
@@ -605,12 +603,10 @@ void GCode::readFromSD()
             }
         }
     }
-    sd.sdmode = false;
     Com::printFLN(Com::tDonePrinting);
     commandsReceivingWritePosition = 0;
     commentDetected = false;
-    Printer::setMenuMode(MENU_MODE_SD_PRINTING,false);
-    BEEP_STOP_PRINTING
+    Printer::stopPrint();
 #endif // SDSUPPORT
 
 } // readFromSD

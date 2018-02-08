@@ -124,10 +124,10 @@
 #define UI_ACTION_WRITE_DEBUG               1105
 #define UI_ACTION_FANSPEED                  1106
 #define UI_ACTION_LIGHTS_ONOFF              1107
-#define UI_ACTION_SD_STOP                   1108
-#define UI_ACTION_SD_STOP_ACK               1109
-#define UI_ACTION_ZPOSITION_NOTEST          1110
-#define UI_ACTION_ZPOSITION_FAST_NOTEST     1111
+//#define UI_ACTION_SD_STOP                   1108
+#define UI_ACTION_STOP_ACK                  1109
+//#define UI_ACTION_ZPOSITION_NOTEST          1110
+//#define UI_ACTION_ZPOSITION_FAST_NOTEST     1111
 #define UI_ACTION_MAX_INACTIVE              1113
 #define UI_ACTION_BEEPER                    1114
 #define UI_ACTION_UNMOUNT_FILAMENT          1115
@@ -668,7 +668,6 @@ void ui_check_slow_keys(int &action) {
 #define BEEP_SHORT {}
 #define BEEP_LONG {}
 #define BEEP_START_PRINTING {}
-#define BEEP_ABORT_PRINTING {}
 #define BEEP_STOP_PRINTING {}
 #define BEEP_PAUSE {}
 #define BEEP_CONTINUE {}
@@ -691,7 +690,6 @@ void ui_check_slow_keys(int &action) {
 #define BEEP_SHORT beep(BEEPER_SHORT_SEQUENCE);
 #define BEEP_LONG beep(BEEPER_LONG_SEQUENCE);
 #define BEEP_START_PRINTING beep(BEEPER_START_PRINTING_SEQUENCE);
-#define BEEP_ABORT_PRINTING beep(BEEPER_ABORT_PRINTING_SEQUENCE);
 #define BEEP_STOP_PRINTING beep(BEEPER_STOP_PRINTING_SEQUENCE);
 #define BEEP_PAUSE beep(BEEPER_PAUSE_SEQUENCE);
 #define BEEP_CONTINUE beep(BEEPER_CONTINUE_SEQUENCE);

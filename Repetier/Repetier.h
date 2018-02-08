@@ -205,7 +205,6 @@ public:
     void mount();
     void unmount();
     void startPrint();
-    void abortPrint();
 
     inline void setIndex(uint32_t  newpos)
     {

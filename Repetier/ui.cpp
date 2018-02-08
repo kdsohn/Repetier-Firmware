@@ -3385,6 +3385,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif // EXTRUDER_ALLOW_COLD_MOVE
             break;
         }
+/*
         case UI_ACTION_ZPOSITION_NOTEST:
         {
             Printer::setNoDestinationCheck(true);
@@ -3412,6 +3413,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
             Printer::setNoDestinationCheck(false);
             break;
         }
+*/
         case UI_ACTION_HEATED_BED_TEMP:
         {
 #if HAVE_HEATED_BED==true
@@ -3852,7 +3854,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif // FEATURE_RGB_LIGHT_EFFECTS
         case UI_ACTION_EXTR_STEPS_E0:
         {
-           if(g_pauseMode == PAUSE_MODE_NONE && !Printer::isPrinting() ){
+           if( !Printer::isMenuMode(MENU_MODE_PAUSED) && !Printer::isPrinting() ){
             INCREMENT_MIN_MAX(extruder[0].stepsPerMM,1,1,9999);
             if(0 == Extruder::current->id) Extruder::selectExtruderById(Extruder::current->id); //übernehmen der werte
 
@@ -3866,7 +3868,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if NUM_EXTRUDER > 1
         case UI_ACTION_EXTR_STEPS_E1:
         {
-           if(g_pauseMode == PAUSE_MODE_NONE && !Printer::isPrinting()){
+           if( !Printer::isMenuMode(MENU_MODE_PAUSED) && !Printer::isPrinting()){
             INCREMENT_MIN_MAX(extruder[1].stepsPerMM,1,1,9999);
             if(1 == Extruder::current->id) Extruder::selectExtruderById(Extruder::current->id); //übernehmen der werte
 
@@ -3906,7 +3908,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif //USE_ADVANCE
         case UI_ACTION_EXTR_STEPS:
         {
-           if(g_pauseMode == PAUSE_MODE_NONE && !Printer::isPrinting()){
+           if( !Printer::isMenuMode(MENU_MODE_PAUSED) && !Printer::isPrinting()){
             INCREMENT_MIN_MAX(Extruder::current->stepsPerMM,1,1,9999);
             Extruder::selectExtruderById(Extruder::current->id);
 
@@ -4035,7 +4037,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
         case UI_ACTION_RF_RESET_ACK:
-        case UI_ACTION_SD_STOP_ACK:
+        case UI_ACTION_STOP_ACK:
         case UI_ACTION_RESTORE_DEFAULTS:
         case UI_ACTION_CHOOSE_CLASSICPID:
         case UI_ACTION_CHOOSE_LESSERINTEGRAL:
@@ -4313,7 +4315,7 @@ void UIDisplay::finishAction(int action)
         }
 #endif // FEATURE_RESET_VIA_MENU
 
-        case UI_ACTION_SD_STOP_ACK:
+        case UI_ACTION_STOP_ACK:
         {
             if( g_nYesNo != 1 )
             {
@@ -4321,16 +4323,7 @@ void UIDisplay::finishAction(int action)
                 break;
             }
             uid.executeAction(UI_ACTION_TOP_MENU);
-            if( Printer::isMenuMode(MENU_MODE_PRINTING) && !Printer::isMenuMode(MENU_MODE_SD_PRINTING) ) //prüfung auf !sdmode sollte hier eigenlicht nicht mehr nötig sein, aber ..
-            {
-                Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetierserver to stop.
-                Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
-                g_uStartOfIdle = 0;
-                UI_STATUS_UPD( UI_TEXT_OUTPUTTING_OBJECT );
-                Commands::waitUntilEndOfAllBuffers(3*MOVE_CACHE_SIZE); //only wait if chance to have been understood : else break!
-                g_uStartOfIdle = HAL::timeInMilliseconds();
-            }
-            sd.abortPrint();
+            Printer::stopPrint();
             break;
         }
 
@@ -4540,7 +4533,7 @@ void UIDisplay::executeAction(int action)
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
                 if( Printer::ZEndstopUnknown )
                 {
-                    // in case the z-endstop is unknown, we home only in z-direction
+                    // in case the z-endstop is unknown, we home only in z-direction //Nibbels 08.02.2018 warum??
                     Printer::homeAxis(false,false,true);
                 }
                 else
@@ -4650,17 +4643,9 @@ void UIDisplay::executeAction(int action)
                 else Printer::debugLevel+=8;
                 if(Printer::debugDryrun())   // simulate movements without printing
                 {
-                    Extruder::setTemperatureForExtruder(0,0);
-#if NUM_EXTRUDER>1
-                    Extruder::setTemperatureForExtruder(0,1);
-#endif // NUM_EXTRUDER>1
-
-#if NUM_EXTRUDER>2
-                    Extruder::setTemperatureForExtruder(0,2);
-#endif // NUM_EXTRUDER>2
-
+                    Extruder::setTemperatureForAllExtruders(0, false);
 #if HAVE_HEATED_BED==true
-                 Extruder::setHeatedBedTemperature(0);
+                    Extruder::setHeatedBedTemperature(0);
 #endif // HAVE_HEATED_BED==true
                 }
                 break;
@@ -4755,7 +4740,7 @@ void UIDisplay::executeAction(int action)
                 if( PrintLine::linesCount )     deny = 1;   // the operating mode can not be switched while the printing is in progress
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-                if( g_nHeatBedScanStatus || g_ZOSScanStatus )       deny = 1;   // the operating mode can not be switched while a heat bed scan / ZOS is in progress
+                if( g_nHeatBedScanStatus || g_nZOSScanStatus )       deny = 1;   // the operating mode can not be switched while a heat bed scan / ZOS is in progress
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
@@ -4898,16 +4883,7 @@ void UIDisplay::executeAction(int action)
             {
                 g_uStartOfIdle = 0;
                 UI_STATUS_UPD( UI_TEXT_PREHEAT_PLA );
-                Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_PLA,0);
-
-#if NUM_EXTRUDER>1
-                Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_PLA,1);
-#endif // NUM_EXTRUDER>1
-
-#if NUM_EXTRUDER>2
-                Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_PLA,2);
-#endif // NUM_EXTRUDER>2
-
+                Extruder::setTemperatureForAllExtruders(UI_SET_PRESET_EXTRUDER_TEMP_PLA, false);
 #if HAVE_HEATED_BED==true
                 Extruder::setHeatedBedTemperature(UI_SET_PRESET_HEATED_BED_TEMP_PLA);
 #endif // HAVE_HEATED_BED==true
@@ -4918,16 +4894,7 @@ void UIDisplay::executeAction(int action)
             {
                 g_uStartOfIdle = 0;
                 UI_STATUS_UPD( UI_TEXT_PREHEAT_ABS );
-                Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_ABS,0);
-
-#if NUM_EXTRUDER>1
-                Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_ABS,1);
-#endif // NUM_EXTRUDER>1
-
-#if NUM_EXTRUDER>2
-                Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_ABS,2);
-#endif // NUM_EXTRUDER>2
-
+                Extruder::setTemperatureForAllExtruders(UI_SET_PRESET_EXTRUDER_TEMP_ABS, false);
 #if HAVE_HEATED_BED==true
                 Extruder::setHeatedBedTemperature(UI_SET_PRESET_HEATED_BED_TEMP_ABS);
 #endif // HAVE_HEATED_BED==true
@@ -4936,17 +4903,8 @@ void UIDisplay::executeAction(int action)
             }
             case UI_ACTION_COOLDOWN:
             {
-                UI_STATUS_UPD( UI_TEXT_COOLDOWN );
-                Extruder::setTemperatureForExtruder(0,0);
-
-#if NUM_EXTRUDER>1
-                Extruder::setTemperatureForExtruder(0,1);
-#endif // NUM_EXTRUDER>1
-
-#if NUM_EXTRUDER>2
-                Extruder::setTemperatureForExtruder(0,2);
-#endif // NUM_EXTRUDER>2
-
+                UI_STATUS_UPD( UI_TEXT_COOLDOWN );                
+                Extruder::setTemperatureForAllExtruders(0, false);
 #if HAVE_HEATED_BED==true
                 Extruder::setHeatedBedTemperature(0);
 #endif // HAVE_HEATED_BED==true
@@ -4958,7 +4916,6 @@ void UIDisplay::executeAction(int action)
 #if HAVE_HEATED_BED==true
                 Extruder::setHeatedBedTemperature(0);
 #endif // HAVE_HEATED_BED==true
-
                 break;
             }
             case UI_ACTION_EXTRUDER0_OFF:
@@ -4971,7 +4928,6 @@ void UIDisplay::executeAction(int action)
 #if NUM_EXTRUDER>1
                 Extruder::setTemperatureForExtruder(0,1);
 #endif // NUM_EXTRUDER>1
-                
                 break;
             }
             case UI_ACTION_EXTRUDER2_OFF:
@@ -4979,7 +4935,6 @@ void UIDisplay::executeAction(int action)
 #if NUM_EXTRUDER>2
                 Extruder::setTemperatureForExtruder(0,2);
 #endif // NUM_EXTRUDER>2
-            
                 break;
             }
             case UI_ACTION_DISABLE_STEPPER:
