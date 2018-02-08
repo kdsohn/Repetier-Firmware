@@ -975,7 +975,10 @@ void scanHeatBed( void )
                 if( testIdlePressure() )
                 {
                     // the current idle pressure is not plausible
-                    g_abortZScan = 1;
+                    if( g_scanRetries ){
+                        g_retryZScan = 1;
+                        g_abortZScan = 0; //cancel abort which was already triggered inside readAveragePressure
+                    }
                     break;
                 }
 
@@ -1433,7 +1436,10 @@ void scanHeatBed( void )
                 if( testIdlePressure() )
                 {
                     // the current idle pressure is not plausible
-                    g_abortZScan = 1;
+                    if( g_scanRetries ){
+                        g_retryZScan = 1;
+                        g_abortZScan = 0; //cancel abort which was already triggered inside readAveragePressure
+                    }
                     break;
                 }
 
@@ -1787,7 +1793,10 @@ void scanHeatBed( void )
                 if( testIdlePressure() )
                 {
                     // the current idle pressure is not plausible
-                    g_abortZScan = 1;
+                    if( g_scanRetries ){
+                        g_retryZScan = 1;
+                        g_abortZScan = 0; //cancel abort which was already triggered inside readAveragePressure
+                    }
                     break;
                 }
 
@@ -4816,7 +4825,7 @@ short readAveragePressure( short* pnAveragePressure )
         }
     
         // wait some extra amount of time in case our results were not constant enough
-        HAL::delayMilliseconds( 100 );        
+        HAL::delayMilliseconds( 100 );
         Commands::checkForPeriodicalActions( Processing );
     }
 
@@ -4869,6 +4878,7 @@ void moveZDownFast()
 void moveZDownSlow(uint8_t acuteness)
 {
     short   nTempPressure;
+    long    startScanZPosition = g_nZScanZPosition;
 
     // move the heat bed down until we detect the retry pressure (slow speed)
     while( 1 )
@@ -4890,36 +4900,34 @@ void moveZDownSlow(uint8_t acuteness)
 
         Commands::checkForPeriodicalActions( Processing ); 
 
+        bool error = false;
         if( g_abortZScan )
         {
-            break;
+                break;
         }
-
         if( g_nZScanZPosition < -g_nScanZMaxCompensationSteps || g_nZScanZPosition > HEAT_BED_SCAN_Z_START_STEPS )
         {
             Com::printFLN( PSTR( "moveZDownSlow(): the z position went out of range, retries = " ), g_scanRetries );
             if(g_nZScanZPosition < -g_nScanZMaxCompensationSteps) Com::printFLN( PSTR( "Z-Endstop Limit:" ), Z_ENDSTOP_DRIVE_OVER );
-            Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition );
-
+            if(g_nZScanZPosition > HEAT_BED_SCAN_Z_START_STEPS) Com::printFLN( PSTR( "Height Limit:" ), Z_ENDSTOP_DRIVE_OVER );
+            Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition*Printer::invAxisStepsPerMM[Z_AXIS] );
+            error = true;
+        }
+        if( g_nLastZScanZPosition && abs(g_nZScanZPosition - g_nLastZScanZPosition) > g_nScanHeatBedDownFastSteps*2 )
+        {
+            Com::printFLN( PSTR( "moveZDownSlow(): the z position delta went out of range, retries = " ), g_scanRetries );
+            Com::printFLN( PSTR( "dZ_lastpos = " ), abs(g_nZScanZPosition - g_nLastZScanZPosition)*Printer::invAxisStepsPerMM[Z_AXIS] );
+            error = true;
+        }
+        if( abs(startScanZPosition - g_nZScanZPosition) > g_nScanHeatBedDownFastSteps*2/acuteness ) {
+            Com::printFLN( PSTR( "moveZDownSlow(): back move delta went out of range, retries = " ), g_scanRetries );
+            Com::printFLN( PSTR( "dZ_move = " ), g_nZScanZPosition*Printer::invAxisStepsPerMM[Z_AXIS] );
+            error = true;
+        }
+        if(error){
             if( g_scanRetries ) g_retryZScan = 1;
             else                g_abortZScan = 1;
             break;
-        }
-        if( g_nLastZScanZPosition )
-        {
-            if( (g_nZScanZPosition > g_nLastZScanZPosition && (g_nZScanZPosition - g_nLastZScanZPosition) > g_nScanHeatBedDownFastSteps*2) ||
-                (g_nZScanZPosition < g_nLastZScanZPosition && (g_nLastZScanZPosition - g_nZScanZPosition) > g_nScanHeatBedDownFastSteps*2) )
-            {
-                if( Printer::debugErrors() )
-                {
-                    Com::printFLN( PSTR( "moveZDownSlow(): the z position delta went out of range, retries = " ), g_scanRetries );
-                    Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition );
-                }
-            
-                if( g_scanRetries ) g_retryZScan = 1;
-                else                g_abortZScan = 1;
-                break;
-            }
         }
     }
 } // moveZDownSlow

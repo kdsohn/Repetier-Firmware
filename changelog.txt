@@ -1,6 +1,10 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.32.Mod (2018-02-08) 
+- HBS: additional maximum delta for moving back very slow
+- HBS: If testIdlePressure() fails while scanning then g_scanRetries are used up (homing, driving Y, retry ...) instead of canceling the scan.
+
 V RF.01.38.31.Mod (2018-02-08) 
 - big Heat Bed Scan Update. If an error occurs the HBS is not allowed to home Z over heated bed anymore. (Wanted this for a long time now.)
   The HBS Scan now has to move the bed down, home Y, home Z, Move the bed down again and then move back to the right Y position.
