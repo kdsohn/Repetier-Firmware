@@ -226,7 +226,6 @@ volatile unsigned char g_nDrawStartLineStatus = 0;
 volatile unsigned char g_nFindZOriginStatus = 0;
 long            g_nZOriginPosition[3]       = { 0, 0, 0 };
 int             g_nZOriginSet               = 0;
-char            g_abortSearchZOrigin               = 0;
 #endif // FEATURE_FIND_Z_ORIGIN
 
 #if FEATURE_ALIGN_EXTRUDERS
@@ -439,6 +438,18 @@ void adjustPressureLimits( short IdlePressure ) {
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 void startHeatBedScan( void )
 {
+#if FEATURE_ALIGN_EXTRUDERS
+    if( g_nAlignExtrudersStatus ) return;
+#endif //FEATURE_ALIGN_EXTRUDERS
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+    //if( g_nHeatBedScanStatus ) return;
+    if( g_nZOSScanStatus ) return;
+#endif //FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_WORK_PART_Z_COMPENSATION
+    if( g_nWorkPartScanStatus ) return;
+#endif //FEATURE_WORK_PART_Z_COMPENSATION
+#if FEATURE_FIND_Z_ORIGIN
+    if( g_nFindZOriginStatus ) return;
     if( g_nHeatBedScanStatus )
     {
         // abort the heat bed scan
@@ -455,7 +466,6 @@ void startHeatBedScan( void )
             // there is some printing in progress at the moment - do not start the heat bed scan in this case
             if( Printer::debugErrors() )
             {
-                Com::printFLN( PSTR( "HBS: error printing in progress" ) );
             }
 
             showError( (void*)ui_text_heat_bed_scan, (void*)ui_text_operation_denied );
@@ -473,7 +483,19 @@ void startHeatBedScan( void )
 
 void scanHeatBed( void )
 {
-    if(g_nZOSScanStatus) return;
+#if FEATURE_ALIGN_EXTRUDERS
+    if( g_nAlignExtrudersStatus ) return;
+#endif //FEATURE_ALIGN_EXTRUDERS
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+    //if( g_nHeatBedScanStatus ) return;
+    if( g_nZOSScanStatus ) return;
+#endif //FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_WORK_PART_Z_COMPENSATION
+    if( g_nWorkPartScanStatus ) return;
+#endif //FEATURE_WORK_PART_Z_COMPENSATION
+#if FEATURE_FIND_Z_ORIGIN
+    if( g_nFindZOriginStatus ) return;
+#endif //FEATURE_FIND_Z_ORIGIN
 
     static unsigned char    nIndexX;
     static unsigned char    nIndexY;
@@ -1966,18 +1988,27 @@ void startAlignExtruders( void )
     }
     else
     {
-        BEEP_START_ALIGN_EXTRUDERS
         if( PrintLine::linesCount )
         {
             // there is some printing in progress at the moment - do not start to align the extruders in this case
             if( Printer::debugErrors() )
             {
-                Com::printFLN( PSTR( "startAlignExtruders(): error printing in progress" ) );
+                Com::printFLN( Com::tPrintingIsInProcessError );
             }
-
             showError( (void*)ui_text_align_extruders, (void*)ui_text_operation_denied );
             return;
         }
+        if( abs( extruder[0].tempControl.currentTemperatureC - extruder[1].tempControl.currentTemperatureC ) > 10 )
+        {
+            if( Printer::debugErrors() )
+            {
+                Com::printFLN( PSTR( "startAlignExtruders(): error temperature difference too big" ) );
+            }
+            showError( (void*)ui_text_align_extruders, (void*)ui_text_temperature_wrong );
+            return;
+        }
+
+        BEEP_START_ALIGN_EXTRUDERS
 
         if( Printer::doHeatBedZCompensation 
             || !Printer::areAxisHomed() 
@@ -1989,28 +2020,29 @@ void startAlignExtruders( void )
             PrintLine::moveRelativeDistanceInSteps( HEAT_BED_SCAN_X_CALIBRATION_POINT_STEPS, HEAT_BED_SCAN_Y_CALIBRATION_POINT_STEPS, 0, 0, RMath::min(Printer::homingFeedrate[X_AXIS],Printer::homingFeedrate[Y_AXIS]), true, true );
         }
 
-        if( abs( extruder[0].tempControl.currentTemperatureC - extruder[1].tempControl.currentTemperatureC ) > 10 )
-        {
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( PSTR( "startAlignExtruders(): error temperature difference too big" ) );
-            }
-
-            showError( (void*)ui_text_align_extruders, (void*)ui_text_temperature_wrong );
-            return;
-        }
-
         // we are ready to align the extruders at the current x and y position with the current temperature
         // the user can choose the x and y position as well as the to-be-used temperatures of the extruders
         g_nAlignExtrudersStatus = 100;
-        return;
     }
-    return;
 } // startAlignExtruders
 
 
 void alignExtruders( void )
 {
+#if FEATURE_ALIGN_EXTRUDERS
+    //if( g_nAlignExtrudersStatus ) return;
+#endif //FEATURE_ALIGN_EXTRUDERS
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+    if( g_nHeatBedScanStatus ) return;
+    if( g_nZOSScanStatus ) return;
+#endif //FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_WORK_PART_Z_COMPENSATION
+    if( g_nWorkPartScanStatus ) return;
+#endif //FEATURE_WORK_PART_Z_COMPENSATION
+#if FEATURE_FIND_Z_ORIGIN
+    if( g_nFindZOriginStatus ) return;
+#endif //FEATURE_FIND_Z_ORIGIN
+    
     if( g_abortZScan )
     {
         // the alignment has been aborted
@@ -2080,7 +2112,7 @@ void alignExtruders( void )
                 g_nAlignExtrudersStatus = 120;
 
 #if DEBUG_HEAT_BED_SCAN == 2
-                if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 110 -> 120" ) );
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "110 -> 120" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
             }
@@ -2092,7 +2124,7 @@ void alignExtruders( void )
                 g_nAlignExtrudersStatus = 121;
 
 #if DEBUG_HEAT_BED_SCAN == 2
-                if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 120 -> 121" ) );
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "120 -> 121" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
             }
@@ -2107,7 +2139,7 @@ void alignExtruders( void )
                 g_nAlignExtrudersStatus = 122;
 
 #if DEBUG_HEAT_BED_SCAN == 2
-                if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 121 -> 122" ) );
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "121 -> 122" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
             }
@@ -2121,7 +2153,7 @@ void alignExtruders( void )
                 g_nAlignExtrudersStatus = 123;
 
 #if DEBUG_HEAT_BED_SCAN == 2
-                if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 122 -> 123" ) );
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "122 -> 123" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
             }
@@ -2135,7 +2167,7 @@ void alignExtruders( void )
                 g_nAlignExtrudersStatus     = 125;
 
 #if DEBUG_HEAT_BED_SCAN == 2
-                if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 123 -> 125" ) );
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "123 -> 125" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
             }
@@ -2151,7 +2183,7 @@ void alignExtruders( void )
                 g_nAlignExtrudersStatus = 145;
 
 #if DEBUG_HEAT_BED_SCAN == 2
-                if( Printer::debugInfo() ) Com::printFLN( PSTR( "g_nAlignExtrudersStatus(): 125 -> 145" ) );
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "125 -> 145" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
             }
@@ -2165,7 +2197,7 @@ void alignExtruders( void )
                 g_nAlignExtrudersStatus = 160;
 
 #if DEBUG_HEAT_BED_SCAN == 2
-                if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 145 -> 160" ) );
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "145 -> 160" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
             }
@@ -2181,7 +2213,7 @@ void alignExtruders( void )
                 g_nAlignExtrudersStatus = 0;
 
 #if DEBUG_HEAT_BED_SCAN == 2
-                if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 160 -> 0" ) );
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "160 -> 0" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 break;
             }
@@ -2195,11 +2227,20 @@ void alignExtruders( void )
 /**************************************************************************************************************************************/
 void startZOScan( bool automatrixleveling )
 {
-    if(g_nHeatBedScanStatus 
+#if FEATURE_ALIGN_EXTRUDERS
+    if( g_nAlignExtrudersStatus ) return;
+#endif //FEATURE_ALIGN_EXTRUDERS
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+    if( g_nHeatBedScanStatus ) return;
+    //if( g_nZOSScanStatus ) return;
+#endif //FEATURE_HEAT_BED_Z_COMPENSATION
 #if FEATURE_WORK_PART_Z_COMPENSATION
-        || g_nWorkPartScanStatus
-#endif // FEATURE_WORK_PART_Z_COMPENSATION
-        ) return;
+    if( g_nWorkPartScanStatus ) return;
+#endif //FEATURE_WORK_PART_Z_COMPENSATION
+#if FEATURE_FIND_Z_ORIGIN
+    if( g_nFindZOriginStatus ) return;
+#endif //FEATURE_FIND_Z_ORIGIN
+
     if( g_nZOSScanStatus )
     {
         // abort the heat bed scan
@@ -2216,7 +2257,7 @@ void startZOScan( bool automatrixleveling )
             // there is some printing in progress at the moment - do not start the heat bed scan in this case
             if( Printer::debugErrors() )
             {
-                Com::printFLN( PSTR( "ZOS exit - printing in progress" ) );
+                Com::printFLN( Com::tPrintingIsInProcessError );
             }
             showError( (void*)ui_text_heat_bed_scan, (void*)ui_text_operation_denied );
         }
@@ -2235,7 +2276,21 @@ void startZOScan( bool automatrixleveling )
 
 void searchZOScan( void )
 {
-    if(g_nZOSScanStatus == 0) return;
+#if FEATURE_ALIGN_EXTRUDERS
+    if( g_nAlignExtrudersStatus ) return;
+#endif //FEATURE_ALIGN_EXTRUDERS
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+    if( g_nHeatBedScanStatus ) return;
+    //if( g_nZOSScanStatus ) return;
+#endif //FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_WORK_PART_Z_COMPENSATION
+    if( g_nWorkPartScanStatus ) return;
+#endif //FEATURE_WORK_PART_Z_COMPENSATION
+#if FEATURE_FIND_Z_ORIGIN
+    if( g_nFindZOriginStatus ) return;
+#endif //FEATURE_FIND_Z_ORIGIN
+    
+    if(!g_nZOSScanStatus) return;
     
     g_uStartOfIdle = 0; //zeige nicht gleich wieder Printer Ready an.
     
@@ -3598,10 +3653,274 @@ long getHeatBedOffset( void )
 } // getHeatBedOffset
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
+#if FEATURE_FIND_Z_ORIGIN
+void startFindZOrigin( void )
+{
+#if FEATURE_ALIGN_EXTRUDERS
+    if( g_nAlignExtrudersStatus ) return;
+#endif //FEATURE_ALIGN_EXTRUDERS
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+    if( g_nHeatBedScanStatus ) return;
+    if( g_nZOSScanStatus ) return;
+#endif //FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_WORK_PART_Z_COMPENSATION
+    if( g_nWorkPartScanStatus ) return;
+#endif //FEATURE_WORK_PART_Z_COMPENSATION
+#if FEATURE_FIND_Z_ORIGIN
+    //if( g_nFindZOriginStatus ) return;
+#endif //FEATURE_FIND_Z_ORIGIN
+    if( g_nFindZOriginStatus )
+    {
+        g_abortZScan = 1;
+    }
+    else
+    {
+        if( Printer::operatingMode != OPERATING_MODE_MILL )
+        {
+            Com::printFLN( PSTR( "startFindZOrigin(): z-origin not supported in printer mode" ) );
+            showError( (void*)ui_text_find_z_origin, (void*)ui_text_operation_denied );
+            return;
+        }
+        // start the search
+        g_nFindZOriginStatus = 1;
+    }
+} // startFindZOrigin
+
+
+void findZOrigin( void )
+{
+#if FEATURE_ALIGN_EXTRUDERS
+    if( g_nAlignExtrudersStatus ) return;
+#endif //FEATURE_ALIGN_EXTRUDERS
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+    if( g_nHeatBedScanStatus ) return;
+    if( g_nZOSScanStatus ) return;
+#endif //FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_WORK_PART_Z_COMPENSATION
+    if( g_nWorkPartScanStatus ) return;
+#endif //FEATURE_WORK_PART_Z_COMPENSATION
+#if FEATURE_FIND_Z_ORIGIN
+    //if( g_nFindZOriginStatus ) return;
+#endif //FEATURE_FIND_Z_ORIGIN
+
+    static short    nMaxPressureContact;
+    static short    nMinPressureContact;
+    short           nCurrentPressure;
+    unsigned long   uStartTime;
+    unsigned long   uCurrentTime;
+
+
+    if( g_abortZScan )
+    {
+        // the search has been aborted
+        g_abortZScan       = 0;
+
+        // turn off the engines
+        Printer::disableZStepper();
+
+        if( Printer::debugInfo() )
+        {
+            Com::printFLN( PSTR( "findZOrigin(): aborted" ) );
+        }
+
+        UI_STATUS_UPD( UI_TEXT_FIND_Z_ORIGIN_ABORTED );
+        g_nFindZOriginStatus = 0;
+        return;
+    }
+
+    // show that we are active
+    previousMillisCmd = HAL::timeInMilliseconds();
+
+    if( g_nFindZOriginStatus )
+    {
+        UI_STATUS_UPD( UI_TEXT_FIND_Z_ORIGIN );
+
+        //HAL::delayMilliseconds( 2000 );
+
+        switch( g_nFindZOriginStatus )
+        {
+            case 1:
+            {
+                g_abortZScan               = 0;
+                g_nZOriginPosition[Z_AXIS] = 0;
+
+                if( Printer::debugInfo() )
+                {
+                    Com::printFLN( PSTR( "findZOrigin(): started" ) );
+                }
+
+                if( readAveragePressure( &nCurrentPressure ) )
+                {
+                    Com::printFLN( PSTR( "findZOrigin(): start pressure not determined" ) );
+                    g_abortZScan = 1;
+                    return;
+                }
+
+                nMinPressureContact = nCurrentPressure - SEARCH_Z_ORIGIN_CONTACT_PRESSURE_DELTA;
+                nMaxPressureContact = nCurrentPressure + SEARCH_Z_ORIGIN_CONTACT_PRESSURE_DELTA;
+
+                if( Printer::debugInfo() )
+                {
+                    Com::printF( PSTR( "findZOrigin(): nMinPressureContact = " ), nMinPressureContact );
+                    Com::printFLN( PSTR( ", nMaxPressureContact = " ), nMaxPressureContact );
+                }
+
+                previousMillisCmd = HAL::timeInMilliseconds();
+                Printer::enableZStepper();
+
+                g_nFindZOriginStatus = 2;
+
+#if DEBUG_FIND_Z_ORIGIN
+                Com::printFLN( PSTR( "findZOrigin(): 1->10" ) );
+#endif // DEBUG_FIND_Z_ORIGIN
+                break;
+            }
+            case 2:
+            {
+#if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
+                Printer::disableCMPnow(true);  //schalte Z CMP ab für findZOrigin
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
+                g_nFindZOriginStatus = 10;
+            }
+            case 10:
+            {
+                // move the heat bed up until we detect the contact pressure
+                uStartTime = HAL::timeInMilliseconds();
+                while( 1 )
+                {
+                    nCurrentPressure = readStrainGauge( ACTIVE_STRAIN_GAUGE );
+
+                    if( nCurrentPressure > nMaxPressureContact || nCurrentPressure < nMinPressureContact )
+                    {
+                        // we have reached the target pressure
+                        g_nFindZOriginStatus = 20;
+
+#if DEBUG_FIND_Z_ORIGIN
+                        Com::printFLN( PSTR( "findZOrigin(): 10->20" ) );
+#endif // DEBUG_FIND_Z_ORIGIN
+                        return;
+                    }
+
+                    if( Printer::isZMinEndstopHit() )
+                    {
+                        // this should never happen
+                        Com::printFLN( PSTR( "findZOrigin(): the z-min endstop reached" ) );
+                        g_abortZScan = 1;
+                        return;
+                    }
+
+                    moveZ( SEARCH_Z_ORIGIN_BED_UP_STEPS );
+                    g_nZOriginPosition[Z_AXIS] = g_nZScanZPosition; //passt wenn korrekt gehomed.
+                    
+                    uCurrentTime = HAL::timeInMilliseconds();
+                    if( (uCurrentTime - uStartTime) > SEARCH_Z_ORIGIN_BREAKOUT_DELAY )
+                    {
+                        // do not stay within this loop forever
+                        return;
+                    }
+
+                    if( g_abortZScan )
+                    {
+                        break;
+                    }
+                }
+                break;
+            }
+            case 20:
+            {
+                // move the heat bed down again until we do not detect any contact anymore
+                uStartTime = HAL::timeInMilliseconds();
+                while( 1 )
+                {
+                    nCurrentPressure = readStrainGauge( ACTIVE_STRAIN_GAUGE );
+
+                    if( nCurrentPressure > nMinPressureContact && nCurrentPressure < nMaxPressureContact )
+                    {
+                        // we have reached the target pressure
+                        g_nFindZOriginStatus = 30;
+
+#if DEBUG_FIND_Z_ORIGIN
+                        Com::printFLN( PSTR( "findZOrigin(): 20 -> 30" ) );
+#endif // DEBUG_FIND_Z_ORIGIN
+                        return;
+                    }
+
+                    if( Printer::isZMaxEndstopHit() )
+                    {
+                        Com::printFLN( PSTR( "findZOrigin(): the z-max endstop reached" ) );
+                        g_abortZScan = 1;
+                        return;
+                    }
+
+                    moveZ( SEARCH_Z_ORIGIN_BED_DOWN_STEPS );
+                    g_nZOriginPosition[Z_AXIS] = g_nZScanZPosition; //passt wenn korrekt gehomed.
+
+                    uCurrentTime = HAL::timeInMilliseconds();
+                    if( (uCurrentTime - uStartTime) > SEARCH_Z_ORIGIN_BREAKOUT_DELAY )
+                    {
+                        // do not stay within this loop forever
+                        return;
+                    }
+
+                    if( g_abortZScan )
+                    {
+                        break;
+                    }
+                }
+                break;
+            }
+            case 30:
+            {
+                // we have found the z-origin
+                setZOrigin();
+
+                GCode::executeFString( Com::tFindZOrigin );
+                g_nFindZOriginStatus = 40;
+
+#if DEBUG_FIND_Z_ORIGIN
+                Com::printFLN( PSTR( "findZOrigin(): 30 -> 40" ) );
+#endif // DEBUG_FIND_Z_ORIGIN
+                break;
+            }
+            case 40:
+            {
+                if( PrintLine::linesCount )
+                {
+                    // wait until all moves have been done
+                    break;
+                }
+
+                Commands::printCurrentPosition();
+                g_nFindZOriginStatus = 0;
+                UI_STATUS_UPD( UI_TEXT_FIND_Z_ORIGIN_DONE );
+
+#if DEBUG_FIND_Z_ORIGIN
+                Com::printFLN( PSTR( "findZOrigin(): 40 -> 0" ) );
+#endif // DEBUG_FIND_Z_ORIGIN
+                break;
+            }
+        }
+    }
+} // findZOrigin
+#endif // FEATURE_FIND_Z_ORIGIN
+
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
 void startWorkPartScan( char nMode )
 {
+    #if FEATURE_ALIGN_EXTRUDERS
+    if( g_nAlignExtrudersStatus ) return;
+#endif //FEATURE_ALIGN_EXTRUDERS
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+    if( g_nHeatBedScanStatus ) return;
+    if( g_nZOSScanStatus ) return;
+#endif //FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_WORK_PART_Z_COMPENSATION
+    //if( g_nWorkPartScanStatus ) return;
+#endif //FEATURE_WORK_PART_Z_COMPENSATION
+#if FEATURE_FIND_Z_ORIGIN
+    if( g_nFindZOriginStatus ) return;
+#endif //FEATURE_FIND_Z_ORIGIN
     if( g_nWorkPartScanStatus )
     {
         // abort the work part scan
@@ -3618,7 +3937,7 @@ void startWorkPartScan( char nMode )
             // there is some printing in progress at the moment - do not start the heat bed scan in this case
             if( Printer::debugErrors() )
             {
-                Com::printFLN( PSTR( "startWorkPartScan(): the scan can not be started while the milling is in progress" ) );
+                Com::printFLN( Com::tPrintingIsInProcessError );
             }
 
             showError( (void*)ui_text_work_part_scan, (void*)ui_text_operation_denied );
@@ -3639,7 +3958,19 @@ void startWorkPartScan( char nMode )
 
 void scanWorkPart( void )
 {
-    if(g_nZOSScanStatus) return;
+#if FEATURE_ALIGN_EXTRUDERS
+    if( g_nAlignExtrudersStatus ) return;
+#endif //FEATURE_ALIGN_EXTRUDERS
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+    if( g_nHeatBedScanStatus ) return;
+    if( g_nZOSScanStatus ) return;
+#endif //FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_WORK_PART_Z_COMPENSATION
+    //if( g_nWorkPartScanStatus ) return;
+#endif //FEATURE_WORK_PART_Z_COMPENSATION
+#if FEATURE_FIND_Z_ORIGIN
+    if( g_nFindZOriginStatus ) return;
+#endif //FEATURE_FIND_Z_ORIGIN
 
     static unsigned char    nIndexX;
     static unsigned char    nIndexY;
@@ -4920,9 +5251,6 @@ void moveZ( int nSteps )
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         if( g_abortZScan ) break; // do not continue here in case the current operation has been cancelled
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-#if FEATURE_FIND_Z_ORIGIN
-        if( g_abortSearchZOrigin ) break; // do not continue here in case the current operation has been cancelled
-#endif // FEATURE_FIND_Z_ORIGIN
 
 #if FEATURE_MILLING_MODE
         if( Printer::operatingMode == OPERATING_MODE_PRINT ) // nur printing-mode. Beim millingmode könnte das falsch sein. Test TODO daher nur printing-mode, da stimmts.
@@ -5967,10 +6295,10 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 #endif // FEATURE_CASE_FAN && !CASE_FAN_ALWAYS_ON
 
 #if FEATURE_MILLING_MODE
-
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {        
-#if FEATURE_HEAT_BED_Z_COMPENSATION
+#endif // FEATURE_MILLING_MODE
+ #if FEATURE_HEAT_BED_Z_COMPENSATION
         if( g_nHeatBedScanStatus )
         {
             scanHeatBed();
@@ -5979,46 +6307,31 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
         {
             searchZOScan();
         }
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION
+ #endif // FEATURE_HEAT_BED_Z_COMPENSATION
+ #if FEATURE_ALIGN_EXTRUDERS
+        if( g_nAlignExtrudersStatus )
+        {
+            alignExtruders();
+        }
+ #endif // FEATURE_ALIGN_EXTRUDERS
+#if FEATURE_MILLING_MODE
     }
     else
     {
-#if FEATURE_WORK_PART_Z_COMPENSATION
+ #if FEATURE_WORK_PART_Z_COMPENSATION
         if( g_nWorkPartScanStatus )
         {
             scanWorkPart();
         }
-#endif // FEATURE_WORK_PART_Z_COMPENSATION
+ #endif // FEATURE_WORK_PART_Z_COMPENSATION
+ #if FEATURE_FIND_Z_ORIGIN
+        if( g_nFindZOriginStatus )
+        {
+            findZOrigin();
+        }
+ #endif // FEATURE_FIND_Z_ORIGIN
     }
-
-#else
-
-#if FEATURE_HEAT_BED_Z_COMPENSATION
-    if( g_nHeatBedScanStatus )
-    {
-        scanHeatBed();
-    }
-    if( g_nZOSScanStatus )
-    {
-        searchZOScan();
-    }
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION
-
 #endif // FEATURE_MILLING_MODE
-
-#if FEATURE_ALIGN_EXTRUDERS
-    if( g_nAlignExtrudersStatus )
-    {
-        alignExtruders();
-    }
-#endif // FEATURE_ALIGN_EXTRUDERS
-
-#if FEATURE_FIND_Z_ORIGIN
-    if( g_nFindZOriginStatus )
-    {
-        findZOrigin();
-    }
-#endif // FEATURE_FIND_Z_ORIGIN
 
 #if FEATURE_PAUSE_PRINTING
     if( g_pauseMode != PAUSE_MODE_NONE )
@@ -12214,257 +12527,6 @@ void setZOrigin( void )
 
 } // setZOrigin
 
-
-#if FEATURE_FIND_Z_ORIGIN
-void startFindZOrigin( void )
-{
-    if( g_nFindZOriginStatus )
-    {
-        if( !g_abortSearchZOrigin )
-        {
-            // abort the finding of the z-origin
-            g_abortSearchZOrigin = 1;
-        }
-    }
-    else
-    {
-        if( Printer::operatingMode != OPERATING_MODE_MILL )
-        {
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( PSTR( "startFindZOrigin(): z-origin not supported in printer mode" ) );
-            }
-
-            showError( (void*)ui_text_find_z_origin, (void*)ui_text_operation_denied );
-            return;
-        }
-        // start the search
-        g_nFindZOriginStatus = 1;
-    }
-} // startFindZOrigin
-
-
-void findZOrigin( void )
-{
-    static short    nMaxPressureContact;
-    static short    nMinPressureContact;
-    short           nCurrentPressure;
-    unsigned long   uStartTime;
-    unsigned long   uCurrentTime;
-
-
-    if( g_abortSearchZOrigin )
-    {
-        // the search has been aborted
-        g_abortSearchZOrigin       = 0;
-
-        // turn off the engines
-        Printer::disableZStepper();
-
-        if( Printer::debugInfo() )
-        {
-            Com::printFLN( PSTR( "findZOrigin(): aborted" ) );
-        }
-
-        UI_STATUS_UPD( UI_TEXT_FIND_Z_ORIGIN_ABORTED );
-        g_nFindZOriginStatus = 0;
-        return;
-    }
-
-    // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
-
-    if( g_nFindZOriginStatus )
-    {
-        UI_STATUS_UPD( UI_TEXT_FIND_Z_ORIGIN );
-
-        //HAL::delayMilliseconds( 2000 );
-
-        switch( g_nFindZOriginStatus )
-        {
-            case 1:
-            {
-                g_abortSearchZOrigin       = 0;
-                g_nZOriginPosition[Z_AXIS] = 0;
-
-                if( Printer::debugInfo() )
-                {
-                    Com::printFLN( PSTR( "findZOrigin(): started" ) );
-                }
-
-                if( readAveragePressure( &nCurrentPressure ) )
-                {
-                    // some error has occurred
-                    if( Printer::debugErrors() )
-                    {
-                        Com::printFLN( PSTR( "findZOrigin(): start pressure not determined" ) );
-                    }
-                    g_abortSearchZOrigin = 1;
-                    return;
-                }
-
-                nMinPressureContact = nCurrentPressure - SEARCH_Z_ORIGIN_CONTACT_PRESSURE_DELTA;
-                nMaxPressureContact = nCurrentPressure + SEARCH_Z_ORIGIN_CONTACT_PRESSURE_DELTA;
-
-                if( Printer::debugInfo() )
-                {
-                    Com::printF( PSTR( "findZOrigin(): nMinPressureContact = " ), nMinPressureContact );
-                    Com::printFLN( PSTR( ", nMaxPressureContact = " ), nMaxPressureContact );
-                }
-
-                previousMillisCmd = HAL::timeInMilliseconds();
-                Printer::enableZStepper();
-
-                g_nFindZOriginStatus = 2;
-
-#if DEBUG_FIND_Z_ORIGIN
-                Com::printFLN( PSTR( "findZOrigin(): 1->10" ) );
-#endif // DEBUG_FIND_Z_ORIGIN
-                break;
-            }
-            case 2:
-            {
-#if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-                Printer::disableCMPnow(true);  //schalte Z CMP ab für findZOrigin
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-                g_nFindZOriginStatus = 10;
-            }
-            case 10:
-            {
-                // move the heat bed up until we detect the contact pressure
-                uStartTime = HAL::timeInMilliseconds();
-                while( 1 )
-                {
-                    nCurrentPressure = readStrainGauge( ACTIVE_STRAIN_GAUGE );
-
-                    if( nCurrentPressure > nMaxPressureContact || nCurrentPressure < nMinPressureContact )
-                    {
-                        // we have reached the target pressure
-                        g_nFindZOriginStatus = 20;
-
-#if DEBUG_FIND_Z_ORIGIN
-                        Com::printFLN( PSTR( "findZOrigin(): 10->20" ) );
-#endif // DEBUG_FIND_Z_ORIGIN
-                        return;
-                    }
-
-                    if( Printer::isZMinEndstopHit() )
-                    {
-                        // this should never happen
-                        if( Printer::debugErrors() )
-                        {
-                            Com::printFLN( PSTR( "findZOrigin(): the z-min endstop has been reached" ) );
-                        }
-                        g_abortSearchZOrigin = 1;
-                        return;
-                    }
-
-                    moveZ( SEARCH_Z_ORIGIN_BED_UP_STEPS );
-                    g_nZOriginPosition[Z_AXIS] = g_nZScanZPosition; //passt wenn korrekt gehomed.
-                    
-                    uCurrentTime = HAL::timeInMilliseconds();
-                    if( (uCurrentTime - uStartTime) > SEARCH_Z_ORIGIN_BREAKOUT_DELAY )
-                    {
-                        // do not stay within this loop forever
-                        return;
-                    }
-
-                    if( g_abortSearchZOrigin )
-                    {
-                        break;
-                    }
-                }
-
-                // we should never end up here
-                break;
-            }
-            case 20:
-            {
-                // move the heat bed down again until we do not detect any contact anymore
-                uStartTime = HAL::timeInMilliseconds();
-                while( 1 )
-                {
-                    nCurrentPressure = readStrainGauge( ACTIVE_STRAIN_GAUGE );
-
-                    if( nCurrentPressure > nMinPressureContact && nCurrentPressure < nMaxPressureContact )
-                    {
-                        // we have reached the target pressure
-                        g_nFindZOriginStatus = 30;
-
-#if DEBUG_FIND_Z_ORIGIN
-                        Com::printFLN( PSTR( "findZOrigin(): 20 -> 30" ) );
-#endif // DEBUG_FIND_Z_ORIGIN
-                        return;
-                    }
-
-                    if( Printer::isZMaxEndstopHit() )
-                    {
-                        if( Printer::debugErrors() )
-                        {
-                            Com::printFLN( PSTR( "findZOrigin(): the z-max endstop has been reached" ) );
-                        }
-                        g_abortSearchZOrigin = 1;
-                        return;
-                    }
-
-                    moveZ( SEARCH_Z_ORIGIN_BED_DOWN_STEPS );
-                    g_nZOriginPosition[Z_AXIS] = g_nZScanZPosition; //passt wenn korrekt gehomed.
-
-                    uCurrentTime = HAL::timeInMilliseconds();
-                    if( (uCurrentTime - uStartTime) > SEARCH_Z_ORIGIN_BREAKOUT_DELAY )
-                    {
-                        // do not stay within this loop forever
-                        return;
-                    }
-
-                    if( g_abortSearchZOrigin )
-                    {
-                        break;
-                    }
-                }
-
-                // we should never end up here
-                break;
-            }
-            case 30:
-            {
-                // we have found the z-origin
-                setZOrigin();
-
-                GCode::executeFString( Com::tFindZOrigin );
-                g_nFindZOriginStatus = 40;
-
-#if DEBUG_FIND_Z_ORIGIN
-                Com::printFLN( PSTR( "findZOrigin(): 30 -> 40" ) );
-#endif // DEBUG_FIND_Z_ORIGIN
-                break;
-            }
-            case 40:
-            {
-                if( PrintLine::linesCount )
-                {
-                    // wait until all moves have been done
-                    break;
-                }
-
-                Commands::printCurrentPosition();
-                g_nFindZOriginStatus = 0;
-                UI_STATUS_UPD( UI_TEXT_FIND_Z_ORIGIN_DONE );
-
-#if DEBUG_FIND_Z_ORIGIN
-                Com::printFLN( PSTR( "findZOrigin(): 40 -> 0" ) );
-#endif // DEBUG_FIND_Z_ORIGIN
-                break;
-            }
-        }
-    }
-
-    // we should never end up here
-    return;
-
-} // findZOrigin
-#endif // FEATURE_FIND_Z_ORIGIN
-
 void switchOperatingMode( char newOperatingMode )
 {
     if( newOperatingMode != OPERATING_MODE_PRINT 
@@ -13234,13 +13296,17 @@ unsigned char isMovingAllowed( const char* pszCommand, char outputLog )
     }
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-    if( g_nHeatBedScanStatus || g_nZOSScanStatus )
+    if( g_nHeatBedScanStatus || g_nZOSScanStatus 
+    #if FEATURE_ALIGN_EXTRUDERS
+        || g_nAlignExtrudersStatus 
+    #endif //FEATURE_ALIGN_EXTRUDERS
+    )
     {
         // do not allow manual movements while the heat bed scan is in progress
         if( Printer::debugErrors() && outputLog )
         {
             Com::printF( pszCommand );
-            Com::printFLN( PSTR( ": this command can not be used while the heat bed scan is in progress" ) );
+            Com::printFLN( PSTR( ": command can not be used while scan is in progress" ) );
         }
         return 0;
     }
@@ -13253,7 +13319,7 @@ unsigned char isMovingAllowed( const char* pszCommand, char outputLog )
         if( Printer::debugErrors() && outputLog )
         {
             Com::printF( pszCommand );
-            Com::printFLN( PSTR( ": this command can not be used while the work part scan is in progress" ) );
+            Com::printFLN( PSTR( ": command can not be used while scan is in progress" ) );
         }
         return 0;
     }
