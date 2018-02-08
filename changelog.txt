@@ -1,6 +1,11 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.33.Mod (2018-02-08) 
+- AlignExtruders: Remove Z-Home over bed / unnecessary error handling.
+- replaced RF.cpp's tab chars with spaces
+- cleaned up copied code
+
 V RF.01.38.32.Mod (2018-02-08) 
 - HBS: additional maximum delta for moving back very slow
 - HBS: If testIdlePressure() fails while scanning then g_scanRetries are used up (homing, driving Y, retry ...) instead of canceling the scan.

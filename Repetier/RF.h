@@ -701,7 +701,6 @@ extern int             g_nZOriginSet;
 
 #if FEATURE_ALIGN_EXTRUDERS
 extern volatile unsigned char g_nAlignExtrudersStatus;
-extern char             g_abortAlignExtruders;
 #endif // FEATURE_ALIGN_EXTRUDERS
 
 #if FEATURE_RGB_LIGHT_EFFECTS

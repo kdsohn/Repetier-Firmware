@@ -589,7 +589,8 @@ public:
         if( Extruder::current->zOffset ) problematisch = true; //wenn rechtes gefedertes Hotend tiefer, dann evtl. kollision
         if( g_offsetZCompensationSteps > 0 ) problematisch = true; //wenn matrix positiv, dann evtl. problem
         if( isAxisHomed(Y_AXIS) && Printer::queuePositionCurrentSteps[Y_AXIS] + Printer::directPositionCurrentSteps[Y_AXIS] <= 5*YAXIS_STEPS_PER_MM ) problematisch = false; //vorherige Probleme egal, wenn bett nach hinten gefahren
-
+        if( g_nAlignExtrudersStatus ) problematisch = false; //das homing passiert in Z einzeln, liegt aber neben dem Bett.
+        if( g_nHeatBedScanStatus ) problematisch = false; //das homing passiert in Z einzeln, liegt aber neben dem Bett.
         if(problematisch) return 0; //während Z-Scan gibts einen homeZ, der ist aber nicht relevant, den case gibts nicht!
         else return 1;
     } // isZHomeSafe

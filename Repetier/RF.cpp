@@ -231,7 +231,6 @@ char            g_abortSearchZOrigin               = 0;
 
 #if FEATURE_ALIGN_EXTRUDERS
 volatile unsigned char g_nAlignExtrudersStatus = 0;
-char            g_abortAlignExtruders       = 0;
 #endif // FEATURE_ALIGN_EXTRUDERS
 
 #if FEATURE_RGB_LIGHT_EFFECTS
@@ -428,6 +427,14 @@ short readStrainGauge( unsigned char uAddress ) //readStrainGauge dauert etwas u
     return Result;
 } // readStrainGauge
 
+void adjustPressureLimits( short IdlePressure ) {
+    g_nMinPressureContact = IdlePressure - g_nScanContactPressureDelta;
+    g_nMaxPressureContact = IdlePressure + g_nScanContactPressureDelta;
+    g_nMinPressureRetry   = IdlePressure - g_nScanRetryPressureDelta;
+    g_nMaxPressureRetry   = IdlePressure + g_nScanRetryPressureDelta;
+    g_nMinPressureIdle    = IdlePressure - g_nScanIdlePressureDelta;
+    g_nMaxPressureIdle    = IdlePressure + g_nScanIdlePressureDelta;
+}
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 void startHeatBedScan( void )
@@ -784,12 +791,7 @@ void scanHeatBed( void )
                 nIndexX          = 2;
                 nIndexY          = 2;
 
-                g_nMinPressureContact = g_nFirstIdlePressure - g_nScanContactPressureDelta;
-                g_nMaxPressureContact = g_nFirstIdlePressure + g_nScanContactPressureDelta;
-                g_nMinPressureRetry   = g_nFirstIdlePressure - g_nScanRetryPressureDelta;
-                g_nMaxPressureRetry   = g_nFirstIdlePressure + g_nScanRetryPressureDelta;
-                g_nMinPressureIdle    = g_nFirstIdlePressure - g_nScanIdlePressureDelta;
-                g_nMaxPressureIdle    = g_nFirstIdlePressure + g_nScanIdlePressureDelta;
+                adjustPressureLimits(g_nFirstIdlePressure);
 
                 // store also the version of this heat bed compensation matrix
 #if DEBUG_REMEMBER_SCAN_PRESSURE
@@ -924,7 +926,7 @@ void scanHeatBed( void )
             case 46: 
             {
                 // home the z-axis in order to find the starting point again
-                Printer::homeAxis( false, false, true ); //Home Z
+                Printer::homeAxis( false, false, true ); //Neben Bett: Home Z
                 moveZ( HEAT_BED_SCAN_Z_START_STEPS ); //spacing for bed
                 
                 g_nHeatBedScanStatus = 47;
@@ -983,12 +985,7 @@ void scanHeatBed( void )
                 }
 
                 // we should consider that the idle presse can change slightly
-                g_nMinPressureContact = g_nCurrentIdlePressure - g_nScanContactPressureDelta;
-                g_nMaxPressureContact = g_nCurrentIdlePressure + g_nScanContactPressureDelta;
-                g_nMinPressureRetry   = g_nCurrentIdlePressure - g_nScanRetryPressureDelta;
-                g_nMaxPressureRetry   = g_nCurrentIdlePressure + g_nScanRetryPressureDelta;
-                g_nMinPressureIdle    = g_nCurrentIdlePressure - g_nScanIdlePressureDelta;
-                g_nMaxPressureIdle    = g_nCurrentIdlePressure + g_nScanIdlePressureDelta;
+                adjustPressureLimits(g_nCurrentIdlePressure);
 
                 g_nHeatBedScanStatus = 51;
 
@@ -1444,12 +1441,7 @@ void scanHeatBed( void )
                 }
 
                 // we should consider that the idle presse can change slightly
-                g_nMinPressureContact = g_nCurrentIdlePressure - g_nScanContactPressureDelta;
-                g_nMaxPressureContact = g_nCurrentIdlePressure + g_nScanContactPressureDelta;
-                g_nMinPressureRetry   = g_nCurrentIdlePressure - g_nScanRetryPressureDelta;
-                g_nMaxPressureRetry   = g_nCurrentIdlePressure + g_nScanRetryPressureDelta;
-                g_nMinPressureIdle    = g_nCurrentIdlePressure - g_nScanIdlePressureDelta;
-                g_nMaxPressureIdle    = g_nCurrentIdlePressure + g_nScanIdlePressureDelta;
+                adjustPressureLimits(g_nCurrentIdlePressure);
 
                 g_nHeatBedScanStatus = 120;
 
@@ -1591,12 +1583,13 @@ void scanHeatBed( void )
             case 132: // we have to determine the z-offset which is caused by different extruder temperatures
             {
                 // determine the z-home position
-                if (Printer::currentZSteps < 0){
-                    Printer::homeAxis( false, false, true); //Nibbels: wäre schädlich für zu hohe druckbetten.
+                //if (Printer::currentZSteps < 0){
+                    //Printer::homeAxis( false, false, true); //Nibbels: wäre schädlich für zu hohe druckbetten.
                     // -> Warum homen, wir fahren nun zum Heizen sowieso 10mm weg. Vorher waren wir direkt am Bett. Unter oder Über Zschalter ist egal.
                     // -> Wills nicht rausmachen, könnte ich aber. Schlädlich wenn Bett zuuu tief wegen watchdog - glaube nicht? 
                     // -> Wenn Extruder unter 0, dann homen, sonst nicht.
-                }
+                    // -> 08.02.2018: wir haben ein homing von case 60, scanposition ist konsistent, warum homen ...
+                //}
                 g_lastScanTime       = HAL::timeInMilliseconds();
                 g_nHeatBedScanStatus = 133;
 
@@ -1741,7 +1734,7 @@ void scanHeatBed( void )
             case 139:
             {
                 moveZ( HEAT_BED_SCAN_Z_START_STEPS ); //spacing for bed
-                Printer::homeAxis( false, true, false ); //Home Z
+                Printer::homeAxis( false, true, false ); //Home Y
 
                 g_scanRetries        --;
                 g_nHeatBedScanStatus = 140;
@@ -1756,7 +1749,7 @@ void scanHeatBed( void )
             case 140: 
             {
                 // home the z-axis in order to find the starting point again
-                Printer::homeAxis( false, false, true ); //Home Z
+                Printer::homeAxis( false, false, true ); //Neben Bett: Home Z
                 moveZ( HEAT_BED_SCAN_Z_START_STEPS ); //spacing for bed
                 
                 g_nHeatBedScanStatus = 141;
@@ -1801,12 +1794,7 @@ void scanHeatBed( void )
                 }
 
                 // we should consider that the idle presse can change slightly
-                g_nMinPressureContact = g_nCurrentIdlePressure - g_nScanContactPressureDelta;
-                g_nMaxPressureContact = g_nCurrentIdlePressure + g_nScanContactPressureDelta;
-                g_nMinPressureRetry   = g_nCurrentIdlePressure - g_nScanRetryPressureDelta;
-                g_nMaxPressureRetry   = g_nCurrentIdlePressure + g_nScanRetryPressureDelta;
-                g_nMinPressureIdle    = g_nCurrentIdlePressure - g_nScanIdlePressureDelta;
-                g_nMaxPressureIdle    = g_nCurrentIdlePressure + g_nScanIdlePressureDelta;
+                adjustPressureLimits(g_nCurrentIdlePressure);
 
                 g_nHeatBedScanStatus = 145;
 
@@ -1966,8 +1954,245 @@ void scanHeatBed( void )
     }
 } // scanHeatBed
 
-/**************************************************************************************************************************************/
 
+#if FEATURE_ALIGN_EXTRUDERS
+void startAlignExtruders( void )
+{
+    if( g_nAlignExtrudersStatus )
+    {
+        // abort the alignment of the extruders
+        g_abortZScan = 1;
+        return;
+    }
+    else
+    {
+        BEEP_START_ALIGN_EXTRUDERS
+        if( PrintLine::linesCount )
+        {
+            // there is some printing in progress at the moment - do not start to align the extruders in this case
+            if( Printer::debugErrors() )
+            {
+                Com::printFLN( PSTR( "startAlignExtruders(): error printing in progress" ) );
+            }
+
+            showError( (void*)ui_text_align_extruders, (void*)ui_text_operation_denied );
+            return;
+        }
+
+        if( Printer::doHeatBedZCompensation 
+            || !Printer::areAxisHomed() 
+            || Printer::currentYPosition() < HEAT_BED_SCAN_Y_START_MM 
+            || Printer::currentXPosition() < HEAT_BED_SCAN_X_START_MM 
+            || Printer::currentZPositionSteps() )
+        {
+            Printer::homeAxis( true, true, true );
+            PrintLine::moveRelativeDistanceInSteps( HEAT_BED_SCAN_X_CALIBRATION_POINT_STEPS, HEAT_BED_SCAN_Y_CALIBRATION_POINT_STEPS, 0, 0, RMath::min(Printer::homingFeedrate[X_AXIS],Printer::homingFeedrate[Y_AXIS]), true, true );
+        }
+
+        if( abs( extruder[0].tempControl.currentTemperatureC - extruder[1].tempControl.currentTemperatureC ) > 10 )
+        {
+            if( Printer::debugErrors() )
+            {
+                Com::printFLN( PSTR( "startAlignExtruders(): error temperature difference too big" ) );
+            }
+
+            showError( (void*)ui_text_align_extruders, (void*)ui_text_temperature_wrong );
+            return;
+        }
+
+        // we are ready to align the extruders at the current x and y position with the current temperature
+        // the user can choose the x and y position as well as the to-be-used temperatures of the extruders
+        g_nAlignExtrudersStatus = 100;
+        return;
+    }
+    return;
+} // startAlignExtruders
+
+
+void alignExtruders( void )
+{
+    if( g_abortZScan )
+    {
+        // the alignment has been aborted
+        g_abortZScan = 0;
+
+        // avoid to crash the extruder against the heat bed during a following move
+        moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
+
+        if( Printer::debugInfo() )
+        {
+            Com::printFLN( PSTR( "alignExtruders(): aborted" ) );
+        }
+
+        UI_STATUS_UPD( UI_TEXT_ALIGN_EXTRUDERS_ABORTED );
+        BEEP_ABORT_ALIGN_EXTRUDERS
+
+        g_nAlignExtrudersStatus  = 0;
+        return;
+    }
+
+    // show that we are active
+    previousMillisCmd = HAL::timeInMilliseconds();
+
+    if( g_nAlignExtrudersStatus )
+    {
+        if( g_nAlignExtrudersStatus != 123 &&
+            g_nAlignExtrudersStatus != 125 )
+        {
+            // there are a few cases where we do not want to change the current status text
+            UI_STATUS( UI_TEXT_ALIGN_EXTRUDERS );
+        }
+
+        switch( g_nAlignExtrudersStatus )
+        {
+            case 100:
+            {
+                // when we are here we assume that all preconditions for the alignment of the extruders are fulfilled already
+                g_lastScanTime          = HAL::timeInMilliseconds();
+                g_scanRetries           = HEAT_BED_SCAN_RETRIES;
+                g_retryStatus           = 105;
+                g_nAlignExtrudersStatus = 110;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 100 -> 110" ) );
+#endif // DEBUG_HEAT_BED_SCAN == 2
+                break;
+            }
+            case 110:
+            {
+                if( (HAL::timeInMilliseconds() - g_lastScanTime) < g_nScanIdleDelay )
+                {
+                    // do not check too early
+                    break;
+                }
+
+                // scan this point
+                if( testIdlePressure() )
+                {
+                    // the current idle pressure is not plausible
+                    // g_retryZScan = 1; //not really needed, already set.
+                    break;
+                }
+
+                // we should consider that the idle presse can change slightly
+                adjustPressureLimits(g_nCurrentIdlePressure);
+
+                g_nAlignExtrudersStatus = 120;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 110 -> 120" ) );
+#endif // DEBUG_HEAT_BED_SCAN == 2
+                break;
+            }
+            case 120:
+            {
+                // move to the surface
+                moveZUpFast();
+
+                g_nAlignExtrudersStatus = 121;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 120 -> 121" ) );
+#endif // DEBUG_HEAT_BED_SCAN == 2
+                break;
+            }
+            case 121:
+            {
+                // ensure that we do not remember any previous z-position at this moment
+                g_nLastZScanZPosition = 0;
+
+                // move a little bit away from the surface
+                moveZDownSlow();
+
+                g_nAlignExtrudersStatus = 122;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 121 -> 122" ) );
+#endif // DEBUG_HEAT_BED_SCAN == 2
+                break;
+            }
+            case 122:
+            {
+                // move slowly to the surface
+                short nTempPressure = 0;
+                moveZUpSlow( &nTempPressure );
+                moveZDownSlow(8); // entspannen
+
+                g_nAlignExtrudersStatus = 123;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 122 -> 123" ) );
+#endif // DEBUG_HEAT_BED_SCAN == 2
+                break;
+            }
+            case 123:
+            {
+                // the left extruder is at the surface now - show that the user must move also the right extruder to the surface in order to get them to the same z-height
+                UI_STATUS_UPD( UI_TEXT_ALIGN_EXTRUDERS );
+                BEEP_ALIGN_EXTRUDERS
+
+                g_nContinueButtonPressed = 0;
+                g_nAlignExtrudersStatus     = 125;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 123 -> 125" ) );
+#endif // DEBUG_HEAT_BED_SCAN == 2
+                break;
+            }
+            case 125:
+            {
+                // wait until the continue button has been pressed
+                if( !g_nContinueButtonPressed )
+                {
+                    break;
+                }
+
+                // we are done
+                g_nAlignExtrudersStatus = 145;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "g_nAlignExtrudersStatus(): 125 -> 145" ) );
+#endif // DEBUG_HEAT_BED_SCAN == 2
+                break;
+            }
+            case 145:
+            {
+                // avoid to crash the extruder against the heat bed during the following moves
+                moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
+
+                Printer::homeAxis( true, true, true );
+
+                g_nAlignExtrudersStatus = 160;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 145 -> 160" ) );
+#endif // DEBUG_HEAT_BED_SCAN == 2
+                break;
+            }
+            case 160:
+            {
+                if( Printer::debugInfo() )
+                {
+                    Com::printFLN( PSTR( "alignExtruders(): the alignment has been completed" ) );
+                }
+                UI_STATUS_UPD( UI_TEXT_ALIGN_EXTRUDERS_DONE );
+                BEEP_STOP_ALIGN_EXTRUDERS
+
+                g_nAlignExtrudersStatus = 0;
+
+#if DEBUG_HEAT_BED_SCAN == 2
+                if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 160 -> 0" ) );
+#endif // DEBUG_HEAT_BED_SCAN == 2
+                break;
+            }
+        }
+    }
+    return;
+} // alignExtruders
+#endif // FEATURE_ALIGN_EXTRUDERS
+
+
+/**************************************************************************************************************************************/
 void startZOScan( bool automatrixleveling )
 {
     if(g_nHeatBedScanStatus 
@@ -2366,6 +2591,7 @@ void searchZOScan( void )
                       Com::printFLN( PSTR( "UpFine:" ), (g_nZScanZPosition-Z) );
                       Z = g_nZScanZPosition;
                       
+                      g_nLastZScanZPosition = 0; //dont remember any old z-positions -> no check if deltaZ got too high.
                       moveZDownSlow(acuteness*4); // +
                       
                       Com::printFLN( PSTR( "DownFine:" ), (g_nZScanZPosition-Z) );
@@ -2833,7 +3059,7 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
 
     if( !Printer::areAxisHomed() )
     {
-        Printer::homeAxis(true,true,true);
+        Printer::homeAxis( true, true, true );
     }
 
     //if [S,P] "go to temp" then do so...
@@ -3372,316 +3598,6 @@ long getHeatBedOffset( void )
 } // getHeatBedOffset
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
-#if FEATURE_ALIGN_EXTRUDERS
-void startAlignExtruders( void )
-{
-    if( g_nAlignExtrudersStatus )
-    {
-        // abort the alignment of the extruders
-        if( Printer::debugInfo() )
-        {
-            Com::printFLN( PSTR( "startAlignExtruders(): cancelled" ) );
-        }
-        g_abortAlignExtruders = 1;
-        return;
-    }
-    else
-    {
-        if( PrintLine::linesCount )
-        {
-            // there is some printing in progress at the moment - do not start to align the extruders in this case
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( PSTR( "startAlignExtruders(): error printing in progress" ) );
-            }
-
-            showError( (void*)ui_text_align_extruders, (void*)ui_text_operation_denied );
-            return;
-        }
-
-        if( Printer::doHeatBedZCompensation 
-            || !Printer::areAxisHomed() 
-            || Printer::currentYPosition() < HEAT_BED_SCAN_Y_START_MM 
-            || Printer::currentXPosition() < HEAT_BED_SCAN_X_START_MM 
-            || Printer::currentZPositionSteps() )
-        {
-            Printer::homeAxis( true, true, true );
-            PrintLine::moveRelativeDistanceInSteps( HEAT_BED_SCAN_X_CALIBRATION_POINT_STEPS, HEAT_BED_SCAN_Y_CALIBRATION_POINT_STEPS, 0, 0, RMath::min(Printer::homingFeedrate[X_AXIS],Printer::homingFeedrate[Y_AXIS]), true, true );
-        }
-
-        if( abs( extruder[0].tempControl.currentTemperatureC - extruder[1].tempControl.currentTemperatureC ) > 10 )
-        {
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( PSTR( "startAlignExtruders(): error temperature difference too big" ) );
-            }
-
-            showError( (void*)ui_text_align_extruders, (void*)ui_text_temperature_wrong );
-            return;
-        }
-
-        // we are ready to align the extruders at the current x and y position with the current temperature
-        // the user can choose the x and y position as well as the to-be-used temperatures of the extruders
-        g_nAlignExtrudersStatus = 100;
-        BEEP_START_ALIGN_EXTRUDERS
-        return;
-    }
-    return;
-} // startAlignExtruders
-
-
-void alignExtruders( void )
-{
-	// directions:
-	// +x = to the right
-	// -x = to the left
-	// +y = heat bed moves to the front
-	// -y = heat bed moves to the back
-	// +z = heat bed moves down
-	// -z = heat bed moves up
-
-	if( g_abortAlignExtruders )
-	{
-		// the alignment has been aborted
-		g_abortAlignExtruders = 0;
-
-		// avoid to crash the extruder against the heat bed during a following move
-		moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
-
-		if( Printer::debugInfo() )
-		{
-			Com::printFLN( PSTR( "alignExtruders(): the alignment has been aborted" ) );
-		}
-
-		UI_STATUS_UPD( UI_TEXT_ALIGN_EXTRUDERS_ABORTED );
-		BEEP_ABORT_ALIGN_EXTRUDERS
-
-		g_nAlignExtrudersStatus  = 0;
-		return;
-	}
-
-	// show that we are active
-	previousMillisCmd = HAL::timeInMilliseconds();
-
-	if( g_nAlignExtrudersStatus )
-	{
-		if( g_nAlignExtrudersStatus != 123 &&
-			g_nAlignExtrudersStatus != 125 )
-		{
-			// there are a few cases where we do not want to change the current status text
-			UI_STATUS( UI_TEXT_ALIGN_EXTRUDERS );
-		}
-
-		if( g_retryZScan )
-		{
-			// we have to retry to scan the current position
-			g_nAlignExtrudersStatus = g_retryStatus;
-			g_retryZScan		 = 0;
-
-#if DEBUG_HEAT_BED_SCAN == 2
-			if( Printer::debugInfo() )
-			{
-				Com::printFLN( PSTR( "alignExtruders(): retry -> " ), g_retryStatus );
-			}
-#endif // DEBUG_HEAT_BED_SCAN == 2
-		}
-
-		switch( g_nAlignExtrudersStatus )
-		{
-			case 100:
-			{
-				// when we are here we assume that all preconditions for the alignment of the extruders are fulfilled already
-				g_lastScanTime			= HAL::timeInMilliseconds();
-				g_scanRetries			= HEAT_BED_SCAN_RETRIES;
-				g_retryStatus			= 105;
-				g_nAlignExtrudersStatus = 110;
-
-#if DEBUG_HEAT_BED_SCAN == 2
-				if( Printer::debugInfo() )
-				{
-					Com::printFLN( PSTR( "alignExtruders(): 100 -> 110" ) );
-				}
-#endif // DEBUG_HEAT_BED_SCAN == 2
-				break;
-			}
-			case 105:
-			{
-				// home the z-axis in order to find the starting point again
-				Printer::homeAxis( false, false, true );
-
-				g_scanRetries			--;
-				g_nAlignExtrudersStatus = 110;
-				g_lastScanTime			= HAL::timeInMilliseconds();
-
-#if DEBUG_HEAT_BED_SCAN == 2
-				if( Printer::debugInfo() )
-				{
-					Com::printFLN( PSTR( "alignExtruders(): 105 -> 110" ) );
-				}
-#endif // DEBUG_HEAT_BED_SCAN == 2
-				break;
-			}
-			case 110:
-			{
-				if( (HAL::timeInMilliseconds() - g_lastScanTime) < g_nScanIdleDelay )
-				{
-					// do not check too early
-					break;
-				}
-
-				// scan this point
-				if( testIdlePressure() )
-				{
-					// the current idle pressure is not plausible
-					g_abortAlignExtruders = 1;
-					break;
-				}
-
-				// we should consider that the idle presse can change slightly
-				g_nMinPressureContact = g_nCurrentIdlePressure - g_nScanContactPressureDelta;
-				g_nMaxPressureContact = g_nCurrentIdlePressure + g_nScanContactPressureDelta;
-				g_nMinPressureRetry	  = g_nCurrentIdlePressure - g_nScanRetryPressureDelta;
-				g_nMaxPressureRetry   = g_nCurrentIdlePressure + g_nScanRetryPressureDelta;
-				g_nMinPressureIdle	  = g_nCurrentIdlePressure - g_nScanIdlePressureDelta;
-				g_nMaxPressureIdle	  = g_nCurrentIdlePressure + g_nScanIdlePressureDelta;
-
-				g_nAlignExtrudersStatus = 120;
-
-#if DEBUG_HEAT_BED_SCAN == 2
-				if( Printer::debugInfo() )
-				{
-					Com::printFLN( PSTR( "alignExtruders(): 110 -> 120" ) );
-				}
-#endif // DEBUG_HEAT_BED_SCAN == 2
-				break;
-			}
-			case 120:
-			{
-				// move to the surface
-				moveZUpFast();
-
-				g_nAlignExtrudersStatus = 121;
-
-#if DEBUG_HEAT_BED_SCAN == 2
-				if( Printer::debugInfo() )
-				{
-					Com::printFLN( PSTR( "alignExtruders(): 120 -> 121" ) );
-				}
-#endif // DEBUG_HEAT_BED_SCAN == 2
-				break;
-			}
-			case 121:
-			{
-				// ensure that we do not remember any previous z-position at this moment
-				g_nLastZScanZPosition = 0;
-
-				// move a little bit away from the surface
-				moveZDownSlow();
-
-				g_nAlignExtrudersStatus = 122;
-
-#if DEBUG_HEAT_BED_SCAN == 2
-				if( Printer::debugInfo() )
-				{
-					Com::printFLN( PSTR( "alignExtruders(): 121 -> 122" ) );
-				}
-#endif // DEBUG_HEAT_BED_SCAN == 2
-				break;
-			}
-			case 122:
-			{
-				// move slowly to the surface
-                short nTempPressure = 0;
-				moveZUpSlow( &nTempPressure );
-                moveZDownSlow(8); // entspannen
-
-				g_nAlignExtrudersStatus = 123;
-
-#if DEBUG_HEAT_BED_SCAN == 2
-				if( Printer::debugInfo() )
-				{
-					Com::printFLN( PSTR( "alignExtruders(): 122 -> 123" ) );
-				}
-#endif // DEBUG_HEAT_BED_SCAN == 2
-				break;
-			}
-			case 123:
-			{
-				// the left extruder is at the surface now - show that the user must move also the right extruder to the surface in order to get them to the same z-height
-				UI_STATUS_UPD( UI_TEXT_ALIGN_EXTRUDERS );
-				BEEP_ALIGN_EXTRUDERS
-
-				g_nContinueButtonPressed = 0;
-				g_nAlignExtrudersStatus	 = 125;
-
-#if DEBUG_HEAT_BED_SCAN == 2
-				if( Printer::debugInfo() )
-				{
-					Com::printFLN( PSTR( "alignExtruders(): 123 -> 125" ) );
-				}
-#endif // DEBUG_HEAT_BED_SCAN == 2
-				break;
-			}
-			case 125:
-			{
-				// wait until the continue button has been pressed
-				if( !g_nContinueButtonPressed )
-				{
-					break;
-				}
-
-				// we are done
-				g_nAlignExtrudersStatus = 145;
-
-#if DEBUG_HEAT_BED_SCAN == 2
-				if( Printer::debugInfo() )
-				{
-					Com::printFLN( PSTR( "g_nAlignExtrudersStatus(): 125 -> 145" ) );
-				}
-#endif // DEBUG_HEAT_BED_SCAN == 2
-				break;
-			}
-			case 145:
-			{
-				// avoid to crash the extruder against the heat bed during the following moves
-				moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
-
-                Printer::homeAxis( true, true, true );
-
-				g_nAlignExtrudersStatus = 160;
-
-#if DEBUG_HEAT_BED_SCAN == 2
-				if( Printer::debugInfo() )
-				{
-					Com::printFLN( PSTR( "alignExtruders(): 145 -> 160" ) );
-				}
-#endif // DEBUG_HEAT_BED_SCAN == 2
-				break;
-			}
-			case 160:
-			{
-				if( Printer::debugInfo() )
-				{
-					Com::printFLN( PSTR( "alignExtruders(): the alignment has been completed" ) );
-				}
-				UI_STATUS_UPD( UI_TEXT_ALIGN_EXTRUDERS_DONE );
-				BEEP_STOP_ALIGN_EXTRUDERS
-
-				g_nAlignExtrudersStatus = 0;
-
-#if DEBUG_HEAT_BED_SCAN == 2
-				if( Printer::debugInfo() )
-				{
-					Com::printFLN( PSTR( "alignExtruders(): 160 -> 0" ) );
-				}
-#endif // DEBUG_HEAT_BED_SCAN == 2
-				break;
-			}
-		}
-	}
-	return;
-} // alignExtruders
-#endif // FEATURE_ALIGN_EXTRUDERS
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
 void startWorkPartScan( char nMode )
@@ -3775,7 +3691,7 @@ void scanWorkPart( void )
         BEEP_ABORT_WORK_PART_SCAN
 
         // restore the compensation values from the EEPROM
-        if( loadCompensationMatrix( 0 ) ) // --> Bei Adresse 0 wird in der Funktion ermittelt welche passt.
+        if( loadCompensationMatrix( 0 ) ) // --> Bei Adresse 0 wird in der Funktion ermittelt welche Adresse passt.
         {
             // there is no valid compensation matrix available
             initCompensationMatrix();
@@ -3866,7 +3782,7 @@ void scanWorkPart( void )
             {
                 // move to the first position
                 previousMillisCmd = HAL::timeInMilliseconds();
-                Printer::enableZStepper(); //nibbels: ???? vorher homing .. oder ist das hier falls z nicht gehomed und nicht aktiviert wird?
+                //Printer::enableZStepper(); //nibbels: ???? vorher homing .. oder ist das hier falls z nicht gehomed und nicht aktiviert wird? //08.02.2018 removed enable z stepper ->  it gets activated in case 10 for sure.
 
                 PrintLine::moveRelativeDistanceInSteps( g_nScanXStartSteps, 0, 0, 0, Printer::homingFeedrate[X_AXIS], true, true );
                 PrintLine::moveRelativeDistanceInSteps( 0, g_nScanYStartSteps, 0, 0, Printer::homingFeedrate[Y_AXIS], true, true );
@@ -3897,12 +3813,7 @@ void scanWorkPart( void )
                     break;
                 }
 
-                g_nMinPressureContact = g_nFirstIdlePressure - g_nScanContactPressureDelta;
-                g_nMaxPressureContact = g_nFirstIdlePressure + g_nScanContactPressureDelta;
-                g_nMinPressureRetry   = g_nFirstIdlePressure - g_nScanRetryPressureDelta;
-                g_nMaxPressureRetry   = g_nFirstIdlePressure + g_nScanRetryPressureDelta;
-                g_nMinPressureIdle    = g_nFirstIdlePressure - g_nScanIdlePressureDelta;
-                g_nMaxPressureIdle    = g_nFirstIdlePressure + g_nScanIdlePressureDelta;
+                adjustPressureLimits(g_nFirstIdlePressure);
 
                 nX               = g_nScanXStartSteps;
                 nY               = g_nScanYStartSteps;
@@ -4193,12 +4104,7 @@ void scanWorkPart( void )
                     break;
                 }
 
-                g_nMinPressureContact = g_nFirstIdlePressure - g_nScanContactPressureDelta;
-                g_nMaxPressureContact = g_nFirstIdlePressure + g_nScanContactPressureDelta;
-                g_nMinPressureRetry   = g_nFirstIdlePressure - g_nScanRetryPressureDelta;
-                g_nMaxPressureRetry   = g_nFirstIdlePressure + g_nScanRetryPressureDelta;
-                g_nMinPressureIdle    = g_nFirstIdlePressure - g_nScanIdlePressureDelta;
-                g_nMaxPressureIdle    = g_nFirstIdlePressure + g_nScanIdlePressureDelta;
+                adjustPressureLimits(g_nFirstIdlePressure);
 
                 g_nWorkPartScanStatus = 50;
 
@@ -4242,12 +4148,7 @@ void scanWorkPart( void )
                 }
 
                 // we should consider that the idle presse can change slightly
-                g_nMinPressureContact = g_nCurrentIdlePressure - g_nScanContactPressureDelta;
-                g_nMaxPressureContact = g_nCurrentIdlePressure + g_nScanContactPressureDelta;
-                g_nMinPressureRetry   = g_nCurrentIdlePressure - g_nScanRetryPressureDelta;
-                g_nMaxPressureRetry   = g_nCurrentIdlePressure + g_nScanRetryPressureDelta;
-                g_nMinPressureIdle    = g_nCurrentIdlePressure - g_nScanIdlePressureDelta;
-                g_nMaxPressureIdle    = g_nCurrentIdlePressure + g_nScanIdlePressureDelta;
+                adjustPressureLimits(g_nCurrentIdlePressure);
 
                 g_nWorkPartScanStatus = 51;
 
@@ -4759,21 +4660,12 @@ short readIdlePressure( short* pnIdlePressure )
 short testIdlePressure( void )
 {
     short   nTempPressure;
-    //short nTemp;
-
-
     if( readAveragePressure( &nTempPressure ) )
     {
-        // some error has occurred
-        if( Printer::debugErrors() )
-        {
-            Com::printFLN( PSTR( "testIdlePressure(): the pressure could not be determined" ) );
-        }
-        return -1;
+        return -1; // some error has occurred
     }
     g_nCurrentIdlePressure = nTempPressure;
     return 0;
-
 } // testIdlePressure
 
 
@@ -4815,12 +4707,9 @@ short readAveragePressure( short* pnAveragePressure )
         if( nTemp >= 5 )
         {
             // we are unable to receive stable values - do not hang here forever
-            if( Printer::debugErrors() )
-            {
-                Com::printF( PSTR( "readAveragePressure(): the pressure is not constant: " ), nMinPressure );
-                Com::printF( PSTR( " / " ), nTempPressure );
-                Com::printFLN( PSTR( " / " ), nMaxPressure );
-            }
+            Com::printF( PSTR( "readAveragePressure(): the pressure is not constant: " ), nMinPressure );
+            Com::printF( PSTR( " / " ), nTempPressure );
+            Com::printFLN( PSTR( " / " ), nMaxPressure );
             break;
         }
     
@@ -4829,10 +4718,7 @@ short readAveragePressure( short* pnAveragePressure )
         Commands::checkForPeriodicalActions( Processing );
     }
 
-    if( Printer::debugErrors() )
-    {
-        Com::printFLN( PSTR( "readAveragePressure(): the pressure is not plausible" ) );
-    }
+    Com::printFLN( PSTR( "readAveragePressure(): the pressure is not plausible" ) );
     g_abortZScan       = 1;
     *pnAveragePressure = 0;
     return -1;
@@ -4856,19 +4742,12 @@ void moveZDownFast()
     if( readAveragePressure( &nTempPressure ) )
     {
         // some error has occurred
-        if( Printer::debugErrors() )
-        {
-            Com::printFLN( PSTR( "moveZDownFast(): the pressure could not be determined" ) );
-        }
         g_abortZScan = 1;
         return;
     }
 
 #if DEBUG_HEAT_BED_SCAN || DEBUG_WORK_PART_SCAN
-    if( Printer::debugInfo() )
-    {
-        Com::printFLN( PSTR( "moveZDownFast(): " ), (int)nTempPressure );
-    }
+    if( Printer::debugInfo() ) Com::printFLN( PSTR( "moveZDownFast(): " ), (int)nTempPressure );
 #endif // DEBUG_HEAT_BED_SCAN || DEBUG_WORK_PART_SCAN
 
 } // moveZDownFast
@@ -4907,24 +4786,21 @@ void moveZDownSlow(uint8_t acuteness)
         }
         if( g_nZScanZPosition < -g_nScanZMaxCompensationSteps || g_nZScanZPosition > HEAT_BED_SCAN_Z_START_STEPS )
         {
-            Com::printFLN( PSTR( "moveZDownSlow(): the z position went out of range, retries = " ), g_scanRetries );
             if(g_nZScanZPosition < -g_nScanZMaxCompensationSteps) Com::printFLN( PSTR( "Z-Endstop Limit:" ), Z_ENDSTOP_DRIVE_OVER );
-            if(g_nZScanZPosition > HEAT_BED_SCAN_Z_START_STEPS) Com::printFLN( PSTR( "Height Limit:" ), Z_ENDSTOP_DRIVE_OVER );
             Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition*Printer::invAxisStepsPerMM[Z_AXIS] );
             error = true;
         }
         if( g_nLastZScanZPosition && abs(g_nZScanZPosition - g_nLastZScanZPosition) > g_nScanHeatBedDownFastSteps*2 )
         {
-            Com::printFLN( PSTR( "moveZDownSlow(): the z position delta went out of range, retries = " ), g_scanRetries );
             Com::printFLN( PSTR( "dZ_lastpos = " ), abs(g_nZScanZPosition - g_nLastZScanZPosition)*Printer::invAxisStepsPerMM[Z_AXIS] );
             error = true;
         }
         if( abs(startScanZPosition - g_nZScanZPosition) > g_nScanHeatBedDownFastSteps*2/acuteness ) {
-            Com::printFLN( PSTR( "moveZDownSlow(): back move delta went out of range, retries = " ), g_scanRetries );
             Com::printFLN( PSTR( "dZ_move = " ), g_nZScanZPosition*Printer::invAxisStepsPerMM[Z_AXIS] );
             error = true;
         }
         if(error){
+            Com::printFLN( PSTR( "moveZDownSlow: out of range " ), g_scanRetries );
             if( g_scanRetries ) g_retryZScan = 1;
             else                g_abortZScan = 1;
             break;
@@ -4965,9 +4841,9 @@ void moveZUpFast()
 
         if( g_nZScanZPosition < -g_nScanZMaxCompensationSteps || g_nZScanZPosition > HEAT_BED_SCAN_Z_START_STEPS )
         {
-            Com::printFLN( PSTR( "moveZUpFast(): the z position went out of range, retries = " ), (int)g_scanRetries );
+            Com::printFLN( PSTR( "moveZUpFast(): out of range " ), (int)g_scanRetries );
             if(g_nZScanZPosition < -g_nScanZMaxCompensationSteps) Com::printFLN( PSTR( "Z-Endstop Limit:" ), Z_ENDSTOP_DRIVE_OVER );
-            Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition );
+            Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition*Printer::invAxisStepsPerMM[Z_AXIS] );
 
             if( g_scanRetries ) g_retryZScan = 1;
             else                g_abortZScan = 1;
@@ -5011,7 +4887,7 @@ void moveZUpSlow( short* pnContactPressure, uint8_t acuteness )
         {
             Com::printFLN( PSTR( "moveZUpSlow(): the z position went out of range, retries = " ), g_scanRetries );
             if(g_nZScanZPosition < -g_nScanZMaxCompensationSteps) Com::printFLN( PSTR( "Z-Endstop Limit:" ), Z_ENDSTOP_DRIVE_OVER );
-            Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition );
+            Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition*Printer::invAxisStepsPerMM[Z_AXIS] );
 
             if( g_scanRetries ) g_retryZScan = 1;
             else                g_abortZScan = 1;
@@ -8343,8 +8219,8 @@ void processCommand( GCode* pCommand )
 #if FEATURE_EMERGENCY_STOP_ALL
             case 3076: // M3076 [S] [P] - configure the emergency stop digits
             {
-                long	nMin = g_nZEmergencyStopAllMin;
-                long	nMax = g_nZEmergencyStopAllMax;
+                long    nMin = g_nZEmergencyStopAllMin;
+                long    nMax = g_nZEmergencyStopAllMax;
 
                 if( pCommand->hasS() )
                 {
@@ -9370,7 +9246,7 @@ void processCommand( GCode* pCommand )
                             Com::printF( Com::tSemiColon,         Printer::queuePositionCurrentSteps[Z_AXIS] / Printer::axisStepsPerMM[Z_AXIS] );
                             Com::printF( PSTR( "; qTS;" ),    Printer::queuePositionTargetSteps[Z_AXIS] );
                             Com::printFLN( PSTR( "; qLS;" ),  Printer::queuePositionLastSteps[Z_AXIS] );
-							
+                            
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
                             Com::printF( PSTR( "; zTZ;" ), Printer::compensatedPositionTargetStepsZ );
                             Com::printFLN( PSTR( "; zCZ;" ), Printer::compensatedPositionCurrentStepsZ );
@@ -9389,37 +9265,37 @@ void processCommand( GCode* pCommand )
 
 
                             #if FEATURE_HEAT_BED_Z_COMPENSATION && FEATURE_WORK_PART_Z_COMPENSATION
-								if( !Printer::doHeatBedZCompensation && !Printer::doWorkPartZCompensation )
-								{
-									Com::printFLN( PSTR( "; return 1;" ) );
-								}
+                                if( !Printer::doHeatBedZCompensation && !Printer::doWorkPartZCompensation )
+                                {
+                                    Com::printFLN( PSTR( "; return 1;" ) );
+                                }
                             #elif FEATURE_HEAT_BED_Z_COMPENSATION
-								if( !Printer::doHeatBedZCompensation )
-								{
-									Com::printFLN( PSTR( "; return heatbedz;" ) );
-								}
+                                if( !Printer::doHeatBedZCompensation )
+                                {
+                                    Com::printFLN( PSTR( "; return heatbedz;" ) );
+                                }
                             #elif FEATURE_WORK_PART_Z_COMPENSATION
-								if( !Printer::doWorkPartZCompensation )
-								{
-									Com::printFLN( PSTR( "; return workpart;" ) );
-								}
+                                if( !Printer::doWorkPartZCompensation )
+                                {
+                                    Com::printFLN( PSTR( "; return workpart;" ) );
+                                }
                             #endif // FEATURE_HEAT_BED_Z_COMPENSATION && FEATURE_WORK_PART_Z_COMPENSATION
 
-								if( Printer::blockAll )
-								{
-									// do not perform any compensation in case the moving is blocked
-									Com::printFLN( PSTR( "; return block;" ) );
-								}
-								if( PrintLine::direct.isZMove() )
-								{
-									// do not perform any compensation in case the moving is blocked
-									Com::printFLN( PSTR( "; return directZ;" ), PrintLine::direct.stepsRemaining );
-								}
-								if( PrintLine::cur->isZMove() )
-								{
-									// do not perform any compensation in case the moving is blocked
-									Com::printFLN( PSTR( "; return curZ;" ) );
-								}
+                                if( Printer::blockAll )
+                                {
+                                    // do not perform any compensation in case the moving is blocked
+                                    Com::printFLN( PSTR( "; return block;" ) );
+                                }
+                                if( PrintLine::direct.isZMove() )
+                                {
+                                    // do not perform any compensation in case the moving is blocked
+                                    Com::printFLN( PSTR( "; return directZ;" ), PrintLine::direct.stepsRemaining );
+                                }
+                                if( PrintLine::cur->isZMove() )
+                                {
+                                    // do not perform any compensation in case the moving is blocked
+                                    Com::printFLN( PSTR( "; return curZ;" ) );
+                                }
 
                             break;
                         }
@@ -11334,27 +11210,27 @@ void nextPreviousXAction( int8_t increment )
         {
             long Temp = Printer::directPositionTargetSteps[X_AXIS];
             Temp += Printer::queuePositionCurrentSteps[X_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
-			Temp += (long)(increment * 1 * Printer::axisStepsPerMM[X_AXIS]);
-			if(Temp <= long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS])) Printer::setDestinationStepsFromMenu( 1 * increment, 0, 0 );
-			else showError( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
+            Temp += (long)(increment * 1 * Printer::axisStepsPerMM[X_AXIS]);
+            if(Temp <= long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS])) Printer::setDestinationStepsFromMenu( 1 * increment, 0, 0 );
+            else showError( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
             break;
         }
         case MOVE_MODE_10_MM:
         {
             long Temp = Printer::directPositionTargetSteps[X_AXIS];
             Temp += Printer::queuePositionCurrentSteps[X_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
-			Temp += (long)(increment * 10 * Printer::axisStepsPerMM[X_AXIS]);
-			if(Temp <= long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS])) Printer::setDestinationStepsFromMenu( 10 * increment, 0, 0 );
-			else showError( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
+            Temp += (long)(increment * 10 * Printer::axisStepsPerMM[X_AXIS]);
+            if(Temp <= long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS])) Printer::setDestinationStepsFromMenu( 10 * increment, 0, 0 );
+            else showError( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
             break;
         }
         case MOVE_MODE_50_MM:
         {
             long Temp = Printer::directPositionTargetSteps[X_AXIS];
             Temp += Printer::queuePositionCurrentSteps[X_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
-			Temp += (long)(increment * 50 * Printer::axisStepsPerMM[X_AXIS]);
-			if(Temp <= long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS])) Printer::setDestinationStepsFromMenu( 50 * increment, 0, 0 );
-			else showError( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
+            Temp += (long)(increment * 50 * Printer::axisStepsPerMM[X_AXIS]);
+            if(Temp <= long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS])) Printer::setDestinationStepsFromMenu( 50 * increment, 0, 0 );
+            else showError( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
             break;
         }
     }
@@ -11476,31 +11352,31 @@ void nextPreviousYAction( int8_t increment )
             noInts.unprotect(); //HAL::allowInterrupts();
             break;
         }
-		case MOVE_MODE_1_MM:
+        case MOVE_MODE_1_MM:
         {
             long Temp = Printer::directPositionTargetSteps[Y_AXIS];
             Temp += Printer::queuePositionCurrentSteps[Y_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
-			Temp += (long)(increment * 1 * Printer::axisStepsPerMM[Y_AXIS]);
-			if(Temp <= long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS])) Printer::setDestinationStepsFromMenu( 0, 1 * increment, 0 );
-			else showError( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
+            Temp += (long)(increment * 1 * Printer::axisStepsPerMM[Y_AXIS]);
+            if(Temp <= long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS])) Printer::setDestinationStepsFromMenu( 0, 1 * increment, 0 );
+            else showError( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
             break;
         }
         case MOVE_MODE_10_MM:
         {
             long Temp = Printer::directPositionTargetSteps[Y_AXIS];
             Temp += Printer::queuePositionCurrentSteps[Y_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
-			Temp += (long)(increment * 10 * Printer::axisStepsPerMM[Y_AXIS]);
-			if(Temp <= long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS])) Printer::setDestinationStepsFromMenu( 0, 10 * increment, 0 );
-			else showError( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
+            Temp += (long)(increment * 10 * Printer::axisStepsPerMM[Y_AXIS]);
+            if(Temp <= long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS])) Printer::setDestinationStepsFromMenu( 0, 10 * increment, 0 );
+            else showError( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
             break;
         }
         case MOVE_MODE_50_MM:
         {
             long Temp = Printer::directPositionTargetSteps[Y_AXIS];
             Temp += Printer::queuePositionCurrentSteps[Y_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
-			Temp += (long)(increment * 50 * Printer::axisStepsPerMM[Y_AXIS]);
-			if(Temp <= long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS])) Printer::setDestinationStepsFromMenu( 0, 50 * increment, 0 );
-			else showError( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
+            Temp += (long)(increment * 50 * Printer::axisStepsPerMM[Y_AXIS]);
+            if(Temp <= long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS])) Printer::setDestinationStepsFromMenu( 0, 50 * increment, 0 );
+            else showError( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
             break;
         }
     }
@@ -12081,31 +11957,31 @@ unsigned short readMotorStatus( unsigned char driver )
     //E1 = 5
 
 /*
-0	OTS	1	R/W	0	0: Normal operation 
+0    OTS    1    R/W    0    0: Normal operation 
 1: Device has entered overtemperature shutdown 
 Write a 0 to this bit to clear the fault. 
 Operation automatically resumes when the temperature has fallen to safe levels.
-1	AOCP	1	R/W	0	0: Normal operation 
+1    AOCP    1    R/W    0    0: Normal operation 
 1: Channel A overcurrent shutdown 
 Write a 0 to this bit to clear the fault and resume operation
-2	BOCP	1	R/W	0	0: Normal operation 
+2    BOCP    1    R/W    0    0: Normal operation 
 1: Channel B overcurrent shutdown 
 Write a 0 to this bit to clear the fault and resume operation
-3	APDF	1	R/W	0	0: Normal operation 
+3    APDF    1    R/W    0    0: Normal operation 
 1: Channel A predriver fault 
 Write a 0 to this bit to clear the fault and resume operation.
-4	BPDF	1	R/W	0	0: Normal operation 
+4    BPDF    1    R/W    0    0: Normal operation 
 1: Channel B predriver fault 
 Write a 0 to this bit to clear the fault and resume operation
-5	UVLO	1	R/W	0	0: Normal operation 
+5    UVLO    1    R/W    0    0: Normal operation 
 1: Undervoltage lockout 
 Write a 0 to this bit to clear the fault. The UVLO bit cannot be cleared in sleep mode. Operation automatically resumes when VM has increased above VUVLO
-6	STD	1	R	0	0: Normal operation 
+6    STD    1    R    0    0: Normal operation 
 1: Stall detected
-7	STDLAT	1	R/W	0	0: Normal operation 
+7    STDLAT    1    R/W    0    0: Normal operation 
 1: Latched stall detect 
 Write a 0 to this bit to clear the fault and resume operation
-11-8	Reserved	4	-	-	Reserved
+11-8    Reserved    4    -    -    Reserved
 */
 
 // configure the pins
@@ -12347,10 +12223,6 @@ void startFindZOrigin( void )
         if( !g_abortSearchZOrigin )
         {
             // abort the finding of the z-origin
-            if( Printer::debugInfo() )
-            {
-                Com::printFLN( PSTR( "startFindZOrigin(): the search has been cancelled" ) );
-            }
             g_abortSearchZOrigin = 1;
         }
     }
@@ -12360,7 +12232,7 @@ void startFindZOrigin( void )
         {
             if( Printer::debugErrors() )
             {
-                Com::printFLN( PSTR( "startFindZOrigin(): finding of the z-origin is not supported in this mode" ) );
+                Com::printFLN( PSTR( "startFindZOrigin(): z-origin not supported in printer mode" ) );
             }
 
             showError( (void*)ui_text_find_z_origin, (void*)ui_text_operation_denied );
@@ -12369,9 +12241,6 @@ void startFindZOrigin( void )
         // start the search
         g_nFindZOriginStatus = 1;
     }
-
-    return;
-
 } // startFindZOrigin
 
 
@@ -13896,16 +13765,16 @@ void doEmergencyStop( char reason )
 
 void addLong( char* string, long value, char digits )
 {
-    uint8_t		dig = 0;
-	uint8_t		neg = 0;
-	uint8_t		col = strlen( string );
-    char		buf[13]; // Assumes 8-bit chars plus zero byte.
-    char*		str = &buf[12];
+    uint8_t        dig = 0;
+    uint8_t        neg = 0;
+    uint8_t        col = strlen( string );
+    char        buf[13]; // Assumes 8-bit chars plus zero byte.
+    char*        str = &buf[12];
 
 
     if(value<0)
     {
-        neg	  = 1;
+        neg      = 1;
         value = -value;
         dig++;
     }
@@ -13924,19 +13793,19 @@ void addLong( char* string, long value, char digits )
         string[col++] = '-';
 
     if(digits<=11)
-	{
+    {
         while(dig<digits)
         {
             *--str = ' ';
             dig++;
         }
-	}
+    }
 
     while(*str)
     {
         string[col++] = *str;
         str++;
     }
-	string[col] = 0;
+    string[col] = 0;
 
 } // addLong

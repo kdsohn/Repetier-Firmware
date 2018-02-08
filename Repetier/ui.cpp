@@ -4533,7 +4533,7 @@ void UIDisplay::executeAction(int action)
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
                 if( Printer::ZEndstopUnknown )
                 {
-                    // in case the z-endstop is unknown, we home only in z-direction
+                    // in case the z-endstop is unknown, we home only in z-direction //Nibbels 08.02.2018 warum??
                     Printer::homeAxis(false,false,true);
                 }
                 else
