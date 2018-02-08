@@ -496,7 +496,7 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
 } // setTemperatureForExtruder
 
 void Extruder::setTemperatureForAllExtruders(float temperatureInCelsius, bool beep){
-    for(uint8_t extrNr = 0; extrNr < NUM_EXTRUDER; extrNr++) Extruder::setTemperatureForExtruder(0, extrNr, beep);
+    for(uint8_t extrNr = 0; extrNr < NUM_EXTRUDER; extrNr++) Extruder::setTemperatureForExtruder(temperatureInCelsius, extrNr, beep);
 }
 
 void Extruder::setHeatedBedTemperature(float temperatureInCelsius,bool beep)
