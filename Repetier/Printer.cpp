@@ -32,7 +32,6 @@ float           Printer::invAxisStepsPerMM[4] = {1.0f/XAXIS_STEPS_PER_MM,1.0f/YA
 float           Printer::maxFeedrate[4] = {MAX_FEEDRATE_X, MAX_FEEDRATE_Y, MAX_FEEDRATE_Z, DIRECT_FEEDRATE_E};               ///< Maximum allowed feedrate. //DIRECT_FEEDRATE_E added by nibbels, wird aber überschrieben.
 float           Printer::homingFeedrate[3] = {HOMING_FEEDRATE_X_PRINT,HOMING_FEEDRATE_Y_PRINT,HOMING_FEEDRATE_Z_PRINT};      ///< dass zumindest etwas sinnvolles drin steht, wird überschrieben.
 
-#ifdef RAMP_ACCELERATION
 float           Printer::maxAccelerationMMPerSquareSecond[4] = {MAX_ACCELERATION_UNITS_PER_SQ_SECOND_X,MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Y,MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Z}; ///< X, Y, Z and E max acceleration in mm/s^2 for printing moves or retracts
 float           Printer::maxTravelAccelerationMMPerSquareSecond[4] = {MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_X,MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_Y,MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_Z}; ///< X, Y, Z max acceleration in mm/s^2 for travel moves
 #if FEATURE_MILLING_MODE
@@ -43,7 +42,6 @@ short           Printer::max_milling_all_axis_acceleration = MILLER_ACCELERATION
 unsigned long   Printer::maxPrintAccelerationStepsPerSquareSecond[4];
 /** Acceleration in steps/s^2 in movement mode.*/
 unsigned long   Printer::maxTravelAccelerationStepsPerSquareSecond[4];
-#endif // RAMP_ACCELERATION
 
 uint8_t         Printer::relativeCoordinateMode = false;                ///< Determines absolute (false) or relative Coordinates (true).
 uint8_t         Printer::relativeExtruderCoordinateMode = false;        ///< Determines Absolute or Relative E Codes while in Absolute Coordinates mode. E is always relative in Relative Coordinates mode.
@@ -304,7 +302,6 @@ void Printer::updateDerivedParameter()
     {
         invAxisStepsPerMM[i] = 1.0f / axisStepsPerMM[i];
 
-#ifdef RAMP_ACCELERATION
 #if FEATURE_MILLING_MODE
         if( Printer::operatingMode == OPERATING_MODE_PRINT )
         {
@@ -323,7 +320,6 @@ void Printer::updateDerivedParameter()
             maxTravelAccelerationStepsPerSquareSecond[i] = MILLER_ACCELERATION * axisStepsPerMM[i];
         }
 #endif  // FEATURE_MILLING_MODE
-#endif // RAMP_ACCELERATION
     }
 
     // 07 11 2017 https://github.com/repetier/Repetier-Firmware/commit/e76875ec2d04bd0dbfdd9a157270ee03f4731d5f#diff-dbe11559ff43e09563388a4968911e40L1973

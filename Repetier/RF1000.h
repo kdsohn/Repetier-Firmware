@@ -845,9 +845,6 @@ own weight, so this is nearly never needed. */
 #define X_BACKLASH                          0
 #define Y_BACKLASH                          0
 
-/** \brief Comment this to disable ramp acceleration */
-#define RAMP_ACCELERATION                   1
-
 // ##########################################################################################
 // ##   configuration of the stepper drivers
 // ##########################################################################################

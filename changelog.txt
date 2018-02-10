@@ -1,6 +1,10 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.34.Mod (2018-02-10) 
+- RAMP_ACCELERATION is the set standard and cannot be switched off. Nobody would want that, thatwhy I removed the setting and some tiny pieces of alternative code.
+- saved 4 bytes of Ram per Printline.
+
 V RF.01.38.33.Mod (2018-02-08) 
 - AlignExtruders: Remove Z-Home over bed / unnecessary error handling.
 - replaced RF.cpp's tab chars with spaces
