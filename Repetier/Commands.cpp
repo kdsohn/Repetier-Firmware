@@ -1518,7 +1518,6 @@ void Commands::executeGCode(GCode *com)
             }
 #endif // BEEPER_TYPE>0
 
-#ifdef RAMP_ACCELERATION
             case 201:   // M201
             {
 #if FEATURE_MILLING_MODE
@@ -1551,7 +1550,6 @@ void Commands::executeGCode(GCode *com)
 #endif  // FEATURE_MILLING_MODE
                 break;
             }
-#endif // RAMP_ACCELERATION
 
             case 203:   // M203 - Temperature monitor
             {

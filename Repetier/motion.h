@@ -57,10 +57,10 @@ private:
     flag8_t             dir;                        ///< Direction of movement. 1 = X+, 2 = Y+, 4= Z+, values can be combined.
     int32_t             delta[4];                   ///< Steps we want to move.
     int32_t             error[4];                   ///< Error calculation for Bresenham algorithm
-    float               speedX;                     ///< Speed in x direction at fullInterval in mm/s
-    float               speedY;                     ///< Speed in y direction at fullInterval in mm/s
-    float               speedZ;                     ///< Speed in z direction at fullInterval in mm/s
-    float               speedE;                     ///< Speed in E direction at fullInterval in mm/s
+    float               speedX;                     ///< Speed in x direction at vMax in mm/s
+    float               speedY;                     ///< Speed in y direction at vMax in mm/s
+    float               speedZ;                     ///< Speed in z direction at vMax in mm/s
+    float               speedE;                     ///< Speed in E direction at vMax in mm/s
     float               fullSpeed;                  ///< Desired speed mm/s
     float               invFullSpeed;               ///< 1.0/fullSpeed for faster computation
     float               accelerationDistance2;      ///< Real 2.0*distance*acceleration mm²/s²
@@ -69,7 +69,7 @@ private:
     float               endSpeed;                   ///< Exit speed in mm/s
     float               minSpeed;
     float               distance;
-    ticks_t             fullInterval;               ///< interval at full speed in ticks/step.
+    //ticks_t             fullInterval;               ///< interval at full speed in ticks/step.
     uint32_t            accelSteps;                 ///< How much steps does it take, to reach the plateau.
     uint32_t            decelSteps;                 ///< How much steps does it take, to reach the end speed.
     uint32_t            accelerationPrim;           ///< Acceleration along primary axis

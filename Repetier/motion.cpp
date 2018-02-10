@@ -422,7 +422,7 @@ void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, 
         limitInterval = RMath::max(axisInterval[E_AXIS], limitInterval);
     } else axisInterval[E_AXIS] = 0;
 
-    fullInterval = limitInterval = (limitInterval > LIMIT_INTERVAL ? limitInterval : LIMIT_INTERVAL);   // This is our target speed
+    ticks_t fullIntervalb = limitInterval = (limitInterval > LIMIT_INTERVAL ? limitInterval : LIMIT_INTERVAL);   // This is our target speed
     if(limitInterval != limitInterval0) {
         // new time at full speed = limitInterval*p->stepsRemaining [ticks]
         timeForMove = (float)limitInterval * (float)stepsRemaining;                                     // for large z-distance this overflows with long computation
@@ -456,7 +456,6 @@ void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, 
     // long interval = axis_interval[primary_axis]; // time for every step in ticks with full speed
     // If acceleration is enabled, do some Bresenham calculations depending on which axis will lead it.
 
-#ifdef RAMP_ACCELERATION
     // slowest time to accelerate from v0 to limitInterval determines used acceleration
     // t = (v_end-v_start)/a
     float slowestAxisPlateauTimeRepro = 1e15; // repro to reduce division Unit: 1/s
@@ -488,7 +487,7 @@ void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, 
     if (startSpeed * startSpeed + accelerationDistance2 >= fullSpeed * fullSpeed)
         setNominalMove();
 
-    vMax = F_CPU / fullInterval;    // maximum steps per second, we can reach
+    vMax = F_CPU / fullIntervalb;    // maximum steps per second, we can reach
     // if(p->vMax>46000)            // gets overflow in N computation
     // p->vMax = 46000;
     // p->plateauN = (p->vMax*p->vMax/p->accelerationPrim)>>1;
@@ -524,14 +523,6 @@ void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, 
     updateTrapezoids();
     // how much steps on primary axis do we need to reach target feedrate
     // p->plateauSteps = (long) (((float)p->acceleration *0.5f / slowestAxisPlateauTimeRepro + p->vMin) *1.01f/slowestAxisPlateauTimeRepro);
-#else
- #if USE_ADVANCE
-  #ifdef ENABLE_QUADRATIC_ADVANCE
-    advanceRate = 0;    // No advance for constant speeds
-    advanceFull = 0;
-  #endif // ENABLE_QUADRATIC_ADVANCE
- #endif // USE_ADVANCE
-#endif // RAMP_ACCELERATION
 
     // Make result permanent
     if (pathOptimize) waitRelax = 70;
@@ -593,7 +584,7 @@ void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize,
         axisInterval[E_AXIS] = 0;
     }
 
-    fullInterval = limitInterval = (limitInterval > LIMIT_INTERVAL ? limitInterval : LIMIT_INTERVAL);   // This is our target speed
+    ticks_t fullIntervalb = limitInterval = (limitInterval > LIMIT_INTERVAL ? limitInterval : LIMIT_INTERVAL);   // This is our target speed
 
     // new time at full speed = limitInterval*p->stepsRemaining [ticks]
     timeForMove = (float)limitInterval * (float)stepsRemaining;                                     // for large z-distance this overflows with long computation
@@ -642,7 +633,6 @@ void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize,
     // long interval = axis_interval[primary_axis]; // time for every step in ticks with full speed
     // If acceleration is enabled, do some Bresenham calculations depending on which axis will lead it.
 
-#ifdef RAMP_ACCELERATION
     // slowest time to accelerate from v0 to limitInterval determines used acceleration
     // t = (v_end-v_start)/a
     float           slowestAxisPlateauTimeRepro = 1e15; // repro to reduce division Unit: 1/s
@@ -674,7 +664,7 @@ void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize,
     if (startSpeed * startSpeed + accelerationDistance2 >= fullSpeed * fullSpeed)
         setNominalMove();
 
-    vMax = F_CPU / fullInterval;    // maximum steps per second, we can reach
+    vMax = F_CPU / fullIntervalb;    // maximum steps per second, we can reach
     // if(p->vMax>46000)            // gets overflow in N computation
     // p->vMax = 46000;
     // p->plateauN = (p->vMax*p->vMax/p->accelerationPrim)>>1;
@@ -711,14 +701,6 @@ void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize,
     updateTrapezoids();
     // how much steps on primary axis do we need to reach target feedrate
     // p->plateauSteps = (long) (((float)p->acceleration *0.5f / slowestAxisPlateauTimeRepro + p->vMin) *1.01f/slowestAxisPlateauTimeRepro);
-#else
- #if USE_ADVANCE
-  #ifdef ENABLE_QUADRATIC_ADVANCE
-    advanceRate = 0;    // No advance for constant speeds
-    advanceFull = 0;
-  #endif // ENABLE_QUADRATIC_ADVANCE
- #endif // USE_ADVANCE
-#endif // RAMP_ACCELERATION
 
     // Make result permanent
     if (pathOptimize) waitRelax = 70;
@@ -2046,7 +2028,7 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
     v                 -> not manipulated active speed
     ***/
     unsigned int v;
-#if RAMP_ACCELERATION
+
     Printer::stepNumber += max_loops;
     Printer::timer      += (max_loops == 1 ?  Printer::interval       : 
                            (max_loops == 2 ? (Printer::interval << 1) : 
@@ -2091,10 +2073,6 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
  #endif // USE_ADVANCE
     }
     Printer::interval = HAL::CPUDivU2(v);
-#else // RAMP_ACCELERATION
-    v = move->vMax;
-    Printer::interval = move->fullInterval; // without RAMPS always use full speed
-#endif // RAMP_ACCELERATION
 
     //RETURN manipulated value:
     unsigned long interval = Printer::interval;
