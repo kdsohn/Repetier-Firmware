@@ -878,18 +878,18 @@ for some printers causing an early stall. */
 /** \brief Number of moves we can cache in advance.
 This number of moves can be cached in advance. If you wan't to cache more, increase this. Especially on
 many very short moves the cache may go empty. The minimum value is 5. */
-#define MOVE_CACHE_SIZE                     16
+#define MOVE_CACHE_SIZE                     18
 
 /** \brief Low filled cache size.
 If the cache contains less then MOVE_CACHE_LOW segments, the time per segment is limited to LOW_TICKS_PER_MOVE clock cycles.
 If a move would be shorter, the feedrate will be reduced. This should prevent buffer underflows. Set this to 0 if you
 don't care about empty buffers during print. */
-#define MOVE_CACHE_LOW                      10
+#define MOVE_CACHE_LOW                      14
 
 /** \brief Cycles per move, if move cache is low.
 This value must be high enough, that the buffer has time to fill up. The problem only occurs at the beginning of a print or
 if you are printing many very short segments at high speed. Higher delays here allow higher values in PATH_PLANNER_CHECK_SEGMENTS. */
-#define LOW_TICKS_PER_MOVE                  250000
+#define LOW_TICKS_PER_MOVE                  300000
 
 
 // ##########################################################################################
@@ -1054,7 +1054,7 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_SLOW_STEP_DELAY_MS        100                                                                     // [ms]
 #define HEAT_BED_SCAN_IDLE_DELAY_MS             250                                                                     // [ms]
 
-#define HEAT_BED_SCAN_RETRIES                   3                                                                       // [-]
+#define HEAT_BED_SCAN_RETRIES                   5                                                                       // [-]
 #define HEAT_BED_SCAN_PRESSURE_READS            15                                                                      // [-]
 #define HEAT_BED_SCAN_PRESSURE_TOLERANCE        15                                                                      // [digits]
 #define HEAT_BED_SCAN_PRESSURE_READ_DELAY_MS    15                                                                      // [ms]
