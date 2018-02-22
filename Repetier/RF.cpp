@@ -462,7 +462,7 @@ void startHeatBedScan( void )
     }
     else
     {
-        if( PrintLine::linesCount )
+        if( Printer::isPrinting() )
         {
             // there is some printing in progress at the moment - do not start the heat bed scan in this case
             if( Printer::debugErrors() )
@@ -558,6 +558,9 @@ void scanHeatBed( void )
         g_nLastZScanZPosition = 0;
         g_retryZScan          = 0;
         g_retryStatus         = 0;
+        
+        g_uStartOfIdle = HAL::timeInMilliseconds();
+        
         return;
     }
 
@@ -1990,7 +1993,7 @@ void startAlignExtruders( void )
     }
     else
     {
-        if( PrintLine::linesCount )
+        if( Printer::isPrinting() )
         {
             // there is some printing in progress at the moment - do not start to align the extruders in this case
             if( Printer::debugErrors() )
@@ -2062,6 +2065,8 @@ void alignExtruders( void )
         BEEP_ABORT_ALIGN_EXTRUDERS
 
         g_nAlignExtrudersStatus  = 0;
+        g_uStartOfIdle = HAL::timeInMilliseconds();
+
         return;
     }
 
@@ -2254,7 +2259,7 @@ void startZOScan( bool automatrixleveling )
     }
     else
     {
-        if( PrintLine::linesCount )
+        if( Printer::isPrinting() )
         {
             // there is some printing in progress at the moment - do not start the heat bed scan in this case
             if( Printer::debugErrors() )
@@ -3739,6 +3744,8 @@ void findZOrigin( void )
 
         UI_STATUS_UPD( UI_TEXT_FIND_Z_ORIGIN_ABORTED );
         g_nFindZOriginStatus = 0;
+        
+        g_uStartOfIdle = HAL::timeInMilliseconds();
         return;
     }
 
@@ -3946,7 +3953,7 @@ void startWorkPartScan( char nMode )
     }
     else
     {
-        if( PrintLine::linesCount )
+        if( Printer::isPrinting() )
         {
             // there is some printing in progress at the moment - do not start the heat bed scan in this case
             if( Printer::debugErrors() )
@@ -4045,6 +4052,8 @@ void scanWorkPart( void )
         g_nWorkPartScanStatus = 0;
         g_nLastZScanZPosition = 0;
         g_retryZScan          = 0;
+        
+        g_uStartOfIdle = HAL::timeInMilliseconds();
         return;
     }
 
@@ -6593,12 +6602,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                         (nPressure > g_nEmergencyPauseDigitsMax) )
                     {
                         // the pressure is outside the allowed range, we must perform the emergency pause
-                        if( Printer::debugErrors() )
-                        {
-                            Com::printF( PSTR( "emergency pause: " ), nPressure );
-                            Com::printFLN( PSTR( " / " ), PrintLine::linesCount );
-                        }
-
+                        Com::printF( PSTR( "emergency pause: " ), nPressure );
                         showWarning( (void*)ui_text_emergency_pause );
                         pausePrint();
                         pausePrint();
@@ -8937,12 +8941,7 @@ void processCommand( GCode* pCommand )
                     {
                         // allow to overwrite the current string again
                         uid.unlock();
-                        if( Printer::debugInfo() )
-                        {
-                            Com::printFLN( PSTR( "M3117: unlock" ) );
-                        }
-
-                        g_uStartOfIdle = HAL::timeInMilliseconds();
+                        Com::printFLN( PSTR( "M3117: unlock" ) );
                     }
                 }
                 break;

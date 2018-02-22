@@ -1,6 +1,11 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.35.Mod (2018-02-10) 
+- https://github.com/foosel/OctoPrint/issues/2367#issuecomment-357554341 changed upstream command "disconnect" to "stop" when canceling a print. The new octoprint will support this.
+- added octostep as an 8x double/quad-stepping. I saw that moving Z fast still caused lags.
+- decreased MAX_FEEDRATE_X _Y _Z in RF1000.h and RF2000.h to avoid way to fast speeds.
+
 V RF.01.38.34.Mod (2018-02-10) 
 - RAMP_ACCELERATION is the set standard and cannot be switched off. Nobody would want that, thatwhy I removed the setting and some tiny pieces of alternative code.
 - saved 4 bytes of Ram per Printline.

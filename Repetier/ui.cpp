@@ -1405,6 +1405,7 @@ void UIDisplay::parse(char *txt,bool ram)
                         case 1: addStringP( PSTR(" Sgl") ); break; //Single Stepping aktiv
                         case 2: addStringP( PSTR(" Dbl") ); break; //Double Stepping aktiv
                         case 4: addStringP( PSTR(" Qud") ); break; //Quad Stepping aktiv
+                        case 8: addStringP( PSTR(" Oct") ); break; //Octo Stepping aktiv
                     }
                     break;
                 }

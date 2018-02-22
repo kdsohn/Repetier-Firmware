@@ -2274,7 +2274,7 @@ void Printer::stopPrint() //function for aborting USB and SD-Prints
     if( Printer::isPrinting() && !Printer::isMenuMode(MENU_MODE_SD_PRINTING) ) //prüfung auf !sdmode sollte hier eigenlicht nicht mehr nötig sein, aber ..
     {
         Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetierserver to stop.
-        Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
+        Com::printFLN( PSTR( "// action:cancel" ) ); //tell octoprint to cancel print. > 1.3.7  https://github.com/foosel/OctoPrint/issues/2367#issuecomment-357554341
         Com::printFLN( PSTR("USB print stopped.") );
     }else{
         Com::printFLN( PSTR("SD print stopped.") );

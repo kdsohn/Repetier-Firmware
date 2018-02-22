@@ -812,9 +812,9 @@ This defines the full power duration before returning to set value. Time is in m
 /** \brief Maximum feedrate, the system allows. Higher feedrates are reduced to these values.
     The axis order in all axis related arrays is X, Y, Z
      Overridden if EEPROM activated. */
-#define MAX_FEEDRATE_X                      500
-#define MAX_FEEDRATE_Y                      500
-#define MAX_FEEDRATE_Z                      50
+#define MAX_FEEDRATE_X                      200
+#define MAX_FEEDRATE_Y                      200
+#define MAX_FEEDRATE_Z                      12
 
 /** \brief Home position speed in mm/s. Overridden if EEPROM activated. */
 #define HOMING_FEEDRATE_X_PRINT             80
