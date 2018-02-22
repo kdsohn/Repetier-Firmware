@@ -2033,8 +2033,9 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
     Printer::timer      += (max_loops == 1 ?  Printer::interval       : 
                            (max_loops == 2 ? (Printer::interval << 1) : 
                            (max_loops == 4 ? (Printer::interval << 2) : 
+                           (max_loops == 8 ? (Printer::interval << 3) : 
                                              (Printer::interval * max_loops)
-                            )));
+                            ))));
 
     //If acceleration is enabled on this move and we are in the acceleration segment, calculate the current interval
     if (move->moveAccelerating())   // we are accelerating
@@ -2081,8 +2082,13 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
     //we know that next time will be a double or quad step so we let pass twice the time and set the stepsPerTimerCall accordingly.
     if(v > Printer::stepsDoublerFrequency) {
         if(v > Printer::stepsDoublerFrequency << 1) {
-            Printer::stepsPerTimerCall = 4;
-            interval <<= 2; //speed div 4
+            if(v > Printer::stepsDoublerFrequency << 2) {
+                Printer::stepsPerTimerCall = 8;
+                interval <<= 3; //speed div 8
+            } else {
+                Printer::stepsPerTimerCall = 4;
+                interval <<= 2; //speed div 4
+            }
         } else {
             Printer::stepsPerTimerCall = 2;
             interval <<= 1; //speed div 2

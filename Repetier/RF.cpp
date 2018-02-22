@@ -462,7 +462,7 @@ void startHeatBedScan( void )
     }
     else
     {
-        if( PrintLine::linesCount )
+        if( Printer::isPrinting() )
         {
             // there is some printing in progress at the moment - do not start the heat bed scan in this case
             if( Printer::debugErrors() )
@@ -558,6 +558,9 @@ void scanHeatBed( void )
         g_nLastZScanZPosition = 0;
         g_retryZScan          = 0;
         g_retryStatus         = 0;
+        
+        g_uStartOfIdle = HAL::timeInMilliseconds();
+        
         return;
     }
 
@@ -1990,7 +1993,7 @@ void startAlignExtruders( void )
     }
     else
     {
-        if( PrintLine::linesCount )
+        if( Printer::isPrinting() )
         {
             // there is some printing in progress at the moment - do not start to align the extruders in this case
             if( Printer::debugErrors() )
@@ -2062,6 +2065,8 @@ void alignExtruders( void )
         BEEP_ABORT_ALIGN_EXTRUDERS
 
         g_nAlignExtrudersStatus  = 0;
+        g_uStartOfIdle = HAL::timeInMilliseconds();
+
         return;
     }
 
@@ -2254,7 +2259,7 @@ void startZOScan( bool automatrixleveling )
     }
     else
     {
-        if( PrintLine::linesCount )
+        if( Printer::isPrinting() )
         {
             // there is some printing in progress at the moment - do not start the heat bed scan in this case
             if( Printer::debugErrors() )
@@ -2515,10 +2520,12 @@ void searchZOScan( void )
                 GCode::keepAlive( Processing );
                 moveZDownFast();
                 g_nZOSScanStatus = 9;
+                Com::printFLN( PSTR( "7" ) );
                 break;
             }
             case 9:
             {
+                Com::printFLN( PSTR( "9" ) );
 #if DEBUG_HEAT_BED_SCAN == 2
                 Com::printFLN( PSTR( "Idle Pressure" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
@@ -2553,10 +2560,12 @@ void searchZOScan( void )
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 GCode::keepAlive( Processing );
                 g_nZOSScanStatus = 10;
+                Com::printFLN( PSTR( "9e" ) );
                 break;
             }
             case 10:
             {
+                Com::printFLN( PSTR( "10" ) );
 #if DEBUG_HEAT_BED_SCAN == 2
                 Com::printFLN( PSTR( "Approaching HeatBed" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
@@ -2572,6 +2581,7 @@ void searchZOScan( void )
                     if(g_scanRetries > 0) g_abortZScan = 0; //funktion soll wenn retrys übrig sind nie abbrechen, das g_abortZScan kommt aus readAveragePressure() -> hat einfluss auf HBS-Abort!!
                     g_retryZScan = 1;
                 }
+                Com::printFLN( PSTR( "10a" ) );
 
                 long didZsteps = abs(g_nZScanZPosition - oldZsteps);
                 Com::printFLN( PSTR( "FastUp:" ), didZsteps );
@@ -2580,6 +2590,7 @@ void searchZOScan( void )
                 long revertZsteps = (didZsteps > 2*abs(g_nScanHeatBedUpFastSteps) ? 2*abs(g_nScanHeatBedUpFastSteps) : didZsteps );
                 Com::printFLN( PSTR( "RevertDown:" ), revertZsteps );
                 moveZ( revertZsteps ); // ++
+                Com::printFLN( PSTR( "10b" ) );
 
                 HAL::delayMilliseconds( g_nScanSlowStepDelay );
                 //rescan force and look if you reverted the contact pressure to the old state:
@@ -2588,6 +2599,7 @@ void searchZOScan( void )
                     if(g_scanRetries > 0) g_abortZScan = 0; //funktion soll wenn retrys übrig sind nie abbrechen, das g_abortZScan kommt aus readAveragePressure() -> hat einfluss auf HBS-Abort!!
                     g_retryZScan = 1;
                 } 
+                Com::printFLN( PSTR( "10c" ) );
                 //check if the old pressure state is reached again, retry if not. If not you measured some melted plastic or your DMS is driving away.
                 if(abs(nTempPressureUp - nTempPressure) < SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA){
                     if(g_scanRetries > 0) g_abortZScan = 0; //funktion soll wenn retrys übrig sind nie abbrechen, das g_abortZScan kommt aus readAveragePressure() -> hat einfluss auf HBS-Abort!!
@@ -2596,6 +2608,7 @@ void searchZOScan( void )
                 Com::printF( PSTR( "RevertPdelta:" ), abs(nTempPressureUp - nTempPressure) );
                 Com::printFLN( PSTR( "/" ), SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA );
 
+                Com::printFLN( PSTR( "10d" ) );
                 if(g_scanRetries > 0 && g_retryZScan){
                     g_retryZScan = 0;
                     g_scanRetries--;
@@ -2604,6 +2617,7 @@ void searchZOScan( void )
                     g_nZOSScanStatus = 7;
                     break;
                 }
+                Com::printFLN( PSTR( "10e" ) );
                
                 // check for error
                 if(g_abortZScan) {
@@ -2615,10 +2629,12 @@ void searchZOScan( void )
 
                 GCode::keepAlive( Processing );
                 g_nZOSScanStatus = 20;
+                Com::printFLN( PSTR( "10f" ) );
                 break;
             }
             case 20:
             {   
+                Com::printFLN( PSTR( "20" ) );
 #if DEBUG_HEAT_BED_SCAN == 2
                 Com::printFLN( PSTR( "Testing Surface " ));
 #endif // DEBUG_HEAT_BED_SCAN
@@ -2626,6 +2642,7 @@ void searchZOScan( void )
                 uint8_t acuteness = 2;
                 // we have roughly found the surface, now we perform the precise slow scan SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS times  
                 for(int i=0; i<SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS; ++i) {
+                      Com::printFLN( PSTR( "10." ), i );
 #if DEBUG_HEAT_BED_SCAN == 2
                       Com::printF( PSTR( " " ), (i+1) );
                       Com::printFLN( PSTR( "x" ) );
@@ -2681,8 +2698,8 @@ void searchZOScan( void )
                 }
                 if(prebreak) break;
                 g_nZOSScanStatus = 50;
+                Com::printFLN( PSTR( "10e" ) );
                 break;
-                
             }
             case 50:
             {    
@@ -3727,6 +3744,8 @@ void findZOrigin( void )
 
         UI_STATUS_UPD( UI_TEXT_FIND_Z_ORIGIN_ABORTED );
         g_nFindZOriginStatus = 0;
+        
+        g_uStartOfIdle = HAL::timeInMilliseconds();
         return;
     }
 
@@ -3934,7 +3953,7 @@ void startWorkPartScan( char nMode )
     }
     else
     {
-        if( PrintLine::linesCount )
+        if( Printer::isPrinting() )
         {
             // there is some printing in progress at the moment - do not start the heat bed scan in this case
             if( Printer::debugErrors() )
@@ -4033,6 +4052,8 @@ void scanWorkPart( void )
         g_nWorkPartScanStatus = 0;
         g_nLastZScanZPosition = 0;
         g_retryZScan          = 0;
+        
+        g_uStartOfIdle = HAL::timeInMilliseconds();
         return;
     }
 
@@ -6581,12 +6602,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                         (nPressure > g_nEmergencyPauseDigitsMax) )
                     {
                         // the pressure is outside the allowed range, we must perform the emergency pause
-                        if( Printer::debugErrors() )
-                        {
-                            Com::printF( PSTR( "emergency pause: " ), nPressure );
-                            Com::printFLN( PSTR( " / " ), PrintLine::linesCount );
-                        }
-
+                        Com::printF( PSTR( "emergency pause: " ), nPressure );
                         showWarning( (void*)ui_text_emergency_pause );
                         pausePrint();
                         pausePrint();
@@ -8925,12 +8941,7 @@ void processCommand( GCode* pCommand )
                     {
                         // allow to overwrite the current string again
                         uid.unlock();
-                        if( Printer::debugInfo() )
-                        {
-                            Com::printFLN( PSTR( "M3117: unlock" ) );
-                        }
-
-                        g_uStartOfIdle = HAL::timeInMilliseconds();
+                        Com::printFLN( PSTR( "M3117: unlock" ) );
                     }
                 }
                 break;
