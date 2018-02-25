@@ -6717,7 +6717,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
             // disable the fan
-            Commands::setFanSpeed(0,false);
+            Commands::setFanSpeed(0);
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #endif // FEATURE_OUTPUT_FINISHED_OBJECT
@@ -6822,7 +6822,7 @@ void outputObject( bool showerrors )
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     // disable the fan
-    Commands::setFanSpeed(0,false);
+    Commands::setFanSpeed(0);
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #if FEATURE_MILLING_MODE

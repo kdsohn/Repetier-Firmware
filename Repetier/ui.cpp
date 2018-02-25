@@ -3288,7 +3288,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
         case UI_ACTION_FANSPEED:
         {
-            Commands::setFanSpeed(Printer::getFanSpeed()+increment,false);
+            Commands::setFanSpeed(Printer::getFanSpeed()+increment);
             break;
         }
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
@@ -5183,27 +5183,27 @@ void UIDisplay::executeAction(int action)
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
             case UI_ACTION_FAN_OFF:
             {
-                Commands::setFanSpeed(0,false);
+                Commands::setFanSpeed(0);
                 break;
             }
             case UI_ACTION_FAN_25:
             {
-                Commands::setFanSpeed(64,false);
+                Commands::setFanSpeed(64);
                 break;
             }
             case UI_ACTION_FAN_50:
             {
-                Commands::setFanSpeed(128,false);
+                Commands::setFanSpeed(128);
                 break;
             }
             case UI_ACTION_FAN_75:
             {
-                Commands::setFanSpeed(192,false);
+                Commands::setFanSpeed(192);
                 break;
             }
             case UI_ACTION_FAN_FULL:
             {
-                Commands::setFanSpeed(255,false);
+                Commands::setFanSpeed(255);
                 break;
             }
             case UI_ACTION_FAN_MODE:

@@ -316,14 +316,13 @@ void Commands::changeFlowrateMultiply(float factorpercent)
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
 uint8_t fanKickstart = 0;
-void Commands::setFanSpeed(int speed,bool wait)
+void Commands::setFanSpeed(int speed)
 {
     uint8_t trimmedSpeed = TRIM_FAN_PWM(speed);
     if(pwm_pos[NUM_EXTRUDER+2] == trimmedSpeed)
         return;
     
     Printer::setMenuMode(MENU_MODE_FAN_RUNNING,trimmedSpeed!=0);
-    if(wait) Commands::waitUntilEndOfAllMoves(); // use only if needed this to change the speed exactly at that point, but it may cause blobs if you do!
     Com::printFLN(Com::tFanspeed,(trimmedSpeed == 1) ? 2 : trimmedSpeed ); //bei 1 zeigt repetierserver / repetierhost 0% an, was nicht stimmt. Das ist etwas Pfusch, aber nun funktionierts.
     if(fanKickstart == 0 && trimmedSpeed > pwm_pos[NUM_EXTRUDER+2] && trimmedSpeed < 85) {
         if(pwm_pos[NUM_EXTRUDER+2]) fanKickstart = FAN_KICKSTART_TIME / 100;
@@ -1278,7 +1277,7 @@ void Commands::executeGCode(GCode *com)
             {
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
-                    setFanSpeed(com->hasS()?com->S:255,com->hasP());
+                    setFanSpeed(com->hasS()?com->S:255);
                 }
                 break;
             }
@@ -1286,7 +1285,7 @@ void Commands::executeGCode(GCode *com)
             {
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
-                    setFanSpeed(0,com->hasP());
+                    setFanSpeed(0);
                 }
                 break;
             }

@@ -390,7 +390,7 @@ void Printer::kill(uint8_t only_steppers)
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     // disable the fan
-    Commands::setFanSpeed(0,false);
+    Commands::setFanSpeed(0);
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
     disableAllSteppersNow();
