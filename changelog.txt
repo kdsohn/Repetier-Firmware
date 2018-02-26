@@ -5,6 +5,7 @@ V RF.01.38.37.Mod (2018-02-26)
 - dont allow any fan speed change to empty move cache. if this is needed fan speed has to be set in queue (TODO), not empty it.
 - some commenting because i checked some things
 - possible fix for easygo25's tilt-bug at the end of an SD-Print. http://www.rf1000.de/viewtopic.php?f=7&t=2199
+- removed home-only-z when commanding home-all by menu and unknown z-endstops. homing should always do what the user demands and G28 as gcode does not have this limit. It seemd totally unnecessary and counterintuitive.
 
 V RF.01.38.36.Mod (2018-02-22) 
 - via menu the homing feedrate and maximum feedrate can now be adjusted better: 

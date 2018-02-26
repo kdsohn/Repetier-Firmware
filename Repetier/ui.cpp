@@ -4518,11 +4518,7 @@ void UIDisplay::executeAction(int action)
                 if( PrintLine::linesCount )
                 {
                     // do not allow homing via the menu while we are printing
-                    if( Printer::debugErrors() )
-                    {
-                        Com::printFLN( Com::tPrintingIsInProcessError );
-                    }
-
+                    Com::printFLN( Com::tPrintingIsInProcessError );
                     showError( (void*)ui_text_home, (void*)ui_text_operation_denied );
                     break;
                 }
@@ -4530,21 +4526,7 @@ void UIDisplay::executeAction(int action)
                 {
                     break;
                 }
-
-#if FEATURE_CONFIGURABLE_Z_ENDSTOPS
-                if( Printer::ZEndstopUnknown )
-                {
-                    // in case the z-endstop is unknown, we home only in z-direction //Nibbels 08.02.2018 warum??
-                    Printer::homeAxis(false,false,true);
-                }
-                else
-                {
-                    Printer::homeAxis(true,true,true);
-                }
-#else
                 Printer::homeAxis(true,true,true);
-#endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
                 Commands::printCurrentPosition();
                 break;
             }
