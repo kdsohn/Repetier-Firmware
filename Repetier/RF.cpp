@@ -218,10 +218,6 @@ bool            g_nDigitZCompensationDigits_active = true;
 unsigned long   uLastZPressureTime_IgnoreUntil = 0;
 #endif // FEATURE_EMERGENCY_STOP_ALL
 
-#if FEATURE_STARTLINE
-volatile unsigned char g_nDrawStartLineStatus = 0;
-#endif // FEATURE_STARTLINE
-
 #if FEATURE_FIND_Z_ORIGIN
 volatile unsigned char g_nFindZOriginStatus = 0;
 long            g_nZOriginPosition[3]       = { 0, 0, 0 };
@@ -748,7 +744,7 @@ void scanHeatBed( void )
 
                 // start at the home position
                 Printer::homeAxis( true, true, true );
-                Commands::waitUntilEndOfAllMoves();
+                Commands::waitUntilEndOfAllMoves(); //scanHeatBed
 
                 // move a bit away from the heat bed in order to achieve better measurements in case of hardware configurations where the extruder is very close to the heat bed after the z-homing
                 moveZ( HEAT_BED_SCAN_Z_START_STEPS );
@@ -2435,7 +2431,6 @@ void searchZOScan( void )
 
                 // start at the home position
                 Printer::homeAxis( true, true, true ); //home z resets ZCMP
-                Commands::waitUntilEndOfAllMoves();
                 g_nZOSScanStatus = 3;
                 break;
             }
@@ -3166,7 +3161,7 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
     //drive up the Bed 100mm -> if to low then filament will pile up to fast on the z-plattform
     Printer::moveToReal( IGNORE_COORDINATE, IGNORE_COORDINATE, 100 , IGNORE_COORDINATE, Printer::homingFeedrate[Z_AXIS]);
     Printer::moveToReal( 0, 0, IGNORE_COORDINATE , IGNORE_COORDINATE, Printer::homingFeedrate[Z_AXIS]);
-    Commands::waitUntilEndOfAllMoves();
+    Commands::waitUntilEndOfAllMoves(); //startViscosityTest
 
     //wait and test idle pressure
     HAL::delayMilliseconds( HEAT_BED_SCAN_DELAY );
@@ -6697,30 +6692,54 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                 }
 #endif // FEATURE_MILLING_MODE
 
+#if FEATURE_PAUSE_PRINTING
+                if( g_pauseStatus != PAUSE_STATUS_NONE )
+                {
+                    // the printing is paused at the moment
+                    InterruptProtectedBlock noInts;
+
+                    g_uPauseTime  = 0;
+                    g_pauseStatus = PAUSE_STATUS_NONE;
+                    g_pauseMode   = PAUSE_MODE_NONE;
+
+                    g_nContinueSteps[X_AXIS] = 0;
+                    g_nContinueSteps[Y_AXIS] = 0;
+                    g_nContinueSteps[Z_AXIS] = 0;
+                    g_nContinueSteps[E_AXIS] = 0;
+
+                    noInts.unprotect();
+                }
+                Printer::setMenuMode(MENU_MODE_PAUSED,false);
+#endif // FEATURE_PAUSE_PRINTING
+
+                //unaufgeräumtes beenden: Es wird sowieso der Stepper deaktiviert.
+                g_nZOSScanStatus = 0;
+                g_nHeatBedScanStatus = 0;
+                //g_nAlignExtrudersStatus = 0;
+
+#if FEATURE_FIND_Z_ORIGIN
+                g_nFindZOriginStatus = 0;
+#endif // FEATURE_FIND_Z_ORIGIN
+#if FEATURE_MILLING_MODE && FEATURE_WORK_PART_Z_COMPENSATION
+                g_nWorkPartScanStatus = 0;
+#endif // FEATURE_MILLING_MODE && FEATURE_WORK_PART_Z_COMPENSATION
+
+                Com::printFLN(PSTR("Stop complete"));
+                Printer::setPrinting(false);
+
+                BEEP_STOP_PRINTING
+
                 g_uBlockCommands = HAL::timeInMilliseconds();
             }
         }
     }
-
-    if( g_uBlockCommands > 1 ) //=1 scheint zu blocken, dann muss StopTIme aktiv sein und hier drüber erst eine Uhrzeit reinsetzen.
+    if( g_uBlockCommands > 1 ) //=1 scheint zu blocken, dann muss g_uStopTime aktiv sein und hier drüber erst eine Uhrzeit reinsetzen.
     {
         if( (uTime - g_uBlockCommands) > COMMAND_BLOCK_DELAY ) //jede 1 sekunden wäre standard nach config
         {
             g_uBlockCommands = 0;
-#if FEATURE_OUTPUT_FINISHED_OBJECT
             // output the object
-            outputObject(false);
-#else
-            // disable all steppers
-            g_uStartOfIdle = HAL::timeInMilliseconds();
-            Printer::disableAllSteppersNow();
-
-#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
-            // disable the fan
-            Commands::setFanSpeed(0);
-#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
-
-#endif // FEATURE_OUTPUT_FINISHED_OBJECT
+            outputObject(false); //in g_uBlockCommands > 1
         }
     }
     
@@ -6798,7 +6817,6 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 
 } // loopRF
 
-#if FEATURE_OUTPUT_FINISHED_OBJECT
 void outputObject( bool showerrors )
 {
     char    unlock = !uid.locked;
@@ -6837,7 +6855,7 @@ void outputObject( bool showerrors )
 #else
     GCode::executeFString(Com::tOutputObjectPrint);
 #endif // FEATURE_MILLING_MODE
-    Commands::waitUntilEndOfAllMoves();
+    Commands::waitUntilEndOfAllMoves(); //output object
 
     // disable all steppers
     Printer::disableAllSteppersNow();
@@ -6850,8 +6868,6 @@ void outputObject( bool showerrors )
     g_uStartOfIdle = HAL::timeInMilliseconds();
 
 } // outputObject
-#endif // FEATURE_OUTPUT_FINISHED_OBJECT
-
 
 #if FEATURE_PARK
 void parkPrinter( void )
@@ -8469,7 +8485,7 @@ void processCommand( GCode* pCommand )
                 //tell menu that we are now in pause mode
                 Printer::setMenuMode( MENU_MODE_PAUSED, true );
                 //stop filling up MOVE_CACHE any further, process pending moves 
-                Commands::waitUntilEndOfAllMoves();
+                Commands::waitUntilEndOfAllMoves(); //FEATURE_PAUSE_PRINTING
                 //say "Pause" when reaching TASK_PAUSE_PRINT in MOVE_CACHE:
                 UI_STATUS_UPD( UI_TEXT_PAUSED ); //override this with "M3117 TEXT" if needed!
                 uid.refreshPage();
@@ -8605,13 +8621,11 @@ void processCommand( GCode* pCommand )
             }
 #endif // FEATURE_EMERGENCY_STOP_ALL
 
-#if FEATURE_OUTPUT_FINISHED_OBJECT
             case 3079: // M3079 - output the printed object
             {
-                outputObject();
+                outputObject(); //als Gcode direkt
                 break;
             }
-#endif // FEATURE_OUTPUT_FINISHED_OBJECT
 
 #if FEATURE_PARK
             case 3080: // M3080 - park the printer
@@ -9010,7 +9024,7 @@ void processCommand( GCode* pCommand )
             case 3130: // M3130 - start/stop the search of the z-origin
             {
                 startFindZOrigin();
-                Commands::waitUntilEndOfAllMoves(); //might prevent stop
+                Commands::waitUntilEndOfAllMoves(); //find z origin, might prevent stop
                 break;
             }
 #endif // FEATURE_FIND_Z_ORIGIN
@@ -10883,7 +10897,7 @@ void processCommand( GCode* pCommand )
 #if FEATURE_STARTLINE
             case 3912:
             {
-                Commands::waitUntilEndOfAllMoves();
+                Commands::waitUntilEndOfAllMoves(); //feature startline
                 if( Printer::areAxisHomed() && Printer::doHeatBedZCompensation ){
 
                     Com::printFLN( PSTR( "Auto-Startmade" ) );
@@ -10951,8 +10965,6 @@ void processCommand( GCode* pCommand )
                     }
                     float e =  0.0f;
 
-                    g_nDrawStartLineStatus = 1; //mache die funktion abbrechbar.
-
                     Printer::moveToReal(x, y, AUTOADJUST_STARTMADEN_AUSSCHLUSS, IGNORE_COORDINATE, RMath::min(Printer::homingFeedrate[X_AXIS], Printer::homingFeedrate[Y_AXIS]) );
                     
                     for(uint8_t i = 1; i <= Lines; i++){
@@ -10974,13 +10986,13 @@ void processCommand( GCode* pCommand )
                                                  y_0 + (y - y_0)*i,
                                                  IGNORE_COORDINATE,
                                                  e_0 + (e - e_0)*i, lineFeedrate);
-                            if(!g_nDrawStartLineStatus) break; //mache die funktion abbrechbar.
-                        } 
+                            if(g_uBlockCommands) break; //mache die funktion abbrechbar.
+                        }
+                        if(g_uBlockCommands) break; //mache die funktion abbrechbar.
                         y += 2.0f;
-                        if(!g_nDrawStartLineStatus) break; //mache die funktion abbrechbar.
                         Printer::moveToReal(IGNORE_COORDINATE, y, IGNORE_COORDINATE, IGNORE_COORDINATE, Printer::homingFeedrate[Y_AXIS] );
                     }
-                    Commands::waitUntilEndOfAllMoves();
+                    Commands::waitUntilEndOfAllMoves(); //feature startline
                     g_nDigitFlowCompensation_Fmin = save_g_nDigitFlowCompensation_Fmin;
                     g_nDigitFlowCompensation_Fmax = save_g_nDigitFlowCompensation_Fmax;
                     g_nDigitFlowCompensation_speed_intense = save_g_nDigitFlowCompensation_speed_intense;
@@ -10988,7 +11000,6 @@ void processCommand( GCode* pCommand )
                     Printer::queuePositionCurrentSteps[E_AXIS] = Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0;
                     Printer::relativeExtruderCoordinateMode = save_relativeExtruderCoordinateMode;
                     Printer::updateCurrentPosition();
-                    g_nDrawStartLineStatus = 0; //mache die funktion abbrechbar.
                 }else{
                     Com::printFLN( PSTR( "M3912 error missing homing or zCMP" ) );
                 }
@@ -11001,7 +11012,7 @@ void processCommand( GCode* pCommand )
                 /* Eigentlich kann man das mit jedem Extruder machen, aber ich lasse das nur für T1 zu, weil ich nur das testen kann. Der Rechte Extruder kann damit absinken, wenn das Filament ihn runterdrückt. Der Linke bleibt in jedem Fall gleich hoch auf der Höhe des Homings! */
                 if ( pCommand->hasZ() && (pCommand->Z <= 0 && pCommand->Z >= -2.0f) ){
                     if(Printer::debugDryrun()) break;
-                    Commands::waitUntilEndOfAllMoves();
+                    Commands::waitUntilEndOfAllMoves(); //M3919 tipdown
                     
                     Extruder *actExtruder = Extruder::current;
                     if(pCommand->hasT() && pCommand->T < NUM_EXTRUDER) actExtruder = &extruder[pCommand->T]; //unter umständen ist actExtruder was anderes wie Extruder::current!
@@ -11401,13 +11412,11 @@ extern void processButton( int nAction )
         }
 #endif // FEATURE_ALIGN_EXTRUDERS
 
-#if FEATURE_OUTPUT_FINISHED_OBJECT
         case UI_ACTION_RF_OUTPUT_OBJECT:
         {
-            outputObject();
+            outputObject(); //als UI_ACTION_RF_OUTPUT_OBJECT
             break;
         }
-#endif // FEATURE_OUTPUT_FINISHED_OBJECT
 
 #if FEATURE_FIND_Z_ORIGIN
         case UI_ACTION_RF_FIND_Z_ORIGIN:

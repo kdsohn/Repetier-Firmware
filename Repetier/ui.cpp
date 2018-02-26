@@ -4654,7 +4654,7 @@ void UIDisplay::executeAction(int action)
             case UI_ACTION_POWER:
             {
 #if PS_ON_PIN>=0 // avoid compiler errors when the power supply pin is disabled
-                Commands::waitUntilEndOfAllMoves();
+                Commands::waitUntilEndOfAllMoves(); //M80/M81 UI_ACTION_POWER toggle
                 SET_OUTPUT(PS_ON_PIN); //GND
                 TOGGLE(PS_ON_PIN);
 #endif // PS_ON_PIN>=0

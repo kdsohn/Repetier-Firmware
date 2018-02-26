@@ -677,7 +677,7 @@ void Commands::executeGCode(GCode *com)
 
         case 4: // G4 dwell
         {
-            Commands::waitUntilEndOfAllMoves();
+            Commands::waitUntilEndOfAllMoves(); //G4
             codenum = 0;
             if(com->hasP()) codenum = com->P; // milliseconds to wait
             if(com->hasS()) codenum = com->S * 1000; // seconds to wait
@@ -1009,12 +1009,9 @@ void Commands::executeGCode(GCode *com)
                     previousMillisCmd = HAL::timeInMilliseconds();
                     if(Printer::debugDryrun()) break;
 
-#ifdef EXACT_TEMPERATURE_TIMING
-                    Commands::waitUntilEndOfAllMoves();
-#else
+                    //TODO man müsste das in den Movecache legen!
                     if(com->hasP() || (com->hasS() && com->S == 0))
-                    Commands::waitUntilEndOfAllMoves();
-#endif // EXACT_TEMPERATURE_TIMING
+                    Commands::waitUntilEndOfAllMoves(); //M104
 
                     if (com->hasS())
                     {
@@ -1083,7 +1080,7 @@ void Commands::executeGCode(GCode *com)
                     Printer::waitMove = 1;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
-                    Commands::waitUntilEndOfAllMoves();
+                    Commands::waitUntilEndOfAllMoves(); //M109
                     Extruder *actExtruder = Extruder::current;
                     if(com->hasT() && com->T<NUM_EXTRUDER) actExtruder = &extruder[com->T];
                     if (com->hasS()) Extruder::setTemperatureForExtruder(com->S,actExtruder->id,com->hasF() && com->F>0);
@@ -1171,7 +1168,7 @@ void Commands::executeGCode(GCode *com)
                     Printer::waitMove = 1;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
-                    Commands::waitUntilEndOfAllMoves();
+                    Commands::waitUntilEndOfAllMoves(); //M190
                     if (com->hasS()) Extruder::setHeatedBedTemperature(com->S,com->hasF() && com->F>0);
 
                     if( fabs(heatedBedController.currentTemperatureC-heatedBedController.targetTemperatureC) < TEMP_TOLERANCE )
@@ -1294,7 +1291,7 @@ void Commands::executeGCode(GCode *com)
             case 80:    // M80 - ATX Power On
             {
 #if PS_ON_PIN > -1
-                Commands::waitUntilEndOfAllMoves();
+                Commands::waitUntilEndOfAllMoves();  //M80 command
                 previousMillisCmd = HAL::timeInMilliseconds();
                 SET_OUTPUT(PS_ON_PIN); //GND
                 WRITE(PS_ON_PIN, (POWER_INVERTING ? HIGH : LOW));
@@ -1304,7 +1301,7 @@ void Commands::executeGCode(GCode *com)
             case 81:    // M81 - ATX Power Off
             {
 #if PS_ON_PIN > -1
-                Commands::waitUntilEndOfAllMoves();
+                Commands::waitUntilEndOfAllMoves(); //M81
                 SET_OUTPUT(PS_ON_PIN); //GND
                 WRITE(PS_ON_PIN,(POWER_INVERTING ? LOW : HIGH));
 #endif // PS_ON_PIN > -1
@@ -1328,7 +1325,7 @@ void Commands::executeGCode(GCode *com)
                 }
                 else
                 {
-                    Commands::waitUntilEndOfAllMoves();
+                    Commands::waitUntilEndOfAllMoves(); //M84
                     Printer::kill(true);
                 }
                 break;
@@ -1407,7 +1404,7 @@ void Commands::executeGCode(GCode *com)
             }
             case 119:   // M119
             {
-                Commands::waitUntilEndOfAllMoves();
+                Commands::waitUntilEndOfAllMoves(); //M119
 
                 if( !Printer::debugInfo() )
                 {
@@ -1695,7 +1692,7 @@ void Commands::executeGCode(GCode *com)
 #endif // FEATURE_CASE_LIGHT
             case 400:   // M400 - Finish all moves
             {
-                Commands::waitUntilEndOfAllMoves();
+                Commands::waitUntilEndOfAllMoves(); //M400 (normal gcode wait)
                 break;
             }
 
@@ -1868,7 +1865,7 @@ void Commands::executeGCode(GCode *com)
     }
     else if(com->hasT())      // Process T code
     {
-        Commands::waitUntilEndOfAllMoves();
+        Commands::waitUntilEndOfAllMoves(); //Tn-Code (change Extruder)
         Extruder::selectExtruderById(com->T);
     }
     else
