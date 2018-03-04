@@ -2255,25 +2255,13 @@ void startZOScan( bool automatrixleveling )
     }
     else
     {
-        if( Printer::isPrinting() )
-        {
-            // there is some printing in progress at the moment - do not start the heat bed scan in this case
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( Com::tPrintingIsInProcessError );
-            }
-            showError( (void*)ui_text_heat_bed_scan, (void*)ui_text_operation_denied );
-        }
-        else
-        {
-            Com::printFLN( PSTR( "ZOS started" ) );
-            BEEP_START_HEAT_BED_SCAN
-            g_nZOSScanStatus = 1;
-            // start the heat bed scan
-            g_abortZScan = 0;
-            g_retryZScan = 0;
-            if(automatrixleveling) g_ZOS_Auto_Matrix_Leveling_State = 1; //aktiviert besonderer modus, bei dem der ZOffsetScan mehrfach in schleife scant und ein schiefes Bett geraderückt, aber die Welligkeit des ursprünglichen HBS behält.
-        }
+        Com::printFLN( PSTR( "ZOS started" ) );
+        BEEP_START_HEAT_BED_SCAN
+        g_nZOSScanStatus = 1;
+        // start the heat bed scan
+        g_abortZScan = 0;
+        g_retryZScan = 0;
+        if(automatrixleveling) g_ZOS_Auto_Matrix_Leveling_State = 1; //aktiviert besonderer modus, bei dem der ZOffsetScan mehrfach in schleife scant und ein schiefes Bett geraderückt, aber die Welligkeit des ursprünglichen HBS behält.
     }
 } // startZOScan
 
