@@ -1846,7 +1846,11 @@ void Printer::homeZAxis()
         // if we have circuit-type Z endstops and we don't know at which endstop we currently are, first move down a bit
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
         if( Printer::ZEndstopUnknown ) {
+            //verzweifelter rausfahrversuch beim RF1000, ohne ahnung ob man den schalter quetscht oder entlastet.
+            //stimmt hier überhaupt homedir * -1 ?? sollte der drucker nicht besser immer nach unten das rausfahren testen?
+            //sollte man nicht für diese aktion evtl. den motorstrom in z runternehmen und während hin und herfahren schrittweise anheben bis man frei ist?
             PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * -1 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
+            //evtl. am besten: Stop und Meldung "Please release Z-Endstop and restart printer"
         }
 #endif
         UI_STATUS_UPD( UI_TEXT_HOME_Z );
@@ -1956,10 +1960,33 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
     homingOrder = HOMING_ORDER_PRINT;
 #endif // FEATURE_MILLING_MODE
 
+#if FEATURE_CONFIGURABLE_Z_ENDSTOPS
+    //ich weiß nicht ob das überhaupt ein gutes verhalten ist. Es ist nicht gut, wenn die z-schraube zu weit reingeschraubt ist und daher z-homing über dem bett verboten sein sollte.
+    //Printer::ZEndstopUnknown = 1 gibts nur, wenn der RF1000 mit Circuitschaltung mit einem der z-endstops gedrückt aufwacht, oder man in dieser position auf den endstop umstellt.
+    //super wäre, wenn die düse dann nicht über dem bett wäre. -> test sollte erst nach unten stattfinden, dann ist nur ein schalter am ende, wenn was schief geht, niemals aber die düse oder das hotend -> emergency-block hilft aber.
+    
+    //evtl. am besten: Stop und Meldung "Please release Z-Endstop and restart printer"
+    
+    //if( Printer::ZEndstopUnknown && homingOrder < 5 /*not z first -> do z first*/ ) )
+    /*{
+        if(homingOrder == HOME_ORDER_XYZ
+        || homingOrder == HOME_ORDER_XZY)
+        {
+            homingOrder = HOME_ORDER_ZXY;
+        }
+        else if(homingOrder == HOME_ORDER_YXZ
+             || homingOrder == HOME_ORDER_YZX)
+        {
+                homingOrder = HOME_ORDER_ZYX;
+        }
+    }
+    */
+#endif //FEATURE_CONFIGURABLE_Z_ENDSTOPS
+    
 #if FEATURE_MILLING_MODE
-    if(operatingMode == OPERATING_MODE_PRINT){
+    if(operatingMode == OPERATING_MODE_PRINT){ //wollte nicht milling mode, weil ich die mechanik da nicht kenne, dieses if ist unter umständen nutzlos.
 #endif // FEATURE_MILLING_MODE
-      if( (!yaxis && zaxis) || ( homingOrder == HOME_ORDER_XZY && homingOrder == HOME_ORDER_ZXY && homingOrder == HOME_ORDER_ZYX ) )
+      if( (!yaxis && zaxis) || ( /* z vor y */ homingOrder == HOME_ORDER_XZY || homingOrder == HOME_ORDER_ZXY || homingOrder == HOME_ORDER_ZYX ) )
       {
        // do not allow homing Z-Only within menu, when the Extruder is configured < 0 and over bed.
        if( !Printer::isZHomeSafe() ) 
