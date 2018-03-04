@@ -1698,10 +1698,9 @@ void UIDisplay::parse(char *txt,bool ram)
 #endif // NUM_EXTRUDER>0
                 else if(c2 == 'g')                                                                      // %Xg : Printer::stepsDoublerFrequency 
                 {
-                    addInt(Printer::stepsDoublerFrequency,5);
+                    addInt(Printer::stepsDoublerFrequency,4);
                     addStringP( PSTR(" ") );
-                    addFloat(Printer::stepsDoublerFrequency/RMath::max(XAXIS_STEPS_PER_MM,YAXIS_STEPS_PER_MM),3,0);
-                    addStringP( PSTR("mm/s") );
+                    addInt(int(Printer::stepsDoublerFrequency/RMath::max(XAXIS_STEPS_PER_MM,YAXIS_STEPS_PER_MM)),2);
                 }
 #if FEATURE_MILLING_MODE
                 else if(c2=='Z')                                                                        // %XZ : Milling special max. acceleration
@@ -1836,9 +1835,9 @@ void UIDisplay::parse(char *txt,bool ram)
             }
             case 'S':
             {
-                if(c2=='0')      addFloat(extruder[0].stepsPerMM,4,0);                                                // %S0 : Steps per mm extruder0
-                else if(c2=='1') addFloat(extruder[1].stepsPerMM,4,0);                                                // %S1 : Steps per mm extruder1
-                else if(c2=='e') addFloat(Extruder::current->stepsPerMM,3,1);                                         // %Se : Steps per mm current extruder
+                if(c2=='0')      addFloat(extruder[0].stepsPerMM,3,0);                                                // %S0 : Steps per mm extruder0
+                else if(c2=='1') addFloat(extruder[1].stepsPerMM,3,0);                                                // %S1 : Steps per mm extruder1
+                else if(c2=='e') addFloat(Extruder::current->stepsPerMM,3,0);                                         // %Se : Steps per mm current extruder
                 else if(c2=='z') addFloat(g_nManualSteps[Z_AXIS] * Printer::invAxisStepsPerMM[Z_AXIS] * 1000,4,0);    // %Sz : Mikrometer per Z-Single_Step (Z_Axis)
                 else if(c2=='M' && col<MAX_COLS) if(g_ZMatrixChangedInRam) printCols[col++]='*';                      // %SM : Matrix has changed in Ram and is ready to Save. -> *)
                 break;

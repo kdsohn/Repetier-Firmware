@@ -540,8 +540,10 @@ void scanHeatBed( void )
             Com::printFLN( PSTR( "scan aborted" ) );
         }
 
-        UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_ABORTED );
+        //UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_ABORTED );
         BEEP_ABORT_HEAT_BED_SCAN
+
+        showError( PSTR(UI_TEXT_HEAT_BED_SCAN_ABORTED), PSTR(UI_TEXT_Z_COMPENSATION_ACTIVE), PSTR(UI_TEXT_INVALID_MATRIX) );
 
         // restore the compensation values from the EEPROM
         if( loadCompensationMatrix( 0 ) )
@@ -1959,8 +1961,10 @@ void scanHeatBed( void )
                     Com::printF( Com::tscanHeatBed );
                     Com::printFLN( PSTR( "the scan has been completed" ) );
                 }
-                UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_DONE );
+                //UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_DONE );
                 BEEP_STOP_HEAT_BED_SCAN
+
+                showInformation( PSTR(UI_TEXT_HEAT_BED_SCAN_DONE), (void*)ui_text_saving_success, PSTR(UI_TEXT_OK) );
 
                 g_nHeatBedScanStatus = 0;
 
