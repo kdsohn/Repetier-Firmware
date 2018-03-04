@@ -1,6 +1,12 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.38.38.Mod (2018-02-26) 
+- some commenting
+- removed check that z-offset-scan to really allow the scan while the printer thinks it is printing.
+- removed self introduced overflow on queuePositionCurrentSteps[E_AXIS]. queuePositionCurrentSteps is size 3.
+
+
 V RF.01.38.37.Mod (2018-02-26) 
 - dont allow any fan speed change to empty move cache. if this is needed fan speed has to be set in queue (TODO), not empty it.
 - some commenting because i checked some things

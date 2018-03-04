@@ -10940,7 +10940,7 @@ void processCommand( GCode* pCommand )
                     //M82:
                     Printer::relativeExtruderCoordinateMode = false;
                     //G92 E0:
-                    Printer::queuePositionCurrentSteps[E_AXIS] = Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0;
+                    Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0;
                     
                     const float spacerX = 10.0f;
                     
@@ -10985,7 +10985,7 @@ void processCommand( GCode* pCommand )
                     g_nDigitFlowCompensation_Fmax = save_g_nDigitFlowCompensation_Fmax;
                     g_nDigitFlowCompensation_speed_intense = save_g_nDigitFlowCompensation_speed_intense;
                     g_nDigitFlowCompensation_intense = save_g_nDigitFlowCompensation_intense;
-                    Printer::queuePositionCurrentSteps[E_AXIS] = Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0;
+                    Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0;
                     Printer::relativeExtruderCoordinateMode = save_relativeExtruderCoordinateMode;
                     Printer::updateCurrentPosition();
                 }else{
