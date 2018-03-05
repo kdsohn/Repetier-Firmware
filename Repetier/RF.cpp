@@ -12843,49 +12843,29 @@ void updateRGBLightStatus( void )
     {
         // operating mode print
 #if NUM_EXTRUDER >= 1
-        if( extruder[0].tempControl.targetTemperatureC > EXTRUDER_MIN_TEMP )
+        for(uint8_t i=0; i<NUM_EXTRUDER; i++)
         {
-            if( fabs( extruder[0].tempControl.targetTemperatureC - extruder[0].tempControl.currentTemperatureC ) < RGB_LIGHT_TEMP_TOLERANCE )
+            if( extruder[i].tempControl.targetTemperatureC > MAX_ROOM_TEMPERATURE )
             {
-                // we have reached the target temperature
-                newStatus = RGB_STATUS_PRINTING;
-            }
-            else if( extruder[0].tempControl.targetTemperatureC > extruder[0].tempControl.currentTemperatureC )
-            {
-                // we are still heating
-                newStatus = RGB_STATUS_HEATING;
-            }
-            else
-            {
-                // we end up here in case the target temperature is below the current temperature (this happens typically when the target temperature is reduced after the first layer)
-            }
-        }
-#endif // NUM_EXTRUDER >= 1
-
-#if NUM_EXTRUDER == 2
-        if( extruder[1].tempControl.targetTemperatureC > EXTRUDER_MIN_TEMP )
-        {
-            if( fabs( extruder[1].tempControl.targetTemperatureC - extruder[1].tempControl.currentTemperatureC ) < RGB_LIGHT_TEMP_TOLERANCE )
-            {
-                if( newStatus == RGB_STATUS_IDLE )
+                if( fabs( extruder[i].tempControl.targetTemperatureC - extruder[i].tempControl.currentTemperatureC ) < RGB_LIGHT_TEMP_TOLERANCE )
                 {
                     // we have reached the target temperature
                     newStatus = RGB_STATUS_PRINTING;
                 }
-            }
-            else if( extruder[1].tempControl.targetTemperatureC > extruder[1].tempControl.currentTemperatureC )
-            {
-                // we are still heating
-                newStatus = RGB_STATUS_HEATING;
-            }
-            else
-            {
-                // we end up here in case the target temperature is below the current temperature (this happens typically when the target temperature is reduced after the first layer)
+                else if( extruder[i].tempControl.targetTemperatureC > extruder[i].tempControl.currentTemperatureC )
+                {
+                    // we are still heating
+                    newStatus = RGB_STATUS_HEATING;
+                }
+                else
+                {
+                    // we end up here in case the target temperature is below the current temperature (this happens typically when the target temperature is reduced after the first layer)
+                }
             }
         }
-#endif // NUM_EXTRUDER == 2
+#endif // NUM_EXTRUDER >= 1
 
-        if( heatedBedController.targetTemperatureC > HEATED_BED_MIN_TEMP )
+        if( heatedBedController.targetTemperatureC > MAX_ROOM_TEMPERATURE )
         {
             if( fabs( heatedBedController.targetTemperatureC - heatedBedController.currentTemperatureC ) < RGB_LIGHT_TEMP_TOLERANCE )
             {
@@ -12907,26 +12887,18 @@ void updateRGBLightStatus( void )
         }
 
 #if NUM_EXTRUDER >= 1
-        if( (extruder[0].tempControl.currentTemperatureC - extruder[0].tempControl.targetTemperatureC) > COOLDOWN_THRESHOLD )
+        for(uint8_t i=0; i<NUM_EXTRUDER; i++)
         {
-            // we shall cool down
-            if( newStatus == RGB_STATUS_IDLE )
+            if( (extruder[i].tempControl.currentTemperatureC - extruder[i].tempControl.targetTemperatureC) > COOLDOWN_THRESHOLD )
             {
-                newStatus = RGB_STATUS_COOLING;
+                // we shall cool down
+                if( newStatus == RGB_STATUS_IDLE )
+                {
+                    newStatus = RGB_STATUS_COOLING;
+                }
             }
         }
 #endif // NUM_EXTRUDER >= 1
-
-#if NUM_EXTRUDER == 2
-        if( (extruder[1].tempControl.currentTemperatureC - extruder[1].tempControl.targetTemperatureC) > COOLDOWN_THRESHOLD )
-        {
-            // we shall cool down
-            if( newStatus == RGB_STATUS_IDLE )
-            {
-                newStatus = RGB_STATUS_COOLING;
-            }
-        }
-#endif // NUM_EXTRUDER == 2
 
         if( (heatedBedController.currentTemperatureC - heatedBedController.targetTemperatureC) > COOLDOWN_THRESHOLD )
         {

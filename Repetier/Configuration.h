@@ -781,6 +781,9 @@ we use blocks of 2 kByte size for the structure of our EEPROM
 /** \brief Defines the Z-Offset stepsize in um */
 #define Z_OFFSET_STEP                       25
 
+/** \brief Minimal temperature which can be reached by cooling */
+#define MAX_ROOM_TEMPERATURE                40
+
 /** \brief Specifies the interval which is used for the manual moves (from the hardware buttons and from the pause functionality) */
 #define MANUAL_MOVE_INTERVAL                1                                                   // [ms]
 

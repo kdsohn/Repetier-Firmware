@@ -25,10 +25,6 @@ const int   sensitive_pins[] PROGMEM     = SENSITIVE_PINS;  // Sensitive pin lis
 int         Commands::lowestRAMValue     = MAX_RAM;
 int         Commands::lowestRAMValueSend = MAX_RAM;
 
-uint16_t    ExtruderTemp = 1;       // 0 = Extruder temperature is lower EXTRUDER_MIN_TEMP  1 = Extruder Temperature is higher EXTRUDER_MIN_TEMP
-uint16_t    BedTemp      = 1;       // 0 = Heatbed temperature is lower HEATED_BED_MIN_TEMP  1 = Heatbed Temperature is higher HEATED_BED_MIN_TEMP
-
-
 void Commands::commandLoop()
 {
 #ifdef DEBUG_PRINT
@@ -1015,14 +1011,6 @@ void Commands::executeGCode(GCode *com)
 
                     if (com->hasS())
                     {
-                        if ( com->S < EXTRUDER_MIN_TEMP )
-                        {
-                            ExtruderTemp = 0;
-                        }
-                        else
-                        {
-                            ExtruderTemp = 1;
-                        }
                         if(com->hasT())
                             Extruder::setTemperatureForExtruder(com->S,com->T,com->hasF() && com->F>0);
                         else
@@ -1044,14 +1032,6 @@ void Commands::executeGCode(GCode *com)
                     if(reportTempsensorError()) break;
                     previousMillisCmd = HAL::timeInMilliseconds();
                     if(Printer::debugDryrun()) break;
-                    if ( com->S < HEATED_BED_MIN_TEMP )
-                    {
-                        BedTemp = 0;
-                    }
-                    else
-                    {
-                        BedTemp = 1;
-                    }
                     if (com->hasS()) Extruder::setHeatedBedTemperature(com->S,com->hasF() && com->F>0);
                 }
                 break;
@@ -1064,68 +1044,72 @@ void Commands::executeGCode(GCode *com)
                     if(reportTempsensorError()) break;
                     previousMillisCmd = HAL::timeInMilliseconds();
                     if(Printer::debugDryrun()) break;
-                    if (com->hasS())
-                    {
-                        if ( com->S < EXTRUDER_MIN_TEMP )
-                        {
-                            break;
-                        }
-                    }
-                    else if ( !ExtruderTemp ) break;
-                    ExtruderTemp = 1;
-                    g_uStartOfIdle = 0;
-                    UI_STATUS_UPD(UI_TEXT_HEATING_EXTRUDER);
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-                    Printer::waitMove = 1;
+                    Printer::waitMove = 1; //brauche ich das, wenn ich sowieso warte bis der movecache leer ist?
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
+                    g_uStartOfIdle = 0;
                     Commands::waitUntilEndOfAllMoves(); //M109
                     Extruder *actExtruder = Extruder::current;
-                    if(com->hasT() && com->T<NUM_EXTRUDER) actExtruder = &extruder[com->T];
+                    if (com->hasT() && com->T<NUM_EXTRUDER) actExtruder = &extruder[com->T];
                     if (com->hasS()) Extruder::setTemperatureForExtruder(com->S,actExtruder->id,com->hasF() && com->F>0);
 
-                    if(fabs(actExtruder->tempControl.targetTemperatureC - actExtruder->tempControl.currentTemperatureC) < TEMP_TOLERANCE)
+                    if (fabs(actExtruder->tempControl.targetTemperatureC - actExtruder->tempControl.currentTemperatureC) < TEMP_TOLERANCE)
                     {
                         // we are already in range
-
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                         Printer::waitMove = 0;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-
                         break;
                     }
-
-                    bool        dirRising   = actExtruder->tempControl.targetTemperature > actExtruder->tempControl.currentTemperature;
-                    millis_t    waituntil   = 0;
 
 #if RETRACT_DURING_HEATUP
                     uint8_t     retracted = 0;
 #endif // RETRACT_DURING_HEATUP
+                    millis_t    waituntil   = 0;
+                    millis_t    currentTime;
+                    bool        isTempReached;
+                    bool        dirRising   = actExtruder->tempControl.targetTemperature > actExtruder->tempControl.currentTemperature;
 
-                    millis_t currentTime;
+                    if( dirRising ){
+                        UI_STATUS_UPD(UI_TEXT_HEATING_EXTRUDER);
+                    }else{
+                        UI_STATUS_UPD(UI_TEXT_COOLING_DOWN);
+                    }
+
                     do
                     {
-                        currentTime = HAL::timeInMilliseconds();
                         Commands::printTemperatures();
                         Commands::checkForPeriodicalActions( WaitHeater );
+                        
+                        currentTime = HAL::timeInMilliseconds();
+                        isTempReached = (dirRising ? actExtruder->tempControl.currentTemperatureC >= actExtruder->tempControl.targetTemperatureC - TEMP_TOLERANCE
+                                                   : actExtruder->tempControl.currentTemperatureC <= actExtruder->tempControl.targetTemperatureC + TEMP_TOLERANCE);
 #if RETRACT_DURING_HEATUP
-                        if (actExtruder == Extruder::current && actExtruder->waitRetractUnits > 0 && !retracted && dirRising && actExtruder->tempControl.currentTemperatureC > actExtruder->waitRetractTemperature)
-                        {
-                            PrintLine::moveRelativeDistanceInSteps(0,0,0,-actExtruder->waitRetractUnits * Printer::axisStepsPerMM[E_AXIS],actExtruder->maxFeedrate,false,false);
-                            retracted = 1;
+                        if( dirRising ){
+                            if (!retracted 
+                                && actExtruder == Extruder::current
+                                && actExtruder->waitRetractUnits > 0
+                                && actExtruder->tempControl.currentTemperatureC >= actExtruder->waitRetractTemperature)
+                            {
+                                PrintLine::moveRelativeDistanceInSteps(0,0,0,-actExtruder->waitRetractUnits * Printer::axisStepsPerMM[E_AXIS],actExtruder->maxFeedrate,false,false);
+                                retracted = 1;
+                            }
                         }
 #endif // RETRACT_DURING_HEATUP
-
-                        if((waituntil == 0 &&
-                            (dirRising ? actExtruder->tempControl.currentTemperatureC >= actExtruder->tempControl.targetTemperatureC-TEMP_TOLERANCE : actExtruder->tempControl.currentTemperatureC <= actExtruder->tempControl.targetTemperatureC+TEMP_TOLERANCE))
-#if defined(TEMP_HYSTERESIS) && TEMP_HYSTERESIS>=1
-                            || (waituntil!=0 && (abs(actExtruder->tempControl.currentTemperatureC - actExtruder->tempControl.targetTemperatureC))>TEMP_HYSTERESIS)
-#endif // #if defined(TEMP_HYSTERESIS) && TEMP_HYSTERESIS>=1
-                          )
-                        {
-                            waituntil = currentTime+1000UL*(millis_t)actExtruder->watchPeriod; // now wait for temp. to stabalize
+                        if( !dirRising ){
+                            if( actExtruder->tempControl.currentTemperatureC <= MAX_ROOM_TEMPERATURE ){
+                                isTempReached = true;
+                                //never wait longer than reaching lowest allowed temperature. 
+                                //This might still be a long-run-bug if you have heated chamber/hot summer and wrong settings in MAX_ROOM_TEMPERATURE!
+                            }
                         }
+
+                        if(waituntil == 0 && isTempReached) //waituntil bleibt 0 bis temperatur einmal erreicht.
+                            {
+                                waituntil = currentTime+1000UL*(millis_t)actExtruder->watchPeriod; // now wait for temp. to stabalize
+                            }
                     }
                     while(waituntil==0 || (waituntil!=0 && (millis_t)(waituntil-currentTime)<2000000000UL));
 
@@ -1152,38 +1136,27 @@ void Commands::executeGCode(GCode *com)
                 {
 #if HAVE_HEATED_BED
                     if(Printer::debugDryrun()) break;
-                    if (com->hasS())
-                    {
-                        if ( com->S < HEATED_BED_MIN_TEMP )
-                        {
-                            break;
-                        }
-                    }
-                    else if ( !BedTemp ) break;
-                    BedTemp = 1;
-                    g_uStartOfIdle = 0;
-                    UI_STATUS_UPD(UI_TEXT_HEATING_BED);
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-                    Printer::waitMove = 1;
+                    Printer::waitMove = 1; //brauche ich das, wenn ich sowieso warte bis der movecache leer ist?
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
+                    g_uStartOfIdle = 0;
                     Commands::waitUntilEndOfAllMoves(); //M190
                     if (com->hasS()) Extruder::setHeatedBedTemperature(com->S,com->hasF() && com->F>0);
 
-                    if( fabs(heatedBedController.currentTemperatureC-heatedBedController.targetTemperatureC) < TEMP_TOLERANCE )
-                    {
-                        // we are already in range
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-                        Printer::waitMove = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-                        break;
+                    bool dirRising = heatedBedController.targetTemperatureC > heatedBedController.currentTemperatureC;
+                    if(dirRising){
+                        UI_STATUS_UPD(UI_TEXT_HEATING_BED);
+                    }else{
+                        UI_STATUS_UPD(UI_TEXT_COOLING_DOWN);
                     }
 
-                    while(heatedBedController.currentTemperatureC+TEMP_TOLERANCE < heatedBedController.targetTemperatureC)
+                    while( fabs(heatedBedController.currentTemperatureC - heatedBedController.targetTemperatureC) > TEMP_TOLERANCE )
                     {
                         Commands::printTemperatures();
                         Commands::checkForPeriodicalActions( WaitHeater );
+                        if( !dirRising && heatedBedController.currentTemperatureC <= MAX_ROOM_TEMPERATURE ) break;
                     }
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING

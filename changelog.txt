@@ -1,8 +1,11 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.39+.Mod (2018-03-05) 
+- fixing rf1k-mhj11's bug that M109 cannot shut down temperature in some situations.
+- fixing rf1k-mhj11's bug that M190 cannot shut down temperature.
 
-V RF.01.38.39.Mod (2018-03-04) 
+V RF.01.38.39.Mod (2018-03-05) 
 - maybe improved HBS scan tolerance for uneven ceramic beds.
 - always show full screen messages when finishing the HBS scan (in case of ok and fail) which the user has to dismiss with the ok button.
 - improved menu text lengths for RF1000 16-char-display

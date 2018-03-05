@@ -135,9 +135,6 @@ Overridden if EEPROM activated.*/
 /** \brief for each extruder, fan will stay on until extruder temperature is below this value */
 #define EXTRUDER_FAN_COOL_TEMP              50
 
-/** \brief Minimal temperature which can be set for the extruder */
-#define EXTRUDER_MIN_TEMP                   40
-
 /** \brief Maximal temperature which can be set for the extruder */
 #define EXTRUDER_MAX_TEMP                   275
 
@@ -534,9 +531,6 @@ The codes are only executed for multiple extruder when changing the extruder. */
 
 /** \brief Set true if you have a heated bed conected to your board, false if not */
 #define HAVE_HEATED_BED                     true
-
-/** \brief Minimal temperature which can be set for the heating bed */
-#define HEATED_BED_MIN_TEMP                 40
 
 /** \brief Maximal temperature which can be set for the heating bed */
 #define HEATED_BED_MAX_TEMP                 180
