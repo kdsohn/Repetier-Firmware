@@ -3415,7 +3415,7 @@ short testHeatBedTemperature( void )
                 Com::printFLN( PSTR( " C" ) );
             }
 
-            UI_STATUS_UPD( UI_TEXT_HEATING_UP );
+            UI_STATUS_UPD( UI_TEXT_COOLING_DOWN );
             return -1;
         }
     }
