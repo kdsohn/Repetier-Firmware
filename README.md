@@ -44,7 +44,7 @@ Start with an integral limit with EEPROM-values of `PID I drive min = 30` and `P
 - Menu -> Configuration -> Temperatures -> (...) -> I-drive min = 20 .. 30  
 - Menu -> Configuration -> Temperatures -> (...) -> I-drive max = 100 .. 130  
 
-## Version RF.01.37mod 
+## Version 1.39+.Mod
 
 http://www.rf1000.de/viewtopic.php?f=67&t=2043 (Thread to Stable 1.37v8 / 18.10.2017)
 http://www.rf1000.de/viewtopic.php?f=74&t=1674 (Nibbels/Wessix SenseOffset-Thread)  
@@ -220,6 +220,4 @@ Lower motor current on both extruders while paused to prevent unnecessary heat t
 Manual extrusion when paused resets automatic retract for continue.
 
 ## Wessix`s help video:
-[![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)
-
-## !! 12.11.2017: Project is Work in Progress and untested changes are possible.
+[![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)  
