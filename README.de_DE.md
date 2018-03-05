@@ -45,7 +45,7 @@ Starte mit I-Anteil limits (EEPROM-Werte) `PID I drive min = 30` and `PID I driv
 - Menü -> Configuration -> Temperatures -> (...) -> I-drive min = 20 .. 30  
 - Menü -> Configuration -> Temperatures -> (...) -> I-drive max = 100 .. 130  
 
-## Version RF 1.37mod - wichtige Threads im Forum
+## Version RF 1.39+.Mod - wichtige Threads im Forum
 
 http://www.rf1000.de/viewtopic.php?f=67&t=2043 (Thread to Stable 1.37v8 / 18.10.2017)
 http://www.rf1000.de/viewtopic.php?f=74&t=1674 (Nibbels/Wessix SenseOffset-Thread)  
@@ -227,6 +227,4 @@ Mit Motorstromabsenkung für beide Extruder-Motoren während der Pause, um eine 
 Manuelles extrudieren während der Pause deaktiviert den automatischen Retract des Extruders beim Fortsetzen.
 
 ## Wessix's Hilfe-Video:
-[![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)
-
-## !! 12.11.2017: An diesem Projekt wird kontinuierlich weitergearbeitet, spontane Änderungen sind jederzeit möglich.
+[![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)  
