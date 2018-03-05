@@ -3333,7 +3333,7 @@ void configureMANUAL_STEPS_Z( int8_t increment )
 
 short testExtruderTemperature( void )
 {
-    if( Extruder::current->tempControl.targetTemperatureC > 40 )
+    if( Extruder::current->tempControl.targetTemperatureC > 40 ) /*MAX_ROOM_TEMPERATURE ??*/
     {
         // we have to wait until the target temperature is reached
         if( (Extruder::current->tempControl.currentTemperatureC + TEMP_TOLERANCE) < Extruder::current->tempControl.targetTemperatureC )
@@ -3389,7 +3389,7 @@ short testExtruderTemperature( void )
 short testHeatBedTemperature( void )
 {
 #if HAVE_HEATED_BED
-    if( heatedBedController.targetTemperatureC > 40 )
+    if( heatedBedController.targetTemperatureC > 40 ) /*MAX_ROOM_TEMPERATURE ??*/
     {
         // we have to wait until the target temperature is reached
         if( (Extruder::getHeatedBedTemperature() + TEMP_TOLERANCE) < heatedBedController.targetTemperatureC )

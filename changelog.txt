@@ -8,6 +8,7 @@ V RF.01.39+.Mod (2018-03-05)
         (and it can be reimplemented https://github.com/Nibbels/Repetier-Firmware/commit/a1703681a4092df528e4aa5feee66f87cedb2dba ) 
         and it was not fully supported everywhere.
         and we have no chance to drive a RFx000 with 3+ Extruders and the known type of electronics
+- small fix for waitForTargetTemperature
 
 V RF.01.38.39.Mod (2018-03-05) 
 - maybe improved HBS scan tolerance for uneven ceramic beds.
