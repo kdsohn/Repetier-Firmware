@@ -1233,10 +1233,8 @@ void TemperatureController::waitForTargetTemperature(uint8_t plus_temp_tolerance
     while(true) {
         Commands::printTemperatures();
         Commands::checkForPeriodicalActions( WaitHeater );
-        if( fabs(targetTemperatureC - currentTemperatureC) <= TEMP_TOLERANCE + plus_temp_tolerance ) {
-            return;
-        }
-        if(!dirRising && currentTemperatureC < MAX_ROOM_TEMPERATURE) return;
+        if( fabs(targetTemperatureC - currentTemperatureC) <= TEMP_TOLERANCE + plus_temp_tolerance ) break;
+        if( !dirRising && currentTemperatureC < MAX_ROOM_TEMPERATURE ) break;
     }
     g_uStartOfIdle = HAL::timeInMilliseconds();
 }
