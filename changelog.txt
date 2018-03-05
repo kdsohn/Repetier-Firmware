@@ -5,7 +5,7 @@ V RF.01.39+.Mod (2018-03-05)
 - fixing rf1k-mhj11's bug that M109 cannot shut down temperature in some situations.
 - fixing rf1k-mhj11's bug that M190 cannot shut down temperature.
 - removed some code for more than 2 extruders because of cleanup 
-        (and it can be reimplemented) 
+        (and it can be reimplemented https://github.com/Nibbels/Repetier-Firmware/commit/a1703681a4092df528e4aa5feee66f87cedb2dba ) 
         and it was not fully supported everywhere.
         and we have no chance to drive a RFx000 with 3+ Extruders and the known type of electronics
 
@@ -24,7 +24,7 @@ V RF.01.38.38.Mod (2018-03-03)
 V RF.01.38.37.Mod (2018-02-26) 
 - dont allow any fan speed change to empty move cache. if this is needed fan speed has to be set in queue (TODO), not empty it.
 - some commenting because i checked some things
-- possible fix for easygo25's tilt-bug at the end of an SD-Print. http://www.rf1000.de/viewtopic.php?f=7&t=2199
+- fix for easygo25's tilt-bug at the end of an SD-Print. http://www.rf1000.de/viewtopic.php?f=7&t=2199
 - removed home-only-z when commanding home-all by menu and unknown z-endstops. homing should always do what the user demands and G28 as gcode does not have this limit. It seemd totally unnecessary and counterintuitive.
 
 V RF.01.38.36.Mod (2018-02-22) 
