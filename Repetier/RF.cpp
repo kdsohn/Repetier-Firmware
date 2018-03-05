@@ -472,6 +472,8 @@ void startHeatBedScan( void )
         {
             // start the heat bed scan
             g_nHeatBedScanStatus = 1;
+            g_abortZScan = 0; //dont kill job on start
+            g_retryZScan = 0;
             BEEP_START_HEAT_BED_SCAN
         }
     }
@@ -541,9 +543,10 @@ void scanHeatBed( void )
         }
 
         //UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_ABORTED );
+        g_uStartOfIdle = HAL::timeInMilliseconds();
+        
         BEEP_ABORT_HEAT_BED_SCAN
-
-        showError( PSTR(UI_TEXT_HEAT_BED_SCAN_ABORTED), PSTR(UI_TEXT_Z_COMPENSATION_ACTIVE), PSTR(UI_TEXT_INVALID_MATRIX) );
+        showError( PSTR(UI_TEXT_HEAT_BED_SCAN_ABORTED) );
 
         // restore the compensation values from the EEPROM
         if( loadCompensationMatrix( 0 ) )
@@ -557,7 +560,6 @@ void scanHeatBed( void )
         g_retryZScan          = 0;
         g_retryStatus         = 0;
         
-        g_uStartOfIdle = HAL::timeInMilliseconds();
         
         return;
     }
@@ -598,12 +600,14 @@ void scanHeatBed( void )
         {
             case 1:
             {
+                g_uStartOfIdle = 0;
                 g_scanStartTime    = HAL::timeInMilliseconds();
                 g_abortZScan       = 0;
 #if DEBUG_HEAT_BED_SCAN
                 nContactPressure   = 0;
 #endif // DEBUG_HEAT_BED_SCAN
                 g_retryStatus      = 0;
+                g_nLastZScanZPosition = 0; //sodass dass bei mehreren scans nicht die letzte position als abstands limit feststeht.
 
                 if( Printer::debugInfo() )
                 {
@@ -1962,9 +1966,10 @@ void scanHeatBed( void )
                     Com::printFLN( PSTR( "the scan has been completed" ) );
                 }
                 //UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_DONE );
+                g_uStartOfIdle = HAL::timeInMilliseconds(); //go to printer ready and ignore status
+                
                 BEEP_STOP_HEAT_BED_SCAN
-
-                showInformation( PSTR(UI_TEXT_HEAT_BED_SCAN_DONE), (void*)ui_text_saving_success, PSTR(UI_TEXT_OK) );
+                showInformation( PSTR(UI_TEXT_HEAT_BED_SCAN_DONE), (void*)ui_text_saving_success, PSTR(UI_TEXT_OK) ); //tell user the scan was a success
 
                 g_nHeatBedScanStatus = 0;
 
@@ -2028,6 +2033,7 @@ void startAlignExtruders( void )
         // we are ready to align the extruders at the current x and y position with the current temperature
         // the user can choose the x and y position as well as the to-be-used temperatures of the extruders
         g_nAlignExtrudersStatus = 100;
+        g_abortZScan = 0; //dont kill job on start
     }
 } // startAlignExtruders
 
@@ -2061,7 +2067,7 @@ void alignExtruders( void )
             Com::printFLN( PSTR( "alignExtruders(): aborted" ) );
         }
 
-        UI_STATUS_UPD( UI_TEXT_ALIGN_EXTRUDERS_ABORTED );
+        showError( PSTR(UI_TEXT_ALIGN_EXTRUDERS_ABORTED) );
         BEEP_ABORT_ALIGN_EXTRUDERS
 
         g_nAlignExtrudersStatus  = 0;
@@ -2090,8 +2096,9 @@ void alignExtruders( void )
                 g_lastScanTime          = HAL::timeInMilliseconds();
                 g_scanRetries           = HEAT_BED_SCAN_RETRIES;
                 g_retryStatus           = 105;
+                g_nLastZScanZPosition   = 0; //sodass dass bei mehreren scans nicht die letzte position als abstands limit feststeht.
                 g_nAlignExtrudersStatus = 110;
-
+                g_uStartOfIdle = 0;
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 100 -> 110" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
@@ -2214,8 +2221,10 @@ void alignExtruders( void )
                 {
                     Com::printFLN( PSTR( "alignExtruders(): the alignment has been completed" ) );
                 }
-                UI_STATUS_UPD( UI_TEXT_ALIGN_EXTRUDERS_DONE );
+
+                showInformation( PSTR(UI_TEXT_ALIGN_EXTRUDERS_DONE) );
                 BEEP_STOP_ALIGN_EXTRUDERS
+                g_uStartOfIdle = HAL::timeInMilliseconds();
 
                 g_nAlignExtrudersStatus = 0;
 
@@ -2251,10 +2260,7 @@ void startZOScan( bool automatrixleveling )
     if( g_nZOSScanStatus )
     {
         // abort the heat bed scan
-        if( Printer::debugInfo() )
-        {
-            Com::printFLN( PSTR( "ZOS scan cancelled" ) );
-        }
+        Com::printFLN( PSTR( "ZOS cancelled" ) );
         abortSearchHeatBedZOffset(false);
     }
     else
@@ -2263,8 +2269,7 @@ void startZOScan( bool automatrixleveling )
         BEEP_START_HEAT_BED_SCAN
         g_nZOSScanStatus = 1;
         // start the heat bed scan
-        g_abortZScan = 0;
-        g_retryZScan = 0;
+        g_abortZScan = 0; //dont kill job on start
         if(automatrixleveling) g_ZOS_Auto_Matrix_Leveling_State = 1; //aktiviert besonderer modus, bei dem der ZOffsetScan mehrfach in schleife scant und ein schiefes Bett geraderückt, aber die Welligkeit des ursprünglichen HBS behält.
     }
 } // startZOScan
@@ -2287,8 +2292,6 @@ void searchZOScan( void )
     
     if(!g_nZOSScanStatus) return;
     
-    g_uStartOfIdle = 0; //zeige nicht gleich wieder Printer Ready an.
-    
     if(g_nHeatBedScanStatus 
 #if FEATURE_WORK_PART_Z_COMPENSATION
         || g_nWorkPartScanStatus
@@ -2303,12 +2306,15 @@ void searchZOScan( void )
         {
             case 1:
             {
+                g_retryZScan = 0;
+                g_uStartOfIdle = 0; //zeige nicht gleich wieder Printer Ready an.
                 Com::printFLN( PSTR( "ZOS init" ) ); 
                 // when the heat bed Z offset is searched, the z-compensation must be disabled
                 g_nZOSScanStatus = 2;
                 g_min_nZScanZPosition = HEAT_BED_SCAN_Z_START_STEPS; //nur nutzen wenn kleiner.
                 g_scanRetries = 0; // never retry   TODO allow retries?
                 g_abortZScan = 0;  // will be set in case of error inside moveZUpFast/Slow
+                g_nLastZScanZPosition = 0; //sodass dass bei mehreren scans nicht die letzte position als abstands limit feststeht.
                 break;
             }
             case 2:
@@ -2805,10 +2811,11 @@ void searchZOScan( void )
             {
                 g_nZOSScanStatus = 0;
                 if( calculateZScrewCorrection() ){
-                   UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN );
                    showMyPage( (void*)ui_text_heat_bed_zoffset_search_status, (void*)ui_text_heat_bed_zoffset_fix_z1, (void*)ui_text_heat_bed_zoffset_fix_z2, (void*)ui_text_statusmsg );
                    g_nAutoReturnMessage = true;
-                   g_nAutoReturnTime=HAL::timeInMilliseconds()+20000;
+                   g_nAutoReturnTime    = HAL::timeInMilliseconds()+30000;
+                   //UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN );
+                   g_uStartOfIdle = HAL::timeInMilliseconds(); //go to printer ready/ignore status
                 }else{
                    UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_ABORTED );
                 }
@@ -2834,6 +2841,7 @@ void abortSearchHeatBedZOffset( bool reloadMatrix )
     g_nZOSScanStatus = 0;
     g_retryZScan = 0;
     g_abortZScan = 0;
+    g_nLastZScanZPosition = 0;
 
     // the search has been aborted
     UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_ABORTED );
@@ -3750,6 +3758,7 @@ void findZOrigin( void )
             case 1:
             {
                 g_abortZScan               = 0;
+                //g_nLastZScanZPosition      = 0; //sodass dass bei mehreren scans nicht die letzte position als abstands limit feststeht. //brauche ich nicht bei findzorigin
                 g_nZOriginPosition[Z_AXIS] = 0;
 
                 if( Printer::debugInfo() )
@@ -4065,6 +4074,7 @@ void scanWorkPart( void )
                 g_scanStartTime    = HAL::timeInMilliseconds();
                 g_abortZScan       = 0;
                 nContactPressure   = 0;
+                g_nLastZScanZPosition = 0; //sodass dass bei mehreren scans nicht die letzte position als abstands limit feststeht.
 
                 if( Printer::debugInfo() )
                 {

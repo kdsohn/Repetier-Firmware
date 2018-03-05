@@ -6,6 +6,8 @@ V RF.01.38.39.Mod (2018-03-04)
 - maybe improved HBS scan tolerance for uneven ceramic beds.
 - always show full screen messages when finishing the HBS scan (in case of ok and fail) which the user has to dismiss with the ok button.
 - improved menu text lengths for RF1000 16-char-display
+- fix that a HBS-Scan after another HBS-Scan still has g_nLastZScanZPosition as a scan limit. That makes the second HBS impossible with some chance.
+- cleanup some messages and g_uStartOfIdle around the HBS-Scan, ZOffsetScan, WorkpartScan and AlignExtruders
 
 V RF.01.38.38.Mod (2018-03-03) 
 - some commenting
