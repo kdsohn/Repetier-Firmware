@@ -4,6 +4,10 @@ TODO: Testing, testing ..
 V RF.01.39+.Mod (2018-03-05) 
 - fixing rf1k-mhj11's bug that M109 cannot shut down temperature in some situations.
 - fixing rf1k-mhj11's bug that M190 cannot shut down temperature.
+- removed some code for more than 2 extruders because of cleanup 
+        (and it can be reimplemented) 
+        and it was not fully supported everywhere.
+        and we have no chance to drive a RFx000 with 3+ Extruders and the known type of electronics
 
 V RF.01.38.39.Mod (2018-03-05) 
 - maybe improved HBS scan tolerance for uneven ceramic beds.

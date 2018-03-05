@@ -4912,13 +4912,6 @@ void UIDisplay::executeAction(int action)
 #endif // NUM_EXTRUDER>1
                 break;
             }
-            case UI_ACTION_EXTRUDER2_OFF:
-            {
-#if NUM_EXTRUDER>2
-                Extruder::setTemperatureForExtruder(0,2);
-#endif // NUM_EXTRUDER>2
-                break;
-            }
             case UI_ACTION_DISABLE_STEPPER:
             {
                 Printer::kill( true );
@@ -5051,16 +5044,7 @@ void UIDisplay::executeAction(int action)
 
                 break;
             }
-            case UI_ACTION_SELECT_EXTRUDER2:
-            {
-#if NUM_EXTRUDER>2
-                Extruder::selectExtruderById(2);
-#endif // NUM_EXTRUDER>2
-                
-                break;
-            }
-
-#if NUM_EXTRUDER == 2
+#if NUM_EXTRUDER >= 1
             case UI_ACTION_ACTIVE_EXTRUDER:
             {
                 if( Extruder::current->id == 0 )    Extruder::selectExtruderById( 1 );

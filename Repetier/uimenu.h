@@ -510,12 +510,6 @@ UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_extruder_mount_filament,UI_TEXT_MOUNT_FILAM
 #if NUM_EXTRUDER>1
 #define UI_MENU_EXTCOND &ui_menu_ext_temp0,&ui_menu_ext_temp1,&ui_menu_ext_off0,&ui_menu_ext_off1,&ui_menu_active_extruder,
 #define UI_MENU_EXTCNT 5
-#elif NUM_EXTRUDER>2
-UI_MENU_CHANGEACTION(ui_menu_ext_temp2,UI_TEXT_EXTR2_TEMP,UI_ACTION_EXTRUDER2_TEMP)
-UI_MENU_ACTIONCOMMAND(ui_menu_ext_sel2,UI_TEXT_EXTR2_SELECT,UI_ACTION_SELECT_EXTRUDER2)
-UI_MENU_ACTIONCOMMAND(ui_menu_ext_off2,UI_TEXT_EXTR2_OFF,UI_ACTION_EXTRUDER2_OFF)
-#define UI_MENU_EXTCOND &ui_menu_ext_temp0,&ui_menu_ext_temp1,&ui_menu_ext_temp2,&ui_menu_ext_off0,&ui_menu_ext_off1,&ui_menu_ext_off2,&ui_menu_ext_sel0,&ui_menu_ext_sel1,&ui_menu_ext_sel1,
-#define UI_MENU_EXTCNT 9
 #else
 #define UI_MENU_EXTCOND &ui_menu_ext_temp0,&ui_menu_ext_off0,
 #define UI_MENU_EXTCNT 2
