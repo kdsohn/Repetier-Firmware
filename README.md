@@ -16,7 +16,7 @@ https://github.com/RF1000/Repetier-Firmware (see branch development)
 ## HowTo Install
 
 - Download the Firmware `Branch: community_development` and unzip all the files.  
-- Install Arduino.cc 1.6.5 or 1.8.4 and later if it is not installed on your computer already.  
+- Install Arduino.cc 1.6.5 or 1.8.5 and later if it is not installed on your computer already.  
 - Edit and save Configuration.h @Line46 and 47 according to your printers model. You have to remove the two **//** in front of the printers name you wish to activate:  
 `#define MOTHERBOARD                         DEVICE_TYPE_RF1000` or  
 `#define MOTHERBOARD                         DEVICE_TYPE_RF2000`
@@ -28,17 +28,25 @@ Board: `Arduino Mega 2560 or Mega ADK`,
 Processor: `ATMega 2560 (Mega 2560)`,  
 Port: Your printers Port like `COM3`, if successfully connected.
 - **Check** and **Upload** the Firmware to your Printer.
+
+## compiled Hex-Files / automatic build system
+
+You want to get precompiled firmware images with stock settings? Visit this website https://jenkins.beta-centauri.de/view/Repetier/ . You will find two versions, one is "stable" the other one is marked as "development".
+Find more information and discussion here: http://www.rf1000.de/viewtopic.php?f=7&t=2057
+Using linux you can flash the .hex-files to your printer with this command:
+```avrdude -patmega2560 -cwiring -P/dev/ttyUSB0 -b115200 -D -Uflash:w:Repetier.hex:i``` 
+
 ## If you upgrade to this Version from 1.37r or earlier please do a fresh M303 PID-Autotune on all heaters!  
-- RF2000/RF1000 extruder 1: `M303 P0 X0 S230 R10 J1`
-- RF2000 extruder 2: `M303 P1 X0 S230 R10 J1`
-- RF2000 heated bed: `M303 P2 X0 S70 R15 J3`
-- RF1000 heated bed: `M303 P1 X0 S70 R15 J3`  
-And start with EEPROM-values `PID drive min = 5` and `PID drive max = 100`  
-Or set #define PID_CONTROL_DRIVE_MIN_LIMIT_FACTOR to 10.0f in configuration.h to use the old version PID-control.
+- RF2000/RF1000 Extruder left: Menu -> Configuration -> Temperatures -> Extruder 0 -> PID Pessen-Rule  
+- RF2000 Extruder right:       Menu -> Configuration -> Temperatures -> Extruder 1 -> PID Pessen-Rule  
+- RF2000/RF1000 Heated Bed:    Menu -> Configuration -> Temperatures -> Heated Bed -> PID Tyreus-Lyben  
+Start with an integral limit with EEPROM-values of `PID I drive min = 30` and `PID I drive max = 120`  
+- Menu -> Configuration -> Temperatures -> (...) -> I-drive min = 20 .. 30  
+- Menu -> Configuration -> Temperatures -> (...) -> I-drive max = 100 .. 130  
 
-## Version RF.01.37mod 
+## Version 1.39+.Mod
 
-See:  
+http://www.rf1000.de/viewtopic.php?f=67&t=2043 (Thread to Stable 1.37v8 / 18.10.2017)
 http://www.rf1000.de/viewtopic.php?f=74&t=1674 (Nibbels/Wessix SenseOffset-Thread)  
 http://www.rf1000.de/viewtopic.php?f=7&t=1504#p14882 (mhier Mod)  
 http://www.rf1000.de/viewtopic.php?f=7&t=1504&start=60#p16397 (added feature)  
@@ -75,6 +83,8 @@ M3902 Zn.n          - to add an Offset to the Matrix. n.n = {-0.2 .. 0.2} [mm]
 M3902 Z0            - to shift your active zOffset to the zMatrix. The M3006 zOffset will be zero afterwards. The zMatrix is altered within Ram and might be saved to EEPROM[n] with M3902 S[n] afterwards.  
 M3902 Sn            - to save the active Matrix to position n = {1..9}  
 M3902 Z0 S1         - to shift the zOffset to your zMatrix and save the Matrix at position 1. This is an example to show that the options of M3902 can be combined.  
+M3911 S6000 P9000 E-30 - to limit extrusion when getting high digits because of overextrusion (Example: -10% per 1000 digits starting from 6000 digits)  
+M3911 S6000 P9000 F-30 - to limit speed when getting high digits (Example: -10% per 1000 digits starting from 6000 digits) M3911 is adjustable at runtime within menus Configuration -> DMS Features -> Digit Flow CMP (No EEPROM-support!)  
 M3939 Fn St1 Pt2 Ex Iy Rm   - to messure a curve of your Filaments velocity over digits -> viscosity.  
 
 M3920 Sb - to go into or switch back from SilentMode (This will lower your steppers current to an alternative profile)  
@@ -86,6 +96,7 @@ Listed all spare pins for RF1000 or RF2000.
 Fixed the RF2000's Status Message length to 20chars.  
 Fix for M3117
 Third Z-Scale Mode: G-Code @ Configuration->Z-Configuration->Z-Scale.
+(+ massive bug elimination on several places within the firmwares code)
 
 _by Nibbels/Wessix_:  
 M3909 Pn Sm         - See "Nibbels/Wessix SenseOffset"  
@@ -172,7 +183,8 @@ Menü -> Configuration -> Stepper :: DblFq = 6500 or {5000...12000}
 
 ## Configurable temperature settings within menu and EEPROM  
 PID-Autotune, other controlparameters and the sensortype is adjustable within the menu.  
-Menü -> Configuration -> Temperatures -> Extruder0/Extruder1/Heizbett  
+Menü -> Configuration -> Temperatures -> Extruder0/Extruder1/Heizbett -> Sensortype: {1=Pico/Reprap, 3=EPCOS G550, 8=104-GT2, 14=3950-100k}  
+In case you need other sensor types see RF1000.h / RF2000.h and edit it within EEPROM.
 
 ## Dualhead Tip-Down Support (beta)
 * M3919 [S]mikrometer - Testfunction for Dip-Down-Hotend @ T1: T1 can now be springloaded and the bed will be adjusted "down" whenever T1 is selected. This is alike Ultimaker 3 does it with the right hotend.   
@@ -182,9 +194,9 @@ Example: M3919 T1 Z-0.6 tells the Printer that the right hotend will reach 0.6mm
 ## Feature Digit-Z-Kompensation (beta)
 If you apply force to the DMS sensors the bed is adjusted (if Z-Compensation is active). This corrects the error which bending of the sensors apply to your layers. The physical change of the beds level is approximately +0,01mm for +1000 applied force (digits).
 
-## RF2000: Additional Temperature Sensor
-This optional 3rd temperature T3 is automatically sent out with the other Temperatures and Digits.  
-``` 15:16:14.637: T:204.67 /205 B:28.60 /20 B@:0 @:143 T0:28.60 /0 @0:0 T1:204.67 /205 @1:143 T3:28.23 F:322 ```
+## RF2000: Additional Temperature Sensor for heated chamger  
+This optional 3rd temperature C is automatically sent out with the other Temperatures and Digits.  
+Example: ``` 22:09:24.271: T:21.7 /0 @:0 B:20.6 /0 B@:0 T0:21.7 /0 @0:0 T1:23.2 /0 @1:0 C:21.5 /0 C@:0 F:-173 /0 @:0 ```  
 See RESERVE_ANALOG_SENSOR_TYPE in RF2000.h for configuration options.  
 See RESERVE_ANALOG_INPUTS to find the involved code within the firmware.  
 You will need to install and additional cable and a temperature sensor at X35 on your printers Board. Then you can wire your sensor to some place needed.  
@@ -196,8 +208,8 @@ Additions to GCode M303:
 [J0] Classic PID  
 [J1] Pessen Integral Rule (suggested for Hotend)  
 [J2] Some Overshoot  
-[J3] No Overshoot (suggested for Heated Bed)  
-[J4] until [J6] are PD, PI, P-Profiles for control experts and special cases.  
+[J3] No Overshoot  
+[J4] Tyreus-Luyben (suggested for Heated Bed)  
 [Rn] Configurable Autotune cycles  
 Easy autotune support via printers menu.  
 Siehe auch http://www.rf1000.de/viewtopic.php?f=7&t=1963  
@@ -208,6 +220,4 @@ Lower motor current on both extruders while paused to prevent unnecessary heat t
 Manual extrusion when paused resets automatic retract for continue.
 
 ## Wessix`s help video:
-[![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)
-
-## !! 22.08.2017: Project is Work in Progress and untested changes are possible.
+[![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)  

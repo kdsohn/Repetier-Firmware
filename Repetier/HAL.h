@@ -472,7 +472,7 @@ public:
 
     } // mulu16xu16to32
 
-    // Multiply two 16 bit values and return 32 bit result
+    // Multiply two 16 bit values and return 16 bit result
     static inline unsigned int mulu6xu16shift16(unsigned int a,unsigned int b)
     {
         unsigned int res;
@@ -598,6 +598,9 @@ public:
 
     } // eprGetFloat
 
+    // Faster version of InterruptProtectedBlock.
+    // For safety it may only be called from within an
+    // interrupt handler.
     static inline void allowInterrupts()
     {
         sei();

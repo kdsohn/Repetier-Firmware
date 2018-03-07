@@ -23,7 +23,7 @@ class Commands
 {
 public:
     static void commandLoop();
-    static void checkForPeriodicalActions();
+    static void checkForPeriodicalActions( enum FirmwareState state = NotBusy );
     static void executeGCode(GCode *com);
     static void waitUntilEndOfAllMoves();
     static void waitUntilEndOfAllBuffers(unsigned int maxcodes = 0);
@@ -31,7 +31,7 @@ public:
     static void printCurrentPosition();
     static void printTemperatures(bool showRaw = false);
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
-    static void setFanSpeed(int speed,bool wait); /// Set fan speed 0..255
+    static void setFanSpeed(int speed); /// Set fan speed 0..255
     static void adjustFanFrequency(uint8_t speed_mode);
     static void adjustFanMode(uint8_t output_mode = 0);
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL

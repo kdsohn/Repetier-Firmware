@@ -30,7 +30,7 @@ extern uint8_t  manageMonitor;
 
 #define TEMPERATURE_CONTROLLER_FLAG_ALARM 1
 /** TemperatureController manages one heater-temperature sensore loop. You can have up to
-4 loops allowing pid/bang bang for up to 3 extruder and the heated bed.
+4 loops allowing pid for up to 3 extruder and the heated bed.
 
 */
 class TemperatureController
@@ -49,7 +49,6 @@ public:
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
 
     uint32_t    lastTemperatureUpdate;  ///< Time in millis of the last temperature update.
-    int8_t      heatManager;            ///< How is temperature controled. 0 = on/off, 1 = PID-Control, 3 = dead time control
 
     float       tempIState;             ///< Temp. var. for PID computation.
     uint8_t     pidDriveMax;            ///< Used for windup in PID calculation.
@@ -70,7 +69,7 @@ public:
     void updateTempControlVars();
     inline bool isAlarm() {return flags & TEMPERATURE_CONTROLLER_FLAG_ALARM;}
     inline void setAlarm(bool on) {if(on) flags |= TEMPERATURE_CONTROLLER_FLAG_ALARM; else flags &= ~TEMPERATURE_CONTROLLER_FLAG_ALARM;}
-    void waitForTargetTemperature();
+    void waitForTargetTemperature(uint8_t plus_temp_tolerance = 0);
     void autotunePID(float temp, uint8_t controllerId, int maxCycles, bool storeResult, int method);
 }; // TemperatureController
 
@@ -134,7 +133,7 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
     /** \brief Sends the high-signal to the stepper for next extruder step.
     Call this function only, if interrupts are disabled.
     */
-    static inline void step()
+    static INLINE void step()
     {
 #if NUM_EXTRUDER==1
         WRITE(EXT0_STEP_PIN,HIGH);
@@ -163,38 +162,6 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
                 break;
             }
 #endif // defined(EXT1_STEP_PIN) && NUM_EXTRUDER>1
-
-#if defined(EXT2_STEP_PIN) && NUM_EXTRUDER>2
-            case 2:
-            {
-                WRITE(EXT2_STEP_PIN,HIGH);
-                break;
-            }
-#endif // defined(EXT2_STEP_PIN) && NUM_EXTRUDER>2
-
-#if defined(EXT3_STEP_PIN) && NUM_EXTRUDER>3
-            case 3:
-            {
-                WRITE(EXT3_STEP_PIN,HIGH);
-                break;
-            }
-#endif // defined(EXT3_STEP_PIN) && NUM_EXTRUDER>3
-
-#if defined(EXT4_STEP_PIN) && NUM_EXTRUDER>4
-            case 4:
-            {
-                WRITE(EXT4_STEP_PIN,HIGH);
-                break;
-            }
-#endif // defined(EXT4_STEP_PIN) && NUM_EXTRUDER>4
-
-#if defined(EXT5_STEP_PIN) && NUM_EXTRUDER>5
-            case 5:
-            {
-                WRITE(EXT5_STEP_PIN,HIGH);
-                break;
-            }
-#endif // defined(EXT5_STEP_PIN) && NUM_EXTRUDER>5
         }
 #endif
     } // step
@@ -202,7 +169,7 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
     /** \brief Sets stepper signal to low for current extruder.
     Call this function only, if interrupts are disabled.
     */
-    static inline void unstep()
+    static INLINE void unstep()
     {
 #if NUM_EXTRUDER==1
         WRITE(EXT0_STEP_PIN,LOW);
@@ -231,38 +198,6 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
                 break;
             }
 #endif // defined(EXT1_STEP_PIN) && NUM_EXTRUDER>1
-
-#if defined(EXT2_STEP_PIN) && NUM_EXTRUDER>2
-            case 2:
-            {
-                WRITE(EXT2_STEP_PIN,LOW);
-                break;
-            }
-#endif // defined(EXT2_STEP_PIN) && NUM_EXTRUDER>2
-
-#if defined(EXT3_STEP_PIN) && NUM_EXTRUDER>3
-            case 3:
-            {
-                WRITE(EXT3_STEP_PIN,LOW);
-                break;
-            }
-#endif // defined(EXT3_STEP_PIN) && NUM_EXTRUDER>3
-
-#if defined(EXT4_STEP_PIN) && NUM_EXTRUDER>4
-            case 4:
-            {
-                WRITE(EXT4_STEP_PIN,LOW);
-                break;
-            }
-#endif // defined(EXT4_STEP_PIN) && NUM_EXTRUDER>4
-
-#if defined(EXT5_STEP_PIN) && NUM_EXTRUDER>5
-            case 5:
-            {
-                WRITE(EXT5_STEP_PIN,LOW);
-                break;
-            }
-#endif // defined(EXT5_STEP_PIN) && NUM_EXTRUDER>5
         }
 #endif // NUM_EXTRUDER==1
 
@@ -322,50 +257,6 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
                 break;
             }
 #endif // defined(EXT1_DIR_PIN) && NUM_EXTRUDER>1
-
-#if defined(EXT2_DIR_PIN) && NUM_EXTRUDER>2
-            case 2:
-            {
-                if(dir)
-                    WRITE(EXT2_DIR_PIN,!EXT2_INVERSE);
-                else
-                    WRITE(EXT2_DIR_PIN,EXT2_INVERSE);
-                break;
-            }
-#endif // defined(EXT2_DIR_PIN) && NUM_EXTRUDER>2
-
-#if defined(EXT3_DIR_PIN) && NUM_EXTRUDER>3
-            case 3:
-            {
-                if(dir)
-                    WRITE(EXT3_DIR_PIN,!EXT3_INVERSE);
-                else
-                    WRITE(EXT3_DIR_PIN,EXT3_INVERSE);
-                break;
-            }
-#endif // defined(EXT3_DIR_PIN) && NUM_EXTRUDER>3
-
-#if defined(EXT4_DIR_PIN) && NUM_EXTRUDER>4
-            case 4:
-            {
-                if(dir)
-                    WRITE(EXT4_DIR_PIN,!EXT4_INVERSE);
-                else
-                    WRITE(EXT4_DIR_PIN,EXT4_INVERSE);
-                break;
-            }
-#endif // defined(EXT4_DIR_PIN) && NUM_EXTRUDER>4
-
-#if defined(EXT5_DIR_PIN) && NUM_EXTRUDER>5
-            case 5:
-            {
-                if(dir)
-                    WRITE(EXT5_DIR_PIN,!EXT5_INVERSE);
-                else
-                    WRITE(EXT5_DIR_PIN,EXT5_INVERSE);
-                break;
-            }
-#endif // defined(EXT5_DIR_PIN) && NUM_EXTRUDER>5
         }
 #endif // NUM_EXTRUDER>0
 
@@ -380,13 +271,13 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
 #endif // EXT0_ENABLE_PIN>-1
 #else
         if(Extruder::current->enablePin > -1)
-            digitalWrite(Extruder::current->enablePin,Extruder::current->enableOn);
+            HAL::digitalWrite(Extruder::current->enablePin,Extruder::current->enableOn);
 
 #if FEATURE_DITTO_PRINTING
         if(Extruder::dittoMode)
         {
             if(extruder[1].enablePin > -1)
-                digitalWrite(extruder[1].enablePin,extruder[1].enableOn);
+                HAL::digitalWrite(extruder[1].enablePin,extruder[1].enableOn);
         }
 #endif // FEATURE_DITTO_PRINTING
 #endif // NUM_EXTRUDER==1
@@ -407,9 +298,10 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
     static void disableAllHeater();
     static void initExtruder();
     static void initHeatedBed();
-    static void setHeatedBedTemperature(float temp_celsius,bool beep = false);
+    static void setHeatedBedTemperature(float temperatureInCelsius,bool beep = false);
     static float getHeatedBedTemperature();
-    static void setTemperatureForExtruder(float temp_celsius,uint8_t extr,bool beep = false);
+    static void setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr,bool beep = false);
+    static void setTemperatureForAllExtruders(float temperatureInCelsius, bool beep);
 
 }; // Extruder
 

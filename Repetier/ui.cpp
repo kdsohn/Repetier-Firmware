@@ -231,6 +231,86 @@ const long baudrates[] PROGMEM = {9600,14400,19200,28800,38400,56000,57600,76800
                                   460800,500000,921600,1000000,1500000,0
                                  };
 
+
+const byte c1[8] PROGMEM = {
+  B00000,
+  B00000,
+  B00000,
+  B00000,
+  B00001,
+  B00010,
+  B00011,
+  B00011
+};
+
+const byte c2[8] PROGMEM = {
+  B00000,
+  B00000,
+  B00101,
+  B01011,
+  B01111,
+  B10111,
+  B11111,
+  B11110
+};
+
+const byte c3[8] PROGMEM = {
+  B00000,
+  B01001,
+  B10110,
+  B01111,
+  B11111,
+  B11111,
+  B00111,
+  B00011
+};
+
+const byte c4[8] PROGMEM = {
+  B01111,
+  B01011,
+  B01111,
+  B01111,
+  B10111,
+  B10111,
+  B01111,
+  B10111
+};
+
+const byte c7[8] PROGMEM = {
+  B01111,
+  B10111,
+  B01011,
+  B00111,
+  B00001,
+  B00011,
+  B00000,
+  B00000
+};
+
+const byte c8[8] PROGMEM = {
+  B00000,
+  B11000,
+  B11000,
+  B11100,
+  B11110,
+  B11111,
+  B11111,
+  B00111
+};
+
+const byte c9[8] PROGMEM = {
+  B00000,
+  B00000,
+  B00001,
+  B00011,
+  B10111,
+  B11111,
+  B11111,
+  B11110
+};
+
+bool normalchars = false;
+
 #define LCD_ENTRYMODE       0x04                    /**< Set entrymode */
 
 /** @name GENERAL COMMANDS */
@@ -356,8 +436,28 @@ void lcdWriteByte(uint8_t c,uint8_t rs)
 
 } // lcdWriteByte
 
+void initCspecchars(){
+    uid.createChar(1,c1);
+    uid.createChar(2,c2);
+    uid.createChar(3,c3);
+    uid.createChar(4,c4);
+    uid.createChar(5,c7);
+    uid.createChar(6,c8);
+    uid.createChar(7,c9);
+    normalchars = false;
+}
+void initNSpecchars(){
+    uid.createChar(1,character_back);
+    uid.createChar(2,character_degree);
+    uid.createChar(3,character_selected);
+    uid.createChar(4,character_unselected);
+    uid.createChar(5,character_temperature);
+    uid.createChar(6,character_folder);
+    uid.createChar(7,character_ready);
+    normalchars = true; 
+}
 
-void initializeLCD()
+void initializeLCD(bool normal)
 {
     // bring all display pins into a defined state
     SET_INPUT(UI_DISPLAY_D4_PIN);
@@ -422,14 +522,9 @@ void initializeLCD()
     lcdCommand(LCD_INCREASE | LCD_DISPLAYSHIFTOFF); //- Entrymode (Display Shift: off, Increment Address Counter)
     lcdCommand(LCD_DISPLAYON | LCD_CURSOROFF | LCD_BLINKINGOFF);    //- Display on
     uid.lastSwitch = uid.lastRefresh = HAL::timeInMilliseconds();
-    uid.createChar(1,character_back);
-    uid.createChar(2,character_degree);
-    uid.createChar(3,character_selected);
-    uid.createChar(4,character_unselected);
-    uid.createChar(5,character_temperature);
-    uid.createChar(6,character_folder);
-    uid.createChar(7,character_ready);
-
+    if(normal){
+        initNSpecchars();
+    }
 } // initializeLCD
 
 // ----------- end direct LCD driver
@@ -455,11 +550,19 @@ void UIDisplay::printRow(uint8_t r,char *txt,char *txt2,uint8_t changeAtCol)
     {
         txt++;
         lcdPutChar(c);
+#if FEATURE_SEE_DISPLAY
+        //cache whatever you write to the display!
+        displayCache[r][col] = c;
+#endif //FEATURE_SEE_DISPLAY
         col++;
     }
     while(col<changeAtCol)
     {
         lcdPutChar(' ');
+#if FEATURE_SEE_DISPLAY
+        //cache whatever you write to the display!
+        displayCache[r][col] = ' ';
+#endif //FEATURE_SEE_DISPLAY
         col++;
     }
     if(txt2!=NULL)
@@ -468,11 +571,19 @@ void UIDisplay::printRow(uint8_t r,char *txt,char *txt2,uint8_t changeAtCol)
         {
             txt2++;
             lcdPutChar(c);
+#if FEATURE_SEE_DISPLAY
+            //cache whatever you write to the display!
+            displayCache[r][col] = c;
+#endif //FEATURE_SEE_DISPLAY
             col++;
         }
         while(col<UI_COLS)
         {
             lcdPutChar(' ');
+#if FEATURE_SEE_DISPLAY
+            //cache whatever you write to the display!
+            displayCache[r][col] = ' ';
+#endif //FEATURE_SEE_DISPLAY
             col++;
         }
     }
@@ -481,13 +592,8 @@ void UIDisplay::printRow(uint8_t r,char *txt,char *txt2,uint8_t changeAtCol)
     lcdStopWrite();
 #endif // UI_DISPLAY_TYPE==3
 
-#if UI_HAS_KEYS==1 && UI_HAS_I2C_ENCODER>0
-    ui_check_slow_encoder();
-#endif // UI_HAS_KEYS==1 && UI_HAS_I2C_ENCODER>0
-
 } // printRow
 #endif // UI_DISPLAY_TYPE<4
-
 
 char printCols[MAX_COLS+1];
 UIDisplay::UIDisplay()
@@ -540,7 +646,8 @@ void UIDisplay::initialize()
 #endif // SDSUPPORT
 
 #if UI_DISPLAY_TYPE>0
-    initializeLCD();
+    initializeLCD(false);
+    initCspecchars();
 
 #if UI_ANIMATION==false || UI_DISPLAY_TYPE==5
 #if UI_DISPLAY_TYPE == 5
@@ -551,11 +658,13 @@ void UIDisplay::initialize()
 #endif // UI_DISPLAY_TYPE == 5
 
         for(uint8_t y=0; y<UI_ROWS; y++) displayCache[y][0] = 0;
-        printRowP(0, versionString);
-        printRowP(1, PSTR(UI_PRINTER_NAME));
-
+        printRowP(0, PSTR(BIGC0) );
+        printRowP(1, PSTR(BIGC1) );
+#if UI_ROWS>3
+        printRowP(UI_ROWS-2, PSTR(BIGC2) );
+#endif // UI_ROWS>3
 #if UI_ROWS>2
-        printRowP(UI_ROWS-1, PSTR(UI_PRINTER_COMPANY));
+        printRowP(UI_ROWS-1, PSTR(BIGC3) );
 #endif // UI_ROWS>2
 
 #if UI_DISPLAY_TYPE == 5
@@ -574,7 +683,6 @@ void UIDisplay::initialize()
 #endif // UI_ROWS>2
 #endif // UI_ANIMATION==false || UI_DISPLAY_TYPE==5
 
-    HAL::delayMilliseconds(UI_START_SCREEN_DELAY);
 #endif // UI_DISPLAY_TYPE>0
 
 #if UI_DISPLAY_I2C_CHIPTYPE==0 && (BEEPER_TYPE==2 || defined(UI_HAS_I2C_KEYS))
@@ -709,7 +817,7 @@ void UIDisplay::addLong(long value,char digits)
 } // addLong
 
 
-const float roundingTable[] PROGMEM = {0.5,0.05,0.005,0.0005};
+const float roundingTable[] PROGMEM = {0.5,0.05,0.005,0.0005,0.00005};
 void UIDisplay::addFloat(float number, char fixdigits,uint8_t digits)
 {
     if(col>=MAX_COLS) return;
@@ -721,6 +829,8 @@ void UIDisplay::addFloat(float number, char fixdigits,uint8_t digits)
         number = -number;
         fixdigits--;
     }
+
+    digits = (digits <= 4 ? digits : 4);
     number += pgm_read_float(&roundingTable[digits]); // for correct rounding
 
     // Extract the integer part of the number and print it
@@ -943,19 +1053,34 @@ void UIDisplay::parse(char *txt,bool ram)
                 break;
             }
 
-#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
             case 'F': // FAN speed
             {
-                if(c2=='s') addInt(Printer::getFanSpeed(true), 3);                                       // %Fs : Fan speed in Percent
-                if(c2=='h') addInt((1 << cooler_pwm_speed)*15, 3);                                       // %Fh : Fan frequency in Hz --> Wert passt grob, ist aber nicht exakt! F_CPU/3906/255*mode...
-                if(c2=='m'){                                                                             // %Fm : Fan modulation type PWM or PDM
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+                if(c2=='s') {                                                                           // %Fs : Fan speed in Percent
+                    addFloat(Printer::getFanSpeed(false)/2.55f,3,1); 
+                }
+                else if(c2=='h') {                                                                      // %Fh : Fan frequency in Hz --> Wert passt grob, ist aber nicht exakt! F_CPU/3906/255*mode...
+                    addInt((1 << cooler_pwm_speed)*15, 3); 
+                }
+                else if(c2=='m'){                                                                       // %Fm : Fan modulation type PWM or PDM
                     if(cooler_mode == COOLER_MODE_PDM) addStringP( PSTR("PDM") );
                     else                               addStringP( PSTR("PWM") );
                 }
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
+#if FEATURE_ZERO_DIGITS
+                if(c2=='H')                                                                             // %FH : Digit Homing to Zero ON/OFF
+                {
+                    addStringP(Printer::g_pressure_offset_active ? ui_text_on : ui_text_off);
+                }
+#endif // FEATURE_ZERO_DIGITS
+#if FEATURE_DIGIT_Z_COMPENSATION
+                if(c2=='C')                                                                             // %FC : Digits force-bend-hotend-down Compensation Z ON/OFF
+                {
+                    addStringP(g_nDigitZCompensationDigits_active ? ui_text_on : ui_text_off);
+                }
+#endif // FEATURE_DIGIT_Z_COMPENSATION
                 break;
             }
-#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
-
             case 'f':
             {
                 if(c2=='x') addFloat(Printer::maxFeedrate[X_AXIS],5,0);                                 // %fx : Max. feedrate x direction
@@ -1037,7 +1162,7 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 else if(c2=='a' && col<MAX_COLS)                                                                             // %ha : all homed      
                 {
-                    if(Printer::flag3 & PRINTER_FLAG3_X_HOMED && Printer::flag3 & PRINTER_FLAG3_Y_HOMED && Printer::flag3 & PRINTER_FLAG3_Z_HOMED && Printer::flag1 & PRINTER_FLAG1_HOMED) printCols[col++]='*';
+                    if(Printer::flag3 & PRINTER_FLAG3_X_HOMED && Printer::flag3 & PRINTER_FLAG3_Y_HOMED && Printer::flag3 & PRINTER_FLAG3_Z_HOMED) printCols[col++]='*';
                 }
                 break;
             }
@@ -1249,20 +1374,38 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 if(c2=='f')                                                                             // %of : flow multiplier
                 {
-                    addInt(Printer::extrudeMultiply,3);
+                    addInt(Printer::extrudeMultiply
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_flowmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+                    ,3);
                     break;
                 }
                 if(c2=='m')                                                                             // %om : Speed multiplier
                 {
-                    addInt(Printer::feedrateMultiply,3);
+                    addInt(Printer::feedrateMultiply
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_feedmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+                    ,3);
+                    break;
+                }
+                if(c2=='v')                                                                             // %ov : Active Speed
+                {
+                    addFloat(Printer::v
+ #if FEATURE_DIGIT_FLOW_COMPENSATION
+                            * g_nDigitFlowCompensation_feedmulti
+ #endif // FEATURE_DIGIT_FLOW_COMPENSATION
+                    ,3,2);
                     break;
                 }
                 if(c2=='p')                                                                             // %op : Is single double or quadstepping?
                 {
                     switch(Printer::stepsPerTimerCall){
-                        case 1: addStringP( PSTR(" Sgl") ); break; //kein double oder quadstepping
-                        case 2: addStringP( PSTR(" Dbl") ); break; //kein double oder quadstepping
-                        case 4: addStringP( PSTR(" Qud") ); break; //kein double oder quadstepping
+                        case 1: addStringP( PSTR(" Sgl") ); break; //Single Stepping aktiv
+                        case 2: addStringP( PSTR(" Dbl") ); break; //Double Stepping aktiv
+                        case 4: addStringP( PSTR(" Qud") ); break; //Quad Stepping aktiv
+                        case 8: addStringP( PSTR(" Oct") ); break; //Octo Stepping aktiv
                     }
                     break;
                 }
@@ -1492,8 +1635,8 @@ void UIDisplay::parse(char *txt,bool ram)
                                 addStringP( PSTR(UI_TEXT_SENSOR_8) );
                                 break;
                             }
-                            case 14: {
-                                addStringP( PSTR(UI_TEXT_SENSOR_14) );
+                            case 13: {
+                                addStringP( PSTR(UI_TEXT_SENSOR_13) );
                                 break;
                             }
                         }
@@ -1517,19 +1660,6 @@ void UIDisplay::parse(char *txt,bool ram)
                     addInt(Extruder::current->waitRetractUnits,2);
                 }
 #endif // RETRACT_DURING_HEATUP
-
-                else if(c2=='h')                                                                        // %Xh : Extruder heat manager (BangBang/PID)
-                {
-                    uint8_t hm = Extruder::current->tempControl.heatManager;
-                    if(hm == 1)
-                        addStringP(PSTR(UI_TEXT_STRING_HM_PID));
-                    else if(hm == 3)
-                        addStringP(PSTR(UI_TEXT_STRING_HM_DEADTIME));
-                    else if(hm == 2)
-                        addStringP(PSTR(UI_TEXT_STRING_HM_SLOWBANG));
-                    else
-                        addStringP(PSTR(UI_TEXT_STRING_HM_BANGBANG));
-                }
 
 #if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
@@ -1568,10 +1698,9 @@ void UIDisplay::parse(char *txt,bool ram)
 #endif // NUM_EXTRUDER>0
                 else if(c2 == 'g')                                                                      // %Xg : Printer::stepsDoublerFrequency 
                 {
-                    addInt(Printer::stepsDoublerFrequency,5);
+                    addInt(Printer::stepsDoublerFrequency,4);
                     addStringP( PSTR(" ") );
-                    addFloat(Printer::stepsDoublerFrequency/RMath::max(XAXIS_STEPS_PER_MM,YAXIS_STEPS_PER_MM),3,0);
-                    addStringP( PSTR("mm/s") );
+                    addInt(int(Printer::stepsDoublerFrequency/RMath::max(XAXIS_STEPS_PER_MM,YAXIS_STEPS_PER_MM)),2);
                 }
 #if FEATURE_MILLING_MODE
                 else if(c2=='Z')                                                                        // %XZ : Milling special max. acceleration
@@ -1692,7 +1821,7 @@ void UIDisplay::parse(char *txt,bool ram)
                         else addStringP( PSTR( "@" ));
                         addInt((int)g_nSensiblePressureDigits,5);
                     }else{
-                        addStringP(ui_text_off);                
+                        addStringP(ui_text_off);
                     }
 #endif // FEATURE_SENSIBLE_PRESSURE
                 }
@@ -1706,9 +1835,9 @@ void UIDisplay::parse(char *txt,bool ram)
             }
             case 'S':
             {
-                if(c2=='0')      addFloat(extruder[0].stepsPerMM,4,0);                                                // %S0 : Steps per mm extruder0
-                else if(c2=='1') addFloat(extruder[1].stepsPerMM,4,0);                                                // %S1 : Steps per mm extruder1
-                else if(c2=='e') addFloat(Extruder::current->stepsPerMM,3,1);                                         // %Se : Steps per mm current extruder
+                if(c2=='0')      addFloat(extruder[0].stepsPerMM,3,0);                                                // %S0 : Steps per mm extruder0
+                else if(c2=='1') addFloat(extruder[1].stepsPerMM,3,0);                                                // %S1 : Steps per mm extruder1
+                else if(c2=='e') addFloat(Extruder::current->stepsPerMM,3,0);                                         // %Se : Steps per mm current extruder
                 else if(c2=='z') addFloat(g_nManualSteps[Z_AXIS] * Printer::invAxisStepsPerMM[Z_AXIS] * 1000,4,0);    // %Sz : Mikrometer per Z-Single_Step (Z_Axis)
                 else if(c2=='M' && col<MAX_COLS) if(g_ZMatrixChangedInRam) printCols[col++]='*';                      // %SM : Matrix has changed in Ram and is ready to Save. -> *)
                 break;
@@ -1843,6 +1972,7 @@ void UIDisplay::parse(char *txt,bool ram)
             {
                 if(c2=='1')                                                                             // temperature icon
                 {
+                    if(!normalchars) initNSpecchars();
                     addStringP(PSTR("\005"));
                 }
                 else if(c2=='2')                                                                             // replace line with new line
@@ -1877,8 +2007,8 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 break;
             }
-#if FEATURE_READ_CALIPER
             case 'C':{
+#if FEATURE_READ_CALIPER
                 if(c2=='a')                                                                             // %Ca : Caliper Active Reading
                 {
                     addLong(abs(caliper_um)+caliper_collect_adjust,5);
@@ -1905,9 +2035,61 @@ void UIDisplay::parse(char *txt,bool ram)
                         addInt(100,3);
                     }
                 }
+#endif //FEATURE_READ_CALIPER
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+                if(c2=='U')                                                                        // %CU : digit flow lower limit
+                {
+                    addInt((int)g_nDigitFlowCompensation_Fmin,5);
+                }
+                else if(c2=='O')                                                                        // %CO : digit flow higher limit
+                {
+                    addInt((int)g_nDigitFlowCompensation_Fmax,5);
+                }
+                else if(c2=='F')                                                                        // %CF : digit flow flowrate
+                {
+                    addInt((int)g_nDigitFlowCompensation_intense,3); //eigentlcih sollten wir F und E hier tauschen... egal.
+                }
+                else if(c2=='E')                                                                        // %CE : digit flow feedrate
+                {
+                    addInt((int)g_nDigitFlowCompensation_speed_intense,3);
+                }
+#endif // FEATURE_DIGIT_FLOW_COMPENSATION
                 break;
             }
-#endif //FEATURE_READ_CALIPER
+            case 'L':
+            {
+                if(c2=='L')                                                                             // %LL : Last Layer (Direct + Queue + Extr. Zoffset)
+                {
+                    addFloat(float(Printer::queuePositionZLayerLast*Printer::invAxisStepsPerMM[Z_AXIS]),3,2);
+                    break;
+                }
+                else if(c2=='C')                                                                        // %LC : Current Layer (Direct + Queue + Extr. Zoffset)
+                {
+                    addFloat(float(Printer::queuePositionZLayerCurrent*Printer::invAxisStepsPerMM[Z_AXIS]),3,2);
+                    break;
+                }
+                else if(c2=='H')                                                                        // %LH : Layer Height
+                {
+                    addFloat(float(Printer::queuePositionZLayerCurrent-Printer::queuePositionZLayerLast)*Printer::invAxisStepsPerMM[Z_AXIS],1,2);
+                    break;
+                }
+                else if(c2=='P')                                                                        // %LP : ECMP %
+                {
+                    addFloat(Printer::compensatedPositionOverPercE*100,1,2);
+                    break;
+                }
+                else if(c2=='m')                                                                        // %Lm : g_minZCompensationSteps
+                {
+                    addFloat(float(g_minZCompensationSteps*Printer::invAxisStepsPerMM[Z_AXIS]),1,2);
+                    break;
+                }
+                else if(c2=='M')                                                                        // %LM : g_maxZCompensationSteps
+                {
+                    addFloat(float(g_maxZCompensationSteps*Printer::invAxisStepsPerMM[Z_AXIS]),2,2);
+                    break;
+                }
+                break;
+            }
             case 'Z':                                                                                   // %Z1-Z4: Page5 service intervall, %Z5-Z8: Page4 printing/milling time
             {
                 if(c2=='1')                                                                             // Shows text printing/milling time since last service
@@ -2123,7 +2305,7 @@ void UIDisplay::parse(char *txt,bool ram)
 
 void UIDisplay::setStatusP(PGM_P txt,bool error)
 {
-    if( locked )                    
+    if( locked )
     {
         // we shall not update the display
         return;
@@ -3105,7 +3287,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
         case UI_ACTION_FANSPEED:
         {
-            Commands::setFanSpeed(Printer::getFanSpeed()+increment*3,false);
+            Commands::setFanSpeed(Printer::getFanSpeed()+increment);
             break;
         }
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
@@ -3203,6 +3385,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif // EXTRUDER_ALLOW_COLD_MOVE
             break;
         }
+/*
         case UI_ACTION_ZPOSITION_NOTEST:
         {
             Printer::setNoDestinationCheck(true);
@@ -3230,6 +3413,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
             Printer::setNoDestinationCheck(false);
             break;
         }
+*/
         case UI_ACTION_HEATED_BED_TEMP:
         {
 #if HAVE_HEATED_BED==true
@@ -3494,7 +3678,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
         case UI_ACTION_HOMING_FEEDRATE_X:
         {
-            INCREMENT_MIN_MAX(Printer::homingFeedrate[X_AXIS],5,5,1000);
+            INCREMENT_MIN_MAX(Printer::homingFeedrate[X_AXIS],5,5,MAX_FEEDRATE_X);
 
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
 #if FEATURE_MILLING_MODE
@@ -3516,7 +3700,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
         case UI_ACTION_HOMING_FEEDRATE_Y:
         {
-            INCREMENT_MIN_MAX(Printer::homingFeedrate[Y_AXIS],5,5,1000);
+            INCREMENT_MIN_MAX(Printer::homingFeedrate[Y_AXIS],5,5,MAX_FEEDRATE_Y);
 
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
 #if FEATURE_MILLING_MODE
@@ -3538,7 +3722,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
         case UI_ACTION_HOMING_FEEDRATE_Z:
         {
-            INCREMENT_MIN_MAX(Printer::homingFeedrate[Z_AXIS],5,5,1000);
+            INCREMENT_MIN_MAX(Printer::homingFeedrate[Z_AXIS],1,1,MAX_FEEDRATE_Z);
 
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
 #if FEATURE_MILLING_MODE
@@ -3560,7 +3744,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
         case UI_ACTION_MAX_FEEDRATE_X:
         {
-            INCREMENT_MIN_MAX(Printer::maxFeedrate[X_AXIS],5,1,1000);
+            INCREMENT_MIN_MAX(Printer::maxFeedrate[X_AXIS],5,1,MAX_FEEDRATE_X);
 
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EPR_X_MAX_FEEDRATE,Printer::maxFeedrate[X_AXIS]);
@@ -3571,7 +3755,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
         case UI_ACTION_MAX_FEEDRATE_Y:
         {
-            INCREMENT_MIN_MAX(Printer::maxFeedrate[Y_AXIS],5,1,1000);
+            INCREMENT_MIN_MAX(Printer::maxFeedrate[Y_AXIS],5,1,MAX_FEEDRATE_Y);
 
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
         HAL::eprSetFloat(EPR_Y_MAX_FEEDRATE,Printer::maxFeedrate[Y_AXIS]);
@@ -3582,7 +3766,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
         case UI_ACTION_MAX_FEEDRATE_Z:
         {
-            INCREMENT_MIN_MAX(Printer::maxFeedrate[Z_AXIS],5,1,1000);
+            INCREMENT_MIN_MAX(Printer::maxFeedrate[Z_AXIS],1,1,MAX_FEEDRATE_Z);
 
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EPR_Z_MAX_FEEDRATE,Printer::maxFeedrate[Z_AXIS]);
@@ -3670,7 +3854,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif // FEATURE_RGB_LIGHT_EFFECTS
         case UI_ACTION_EXTR_STEPS_E0:
         {
-           if(g_pauseMode == PAUSE_MODE_NONE && !Printer::isPrinting() ){
+           if( !Printer::isMenuMode(MENU_MODE_PAUSED) && !Printer::isPrinting() ){
             INCREMENT_MIN_MAX(extruder[0].stepsPerMM,1,1,9999);
             if(0 == Extruder::current->id) Extruder::selectExtruderById(Extruder::current->id); //übernehmen der werte
 
@@ -3684,7 +3868,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if NUM_EXTRUDER > 1
         case UI_ACTION_EXTR_STEPS_E1:
         {
-           if(g_pauseMode == PAUSE_MODE_NONE && !Printer::isPrinting()){
+           if( !Printer::isMenuMode(MENU_MODE_PAUSED) && !Printer::isPrinting()){
             INCREMENT_MIN_MAX(extruder[1].stepsPerMM,1,1,9999);
             if(1 == Extruder::current->id) Extruder::selectExtruderById(Extruder::current->id); //übernehmen der werte
 
@@ -3701,6 +3885,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         {
             float step = (extruder[0].advanceL < 20.0f) ? 1.0f : ((extruder[0].advanceL < 50.0f) ? 5.0f : 10.0f);
             INCREMENT_MIN_MAX(extruder[0].advanceL,step,0.0f,250.0f); //Nibbels TODO gute Werte zulassen? Ist Step 1 ok? -> 60 war zu wenig.
+             Printer::updateAdvanceFlags();
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EEPROM::getExtruderOffset(0)+EPR_EXTRUDER_ADVANCE_L,extruder[0].advanceL);
             EEPROM::updateChecksum();
@@ -3712,6 +3897,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         {
             float step = (extruder[1].advanceL < 20.0f) ? 1.0f : ((extruder[1].advanceL < 50.0f) ? 5.0f : 10.0f);
             INCREMENT_MIN_MAX(extruder[1].advanceL,step,0.0f,250.0f); //Nibbels TODO gute Werte zulassen? Ist Step 1 ok? -> 60 war zu wenig.
+             Printer::updateAdvanceFlags();
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EEPROM::getExtruderOffset(1)+EPR_EXTRUDER_ADVANCE_L,extruder[1].advanceL);
             EEPROM::updateChecksum();
@@ -3722,7 +3908,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif //USE_ADVANCE
         case UI_ACTION_EXTR_STEPS:
         {
-           if(g_pauseMode == PAUSE_MODE_NONE && !Printer::isPrinting()){
+           if( !Printer::isMenuMode(MENU_MODE_PAUSED) && !Printer::isPrinting()){
             INCREMENT_MIN_MAX(Extruder::current->stepsPerMM,1,1,9999);
             Extruder::selectExtruderById(Extruder::current->id);
 
@@ -3769,17 +3955,6 @@ void UIDisplay::nextPreviousAction(int8_t next)
 
             break;
         }
-        case UI_ACTION_EXTR_HEATMANAGER:
-        {
-            INCREMENT_MIN_MAX(Extruder::current->tempControl.heatManager,1,0,3);
-
-#if FEATURE_AUTOMATIC_EEPROM_UPDATE
-            HAL::eprSetFloat(EEPROM::getExtruderOffset(Extruder::current->id)+EPR_EXTRUDER_HEAT_MANAGER,Extruder::current->tempControl.heatManager);
-            EEPROM::updateChecksum();
-#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-
-            break;
-        }
         case UI_ACTION_EXTR_WATCH_PERIOD:
         {
             INCREMENT_MIN_MAX(Extruder::current->watchPeriod,1,0,999);
@@ -3816,33 +3991,6 @@ void UIDisplay::nextPreviousAction(int8_t next)
             break;
         }
 #endif // RETRACT_DURING_HEATUP
-
-#if USE_ADVANCE
-#ifdef ENABLE_QUADRATIC_ADVANCE
-        case UI_ACTION_ADVANCE_K:
-        {
-            INCREMENT_MIN_MAX(Extruder::current->advanceK,1,0,200);
-
-#if FEATURE_AUTOMATIC_EEPROM_UPDATE
-            HAL::eprSetFloat(EEPROM::getExtruderOffset(Extruder::current->id)+EPR_EXTRUDER_ADVANCE_K,Extruder::current->advanceK);
-            EEPROM::updateChecksum();
-#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-            break;
-        }
-#endif // ENABLE_QUADRATIC_ADVANCE
-
-        case UI_ACTION_ADVANCE_L:
-        {
-            INCREMENT_MIN_MAX(Extruder::current->advanceL,5,0,600);
-
-#if FEATURE_AUTOMATIC_EEPROM_UPDATE
-            HAL::eprSetFloat(EEPROM::getExtruderOffset(Extruder::current->id)+EPR_EXTRUDER_ADVANCE_L,Extruder::current->advanceL);
-            EEPROM::updateChecksum();
-#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-
-            break;
-        }
-#endif // USE_ADVANCE
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
         case UI_ACTION_RF_SET_Z_MATRIX_WORK_PART:
@@ -3889,11 +4037,13 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
         case UI_ACTION_RF_RESET_ACK:
-        {
-            INCREMENT_MIN_MAX(g_nYesNo,1,0,1);
-            break;
-        }
-        case UI_ACTION_SD_STOP_ACK:
+        case UI_ACTION_STOP_ACK:
+        case UI_ACTION_RESTORE_DEFAULTS:
+        case UI_ACTION_CHOOSE_CLASSICPID:
+        case UI_ACTION_CHOOSE_LESSERINTEGRAL:
+        case UI_ACTION_CHOOSE_SOME:
+        case UI_ACTION_CHOOSE_NO:
+        case UI_ACTION_CHOOSE_TYREUS_LYBEN:
         {
             INCREMENT_MIN_MAX(g_nYesNo,1,0,1);
             break;
@@ -3941,20 +4091,6 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
 #endif //FEATURE_EMERGENCY_STOP_ALL
 
-        case UI_ACTION_RESTORE_DEFAULTS:
-        {
-            INCREMENT_MIN_MAX(g_nYesNo,1,0,1);
-            break;
-        }
-
-        case UI_ACTION_CHOOSE_CLASSICPID:
-        case UI_ACTION_CHOOSE_LESSERINTEGRAL:
-        case UI_ACTION_CHOOSE_SOME:
-        case UI_ACTION_CHOOSE_NO:
-        {
-            INCREMENT_MIN_MAX(g_nYesNo,1,0,1);
-            break;
-        }
         case UI_ACTION_CHOOSE_DMIN:
         {
             if(uid.menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
@@ -4051,15 +4187,15 @@ void UIDisplay::nextPreviousAction(int8_t next)
                         if(increment > 0){
                             switch(drive){
                               case 3: { drive = 8; break; }
-                              case 8: { drive = 14; break; } //add more sensors for menu-tweaking here, those are the most common for RFx000
-                              case 14: { drive = 1; break; }
+                              case 8: { drive = 13; break; } //add more sensors for menu-tweaking here, those are the most common for RFx000
+                              case 13: { drive = 1; break; }
                               default: { drive = 3; break; }
                             }
                         }else{ //== 0 gibts nicht, soweit ich weiß
                             switch(drive){
                               case 3: { drive = 1; break; }
-                              case 1: { drive = 14; break; }
-                              case 14: { drive = 8; break; } //add more sensors for menu-tweaking here, those are the most common for RFx000
+                              case 1: { drive = 13; break; }
+                              case 13: { drive = 8; break; } //add more sensors for menu-tweaking here, those are the most common for RFx000
                               default: { drive = 3; break; }
                             }
                         }
@@ -4097,6 +4233,31 @@ void UIDisplay::nextPreviousAction(int8_t next)
             }
             break;
         }
+#if FEATURE_DIGIT_FLOW_COMPENSATION
+        case UI_ACTION_FLOW_MIN:
+        {
+            INCREMENT_MIN_MAX(g_nDigitFlowCompensation_Fmin,200,0,g_nDigitFlowCompensation_Fmax);
+            break;
+        }
+        case UI_ACTION_FLOW_MAX:
+        {
+            short max = (g_nEmergencyPauseDigitsMax ? abs(g_nEmergencyPauseDigitsMax) : abs(EMERGENCY_PAUSE_DIGITS_MAX));
+            INCREMENT_MIN_MAX(g_nDigitFlowCompensation_Fmax,200,g_nDigitFlowCompensation_Fmin,max);
+            break;
+        }
+        case UI_ACTION_FLOW_DF:
+        {
+            INCREMENT_MIN_MAX(g_nDigitFlowCompensation_intense,1,-99,99);
+            //flowmulti wird zur laufzeit geändert, anhand von steigung intense -> aber je nach cache erst sehr spät.
+            break;
+        }
+        case UI_ACTION_FLOW_DV:
+        {
+            INCREMENT_MIN_MAX(g_nDigitFlowCompensation_speed_intense,1,-90,99);
+            //feedmulti wird zur laufzeit geändert, anhand von steigung intense
+            break;
+        }
+#endif //FEATURE_DIGIT_FLOW_COMPENSATION
         case UI_ACTION_FREQ_DBL:
         {
             INCREMENT_MIN_MAX(Printer::stepsDoublerFrequency,500,5000,12000);
@@ -4154,7 +4315,7 @@ void UIDisplay::finishAction(int action)
         }
 #endif // FEATURE_RESET_VIA_MENU
 
-        case UI_ACTION_SD_STOP_ACK:
+        case UI_ACTION_STOP_ACK:
         {
             if( g_nYesNo != 1 )
             {
@@ -4162,16 +4323,7 @@ void UIDisplay::finishAction(int action)
                 break;
             }
             uid.executeAction(UI_ACTION_TOP_MENU);
-            if( Printer::isMenuMode(MENU_MODE_PRINTING) && !Printer::isMenuMode(MENU_MODE_SD_PRINTING) ) //prüfung auf !sdmode sollte hier eigenlicht nicht mehr nötig sein, aber ..
-            {
-                Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetierserver to stop.
-                Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
-                g_uStartOfIdle = 0;
-                UI_STATUS_UPD( UI_TEXT_OUTPUTTING_OBJECT );
-                Commands::waitUntilEndOfAllBuffers(3*MOVE_CACHE_SIZE); //only wait if chance to have been understood : else break!
-                g_uStartOfIdle = HAL::timeInMilliseconds();
-            }
-            sd.abortPrint();
+            Printer::stopPrint();
             break;
         }
 
@@ -4198,6 +4350,7 @@ void UIDisplay::finishAction(int action)
         case UI_ACTION_CHOOSE_LESSERINTEGRAL:
         case UI_ACTION_CHOOSE_SOME:
         case UI_ACTION_CHOOSE_NO:
+        case UI_ACTION_CHOOSE_TYREUS_LYBEN:
         {
             if( g_nYesNo != 1 )
             {
@@ -4364,11 +4517,7 @@ void UIDisplay::executeAction(int action)
                 if( PrintLine::linesCount )
                 {
                     // do not allow homing via the menu while we are printing
-                    if( Printer::debugErrors() )
-                    {
-                        Com::printFLN( Com::tPrintingIsInProcessError );
-                    }
-
+                    Com::printFLN( Com::tPrintingIsInProcessError );
                     showError( (void*)ui_text_home, (void*)ui_text_operation_denied );
                     break;
                 }
@@ -4376,21 +4525,7 @@ void UIDisplay::executeAction(int action)
                 {
                     break;
                 }
-
-#if FEATURE_CONFIGURABLE_Z_ENDSTOPS
-                if( Printer::ZEndstopUnknown )
-                {
-                    // in case the z-endstop is unknown, we home only in z-direction
-                    Printer::homeAxis(false,false,true);
-                }
-                else
-                {
-                    Printer::homeAxis(true,true,true);
-                }
-#else
                 Printer::homeAxis(true,true,true);
-#endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
                 Commands::printCurrentPosition();
                 break;
             }
@@ -4462,10 +4597,8 @@ void UIDisplay::executeAction(int action)
             }
             case UI_ACTION_SET_XY_ORIGIN:
             {
-                if( Printer::setOrigin(-Printer::queuePositionLastMM[X_AXIS],-Printer::queuePositionLastMM[Y_AXIS],Printer::originOffsetMM[Z_AXIS]) )
-                {
-                    BEEP_ACCEPT_SET_POSITION
-                }
+                Printer::setOrigin(-Printer::queuePositionLastMM[X_AXIS],-Printer::queuePositionLastMM[Y_AXIS],Printer::originOffsetMM[Z_AXIS]);
+                BEEP_ACCEPT_SET_POSITION
                 break;
             }
             case UI_ACTION_DEBUG_ECHO:
@@ -4492,17 +4625,9 @@ void UIDisplay::executeAction(int action)
                 else Printer::debugLevel+=8;
                 if(Printer::debugDryrun())   // simulate movements without printing
                 {
-                    Extruder::setTemperatureForExtruder(0,0);
-#if NUM_EXTRUDER>1
-                    Extruder::setTemperatureForExtruder(0,1);
-#endif // NUM_EXTRUDER>1
-
-#if NUM_EXTRUDER>2
-                    Extruder::setTemperatureForExtruder(0,2);
-#endif // NUM_EXTRUDER>2
-
+                    Extruder::setTemperatureForAllExtruders(0, false);
 #if HAVE_HEATED_BED==true
-                 Extruder::setHeatedBedTemperature(0);
+                    Extruder::setHeatedBedTemperature(0);
 #endif // HAVE_HEATED_BED==true
                 }
                 break;
@@ -4510,7 +4635,7 @@ void UIDisplay::executeAction(int action)
             case UI_ACTION_POWER:
             {
 #if PS_ON_PIN>=0 // avoid compiler errors when the power supply pin is disabled
-                Commands::waitUntilEndOfAllMoves();
+                Commands::waitUntilEndOfAllMoves(); //M80/M81 UI_ACTION_POWER toggle
                 SET_OUTPUT(PS_ON_PIN); //GND
                 TOGGLE(PS_ON_PIN);
 #endif // PS_ON_PIN>=0
@@ -4597,7 +4722,7 @@ void UIDisplay::executeAction(int action)
                 if( PrintLine::linesCount )     deny = 1;   // the operating mode can not be switched while the printing is in progress
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-                if( g_nHeatBedScanStatus || g_ZOSScanStatus )       deny = 1;   // the operating mode can not be switched while a heat bed scan / ZOS is in progress
+                if( g_nHeatBedScanStatus || g_nZOSScanStatus )       deny = 1;   // the operating mode can not be switched while a heat bed scan / ZOS is in progress
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
@@ -4740,16 +4865,7 @@ void UIDisplay::executeAction(int action)
             {
                 g_uStartOfIdle = 0;
                 UI_STATUS_UPD( UI_TEXT_PREHEAT_PLA );
-                Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_PLA,0);
-
-#if NUM_EXTRUDER>1
-                Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_PLA,1);
-#endif // NUM_EXTRUDER>1
-
-#if NUM_EXTRUDER>2
-                Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_PLA,2);
-#endif // NUM_EXTRUDER>2
-
+                Extruder::setTemperatureForAllExtruders(UI_SET_PRESET_EXTRUDER_TEMP_PLA, false);
 #if HAVE_HEATED_BED==true
                 Extruder::setHeatedBedTemperature(UI_SET_PRESET_HEATED_BED_TEMP_PLA);
 #endif // HAVE_HEATED_BED==true
@@ -4760,16 +4876,7 @@ void UIDisplay::executeAction(int action)
             {
                 g_uStartOfIdle = 0;
                 UI_STATUS_UPD( UI_TEXT_PREHEAT_ABS );
-                Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_ABS,0);
-
-#if NUM_EXTRUDER>1
-                Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_ABS,1);
-#endif // NUM_EXTRUDER>1
-
-#if NUM_EXTRUDER>2
-                Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_ABS,2);
-#endif // NUM_EXTRUDER>2
-
+                Extruder::setTemperatureForAllExtruders(UI_SET_PRESET_EXTRUDER_TEMP_ABS, false);
 #if HAVE_HEATED_BED==true
                 Extruder::setHeatedBedTemperature(UI_SET_PRESET_HEATED_BED_TEMP_ABS);
 #endif // HAVE_HEATED_BED==true
@@ -4778,17 +4885,8 @@ void UIDisplay::executeAction(int action)
             }
             case UI_ACTION_COOLDOWN:
             {
-                UI_STATUS_UPD( UI_TEXT_COOLDOWN );
-                Extruder::setTemperatureForExtruder(0,0);
-
-#if NUM_EXTRUDER>1
-                Extruder::setTemperatureForExtruder(0,1);
-#endif // NUM_EXTRUDER>1
-
-#if NUM_EXTRUDER>2
-                Extruder::setTemperatureForExtruder(0,2);
-#endif // NUM_EXTRUDER>2
-
+                UI_STATUS_UPD( UI_TEXT_COOLDOWN );                
+                Extruder::setTemperatureForAllExtruders(0, false);
 #if HAVE_HEATED_BED==true
                 Extruder::setHeatedBedTemperature(0);
 #endif // HAVE_HEATED_BED==true
@@ -4800,7 +4898,6 @@ void UIDisplay::executeAction(int action)
 #if HAVE_HEATED_BED==true
                 Extruder::setHeatedBedTemperature(0);
 #endif // HAVE_HEATED_BED==true
-
                 break;
             }
             case UI_ACTION_EXTRUDER0_OFF:
@@ -4813,15 +4910,6 @@ void UIDisplay::executeAction(int action)
 #if NUM_EXTRUDER>1
                 Extruder::setTemperatureForExtruder(0,1);
 #endif // NUM_EXTRUDER>1
-                
-                break;
-            }
-            case UI_ACTION_EXTRUDER2_OFF:
-            {
-#if NUM_EXTRUDER>2
-                Extruder::setTemperatureForExtruder(0,2);
-#endif // NUM_EXTRUDER>2
-            
                 break;
             }
             case UI_ACTION_DISABLE_STEPPER:
@@ -4956,16 +5044,7 @@ void UIDisplay::executeAction(int action)
 
                 break;
             }
-            case UI_ACTION_SELECT_EXTRUDER2:
-            {
-#if NUM_EXTRUDER>2
-                Extruder::selectExtruderById(2);
-#endif // NUM_EXTRUDER>2
-                
-                break;
-            }
-
-#if NUM_EXTRUDER == 2
+#if NUM_EXTRUDER >= 1
             case UI_ACTION_ACTIVE_EXTRUDER:
             {
                 if( Extruder::current->id == 0 )    Extruder::selectExtruderById( 1 );
@@ -5069,27 +5148,27 @@ void UIDisplay::executeAction(int action)
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
             case UI_ACTION_FAN_OFF:
             {
-                Commands::setFanSpeed(0,false);
+                Commands::setFanSpeed(0);
                 break;
             }
             case UI_ACTION_FAN_25:
             {
-                Commands::setFanSpeed(64,false);
+                Commands::setFanSpeed(64);
                 break;
             }
             case UI_ACTION_FAN_50:
             {
-                Commands::setFanSpeed(128,false);
+                Commands::setFanSpeed(128);
                 break;
             }
             case UI_ACTION_FAN_75:
             {
-                Commands::setFanSpeed(192,false);
+                Commands::setFanSpeed(192);
                 break;
             }
             case UI_ACTION_FAN_FULL:
             {
-                Commands::setFanSpeed(255,false);
+                Commands::setFanSpeed(255);
                 break;
             }
             case UI_ACTION_FAN_MODE:
@@ -5259,6 +5338,29 @@ void UIDisplay::executeAction(int action)
             }
 #endif // DEBUG_PRINT
 
+    #if FEATURE_ZERO_DIGITS
+            case UI_ACTION_FEATURE_ZERO_DIGITS:
+            {
+                Printer::g_pressure_offset_active = (Printer::g_pressure_offset_active ? false : true);
+    #if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                HAL::eprSetByte( EPR_RF_ZERO_DIGIT_STATE, (Printer::g_pressure_offset_active ? 1 : 2) ); //2 ist false, < 1 ist true
+                EEPROM::updateChecksum();
+    #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+                break;
+            }
+    #endif // FEATURE_ZERO_DIGITS
+    #if FEATURE_DIGIT_Z_COMPENSATION
+            case UI_ACTION_DIGIT_COMPENSATION:
+            {
+                g_nDigitZCompensationDigits_active = (g_nDigitZCompensationDigits_active ? false : true);
+    #if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                HAL::eprSetByte( EPR_RF_DIGIT_CMP_STATE, (g_nDigitZCompensationDigits_active ? 1 : 2) ); //2 ist false, < 1 ist true
+                EEPROM::updateChecksum();
+    #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+                break;
+            }
+    #endif // FEATURE_DIGIT_Z_COMPENSATION
+
 #if FEATURE_HEAT_BED_Z_COMPENSATION
             case UI_ACTION_RF_DO_MHIER_BED_SCAN:
             {           
@@ -5287,7 +5389,7 @@ void UIDisplay::executeAction(int action)
                 // save the determined values to the EEPROM        
                 if(g_ZMatrixChangedInRam){
                     uid.executeAction(UI_ACTION_TOP_MENU);
-                    saveCompensationMatrix( (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveHeatBed) );     
+                    saveCompensationMatrix( (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveHeatBed) );
                     if( Printer::debugInfo() )
                     {
                         Com::printFLN( PSTR( "Manual Input: the heat bed compensation matrix has been saved" ) );
@@ -5299,6 +5401,15 @@ void UIDisplay::executeAction(int action)
                 break;
             }
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_ALIGN_EXTRUDERS
+            case UI_ACTION_ALIGN_EXTRUDERS:
+            {
+                uid.menuPos[0] = 0;
+                uid.menuLevel = 0;
+                startAlignExtruders();
+                break;
+            }
+#endif // FEATURE_ALIGN_EXTRUDERS
         }
     }
 
@@ -5328,21 +5439,10 @@ void UIDisplay::executeAction(int action)
 
 } // executeAction
 
-
-void UIDisplay::mediumAction()
-{
-#if UI_HAS_I2C_ENCODER>0
-    ui_check_slow_encoder();
-#endif // UI_HAS_I2C_ENCODER>0
-
-} // mediumAction
-
-
 void UIDisplay::slowAction()
 {
     millis_t  time    = HAL::timeInMilliseconds();
     uint8_t   refresh = 0;
-
 
 #if UI_HAS_KEYS==1
     // Update key buffer
@@ -5420,12 +5520,12 @@ void UIDisplay::slowAction()
 #endif // UI_HAS_KEYS==1
 
 #if UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER
-    if(menuLevel>0 && g_nAutoReturnTime && g_nAutoReturnTime<time)
+    if(menuLevel > 0 && g_nAutoReturnTime && g_nAutoReturnTime<time)
     {
         if( menu[menuLevel] != &ui_menu_message || g_nAutoReturnMessage )
         {
             lastSwitch = time;
-            menuLevel=0;
+            menuLevel = 0;
             activeAction = 0;
             g_nAutoReturnMessage = false;
         }
@@ -5433,27 +5533,25 @@ void UIDisplay::slowAction()
     }
 #endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER || UI_MILL_AUTORETURN_TO_MENU_AFTER
 
-    if(menuLevel==0 && time>4000)
+    if(menuLevel == 0 && time > 4000)
     {
-        if(time-lastSwitch>UI_PAGES_DURATION)
+        if(time - lastSwitch > UI_PAGES_DURATION)
         {
             lastSwitch = time;
-
 #if !defined(UI_DISABLE_AUTO_PAGESWITCH) || !UI_DISABLE_AUTO_PAGESWITCH
             menuPos[0]++;
-            if(menuPos[0]>=UI_NUM_PAGES)
-                menuPos[0]=0;
+            if(menuPos[0] >= UI_NUM_PAGES)
+                menuPos[0] = 0;
 #endif // !defined(UI_DISABLE_AUTO_PAGESWITCH) || !UI_DISABLE_AUTO_PAGESWITCH
-
             refresh = 1;
         }
-        else if(time-lastRefresh>=1000) refresh=1;
+        else if(time - lastRefresh >= 1000) refresh=1;
     }
-    else if(time-lastRefresh>=800)
+    else if(time - lastRefresh >= 800)
     {
-        UIMenu *men = (UIMenu*)menu[menuLevel];
-        uint8_t mtype = pgm_read_byte((void*)&(men->menuType));
-        (void)mtype; //ignore unused error Nibbels
+        //UIMenu *men = (UIMenu*)menu[menuLevel];
+        //uint8_t mtype = pgm_read_byte((void*)&(men->menuType));
+        //(void)mtype; //ignore unused error Nibbels -> ignore all by repetier  https://github.com/repetier/Repetier-Firmware/commit/57c21814d8f8946852fa27af2a7c31831b493ec1
         refresh=1;
     }
 

@@ -45,11 +45,13 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
 /** \brief Define the type of your device */
 //#define MOTHERBOARD                         DEVICE_TYPE_RF1000
 //#define MOTHERBOARD                         DEVICE_TYPE_RF2000
-#define PROTOTYPE_PCB                       0                                                   // 1 = first PCB's / 0 = Final
+//#define MOTHERBOARD                         DEVICE_TYPE_RF2000v2
 
 #ifndef MOTHERBOARD
-#error Device type is not defined. Edit Configuration.h or pass the corresponding option to the compiler.
+#error Device type (RF1000 / RF2000 / RF2000v2) is not defined. Edit Configuration.h or pass the corresponding option to the compiler.
 #endif
+
+#define PROTOTYPE_PCB                       0                                                   // 1 = first PCB's / 0 = Final
 
 /** \brief EEPROM storage mode
 Set the EEPROM_MODE to 0 if you always want to use the settings in this configuration file. If not,
@@ -72,12 +74,6 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 
 /** \brief Enables automatic compensation in z direction for the operationg mode "print" */
 #define FEATURE_HEAT_BED_Z_COMPENSATION     1                                                   // 1 = on, 0 = off
-
-/** \brief Allows/disallows to override Z-min via G0 and G1 */
-#define FEATURE_Z_MIN_OVERRIDE_VIA_GCODE    1                                                   // 1 = on, 0 = off
-
-/** \brief Enables/disables the output of the finished object feature */
-#define FEATURE_OUTPUT_FINISHED_OBJECT      1                                                   // 1 = on, 0 = off
 
 /** \brief Allows to pause the processing of G-Codes */
 #define FEATURE_PAUSE_PRINTING              1                                                   // 1 = on, 0 = off
@@ -106,12 +102,13 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 /** \brief Specifies the number of pressure values which shall be averaged for inprint live z-adjustment */
 #if FEATURE_HEAT_BED_Z_COMPENSATION
   #define FEATURE_DIGIT_Z_COMPENSATION           1                                               // 1 = on, 0 = off
+  #define FEATURE_DIGIT_FLOW_COMPENSATION        1                                               // 1 = on, 0 = off
   #define FEATURE_SENSIBLE_PRESSURE              1                                               // 1 = on, 0 = off
   #if FEATURE_SENSIBLE_PRESSURE
     // mittels SENSIBLE_PRESSURE soll im grunde ausschließlich die wärmeausdehnung in einem perfekt kalibrierten system (HBS,mhier) kompensiert werden:
     // Max lift in [um]; Standard: 180um=0,18mm, darf nie 0 sein!! größer 0.2 macht normalerweise keinen Sinn.
     // Läuft dieser Wert ins Limit ist die Düse nicht in Ordnung, die Digit-Begrenzung zu niedrig oder das Z-Offset falsch justiert.
-    #define SENSIBLE_PRESSURE_MAX_OFFSET                180     
+    #define SENSIBLE_PRESSURE_MAX_OFFSET                180
     #define SENSIBLE_PRESSURE_INTERVAL                  100                                      //weniger macht keinen sinn. ob diese einschränkung sinn macht, aber sie bleibt vorerst mal da!
   #endif // FEATURE_SENSIBLE_PRESSURE
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
@@ -193,6 +190,8 @@ WARNING: Servos can draw a considerable amount of current. Make sure your system
 /** \brief Allows to choose whether pressing of the right menu button shall enter the file menu directly */
 #define FEATURE_RIGHT_BUTTON_MENU           0                                                   // 1 = on, 0 = off
 
+/** \brief Allows to use M42 pin change GCODE. I did not like the Gcode because Functions should be programmed and not written to pins. */
+#define FEATURE_M42_TEMPER_WITH_PINS        0                                                   // 1 = on, 0 = off
 
 // ##########################################################################################
 // ##   common configuration
@@ -209,14 +208,7 @@ See "configuration of the speed vs. cpu usage" within RF1000.h / RF2000.h
 // ##   debugging
 // ##########################################################################################
 
-/** \brief Enables debug outputs which are used mainly for the development */
-#define DEBUG_SHOW_DEVELOPMENT_LOGS         1                                                   // 1 = on, 0 = off
-
-
 #if FEATURE_HEAT_BED_Z_COMPENSATION 
-
-/** \brief Enables debug outputs from the compensation in z direction */
-#define DEBUG_HEAT_BED_Z_COMPENSATION       0                                                   // 1 = on, 0 = off
 
 /** \brief Enables debug outputs from the heat bed scan */
 #define DEBUG_HEAT_BED_SCAN                 0                                                   // 0 = off, 1 = on, 2 = on with more debug outputs
@@ -239,21 +231,21 @@ See "configuration of the speed vs. cpu usage" within RF1000.h / RF2000.h
 
 /** \brief Allows M111 to set bit 5 (16) which disables all commands except M111. This can be used
 to test your data througput or search for communication problems. */
-#define INCLUDE_DEBUG_COMMUNICATION
+//#define INCLUDE_DEBUG_COMMUNICATION
 
 /** \brief Allows M111 so set bit 6 (32) which disables moves, at the first tried step. In combination
 with a dry run, you can test the speed of path computations, which are still performed. */
-#define INCLUDE_DEBUG_NO_MOVE
+//#define INCLUDE_DEBUG_NO_MOVE
 
 /** \brief Writes the free RAM to output, if it is less then at the last test. Should always return
 values >500 for safety, since it doesn't catch every function call. Nice to tweak cache
 usage or for seraching for memory induced errors. Switch it off for production, it costs execution time. */
-//#define DEBUG_FREE_MEMORY
+#define DEBUG_FREE_MEMORY                             0                                         // 1 = on, 0 = off
 
-#ifdef DEBUG_FREE_MEMORY
-#define DEBUG_MEMORY                        Commands::checkFreeMemory();
+#if DEBUG_FREE_MEMORY
+ #define DEBUG_MEMORY                        Commands::checkFreeMemory();
 #else
-#define DEBUG_MEMORY
+ #define DEBUG_MEMORY
 #endif // DEBUG_FREE_MEMORY
 
 /** \brief If enabled, writes the created generic table to serial port at startup. */
@@ -312,13 +304,9 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 // ##   configuration of the output object functionality
 // ##########################################################################################
 
-#if FEATURE_OUTPUT_FINISHED_OBJECT
-
 /** \brief The following script allows to configure the exact behavior of the automatic object output */
-#define OUTPUT_OBJECT_SCRIPT_PRINT          "G21\nG91\nG1 E-" xstr(SCRIPT_RETRACT_MM) "\nG1 Z210 F5000\nG1 Y250 F7500"
-#define OUTPUT_OBJECT_SCRIPT_MILL           "G28 Z0\nG21\nG91\nG1 Y250 F7500"
-
-#endif // FEATURE_OUTPUT_FINISHED_OBJECT
+#define OUTPUT_OBJECT_SCRIPT_PRINT          "G21\nG91\nG1 E-" xstr(SCRIPT_RETRACT_MM) "\nG90\nG1 Z200 F5000\nG1 Y245 F7500"
+#define OUTPUT_OBJECT_SCRIPT_MILL           "G28 Z0\nG21\nG91\nG1 Y245 F7500"
 
 // ##########################################################################################
 // ##   configuration of the pause functionality
@@ -331,7 +319,7 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 #endif // !FEATURE_HEAT_BED_Z_COMPENSATION && !FEATURE_WORK_PART_Z_COMPENSATION
 
 /** \brief Specifies the time interval after the pausing of the print at which the extruder current is reduced */
-#define EXTRUDER_CURRENT_PAUSE_DELAY        5000                                                // [ms] or 0, in order to disable the lowering of the extruder current
+#define EXTRUDER_CURRENT_PAUSE_DELAY        60000                                                // [ms] or 0, in order to disable the lowering of the extruder current
 #endif // FEATURE_PAUSE_PRINTING
 
 /** \brief Specifies the extruder current which shall be use after pausing of the print and before continuing of the print */
@@ -374,17 +362,17 @@ With RF1.37r2.Mod the Emergency-Pause-Features limits can be changed in EEPROM a
 
 
 // ##########################################################################################
-// ##   configuration of the emergency z stop functionality
+// ##   configuration of the emergency stop functionality
 // ##########################################################################################
 
 #if FEATURE_EMERGENCY_STOP_ALL
 
-/** \brief Specifies the pressure at which the emergency z-stop shall be performed, in [digits] 
+/** \brief Specifies the pressure at which the emergency stop shall be performed, in [digits] 
 With RF1.37r6.Mod the Emergency-ZStop-Features limits can be changed in EEPROM and Printers Menu. Here are the absolute maximum limits:
 Do not set them to Zero.
 */
-#define EMERGENCY_STOP_DIGITS_MIN           -14000
-#define EMERGENCY_STOP_DIGITS_MAX           14000
+#define EMERGENCY_STOP_DIGITS_MIN           -10000
+#define EMERGENCY_STOP_DIGITS_MAX           10000
 
 /** \brief Specifies the interval at which the pressure check shall be performed, in [ms] */
 #define EMERGENCY_STOP_INTERVAL             10
@@ -400,6 +388,9 @@ Do not set them to Zero.
 // ##########################################################################################
 
 #if FEATURE_SERVICE_INTERVAL
+/** \brief Wie setzte ich den Interval wieder zurück, ohne die Firmware neu aufzuspielen? 
+Um diese Meldung zurück zu setzen muss man den RFx000 ausschalten, die Knöpfe "links", "rauf" und "runter" drücken (und alle drei gedrückt halten), den RFx000 einschalten und die Knöpfe ca. 5-10 Sekunden danach loslassen.
+Damit werden die Service-Zähler wieder auf 0 zurück gestellt. */
 
 /** \brief Specifies the max printed hours [h] */
 #define HOURS_PRINTED_UNTIL_SERVICE         100
@@ -610,15 +601,12 @@ Select the language to use.
 /** \brief How many ms should a single page be shown, until it is switched to the next one.*/
 #define UI_PAGES_DURATION                   4000
 
-/** \brief Delay of start screen in milliseconds */
-#define UI_START_SCREEN_DELAY               1000
-
 /** \brief Uncomment if you don't want automatic page switching. You can still switch the
 info pages with next/previous button/click-encoder */
 #define UI_DISABLE_AUTO_PAGESWITCH          true
 
 /** \brief Time to return to info menu if x millisconds no key was pressed. Set to 0 to disable it. */
-#define UI_PRINT_AUTORETURN_TO_MENU_AFTER   60000
+#define UI_PRINT_AUTORETURN_TO_MENU_AFTER   120000
 #define UI_MILL_AUTORETURN_TO_MENU_AFTER    0
 
 /** \brief Normally cou want a next/previous actions with every click of your encoder.
@@ -654,7 +642,6 @@ Values must be in range 1..255 */
 #define BEEPER_SHORT_SEQUENCE                   2,2
 #define BEEPER_LONG_SEQUENCE                    8,8
 #define BEEPER_START_PRINTING_SEQUENCE          100,2
-#define BEEPER_ABORT_PRINTING_SEQUENCE          250,5
 #define BEEPER_STOP_PRINTING_SEQUENCE           100,3
 #define BEEPER_PAUSE_SEQUENCE                   50,3
 #define BEEPER_CONTINUE_SEQUENCE                50,2
@@ -664,6 +651,10 @@ Values must be in range 1..255 */
 #define BEEPER_START_WORK_PART_SCAN_SEQUENCE    100,2
 #define BEEPER_ABORT_WORK_PART_SCAN_SEQUENCE    250,5
 #define BEEPER_STOP_WORK_PART_SCAN_SEQUENCE     100,3
+//FEATURE_ALIGN_EXTRUDERS
+ #define BEEPER_START_ALIGN_EXTRUDERS_SEQUENCE  100,2
+ #define BEEPER_ABORT_ALIGN_EXTRUDERS_SEQUENCE  250,5
+ #define BEEPER_STOP_ALIGN_EXTRUDERS_SEQUENCE   100,3
 #define BEEPER_ABORT_SET_POSITION_SEQUENCE      250,5
 #define BEEPER_ACCEPT_SET_POSITION_SEQUENCE     100,2
 #define BEEPER_SERVICE_INTERVALL_SEQUNCE        100,3
@@ -673,8 +664,8 @@ Values must be in range 1..255 */
 /** \brief Values used for preheat */
 #define UI_SET_PRESET_HEATED_BED_TEMP_PLA   60
 #define UI_SET_PRESET_EXTRUDER_TEMP_PLA     180
-#define UI_SET_PRESET_HEATED_BED_TEMP_ABS   110
-#define UI_SET_PRESET_EXTRUDER_TEMP_ABS     240
+#define UI_SET_PRESET_HEATED_BED_TEMP_ABS   100
+#define UI_SET_PRESET_EXTRUDER_TEMP_ABS     210
 
 /** \brief Values used for unload(unmount)/load(mount) filament */
 #define UI_SET_EXTRUDER_TEMP_UNMOUNT        120
@@ -790,6 +781,9 @@ we use blocks of 2 kByte size for the structure of our EEPROM
 /** \brief Defines the Z-Offset stepsize in um */
 #define Z_OFFSET_STEP                       25
 
+/** \brief Minimal temperature which can be reached by cooling */
+#define MAX_ROOM_TEMPERATURE                40
+
 /** \brief Specifies the interval which is used for the manual moves (from the hardware buttons and from the pause functionality) */
 #define MANUAL_MOVE_INTERVAL                1                                                   // [ms]
 
@@ -817,7 +811,7 @@ non-Repetier PC applications may fall over the debug outputs of the firmware. */
 #define COMMAND_BLOCK_DELAY                 1000                                                // [ms]
 
 /** \brief Configuration of the external watchdog
-The TPS3820 of the RF1000/RF2000 resets about [t_tout is watchdog time out: min 112, typ 200, max 310ms] after the last time when it was triggered
+The TPS3820 of the RF1000/RF2000 resets about 112/200/310 (min/typical/max) ms after the last time when it was triggered
 http://pdf1.alldatasheet.com/datasheet-pdf/view/29215/TI/TPS3820-50DBVT.html 
 t_d in datasheet is delay time: how long reset is triggered after timeout: 15...25...37ms for TPS3820.
 */
@@ -854,6 +848,9 @@ If your EXT0_PID_MAX is low, you should prefer the second method. */
 /** \brief Temperature range for target temperature to hold in M109 command. 5 means +/-5 degC
 Uncomment define to force the temperature into the range for given watchperiod. */
 #define TEMP_TOLERANCE                      2.0f                                               // [°C]
+
+/** \brief Additional special temperature tolerance range when unpausing print. Faster start is better here, because reaching pause position might take a while - for a bit less oozing */
+#define ADD_CONTINUE_AFTER_PAUSE_TEMP_TOLERANCE         2                                      // [°C]
 
 /** \brief Bits of the ADC converter */
 #define ANALOG_INPUT_BITS                   10
@@ -952,5 +949,20 @@ You can activate this to 1 and connect some Button. If you connect ground to pul
 #if FEATURE_READ_CALIPER && FEATURE_USER_INT3
  #error You cannot use FEATURE_READ_CALIPER and FEATURE_USER_INT3 at the same time with stock programming. Please change pins/etc. and remove this errorcheck
 #endif
+
+/** beta!!! Nibbels/PeterKA only!!! -> Testfeature: It can check if you lost steps and test your buttons hysteresis */
+#define FEATURE_CHECK_HOME                  0
+
+/** \brief This adds some GCode M3029 to simulate Key-Press by GCode and to read whats inside the printers Display rightnow. */
+#define FEATURE_SEE_DISPLAY                 1
+
+/** \brief This feature allows you to extrude into thin air to messure the filaments viscosity value using dms sensors */
+#define FEATURE_VISCOSITY_TEST              1
+
+/** \brief This is some testing function for reading the stepper drivers status bits while operation */
+#define FEATURE_READ_STEPPER_STATUS         0
+
+/** \brief Automatic Startline */
+#define FEATURE_STARTLINE                   1
 
 #endif // CONFIGURATION_H

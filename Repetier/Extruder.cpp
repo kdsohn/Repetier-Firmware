@@ -103,6 +103,9 @@ void Extruder::manageTemperatures()
                 Printer::flag0 |= PRINTER_FLAG0_TEMPSENSOR_DEFECT;
                 reportTempsensorError();
 
+                Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetier-host / server to stop printing
+                Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
+                
                 showError( (void*)ui_text_temperature_manager, (void*)ui_text_sensor_error );
             }
         }
@@ -115,102 +118,48 @@ void Extruder::manageTemperatures()
             act->setAlarm(false);  //reset alarm
         }
 
-        act->tempArray[act->tempPointer++] = act->currentTemperatureC;
+        act->tempArray[act->tempPointer++] = act->currentTemperatureC; //ist in jedem fall voll mit gültigen temperaturen, wenn der regelbereich erreicht wird.
         //act->tempPointer &= 3; // 3 = springe von 4 = 100b auf 0 zurück,    wenn 3. -> 1/300ms  -> 3.33 = reciproke     !!tempArray needs [4] ...
         //act->tempPointer &= 7; // 7 = springe von 8 = 1000b auf 0 zurück,   wenn 7. -> 1/700ms  -> 1.42 = reciproke     !!tempArray needs [8] ...
         act->tempPointer &= 15; // 15 = springe von 16 = 10000b zurück auf 0, wenn 15 -> 1/1500ms -> 0.666 = reciproke    !!tempArray needs [16] ...
-        if(act->heatManager == 1)
+
+        uint8_t output;
+        float error = act->targetTemperatureC - act->currentTemperatureC;
+
+        if( act->targetTemperatureC < 20.0f )
         {
-            uint8_t output;
-            float error = act->targetTemperatureC - act->currentTemperatureC;
-
-            if( act->targetTemperatureC < 20.0f )
-            {
-                output = 0; // off is off, even if damping term wants a heat peak!
-            } 
-            else if( error > PID_CONTROL_RANGE )
-            {
-                output = act->pidMax;
-            }
-            else if( error < -PID_CONTROL_RANGE )
-            {
-                output = 0;
-            }
-            else
-            {
-                float pidTerm = 0;
-
-                float pgain = act->pidPGain * error;
-                pidTerm += pgain;
-                act->tempIState = constrain(act->tempIState + error, act->tempIStateLimitMin, act->tempIStateLimitMax);
-                float igain = act->pidIGain * act->tempIState * 0.1;  // 0.1 = 10Hz
-                pidTerm += igain;
-                float dgain = act->pidDGain * (act->tempArray[act->tempPointer] - act->currentTemperatureC)*0.666f; // raising dT/dt, 3.33 = reciproke of time interval (300 ms) -> temparray greift weiter zurück als letzte messung.
-                pidTerm += dgain;
-
-#if SCALE_PID_TO_MAX==1
-                pidTerm = (pidTerm*act->pidMax)*0.0039062;
-#endif // SCALE_PID_TO_MAX==1
-
-                output = constrain((int)pidTerm, 0, act->pidMax);
-/*
-                Com::printF( PSTR( " err:" ), error,5  );
-                Com::printF( PSTR( " IMin:" ), act->tempIStateLimitMin,5 );
-                Com::printF( PSTR( " IMax:" ), act->tempIStateLimitMax,5  );
-                Com::printF( PSTR( " I:" ), act->tempIState,5  );
-                Com::printF( PSTR( " KP:" ), act->pidPGain,5  );
-                Com::printF( PSTR( " KI:" ), act->pidIGain,5  );
-                Com::printF( PSTR( " KD:" ), act->pidDGain,5  );
-                Com::printF( PSTR( " pG:" ), pgain,5  );
-                Com::printF( PSTR( " iG:" ), igain,5  );
-                Com::printF( PSTR( " dG:" ), dgain,5  );
-                Com::printF( PSTR( " Term:" ), pidTerm ,5 );
-                Com::printFLN( PSTR( " = " ), output );
-*/
-            }
-            pwm_pos[act->pwmIndex] = output;
+            output = 0; // off is off, even if damping term wants a heat peak!
+            act->tempIState = 0;
+        } 
+        else if( error > PID_CONTROL_RANGE )
+        {
+            output = act->pidMax;
+            act->tempIState = 0;
         }
-        else if(act->heatManager == 3)     // dead-time control
+        else if( error < -PID_CONTROL_RANGE )
         {
-            uint8_t output;
-            float error  = act->targetTemperatureC - act->currentTemperatureC;
-            float target = act->targetTemperatureC;
-
-            if( act->targetTemperatureC < 20.0f )
-            {
-                output = 0; // off is off, even if damping term wants a heat peak!
-            }
-            else if( error > PID_CONTROL_RANGE )
-            {
-                output = act->pidMax;
-            }
-            else if( error < -PID_CONTROL_RANGE )
-            {
-                output = 0;
-            }
-            else
-            {
-                float raising = 3.333 * (act->currentTemperatureC - act->tempArray[act->tempPointer]); // raising dT/dt, 3.33 = reciproke of time interval (300 ms)
-                act->tempIState = 0.25 * (3.0 * act->tempIState + raising); // damp raising
-                output = (act->currentTemperatureC + act->tempIState * act->pidPGain > target ? 0 : act->pidDriveMax);
-            }
-            pwm_pos[act->pwmIndex] = output;
+            output = 0;
+            act->tempIState = 0;
         }
         else
+        {
+            float pidTerm = 0;
 
-            if(act->heatManager == 2)    // Bang-bang with reduced change frequency to save relais life
-            {
-                uint32_t time = HAL::timeInMilliseconds();
-                if (time - act->lastTemperatureUpdate > HEATED_BED_SET_INTERVAL)
-                {
-                    pwm_pos[act->pwmIndex] = (on ? 255 : 0);
-                    act->lastTemperatureUpdate = time;
-                }
-            }
-            else     // Fast Bang-Bang fallback
-            {
-                pwm_pos[act->pwmIndex] = (on ? 255 : 0);
-            }
+            float pgain = act->pidPGain * error;
+            pidTerm += pgain;
+            act->tempIState = constrain(act->tempIState + error, act->tempIStateLimitMin, act->tempIStateLimitMax);
+            float igain = act->pidIGain * act->tempIState * 0.1;  // 0.1 = 10Hz
+            pidTerm += igain;
+            float dgain = act->pidDGain * (act->tempArray[act->tempPointer] - act->currentTemperatureC) * 0.666f; // raising dT/dt, 0.666 = reciproke of time interval (1500 ms) -> temparray greift weiter zurück als letzte messung.
+            pidTerm += dgain;
+
+#if SCALE_PID_TO_MAX==1
+            pidTerm = (pidTerm*act->pidMax)*0.0039062;
+#endif // SCALE_PID_TO_MAX==1
+
+            output = constrain((int)pidTerm, 0, act->pidMax);
+        }
+        pwm_pos[act->pwmIndex] = output;
 
 #ifdef EXTRUDER_MAX_TEMP
         if(act->currentTemperatureC>EXTRUDER_MAX_TEMP) // Force heater off if EXTRUDER_MAX_TEMP is exceeded
@@ -315,26 +264,6 @@ void Extruder::initExtruder()
     SET_OUTPUT(EXT1_STEP_PIN);
 #endif // defined(EXT1_STEP_PIN) && EXT1_STEP_PIN>-1 && NUM_EXTRUDER>1
 
-#if defined(EXT2_STEP_PIN) && EXT2_STEP_PIN>-1 && NUM_EXTRUDER>2
-    SET_OUTPUT(EXT2_DIR_PIN);
-    SET_OUTPUT(EXT2_STEP_PIN);
-#endif // defined(EXT2_STEP_PIN) && EXT2_STEP_PIN>-1 && NUM_EXTRUDER>2
-
-#if defined(EXT3_STEP_PIN) && EXT3_STEP_PIN>-1 && NUM_EXTRUDER>3
-    SET_OUTPUT(EXT3_DIR_PIN);
-    SET_OUTPUT(EXT3_STEP_PIN);
-#endif // defined(EXT3_STEP_PIN) && EXT3_STEP_PIN>-1 && NUM_EXTRUDER>3
-
-#if defined(EXT4_STEP_PIN) && EXT4_STEP_PIN>-1 && NUM_EXTRUDER>4
-    SET_OUTPUT(EXT4_DIR_PIN);
-    SET_OUTPUT(EXT4_STEP_PIN);
-#endif // defined(EXT4_STEP_PIN) && EXT4_STEP_PIN>-1 && NUM_EXTRUDER>4
-
-#if defined(EXT5_STEP_PIN) && EXT5_STEP_PIN>-1 && NUM_EXTRUDER>5
-    SET_OUTPUT(EXT5_DIR_PIN);
-    SET_OUTPUT(EXT5_STEP_PIN);
-#endif // defined(EXT5_STEP_PIN) && EXT5_STEP_PIN>-1 && NUM_EXTRUDER>5
-
     for(i=0; i<NUM_EXTRUDER; ++i)
     {
         Extruder *act = &extruder[i];
@@ -360,19 +289,11 @@ void Extruder::initExtruder()
 
 void TemperatureController::updateTempControlVars()
 {
-    if(heatManager==1 && pidIGain!=0)   // prevent division by zero
+    if(pidIGain!=0)   // prevent division by zero
     {
         tempIStateLimitMax = (float)pidDriveMax * PID_CONTROL_DRIVE_MAX_LIMIT_FACTOR / pidIGain;
         tempIStateLimitMin = (float)pidDriveMin * PID_CONTROL_DRIVE_MIN_LIMIT_FACTOR / pidIGain; //Bisher hatte der PID-Regler keinen negativen I-Anteil, weil die Limits nicht ins Negative dürfen. Jetzt schon. Es ist das Minus in der Config, das die Stabilität bringt.
-/*
-        Com::printF( PSTR( " pidDriveMax:" ), pidDriveMax );
-        Com::printF( PSTR( " pidDriveMin:" ), pidDriveMin );
-        Com::printF( PSTR( " pidIGain:" ), pidIGain );
-        Com::printF( PSTR( " tempIStateLimitMax:" ), tempIStateLimitMax );
-        Com::printFLN( PSTR( " tempIStateLimitMin:" ), tempIStateLimitMin );
-*/
     }
-
 } // updateTempControlVars
 
 
@@ -436,9 +357,7 @@ void Extruder::selectExtruderById(uint8_t extruderId)
     
     if(Printer::areAxisHomed())
     {
-        float oldfeedrate = Printer::feedrate;
         Printer::moveToReal(IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,IGNORE_COORDINATE,Printer::homingFeedrate[X_AXIS]);
-        Printer::feedrate = oldfeedrate;
     }
     Printer::updateCurrentPosition();
 #if USE_ADVANCE
@@ -463,18 +382,18 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
     }
 
     bool alloffs = true;
-    for(uint8_t i=0; i<NUM_EXTRUDER; i++)
-        if(tempController[i]->targetTemperatureC>15) alloffs = false;
+    for(uint8_t i=0; i < NUM_EXTRUDER; i++)
+        if(tempController[i]->targetTemperatureC > 15) alloffs = false;
 
 #ifdef EXTRUDER_MAX_TEMP
     if(temperatureInCelsius>EXTRUDER_MAX_TEMP) temperatureInCelsius = EXTRUDER_MAX_TEMP;
 #endif // EXTRUDER_MAX_TEMP
 
-    if(temperatureInCelsius<0) temperatureInCelsius=0;
+    if(temperatureInCelsius < 0) temperatureInCelsius=0;
     TemperatureController *tc = tempController[extr];
     tc->setTargetTemperature(temperatureInCelsius,0);
     tc->updateTempControlVars();
-    if(beep && temperatureInCelsius>30)
+    if(beep && temperatureInCelsius > 30)
         tc->setAlarm(true);
     if(temperatureInCelsius>=EXTRUDER_FAN_COOL_TEMP) extruder[extr].coolerPWM = extruder[extr].coolerSpeed;
 
@@ -485,34 +404,36 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
     }
 
 #if FEATURE_CASE_FAN && !CASE_FAN_ALWAYS_ON
-    if( temperatureInCelsius >= CASE_FAN_ON_TEMPERATURE )
-    {
-        if(Printer::ignoreFanOn){
-            //ignore the case fan whenever there is another cooling solution available // Nibbels
-            //the fan should still be connected within the rf2000 but might be avoided to suppress noise.
-            //the ignore-flag has to be set at runtime to prevent unlearned persons to risk overheat having the wrong startcode.
-            //enable and disable the fan with M3120 or M3121 or M3300 P3 S{1,0}
-            Printer::prepareFanOff = 0;
-            Printer::fanOffDelay = 0;
-        }else{
-            // enable the case fan in case the extruder is turned on
-            Printer::prepareFanOff = 0;
-            WRITE(CASE_FAN_PIN, 1);         
-        }
-    }
-    else
-    {
-        // disable the case fan in case the extruder is turned off
-        if( Printer::fanOffDelay )
+    if(Printer::ignoreFanOn){
+        //ignore the case fan whenever there is another cooling solution available // Nibbels
+        //the fan should still be connected within the rf2000 but might be avoided to suppress noise.
+        //the ignore-flag has to be set at runtime to prevent unlearned persons to risk overheat having the wrong startcode.
+        //enable and disable the fan with M3120 or M3121 or M3300 P3 S{1,0}
+        Printer::prepareFanOff = 0;
+        Printer::fanOffDelay = 0;
+    }else{
+        bool isheating = false;
+        for(uint8_t i=0; i < NUM_EXTRUDER; i++) if(tempController[i]->targetTemperatureC > CASE_FAN_ON_TEMPERATURE) isheating = true;
+        if( isheating )
         {
-            // we are going to disable the case fan after the delay
-            Printer::prepareFanOff = HAL::timeInMilliseconds();
+            // enable the case fan in case any extruder is turned on
+            Printer::prepareFanOff = 0;
+            WRITE(CASE_FAN_PIN, 1);
         }
         else
         {
-            // we are going to disable the case fan now
-            Printer::prepareFanOff = 0;
-            WRITE(CASE_FAN_PIN, 0);
+            // disable the case fan in case the extruder is turned off
+            if( Printer::fanOffDelay )
+            {
+                // we are going to disable the case fan after the delay
+                Printer::prepareFanOff = HAL::timeInMilliseconds();
+            }
+            else
+            {
+                // we are going to disable the case fan now
+                Printer::prepareFanOff = 0;
+                WRITE(CASE_FAN_PIN, 0);
+            }
         }
     }
 #endif // FEATURE_CASE_FAN && !CASE_FAN_ALWAYS_ON
@@ -523,13 +444,13 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
         TemperatureController *tc2 = tempController[1];
         tc2->setTargetTemperature(temperatureInCelsius,0);
         tc2->updateTempControlVars();
-        if(temperatureInCelsius>=EXTRUDER_FAN_COOL_TEMP) extruder[1].coolerPWM = extruder[1].coolerSpeed;
+        if(temperatureInCelsius >= EXTRUDER_FAN_COOL_TEMP) extruder[1].coolerPWM = extruder[1].coolerSpeed;
     }
 #endif // FEATURE_DITTO_PRINTING
 
     bool alloff = true;
-    for(uint8_t i=0; i<NUM_EXTRUDER; i++)
-        if(tempController[i]->targetTemperatureC>15) alloff = false;
+    for(uint8_t i=0; i < NUM_EXTRUDER; i++)
+        if(tempController[i]->targetTemperatureC > 15) alloff = false;
 
 #if EEPROM_MODE != 0
     if(alloff && !alloffs) // All heaters are now switched off?
@@ -548,10 +469,15 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
     if(alloffs && !alloff) // heaters are turned on, start measuring printing time
     {
         Printer::msecondsPrinting = HAL::timeInMilliseconds();
+        Printer::filamentPrinted = 0;  // new print, new counter  
+        Printer::flag2 &= ~PRINTER_FLAG2_RESET_FILAMENT_USAGE;  
     }
 
 } // setTemperatureForExtruder
 
+void Extruder::setTemperatureForAllExtruders(float temperatureInCelsius, bool beep){
+    for(uint8_t extrNr = 0; extrNr < NUM_EXTRUDER; extrNr++) Extruder::setTemperatureForExtruder(temperatureInCelsius, extrNr, beep);
+}
 
 void Extruder::setHeatedBedTemperature(float temperatureInCelsius,bool beep)
 {
@@ -597,13 +523,13 @@ float Extruder::getHeatedBedTemperature()
 void Extruder::disableCurrentExtruderMotor()
 {
     if(Extruder::current->enablePin > -1)
-        digitalWrite(Extruder::current->enablePin,!Extruder::current->enableOn);
+        HAL::digitalWrite(Extruder::current->enablePin,!Extruder::current->enableOn);
 
 #if FEATURE_DITTO_PRINTING
     if(Extruder::dittoMode)
     {
         if(extruder[1].enablePin > -1)
-            digitalWrite(extruder[1].enablePin,!extruder[1].enableOn);
+            HAL::digitalWrite(extruder[1].enablePin,!extruder[1].enableOn);
     }
 #endif // FEATURE_DITTO_PRINTING
 
@@ -636,7 +562,7 @@ void Extruder::disableAllExtruders()
             e = &extruder[i];
 
             if(e->enablePin > -1)
-                digitalWrite(e->enablePin,!e->enableOn);
+                HAL::digitalWrite(e->enablePin,!e->enableOn);
 
 #if STEPPER_ON_DELAY
             e->enabled = 0;
@@ -690,7 +616,7 @@ const short temptable_4[NUMTEMPS_4][2] PROGMEM =
 #define NUMTEMPS_8 34 
 const short temptable_8[NUMTEMPS_8][2] PROGMEM =
 {
-    {0,8000},{69,2400},{79,2320},{92,2240},{107,2160},{125,2080},{146,2000},{172,1920},{204,1840},{222,1760},{291,1680},{350,1600},
+    {0,8000},{69,2400},{79,2320},{92,2240},{107,2160},{125,2080},{146,2000},{172,1920},{204,1840},{244,1760},{291,1680},{350,1600},
     {422,1520},{511,1440},{621,1360},{755,1280},{918,1200},{1114,1120},{1344,1040},{1608,960},{1902,880},{2216,800},{2539,720},
     {2851,640},{3137,560},{3385,480},{3588,400},{3746,320},{3863,240},{3945,160},{4002,80},{4038,0},{4061,-80},{4075,-160}
 };
@@ -737,6 +663,7 @@ const short temptable_12[NUMTEMPS_12][2] PROGMEM =
     {701*4, 86*8},{736*4, 81*8},{771*4, 76*8},{806*4, 70*8},{841*4, 63*8},{876*4, 56*8},{911*4, 48*8},{946*4, 38*8},{981*4, 23*8},{1005*4, 5*8},{1016*4, 0*8}
 };
 
+/*
 // PT100 E3D
 #define NUMTEMPS_13 19 
 const short temptable_13[NUMTEMPS_13][2] PROGMEM =
@@ -744,20 +671,24 @@ const short temptable_13[NUMTEMPS_13][2] PROGMEM =
     {0,0},{908,8},{942,10*8},{982,20*8},{1015,8*30},{1048,8*40},{1080,8*50},{1113,8*60},{1146,8*70},{1178,8*80},{1211,8*90},{1276,8*110},{1318,8*120}
     ,{1670,8*230},{2455,8*500},{3445,8*900},{3666,8*1000},{3871,8*1100},{4095,8*2000}
 };
+*/
 
-// Thermistor NTC 3950 100k Ohm (result seems a bit to cold for my amazon-ntcs)
-#define NUMTEMPS_14 46 
-const short temptable_14[NUMTEMPS_14][2] PROGMEM = {
-    {1*4,8*938}, {31*4,8*314}, {41*4,8*290}, {51*4,8*272}, {61*4,8*258}, {71*4,8*247}, {81*4,8*237}, {91*4,8*229}, {101*4,8*221}, {111*4,8*215}, {121*4,8*209},
-    {131*4,8*204}, {141*4,8*199}, {151*4,8*195}, {161*4,8*190}, {171*4,8*187}, {181*4,8*183}, {191*4,8*179}, {201*4,8*176}, {221*4,8*170}, {241*4,8*165}, 
-    {261*4,8*160}, {281*4,8*155}, {301*4,8*150}, {331*4,8*144}, {361*4,8*139}, {391*4,8*133}, {421*4,8*128}, {451*4,8*123}, {491*4,8*117}, {531*4,8*111}, 
-    {571*4,8*105}, {611*4,8*100}, {681*4,8*90}, {711*4,8*85}, {811*4,8*69}, {831*4,8*65}, {881*4,8*55}, 
-    {901*4,8*51},  {941*4,8*39}, {971*4,8*28}, {981*4,8*23}, {991*4,8*17}, {1001*4,8*9}, {1021*4,8*-27},{1023*4,8*-200}
+//TODO: Tabelle startet erst bei 92°C ... Kleine Rundungszacken am Anfang, weil alles *4.
+#define NUMTEMPS_13 61 // NTC 3950 100k thermistor - Conrad V3
+const short temptable_13[NUMTEMPS_13][2] PROGMEM =
+{
+  {23*4, 300*8},{25*4, 295*8},{27*4, 290*8},{28*4, 285*8},{31*4, 280*8},{33*4, 275*8},{35*4, 270*8},{38*4, 265*8},{41*4, 260*8},{44*4, 255*8},
+  {48*4, 250*8},{52*4, 245*8},{56*4, 240*8},{61*4, 235*8},{66*4, 230*8},{71*4, 225*8},{78*4, 220*8},{84*4, 215*8},{92*4, 210*8},{100*4, 205*8},
+  {109*4, 200*8},{120*4, 195*8},{131*4, 190*8},{143*4, 185*8},{156*4, 180*8},{171*4, 175*8},{187*4, 170*8},{205*4, 165*8},{224*4, 160*8},{245*4, 155*8},
+  {268*4, 150*8},{293*4, 145*8},{320*4, 140*8},{348*4, 135*8},{379*4, 130*8},{411*4, 125*8},{445*4, 120*8},{480*4, 115*8},{516*4, 110*8},{553*4, 105*8},
+  {591*4, 100*8},{628*4, 95*8},{665*4, 90*8},{702*4, 85*8},{737*4, 80*8},{770*4, 75*8},{801*4, 70*8},{830*4, 65*8},{857*4, 60*8},{881*4, 55*8},
+  {903*4, 50*8},{922*4, 45*8},{939*4, 40*8},{954*4, 35*8},{966*4, 30*8},{977*4, 25*8},{985*4, 20*8},{993*4, 15*8},{999*4, 10*8},{1004*4, 5*8},
+  {1008*4, 0*8}
 };
 
 // Thermistor NTC 3950 100k Ohm (other source)
-#define NUMTEMPS_15 103 
-const short temptable_15[NUMTEMPS_15][2] PROGMEM = {
+#define NUMTEMPS_14 103 
+const short temptable_14[NUMTEMPS_14][2] PROGMEM = {
     {1*4,938*8},{11*4,423*8},{21*4,351*8},{31*4,314*8},{41*4,290*8},{51*4,272*8},{61*4,258*8},{71*4,247*8},\
 {81*4,237*8},{91*4,229*8},{101*4,221*8},{111*4,215*8},{121*4,209*8},{131*4,204*8},{141*4,199*8},{151*4,195*8},\
 {161*4,190*8},{171*4,187*8},{181*4,183*8},{191*4,179*8},{201*4,176*8},{211*4,173*8},{221*4,170*8},{231*4,167*8},\
@@ -770,7 +701,7 @@ const short temptable_15[NUMTEMPS_15][2] PROGMEM = {
 {731*4,82*8},{741*4,81*8},{751*4,79*8},{761*4,77*8},{771*4,76*8},{781*4,74*8},{791*4,72*8},{801*4,71*8},{811*4,69*8},\
 {821*4,67*8},{831*4,65*8},{841*4,63*8},{851*4,62*8},{861*4,60*8},{871*4,57*8},{881*4,55*8},{891*4,53*8},{901*4,51*8},\
 {911*4,48*8},{921*4,45*8},{931*4,42*8},{941*4,39*8},{951*4,36*8},{961*4,32*8},{971*4,28*8},{981*4,23*8},{991*4,17*8},\
-{1001*4,9*8},{1011*4,-1*8},{1021*4,-26*8}   
+{1001*4,9*8},{1011*4,-1*8},{1021*4,-26*8}
 };
 
 
@@ -786,7 +717,7 @@ const short temptable_6[NUM_TEMPS_USERTHERMISTOR1][2] PROGMEM = USER_THERMISTORT
 const short temptable_7[NUM_TEMPS_USERTHERMISTOR2][2] PROGMEM = USER_THERMISTORTABLE2 ;
 #endif // NUM_TEMPS_USERTHERMISTOR2>0
 
-const short * const temptables[15] PROGMEM = {(short int *)&temptable_1[0][0],(short int *)&temptable_2[0][0],(short int *)&temptable_3[0][0],(short int *)&temptable_4[0][0]
+const short * const temptables[14] PROGMEM = {(short int *)&temptable_1[0][0],(short int *)&temptable_2[0][0],(short int *)&temptable_3[0][0],(short int *)&temptable_4[0][0]
 #if NUM_TEMPS_USERTHERMISTOR0>0
         ,(short int *)&temptable_5[0][0]
 #else
@@ -812,10 +743,9 @@ const short * const temptables[15] PROGMEM = {(short int *)&temptable_1[0][0],(s
         ,(short int *)&temptable_12[0][0]
         ,(short int *)&temptable_13[0][0]
         ,(short int *)&temptable_14[0][0]
-        ,(short int *)&temptable_15[0][0]
-                                             };
-const uint8_t temptables_num[15] PROGMEM = {NUMTEMPS_1,NUMTEMPS_2,NUMTEMPS_3,NUMTEMPS_4,NUM_TEMPS_USERTHERMISTOR0,NUM_TEMPS_USERTHERMISTOR1,NUM_TEMPS_USERTHERMISTOR2,NUMTEMPS_8,
-                                 NUMTEMPS_9,NUMTEMPS_10,NUMTEMPS_11,NUMTEMPS_12,NUMTEMPS_13,NUMTEMPS_14,NUMTEMPS_15
+    };
+const uint8_t temptables_num[14] PROGMEM = {NUMTEMPS_1,NUMTEMPS_2,NUMTEMPS_3,NUMTEMPS_4,NUM_TEMPS_USERTHERMISTOR0,NUM_TEMPS_USERTHERMISTOR1,NUM_TEMPS_USERTHERMISTOR2,NUMTEMPS_8,
+                                                NUMTEMPS_9,NUMTEMPS_10,NUMTEMPS_11,NUMTEMPS_12,NUMTEMPS_13,NUMTEMPS_14
                                            };
 
 
@@ -840,9 +770,8 @@ void TemperatureController::updateCurrentTemperature()
         case 10: // 100k 0603 SMD Vishay NTCS0603E3104FXT (4.7k pullup)
         case 11: // 100k GE Sensing AL03006-58.2K-97-G1 (4.7k pullup)
         case 12: // 100k RS thermistor 198-961 (4.7k pullup)
-        //case 13 weiter unten, E3D PT100.
+        case 13: // NTC 3950 100k thermistor - Conrad V3
         case 14: // Thermistor NTC 3950 100k Ohm
-        case 15: // Thermistor NTC 3950 100k Ohm
         case 97: // Define Raw Thermistor and Restistor-Settings within configuration.h see USE_GENERIC_THERMISTORTABLE_1 and GENERIC_THERM_NUM_ENTRIES 
         case 98: // Define Raw Thermistor and Restistor-Settings within configuration.h see USE_GENERIC_THERMISTORTABLE_2 and GENERIC_THERM_NUM_ENTRIES 
         case 99: // Define Raw Thermistor and Restistor-Settings within configuration.h see USE_GENERIC_THERMISTORTABLE_3 and GENERIC_THERM_NUM_ENTRIES 
@@ -850,7 +779,6 @@ void TemperatureController::updateCurrentTemperature()
             currentTemperature = (1023<<(2-ANALOG_REDUCE_BITS))-(osAnalogInputValues[sensorPin]>>(ANALOG_REDUCE_BITS)); // Convert to 10 bit result
             break;
         }
-        case 13: // PT100 E3D
         case 50: // User defined PTC table
         case 51:
         case 52:
@@ -883,8 +811,8 @@ void TemperatureController::updateCurrentTemperature()
         case 10:
         case 11:
         case 12:
+        case 13: // Conrad V3
         case 14: // Thermistor NTC 3950 100k Ohm
-        case 15: // Thermistor NTC 3950 100k Ohm
         {
             type--;
             uint8_t num = pgm_read_byte(&temptables_num[type])<<1;
@@ -945,7 +873,6 @@ void TemperatureController::updateCurrentTemperature()
 
             break;
         }
-        case 13:
         case 50: // User defined PTC thermistor
         case 51:
         case 52:
@@ -1127,8 +1054,8 @@ void TemperatureController::setTargetTemperature(float target, float offset)
         case 10:
         case 11:
         case 12:
+        case 13: // NTC 3950 100k thermistor - Conrad V3
         case 14: // Thermistor NTC 3950 100k Ohm
-        case 15: // Thermistor NTC 3950 100k Ohm
         {
             type--;
             uint8_t num = pgm_read_byte(&temptables_num[type])<<1;
@@ -1164,7 +1091,6 @@ void TemperatureController::setTargetTemperature(float target, float offset)
 #endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
             break;
         }
-        case 13: // PT100 E3D
         case 50: // user defined PTC thermistor
         case 51:
         case 52:
@@ -1295,22 +1221,20 @@ void Extruder::disableAllHeater()
 
 } // disableAllHeater
 
-void TemperatureController::waitForTargetTemperature() {
-    if(targetTemperatureC < 30) return;
+void TemperatureController::waitForTargetTemperature(uint8_t plus_temp_tolerance) {
     if(Printer::debugDryrun()) return;
-    g_uStartOfIdle = 0;
-    if(targetTemperatureC < currentTemperatureC){
-        UI_STATUS_UPD( UI_TEXT_COOLING_DOWN );
-    }else{
+    bool dirRising = targetTemperatureC > currentTemperatureC;
+    if(dirRising){
         UI_STATUS_UPD( UI_TEXT_HEATING_UP );
+    }else{
+        UI_STATUS_UPD( UI_TEXT_COOLING_DOWN );
     }
+    g_uStartOfIdle = 0;
     while(true) {
         Commands::printTemperatures();
-        Commands::checkForPeriodicalActions();
-        GCode::keepAlive(WaitHeater);
-        if( fabs(targetTemperatureC - currentTemperatureC) <= TEMP_TOLERANCE ) {
-            return;
-        }
+        Commands::checkForPeriodicalActions( WaitHeater );
+        if( fabs(targetTemperatureC - currentTemperatureC) <= TEMP_TOLERANCE + plus_temp_tolerance ) break;
+        if( !dirRising && currentTemperatureC < MAX_ROOM_TEMPERATURE ) break;
     }
     g_uStartOfIdle = HAL::timeInMilliseconds();
 }
@@ -1339,14 +1263,8 @@ void TemperatureController::autotunePID(float temp, uint8_t controllerId, int ma
     Com::printInfoFLN(Com::tPIDAutotuneStart);
     Com::printF( PSTR("Ruleset: "), (int)method );
     switch(method){
-        case 6: //P
-            Com::printFLN(Com::tAPIDsimpleP);
-        break;
-        case 5: //PI
-            Com::printFLN(Com::tAPIDsimplePI);
-        break;
-        case 4: //PD
-            Com::printFLN(Com::tAPIDsimplePD);
+        case 4: //Tyreus-Lyben
+            Com::printFLN(Com::tAPIDTyreusLyben);
         break;
         case 3: //PID no overshoot
             Com::printFLN(Com::tAPIDNone);
@@ -1372,8 +1290,7 @@ void TemperatureController::autotunePID(float temp, uint8_t controllerId, int ma
 
     for(;;)
     {
-        Commands::checkForPeriodicalActions(); // update heaters etc. https://github.com/repetier/Repetier-Firmware/commit/241c550ac004023842d6886c6e0db15a1f6b56d7
-        GCode::keepAlive( WaitHeater );
+        Commands::checkForPeriodicalActions( WaitHeater ); // update heaters etc. https://github.com/repetier/Repetier-Firmware/commit/241c550ac004023842d6886c6e0db15a1f6b56d7
         updateCurrentTemperature();
         currentTemp = currentTemperatureC;
 
@@ -1430,47 +1347,40 @@ KP = Ku * Maßzahl lt. Tabelle
 see also: http://www.mstarlabs.com/control/znrule.html
 */
                         switch(method){
-                            case 6: //P
-                               Kp = 0.5f*Ku;          //0.5 KRkrit
-                               Ki = 0;
-                               Kd = 0;
-                               Com::printFLN(Com::tAPIDsimpleP);
-                            break;
-                            case 5: //PI
-                               Kp = 0.45f*Ku;          //0.45 KRkrit
-                               Ki = 1.2f*Kp/Tu;       //0.833 Tkrit
-                               Kd = 0;
-                               Com::printFLN(Com::tAPIDsimplePI);
-                            break;
-                            case 4: //PD
-                               Kp = 0.8f*Ku;          //0.8 KRkrit
-                               Ki = 0;
-                               Kd = Kp*Tu/8.0f;       //0.125 Tkrit
-                               Com::printFLN(Com::tAPIDsimplePD);
-                            break;
-                            case 3: //PID no overshoot
+                            case 4: { //PID Tyreus-Lyben ("lazy--" -> Heated Bed!)
+                               Kp = 0.4545f*Ku;      //1/2.2 KRkrit
+                               Ki = Kp/Tu/2.2f;        //2.2 Tkrit
+                               Kd = Kp*Tu/6.3f;      //1/6.3 Tkrit[/code]
+                               Com::printFLN(Com::tAPIDTyreusLyben);
+                               break;
+                            }
+                            case 3: { //PID no overshoot ("lazy-" -> Heated Bed!)
                                Kp = 0.2f*Ku;          //0.2 KRkrit
                                Ki = 2.0f*Kp/Tu;       //0.5 Tkrit
                                Kd = Kp*Tu/3.0f;       //0.333 Tkrit
                                Com::printFLN(Com::tAPIDNone);
-                            break;
-                            case 2: //PID some overshoot
+                               break;
+                            }
+                            case 2: { //PID some overshoot
                                Kp = 0.33f*Ku;         //0.33 KRkrit
                                Ki = 2.0f*Kp/Tu;       //0.5 Tkrit
                                Kd = Kp*Tu/3.0f;       //0.333 Tkrit
                                Com::printFLN(Com::tAPIDSome);
-                            break;
-                            case 1: //PID Pessen Integral Rule
+                               break;
+                            }
+                            case 1: { //PID Pessen Integral Rule ("dynamic++" -> fast Hotend!)
                                Kp = 0.7f*Ku;          //0.7 KRkrit
                                Ki = 2.5f*Kp/Tu;       //0.4 Tkrit
                                Kd = Kp*Tu*3.0f/20.0f; //0.15 Tkrit
                                Com::printFLN(Com::tAPIDPessen);
-                            break;
-                            default: //PID classic Ziegler-Nichols
+                               break;
+                            }
+                            default: { //PID classic Ziegler-Nichols  ("dynamic+" -> Hotend!)
                                Kp = 0.6f*Ku;          //0.6 KRkrit
                                Ki = 2.0f*Kp/Tu;       //0.5 Tkrit
                                Kd = Kp*Tu/8.0f;       //0.125 Tkrit
                                Com::printFLN(Com::tAPIDClassic);
+                            }
                         }
                         Com::printFLN(Com::tAPIDKp,Kp);
                         Com::printFLN(Com::tAPIDKi,Ki);
@@ -1512,13 +1422,10 @@ see also: http://www.mstarlabs.com/control/znrule.html
                 pidPGain = Kp;
                 pidIGain = Ki;
                 pidDGain = Kd;
-                heatManager = 1; //HTR_PID / activate PID MANAGER
                 EEPROM::storeDataIntoEEPROM();
             }
             return;
         }
-        UI_MEDIUM;
-        UI_SLOW;
     }
 } // autotunePID
 
@@ -1581,27 +1488,6 @@ const char ext1_select_cmd[] PROGMEM = EXT1_SELECT_COMMANDS;
 const char ext1_deselect_cmd[] PROGMEM = EXT1_DESELECT_COMMANDS;
 #endif // NUM_EXTRUDER>1
 
-#if NUM_EXTRUDER>2
-const char ext2_select_cmd[] PROGMEM = EXT2_SELECT_COMMANDS;
-const char ext2_deselect_cmd[] PROGMEM = EXT2_DESELECT_COMMANDS;
-#endif // NUM_EXTRUDER>2
-
-#if NUM_EXTRUDER>3
-const char ext3_select_cmd[] PROGMEM = EXT3_SELECT_COMMANDS;
-const char ext3_deselect_cmd[] PROGMEM = EXT3_DESELECT_COMMANDS;
-#endif // NUM_EXTRUDER>3
-
-#if NUM_EXTRUDER>4
-const char ext4_select_cmd[] PROGMEM = EXT4_SELECT_COMMANDS;
-const char ext4_deselect_cmd[] PROGMEM = EXT4_DESELECT_COMMANDS;
-#endif // NUM_EXTRUDER>4
-
-#if NUM_EXTRUDER>5
-const char ext5_select_cmd[] PROGMEM = EXT5_SELECT_COMMANDS;
-const char ext5_deselect_cmd[] PROGMEM = EXT5_DESELECT_COMMANDS;
-#endif // NUM_EXTRUDER>5
-
-
 Extruder extruder[NUM_EXTRUDER] =
 {
 #if NUM_EXTRUDER>0
@@ -1619,13 +1505,12 @@ Extruder extruder[NUM_EXTRUDER] =
 
         ,{
             0,EXT0_TEMPSENSOR_TYPE,EXT0_SENSOR_INDEX,0,0,0,0,
-
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
             0,
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
-
-            0,EXT0_HEAT_MANAGER
-            ,0,EXT0_PID_INTEGRAL_DRIVE_MAX,EXT0_PID_INTEGRAL_DRIVE_MIN,EXT0_PID_P,EXT0_PID_I,EXT0_PID_D,EXT0_PID_MAX,0,0,0,{0,0,0,0}
+            0,
+            0,EXT0_PID_INTEGRAL_DRIVE_MAX,EXT0_PID_INTEGRAL_DRIVE_MIN,EXT0_PID_P,EXT0_PID_I,EXT0_PID_D,EXT0_PID_MAX,0,0,
+            0,{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
         ,0}
         ,ext0_select_cmd,ext0_deselect_cmd,EXT0_EXTRUDER_COOLER_SPEED,0
 #if STEPPER_ON_DELAY
@@ -1652,14 +1537,14 @@ Extruder extruder[NUM_EXTRUDER] =
 
         ,{
             1,EXT1_TEMPSENSOR_TYPE,EXT1_SENSOR_INDEX,0,0,0,0,
-
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
             0,
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
-
-            0,EXT1_HEAT_MANAGER
-            ,0,EXT1_PID_INTEGRAL_DRIVE_MAX,EXT1_PID_INTEGRAL_DRIVE_MIN,EXT1_PID_P,EXT1_PID_I,EXT1_PID_D,EXT1_PID_MAX,0,0,0,{0,0,0,0}
-        ,0}
+            0,
+            0,EXT1_PID_INTEGRAL_DRIVE_MAX,EXT1_PID_INTEGRAL_DRIVE_MIN,EXT1_PID_P,EXT1_PID_I,EXT1_PID_D,EXT1_PID_MAX,0,0,
+            0,{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+            0
+         }
         ,ext1_select_cmd,ext1_deselect_cmd,EXT1_EXTRUDER_COOLER_SPEED,0
 #if STEPPER_ON_DELAY
         , '\x0'
@@ -1669,126 +1554,20 @@ Extruder extruder[NUM_EXTRUDER] =
 #endif // FEATURE_PAUSE_PRINTING
     }
 #endif // NUM_EXTRUDER>1
-
-#if NUM_EXTRUDER>2
-    ,{
-        2,EXT2_X_OFFSET,EXT2_Y_OFFSET,EXT2_Z_OFFSET,EXT2_STEPS_PER_MM,EXT2_ENABLE_PIN,EXT2_ENABLE_ON,
-        EXT2_MAX_FEEDRATE,EXT2_MAX_ACCELERATION,EXT2_MAX_START_FEEDRATE,0,EXT2_WATCHPERIOD
-        ,EXT2_WAIT_RETRACT_TEMP,EXT2_WAIT_RETRACT_UNITS,0
-
-#if USE_ADVANCE
-#ifdef ENABLE_QUADRATIC_ADVANCE
-        ,EXT2_ADVANCE_K
-#endif // ENABLE_QUADRATIC_ADVANCE
-        ,EXT2_ADVANCE_L,EXT2_ADVANCE_BACKLASH_STEPS
-#endif // USE_ADVANCE
-
-        ,{
-            2,EXT2_TEMPSENSOR_TYPE,EXT2_SENSOR_INDEX,0,0,0,0,0,EXT2_HEAT_MANAGER
-            ,0,EXT2_PID_INTEGRAL_DRIVE_MAX,EXT2_PID_INTEGRAL_DRIVE_MIN,EXT2_PID_P,EXT2_PID_I,EXT2_PID_D,EXT2_PID_MAX,0,0,0,{0,0,0,0}
-        ,0}
-        ,ext2_select_cmd,ext2_deselect_cmd,EXT2_EXTRUDER_COOLER_SPEED,0
-#if STEPPER_ON_DELAY
-        , '\x0'
-#endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
-#if FEATURE_PAUSE_PRINTING
-        ,0 //uint8_t paused
-#endif // FEATURE_PAUSE_PRINTING
-    }
-#endif // NUM_EXTRUDER>2
-
-#if NUM_EXTRUDER>3
-    ,{
-        3,EXT3_X_OFFSET,EXT3_Y_OFFSET,EXT3_Z_OFFSET,EXT3_STEPS_PER_MM,EXT3_ENABLE_PIN,EXT3_ENABLE_ON,
-        EXT3_MAX_FEEDRATE,EXT3_MAX_ACCELERATION,EXT3_MAX_START_FEEDRATE,0,EXT3_WATCHPERIOD
-        ,EXT3_WAIT_RETRACT_TEMP,EXT3_WAIT_RETRACT_UNITS,0
-
-#if USE_ADVANCE
-#ifdef ENABLE_QUADRATIC_ADVANCE
-        ,EXT3_ADVANCE_K
-#endif // ENABLE_QUADRATIC_ADVANCE
-        ,EXT3_ADVANCE_L,EXT3_ADVANCE_BACKLASH_STEPS
-#endif // USE_ADVANCE
-
-        ,{
-            3,EXT3_TEMPSENSOR_TYPE,EXT3_SENSOR_INDEX,0,0,0,0,0,EXT3_HEAT_MANAGER
-            ,0,EXT3_PID_INTEGRAL_DRIVE_MAX,EXT3_PID_INTEGRAL_DRIVE_MIN,EXT3_PID_P,EXT3_PID_I,EXT3_PID_D,EXT3_PID_MAX,0,0,0,{0,0,0,0}
-
-        ,0}
-        ,ext3_select_cmd,ext3_deselect_cmd,EXT3_EXTRUDER_COOLER_SPEED,0
-#if STEPPER_ON_DELAY
-        , '\x0'
-#endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
-#if FEATURE_PAUSE_PRINTING
-        ,0 //uint8_t paused
-#endif // FEATURE_PAUSE_PRINTING
-    }
-#endif // NUM_EXTRUDER>3
-
-#if NUM_EXTRUDER>4
-    ,{
-        4,EXT4_X_OFFSET,EXT4_Y_OFFSET,EXT4_Z_OFFSET,EXT4_STEPS_PER_MM,EXT4_ENABLE_PIN,EXT4_ENABLE_ON,
-        EXT4_MAX_FEEDRATE,EXT4_MAX_ACCELERATION,EXT4_MAX_START_FEEDRATE,0,EXT4_WATCHPERIOD
-        ,EXT4_WAIT_RETRACT_TEMP,EXT4_WAIT_RETRACT_UNITS,0
-
-#if USE_ADVANCE
-#ifdef ENABLE_QUADRATIC_ADVANCE
-        ,EXT4_ADVANCE_K
-#endif // ENABLE_QUADRATIC_ADVANCE
-        ,EXT4_ADVANCE_L,EXT4_ADVANCE_BACKLASH_STEPS
-#endif // USE_ADVANCE
-
-        ,{
-            4,EXT4_TEMPSENSOR_TYPE,EXT4_SENSOR_INDEX,0,0,0,0,0,EXT4_HEAT_MANAGER
-            ,0,EXT4_PID_INTEGRAL_DRIVE_MAX,EXT4_PID_INTEGRAL_DRIVE_MIN,EXT4_PID_P,EXT4_PID_I,EXT4_PID_D,EXT4_PID_MAX,0,0,0,{0,0,0,0}
-        ,0}
-        ,ext4_select_cmd,ext4_deselect_cmd,EXT4_EXTRUDER_COOLER_SPEED,0
-#if STEPPER_ON_DELAY
-        , '\x0'
-#endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
-#if FEATURE_PAUSE_PRINTING
-        ,0 //uint8_t paused
-#endif // FEATURE_PAUSE_PRINTING
-    }
-#endif // NUM_EXTRUDER>4
-
-#if NUM_EXTRUDER>5
-    ,{
-        5,EXT5_X_OFFSET,EXT5_Y_OFFSET,EXT5_Z_OFFSET,EXT5_STEPS_PER_MM,EXT5_ENABLE_PIN,EXT5_ENABLE_ON,
-        EXT5_MAX_FEEDRATE,EXT5_MAX_ACCELERATION,EXT5_MAX_START_FEEDRATE,0,EXT5_WATCHPERIOD
-        ,EXT5_WAIT_RETRACT_TEMP,EXT5_WAIT_RETRACT_UNITS,0
-
-#if USE_ADVANCE
-#ifdef ENABLE_QUADRATIC_ADVANCE
-        ,EXT5_ADVANCE_K
-#endif // ENABLE_QUADRATIC_ADVANCE
-        ,EXT5_ADVANCE_L,EXT5_ADVANCE_BACKLASH_STEPS
-#endif // USE_ADVANCE
-
-        ,{
-            5,EXT5_TEMPSENSOR_TYPE,EXT5_SENSOR_INDEX,0,0,0,0,0,EXT5_HEAT_MANAGER
-            ,0,EXT5_PID_INTEGRAL_DRIVE_MAX,EXT5_PID_INTEGRAL_DRIVE_MIN,EXT5_PID_P,EXT5_PID_I,EXT5_PID_D,EXT5_PID_MAX,0,0,0,{0,0,0,0}
-        ,0}
-        ,ext5_select_cmd,ext5_deselect_cmd,EXT5_EXTRUDER_COOLER_SPEED,0
-#if STEPPER_ON_DELAY
-        , '\x0'
-#endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
-#if FEATURE_PAUSE_PRINTING
-        ,0 //uint8_t paused
-#endif // FEATURE_PAUSE_PRINTING
-    }
-#endif // NUM_EXTRUDER>5
 };
 
 #if HAVE_HEATED_BED
 #define NUM_TEMPERATURE_LOOPS NUM_EXTRUDER+1
-TemperatureController heatedBedController = {NUM_EXTRUDER,HEATED_BED_SENSOR_TYPE,BED_SENSOR_INDEX,0,0,0,0,
-    #if FEATURE_HEAT_BED_TEMP_COMPENSATION
-        0,
+TemperatureController heatedBedController = {
+            NUM_EXTRUDER,HEATED_BED_SENSOR_TYPE,BED_SENSOR_INDEX,0,0,0,0,
+#if FEATURE_HEAT_BED_TEMP_COMPENSATION
+            0,
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
-        0,HEATED_BED_HEAT_MANAGER
-        ,0,HEATED_BED_PID_INTEGRAL_DRIVE_MAX,HEATED_BED_PID_INTEGRAL_DRIVE_MIN,HEATED_BED_PID_PGAIN,HEATED_BED_PID_IGAIN,HEATED_BED_PID_DGAIN,HEATED_BED_PID_MAX,0,0,0,{0,0,0,0}
-        ,0};
+            0,
+            0,HEATED_BED_PID_INTEGRAL_DRIVE_MAX,HEATED_BED_PID_INTEGRAL_DRIVE_MIN,HEATED_BED_PID_PGAIN,HEATED_BED_PID_IGAIN,HEATED_BED_PID_DGAIN,HEATED_BED_PID_MAX,0,0,
+            0,{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+            0
+        };
 #else
 #define NUM_TEMPERATURE_LOOPS NUM_EXTRUDER
 #endif // HAVE_HEATED_BED
@@ -1801,13 +1580,16 @@ There is no Controller involved! It is not hooked into tempController
 Do not try to do anything other than updateCurrentTemperature and reading the Temps.
 TODO: Making a totally clean class, without the logic to controll something.
 */
-TemperatureController optTempController = {0,RESERVE_ANALOG_SENSOR_TYPE,RESERVE_SENSOR_INDEX,0,0,0,0,   
+TemperatureController optTempController = {
+        0,RESERVE_ANALOG_SENSOR_TYPE,RESERVE_SENSOR_INDEX,0,0,0,0,
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
         0,
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
-        0, 0
-        ,0,0,0,0,0,0,0,0,0,0,{0,0,0,0}
-        ,0};
+        0,
+        0,0,0,0,0,0,0,0,0,
+        0,{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+        0
+        };
 #endif // RESERVE_ANALOG_INPUTS
 
 
@@ -1820,22 +1602,6 @@ TemperatureController *tempController[NUM_TEMPERATURE_LOOPS] =
 #if NUM_EXTRUDER>1
     ,&extruder[1].tempControl
 #endif // NUM_EXTRUDER>1
-
-#if NUM_EXTRUDER>2
-    ,&extruder[2].tempControl
-#endif // NUM_EXTRUDER>2
-
-#if NUM_EXTRUDER>3
-    ,&extruder[3].tempControl
-#endif // NUM_EXTRUDER>3
-
-#if NUM_EXTRUDER>4
-    ,&extruder[4].tempControl
-#endif // NUM_EXTRUDER>4
-
-#if NUM_EXTRUDER>5
-    ,&extruder[5].tempControl
-#endif // NUM_EXTRUDER>5
 
 #if HAVE_HEATED_BED
 #if NUM_EXTRUDER==0

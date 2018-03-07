@@ -128,14 +128,10 @@
 #define UI_TEXT_EXTRUDER_OFFSET_X2      "[mm]: %OE", ""
 #define UI_TEXT_EXTRUDER_OFFSET_Y2      "[mm]: %OF", ""
 #define UI_TEXT_EXTRUDER_OFFSET_Z2      "[mm]: %OS", ""
-#define UI_TEXT_EMERGENCY_PAUSE_MIN2    "Emergency Pause","[digits]: %pl","Printpause Min.","Max. is %ph"
-#define UI_TEXT_EMERGENCY_PAUSE_MAX2    "Emergency Pause","[digits]: %ph","Printpause Max.","Min. is %pl"
-#define UI_TEXT_EMERGENCY_PAUSE_MIN     "Digits Pause Min"
-#define UI_TEXT_EMERGENCY_PAUSE_MAX     "Digits Pause Max"
-#define UI_TEXT_EMERGENCY_ZSTOP_MIN2    "Z-Emergency Stop","[digits]: %pL","Z-Stop Min.","Max. is %pH"
-#define UI_TEXT_EMERGENCY_ZSTOP_MAX2    "Z-Emergency Stop","[digits]: %pH","Z-Stop Max.","Min. is %pL"
-#define UI_TEXT_EMERGENCY_ZSTOP_MIN     "Digits Stop Min"
-#define UI_TEXT_EMERGENCY_ZSTOP_MAX     "Digits Stop Max"
+#define UI_TEXT_EMERGENCY_PAUSE_MIN     "Min:%pl digits"
+#define UI_TEXT_EMERGENCY_PAUSE_MAX     "Max:%ph digits"
+#define UI_TEXT_EMERGENCY_ZSTOP_MIN     "Min:%pL digits"
+#define UI_TEXT_EMERGENCY_ZSTOP_MAX     "Max:%pH digits"
 #define UI_TEXT_SD_CARD                 "SD Card"
 #define UI_TEXT_DEBUGGING               "Debugging"
 #define UI_TEXT_HOME_ALL                "Home all"
@@ -229,11 +225,7 @@
 #define UI_TEXT_EXTR_START_FEED         "Start FR:%Xf"
 #define UI_TEXT_EXTR_MAX_FEED           "Max FR:%XF"
 #define UI_TEXT_EXTR_ADVANCE_L          "Advance lin:%Xl"
-#define UI_TEXT_EXTR_ADVANCE_L_E0       "E0-Advance L:%Xb"
-#define UI_TEXT_EXTR_ADVANCE_L_E1       "E1-Advance L:%Xc"
-#define UI_TEXT_FREQ_DBL                "DblFq:%Xg"
 #define UI_TEXT_EXTR_ADVANCE_K          "Advance quad:%Xa"
-#define UI_TEXT_EXTR_MANAGER            "Control:%Xh"
 #define UI_TEXT_EXTR_PGAIN              "DT/PID P:%Xp"
 #define UI_TEXT_EXTR_IGAIN              "PID I:%Xi"
 #define UI_TEXT_EXTR_DGAIN              "PID D:%Xd"
@@ -241,7 +233,6 @@
 #define UI_TEXT_EXTR_DMAX               "I-drive max:%XM"
 #define UI_TEXT_EXTR_PMAX               "Power Max:%XD%%%"
 #define UI_TEXT_EXTR_SENSOR_TYPE        "Sens.:%XS"
-#define UI_TEXT_STRING_HM_BANGBANG      "BangBang"
 #define UI_TEXT_STRING_HM_PID           "PID"
 #define UI_TEXT_STRING_ACTION           "Action:%la"
 #define UI_TEXT_HEATING_EXTRUDER        "Heating Extruder"
@@ -259,7 +250,6 @@
 #define UI_TEXT_PAGE_BUFFER             "Buffer:%oB"
 #define UI_TEXT_SET_Z_ORIGIN            "Set Z Origin"
 #define UI_TEXT_FIND_Z_ORIGIN           "Find Z Origin"
-#define UI_TEXT_TEST_STRAIN_GAUGE       "Test SG"
 #define UI_TEXT_ZCALIB                  "Z Calibration"
 #define UI_TEXT_Z_OFFSET                "Z Offset"
 #define UI_TEXT_SET_P1                  "Set P1"
@@ -277,7 +267,8 @@
 #define UI_TEXT_DO_HEAT_BED_SCAN        "Matrix Scan"
 #define UI_TEXT_DO_SAVE_ACTIVE_ZMATRIX  "Save Matrix %SM"
 #define UI_TEXT_DO_MHIER_BED_SCAN       "Z-Offset-Scan"
-#define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matrix-Leveling"
+#define UI_TEXT_DO_FEATURE_ZERO_DIGITS  "Digit Homing:%FH"
+#define UI_TEXT_DO_DIGIT_COMPENSATION   "Digit CMP:   %FC"
 #define UI_TEXT_HEAT_BED_SCAN_PLA       "Matrix Scan PLA"
 #define UI_TEXT_HEAT_BED_SCAN_ABS       "Matrix Scan ABS"
 #define UI_TEXT_DO_WORK_PART_SCAN       "Scan"
@@ -297,8 +288,11 @@
 #define UI_TEXT_RESET_ACK               "Restart now?","","%mYYes","%mNNo"
 #define UI_TEXT_HEAT_BED_SCAN_ABORTED   "Scan aborted"
 #define UI_TEXT_HEAT_BED_SCAN_DONE      "Scan completed"
-#define UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN "mOffset: %HO um"
+// FEATURE_ALIGN_EXTRUDERS
+#define UI_TEXT_ALIGN_EXTRUDERS_ABORTED "Align aborted"
+#define UI_TEXT_ALIGN_EXTRUDERS_DONE    "Align completed"
 #define UI_TEXT_ALIGN_EXTRUDERS         "Align Extruders"
+#define UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN "mOffset: %HO um"
 #define UI_TEXT_PRINT_MODE              "Printer"
 #define UI_TEXT_MILL_MODE               "Miller"
 #define UI_TEXT_Z_SINGLE                "Single"
@@ -310,8 +304,7 @@
 #define UI_TEXT_Z_COMPENSATION_ACTIVE   "Cmp"
 #define UI_TEXT_FIND_Z_ORIGIN_ABORTED   "Search aborted"
 #define UI_TEXT_FIND_Z_ORIGIN_DONE      "Search completed"
-#define UI_TEXT_TEST_STRAIN_GAUGE_ABORTED   "Test aborted"
-#define UI_TEXT_TEST_STRAIN_GAUGE_DONE      "Test completed"
+#define UI_TEXT_TEST_STRAIN_GAUGE_DONE  "Test completed"
 #define UI_TEXT_WORK_PART_SCAN          "Work Part Scan"
 #define UI_TEXT_WORK_PART_SCAN_ABORTED  "Scan aborted"
 #define UI_TEXT_WORK_PART_SCAN_DONE     "Scan completed"
@@ -321,7 +314,6 @@
 #define UI_TEXT_SET_SCAN_XY_END         "Set XY End"
 #define UI_TEXT_SET_SCAN_DELTA_X        "Set dX: %Dxmm"
 #define UI_TEXT_SET_SCAN_DELTA_Y        "Set dY: %Dymm"
-#define UI_TEXT_STRAIN_GAUGE            "F: %s1 L: %Fs%%%%11F: %s1 V: %om%%%"
 #define UI_TEXT_SERVICE                 "SERVICE"
 #define UI_TEXT_SERVICE_TIME            "Until service"
 #define UI_TEXT_PRINTING_ROOM_LIGHT     "PRL: " 
@@ -358,10 +350,10 @@
 #define UI_TEXT_STATUSMSG               "%os"
 
 #define UI_TEXT_SENSOR_1                " Pico/RepRa" //1 B57560G0107F000
-#define UI_TEXT_SENSOR_3                " EPCOS-G550" //3
-#define UI_TEXT_SENSOR_4                " 10k NTC" //4 10K für heizbett vom alternativen Hersteller ohne umbau.
-#define UI_TEXT_SENSOR_8                " 104-GT2" //8
-#define UI_TEXT_SENSOR_14               " 3950-100k" //14
+#define UI_TEXT_SENSOR_3                " EPCOS-G550" //3 V1/V2 Hotend
+#define UI_TEXT_SENSOR_4                " 10k NTC"    //4 10K für Heizbett vom alternativen Hersteller ohne Umbau.
+#define UI_TEXT_SENSOR_8                " 104-GT2"    //8
+#define UI_TEXT_SENSOR_13               " 3950-100k"  //13 V3 Hotend
 
 // Printtime output gets aggregated like <Days_5gisgits>UI_TEXT_PRINTTIME_DAYS<Hours>UI_TEXT_PRINTTIME_HOURS<Minutes>UI_TEXT_PRINTTIME_MINUTES
 // ___88 days 12:45
@@ -372,8 +364,7 @@
 #define UI_TEXT_MILL_TIME               "Milling time"
 #define UI_TEXT_PRINT_FILAMENT          "Filament printed"
 #define UI_TEXT_POWER                   "ATX Power on/off"
-#define UI_TEXT_STRING_HM_DEADTIME      "Dead Time"
-#define UI_TEXT_STRING_HM_SLOWBANG      "SlowBang"
+
 #define UI_TEXT_STOP_PRINT              "Stop Print"
 #define UI_TEXT_STOP_PRINT_ACK          "Stop Print now?","","%mYYes","%mNNo"
 #define UI_TEXT_STOP_MILL               "Stop Mill"
@@ -383,6 +374,7 @@
 #define UI_ACTION_TEXT_PESSEN "PID Pessen-Rule"
 #define UI_ACTION_TEXT_SOME "PID Some-Overshoot"
 #define UI_ACTION_TEXT_NO "PID No-Overshoot"
+#define UI_ACTION_TEXT_TYREUS_LYBEN "PID Tyreus-Lyben"
 
 #define UI_TEXT_MOTOR_X                "I_x: %MX"
 #define UI_TEXT_MOTOR_Y                "I_y: %MY"
@@ -400,7 +392,20 @@
 #define UI_TEXT_CAL_CORRECT            "Adjustment:%Cc um"
 #define UI_TEXT_CAL_CONF_MENU          "Feature Caliper"
 
-#if MOTHERBOARD == DEVICE_TYPE_RF2000
+#define UI_TEXT_FLOW_MENU              "Digit Flow CMP"
+#define UI_TEXT_FLOW_MIN               "Digit Min:%CU"
+#define UI_TEXT_FLOW_MAX               "Digit Max:%CO"
+#define UI_TEXT_FLOW_DF                "dFlow:   :%CF%%%"
+#define UI_TEXT_FLOW_DV                "dFeed:   :%CE%%%"
+
+#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+    #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"
+    #define UI_TEXT_FREQ_DBL                "DblFq:%Xgmm/s"
+    #define UI_TEXT_EXTR_ADVANCE_L_E0       "E0-Advance L:%Xb"
+    #define UI_TEXT_EXTR_ADVANCE_L_E1       "E1-Advance L:%Xc"
+    #define UI_TEXT_EMERGENCY_PAUSE_MENU    "Emergency Pause"
+    #define UI_TEXT_EMERGENCY_ZSTOP_MENU    "Z-Emergency Stop"
+    #define UI_TEXT_STRAIN_GAUGE            "F: %s1 L: %Fs%%%%11F: %s1 V: %om%%%"
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min reached unhomed"
     #define UI_TEXT_RGB_LIGHT_MODE          "RGB Light: %li"
@@ -439,12 +444,19 @@
     #define UI_TEXT_TEMPERATURE_MANAGER     "Temperatur Manager"
     #define UI_TEXT_OPERATION_DENIED        "Operation denied"
     #define UI_TEXT_TEMPERATURE_WRONG       "Temperature wrong"
-#else   
+#else
+    #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"
+    #define UI_TEXT_FREQ_DBL                "DblF:%Xgmm/s"
+    #define UI_TEXT_EXTR_ADVANCE_L_E0       "E0-AdvanceL:%Xb"
+    #define UI_TEXT_EXTR_ADVANCE_L_E1       "E1-AdvanceL:%Xc"
+    #define UI_TEXT_EMERGENCY_PAUSE_MENU    "EmergencyPause"
+    #define UI_TEXT_EMERGENCY_ZSTOP_MENU    "ZEmergencyStop"
+    #define UI_TEXT_STRAIN_GAUGE            "F:%s1 L:%Fs%%%%11F: %s1 V: %om%%%"
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F:%s1 V:%om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min reached uho."
     #define UI_TEXT_RGB_LIGHT_MODE          "RGB Light: %li"
     #define UI_TEXT_BAUDRATE                "Baudrate:%oc"
-    #define UI_TEXT_ACTION_FANSPEED         "Fan Speed:%Fs%%%"
+    #define UI_TEXT_ACTION_FANSPEED         "FanSpeed:%Fs%%%"
     #define UI_TEXT_FAN_25                  "Fan to 25%%%"
     #define UI_TEXT_FAN_50                  "Fan to 50%%%"
     #define UI_TEXT_FAN_75                  "Fan to 75%%%"
@@ -467,7 +479,7 @@
     #define UI_TEXT_RESET_MEASUREMENT       "Reset Meas."
     #define UI_TEXT_MILLER_ONE_TRACK        "one t."
     #define UI_TEXT_MILLER_TWO_TRACKS       "two t."
-    #define UI_TEXT_RESTORE_DEFAULTS        "Restore Default"
+    #define UI_TEXT_RESTORE_DEFAULTS        "RestoreDefault"
     #define UI_TEXT_RESTORE_DEFAULTS4       UI_TEXT_RESTORE_DEFAULTS,UI_TEXT_CONFIGURATION "?","%mYJa","%mNNein"
     #define UI_TEXT_Z_MODE_SURFACE          "Surf."
     #define UI_TEXT_Z_MODE_GCODE            "GCode"
@@ -475,7 +487,7 @@
     #define UI_TEXT_TEMPERATURE_MANAGER     "Temp. Manager"
     #define UI_TEXT_OPERATION_DENIED        "Operat. denied"
     #define UI_TEXT_TEMPERATURE_WRONG       "Temp. wrong"
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+#endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 
 //#endif
 #else
@@ -513,16 +525,14 @@
 #define UI_TEXT_POSITION                "Position"
 #define UI_TEXT_EXTRUDER                "Extruder"
 #define UI_TEXT_EXTRUDER_OFFSET_X2      "[mm]: %OE ", ""
-#define UI_TEXT_EXTRUDER_OFFSET_Y2      "[mm]: %OF ", "" 
-#define UI_TEXT_EXTRUDER_OFFSET_Z2      "[mm]: %OS ", "" 
-#define UI_TEXT_EMERGENCY_PAUSE_MIN2    "Notfall Pause","[digits]: %pl","Printpause Min.","Max. is %ph"
-#define UI_TEXT_EMERGENCY_PAUSE_MAX2    "Notfall Pause","[digits]: %ph","Printpause Max.","Min. is %pl"
-#define UI_TEXT_EMERGENCY_PAUSE_MIN     "Digits Pause Min"
-#define UI_TEXT_EMERGENCY_PAUSE_MAX     "Digits Pause Max"
-#define UI_TEXT_EMERGENCY_ZSTOP_MIN2    "Z-Notfall Stop","[digits]: %pL","Z-Stop Min.","Max. is %pH"
-#define UI_TEXT_EMERGENCY_ZSTOP_MAX2    "Z-Notfall Stop","[digits]: %pH","Z-Stop Max.","Min. is %pL"
-#define UI_TEXT_EMERGENCY_ZSTOP_MIN     "Digits Stop Min"
-#define UI_TEXT_EMERGENCY_ZSTOP_MAX     "Digits Stop Max"
+#define UI_TEXT_EXTRUDER_OFFSET_Y2      "[mm]: %OF ", ""
+#define UI_TEXT_EXTRUDER_OFFSET_Z2      "[mm]: %OS ", ""
+#define UI_TEXT_EMERGENCY_PAUSE_MENU    "Notfall Pause"
+#define UI_TEXT_EMERGENCY_PAUSE_MIN     "Min:%pl digits"
+#define UI_TEXT_EMERGENCY_PAUSE_MAX     "Max:%ph digits"
+#define UI_TEXT_EMERGENCY_ZSTOP_MENU    "Z-Notfall Stop"
+#define UI_TEXT_EMERGENCY_ZSTOP_MIN     "Min:%pL digits"
+#define UI_TEXT_EMERGENCY_ZSTOP_MAX     "Max:%pH digits"
 #define UI_TEXT_SD_CARD                 "SD Karte"
 #define UI_TEXT_DEBUGGING               "Debugging"
 #define UI_TEXT_HOME_ALL                "Home alle"
@@ -595,11 +605,7 @@
 #define UI_TEXT_DMS                     "DMS Features"
 #define UI_TEXT_EXTR_MAX_FEED           "Max FR:%XF"
 #define UI_TEXT_EXTR_ADVANCE_L          "Advance lin:%Xl"
-#define UI_TEXT_EXTR_ADVANCE_L_E0       "E0-Advance L:%Xb"
-#define UI_TEXT_EXTR_ADVANCE_L_E1       "E1-Advance L:%Xc"
-#define UI_TEXT_FREQ_DBL                "DblFq:%Xg"
 #define UI_TEXT_EXTR_ADVANCE_K          "Advance quad:%Xa"
-#define UI_TEXT_EXTR_MANAGER            "Regler:%Xh"
 #define UI_TEXT_EXTR_PGAIN              "DT/PID P:%Xp"
 #define UI_TEXT_EXTR_IGAIN              "PID I:%Xi"
 #define UI_TEXT_EXTR_DGAIN              "PID D:%Xd"
@@ -607,7 +613,6 @@
 #define UI_TEXT_EXTR_DMAX               "I-Drive Max:%XM"
 #define UI_TEXT_EXTR_PMAX               "Heizung Max:%XD%%%"
 #define UI_TEXT_EXTR_SENSOR_TYPE        "Sens.:%XS"
-#define UI_TEXT_STRING_HM_BANGBANG      "BangBang"
 #define UI_TEXT_STRING_HM_PID           "PID"
 #define UI_TEXT_STRING_ACTION           "Aktion:%la"
 #define UI_TEXT_HEATING_EXTRUDER        "Heize Extruder"
@@ -625,7 +630,6 @@
 #define UI_TEXT_PAGE_BUFFER             "Puffer:%oB"
 #define UI_TEXT_SHOW_MEASUREMENT        "Zeige Messung"
 #define UI_TEXT_RESET_MEASUREMENT       "Reset Messung"
-#define UI_TEXT_TEST_STRAIN_GAUGE       "Teste DMS"
 #define UI_TEXT_ZCALIB                  "Z Kalibrierung"
 #define UI_TEXT_Z_OFFSET                "Z Abstand"
 #define UI_TEXT_SET_P1                  "Setze P1"
@@ -641,7 +645,8 @@
 #define UI_TEXT_DO_HEAT_BED_SCAN        "Matrix Scan"
 #define UI_TEXT_DO_SAVE_ACTIVE_ZMATRIX  "Matrix speichern%SM"
 #define UI_TEXT_DO_MHIER_BED_SCAN       "Z-Offset-Scan"
-#define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matrix-Leveling"
+#define UI_TEXT_DO_FEATURE_ZERO_DIGITS  "Digit Homing:%FH"
+#define UI_TEXT_DO_DIGIT_COMPENSATION   "Digit CMP:   %FC"
 #define UI_TEXT_HEAT_BED_SCAN_PLA       "Matrix Scan PLA"
 #define UI_TEXT_HEAT_BED_SCAN_ABS       "Matrix Scan ABS"
 #define UI_TEXT_DO_WORK_PART_SCAN       "Abtasten"
@@ -661,6 +666,9 @@
 #define UI_TEXT_RESET_ACK               "Neustart jetzt?","","%mYJa","%mNNein"
 #define UI_TEXT_HEAT_BED_SCAN_ABORTED   "Scan abgebrochen"
 #define UI_TEXT_HEAT_BED_SCAN_DONE      "Scan beendet"
+// FEATURE_ALIGN_EXTRUDERS
+#define UI_TEXT_ALIGN_EXTRUDERS_ABORTED "Ausr. abgebr."
+#define UI_TEXT_ALIGN_EXTRUDERS_DONE    "Ausr. beendet"
 #define UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN "mOffset: %HO um"
 #define UI_TEXT_PRINT_MODE              "Drucker"
 #define UI_TEXT_MILL_MODE               "Fr" STR_auml "ser"
@@ -681,7 +689,6 @@
 #define UI_TEXT_SET_SCAN_XY_END         "Setze XY Ende"
 #define UI_TEXT_SET_SCAN_DELTA_X        "Setze dX: %Dxmm"
 #define UI_TEXT_SET_SCAN_DELTA_Y        "Setze dY: %Dymm"
-#define UI_TEXT_STRAIN_GAUGE            "F: %s1 L: %Fs%%%"
 #define UI_TEXT_SERVICE                 "WARTUNG"
 #define UI_TEXT_SERVICE_TIME            "N" STR_auml "chster Service"
 #define UI_TEXT_PRINTING_ROOM_LIGHT     "PRL: "
@@ -699,20 +706,20 @@
 #define UI_TEXT_WARNING                 "Warnung:"
 #define UI_TEXT_INFORMATION             "Information:"
 #define UI_TEXT_SET_ORIGIN              "Setze Ursprung"
-#define UI_TEXT_AUTODETECT_PID          "PID ermitteln" 
+#define UI_TEXT_AUTODETECT_PID          "PID ermitteln"
 #define UI_TEXT_PID_ACK                 UI_TEXT_AUTODETECT_PID "?","","%mYJa","%mNNein"
 // Temp. = Temperatur
 #define UI_TEXT_HOME_UNKNOWN            "Home unbekannt"
-#define UI_TEXT_SAVING_NEEDLESS         "Sichern sinnlos"  
-#define UI_TEXT_SAVING_SUCCESS          "Matrix gesichert"      
+#define UI_TEXT_SAVING_NEEDLESS         "Sichern sinnlos"
+#define UI_TEXT_SAVING_SUCCESS          "Matrix gesichert"
 // n.m. = nicht moeglich
-#define UI_TEXT_OPERATION_DENIED        "Operation verw."       
+#define UI_TEXT_OPERATION_DENIED        "Operation verw."
 // verw. = verweigert
 #define UI_TEXT_EMERGENCY_PAUSE         "Notfall Pause"
 #define UI_TEXT_EMERGENCY_STOP          "Notfall Block"
 
 #define UI_TEXT_MIN_REACHED             "Min erreicht"
-#define UI_TEXT_MAX_REACHED             "Max erreicht"      
+#define UI_TEXT_MAX_REACHED             "Max erreicht"
 // Temp. = Temperatur
 #define UI_TEXT_TIMEOUT                 "Timeout"
 #define UI_TEXT_AUTODETECT_PID_DONE     "PID ermittelt"
@@ -723,10 +730,10 @@
 #define UI_TEXT_STATUSMSG               "%os"
 
 #define UI_TEXT_SENSOR_1                " Pico/RepRa" //1 B57560G0107F000
-#define UI_TEXT_SENSOR_3                " EPCOS-G550" //3
-#define UI_TEXT_SENSOR_4                " 10k NTC" //4 10K für heizbett vom alternativen Hersteller ohne umbau.
-#define UI_TEXT_SENSOR_8                " 104-GT2" //8
-#define UI_TEXT_SENSOR_14               " 3950-100k" //14
+#define UI_TEXT_SENSOR_3                " EPCOS-G550" //3 V1/V2 Hotend
+#define UI_TEXT_SENSOR_4                " 10k NTC"    //4 10K für Heizbett vom alternativen Hersteller ohne Umbau.
+#define UI_TEXT_SENSOR_8                " 104-GT2"    //8
+#define UI_TEXT_SENSOR_13               " 3950-100k"  //13 V3 Hotend
 
 // Printtime output gets aggregated like <Days_5gisgits>UI_TEXT_PRINTTIME_DAYS<Hours>UI_TEXT_PRINTTIME_HOURS<Minutes>UI_TEXT_PRINTTIME_MINUTES
 // ___88 days 12:45
@@ -734,13 +741,12 @@
 #define UI_TEXT_PRINTTIME_HOURS         ":"
 #define UI_TEXT_PRINTTIME_MINUTES       ""
 #define UI_TEXT_POWER                   "ATX Netzteil an/aus"
-#define UI_TEXT_STRING_HM_DEADTIME      "Totzeit"
-#define UI_TEXT_STRING_HM_SLOWBANG      "Langs.BB"
 
 #define UI_ACTION_TEXT_CLASSICPID "PID Ziegler-Nichols"
 #define UI_ACTION_TEXT_PESSEN "PID Pessen-Rule"
 #define UI_ACTION_TEXT_SOME "PID Some-Overshoot"
 #define UI_ACTION_TEXT_NO "PID No-Overshoot"
+#define UI_ACTION_TEXT_TYREUS_LYBEN "PID Tyreus-Lyben"
 
 #define UI_TEXT_MOTOR_X                "I_x: %MX"
 #define UI_TEXT_MOTOR_Y                "I_y: %MY"
@@ -758,8 +764,18 @@
 #define UI_TEXT_CAL_CORRECT            "Korrektur:%Cc um"
 #define UI_TEXT_CAL_CONF_MENU          "Feature Caliper"
 
-#if MOTHERBOARD == DEVICE_TYPE_RF2000
+#define UI_TEXT_FLOW_MENU              "Digit Flow CMP"
+#define UI_TEXT_FLOW_MIN               "Digit Min:%CU"
+#define UI_TEXT_FLOW_MAX               "Digit Max:%CO"
+#define UI_TEXT_FLOW_DF                "dFlow:   :%CF%%%"
+#define UI_TEXT_FLOW_DV                "dFeed:   :%CE%%%"
 
+#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+    #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"
+    #define UI_TEXT_FREQ_DBL                "DblFq:%Xgmm/s"
+    #define UI_TEXT_EXTR_ADVANCE_L_E0       "E0-Advance L:%Xb"
+    #define UI_TEXT_EXTR_ADVANCE_L_E1       "E1-Advance L:%Xc"
+    #define UI_TEXT_STRAIN_GAUGE            "F: %s1 L: %Fs%%%%11F: %s1 V: %om%%%"
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min Kontakt unhomed"
     #define UI_TEXT_EXTRUDER_OFFSET_X       "Extruder Abstand X"
@@ -781,7 +797,7 @@
     #define UI_TEXT_FEED_MAX_Z              "Max Z :%fz"
     #define UI_TEXT_JERK                    "X/Y-Ruck :%aj"
     #define UI_TEXT_ZJERK                   "Z-Ruck   :%aJ"
-    #define UI_TEXT_ACTION_FANSPEED         "L" STR_uuml "fter:    %Fs%%%"
+    #define UI_TEXT_ACTION_FANSPEED         "L" STR_uuml "fter: %Fs%%%"
     #define UI_TEXT_FAN_OFF                 "L" STR_uuml "fter aus"
     #define UI_TEXT_FAN_25                  "L" STR_uuml "fter auf  25%%%"
     #define UI_TEXT_FAN_50                  "L" STR_uuml "fter auf  50%%%"
@@ -797,7 +813,7 @@
     #define UI_TEXT_UNMOUNT_FILAMENT        "Filament entladen"
     #define UI_TEXT_E_POSITION              "Position Extruder"
     #define UI_TEXT_ACTIVE_EXTRUDER         "Aktiver Extruder:%Oa"
-    #define UI_TEXT_CONFIG_SINGLE_STEPS        "Z-Sprung: %Sz um"
+    #define UI_TEXT_CONFIG_SINGLE_STEPS     "Z-Sprung: %Sz um"
     #define UI_TEXT_SET_E_ORIGIN            "Setze E Ursprung"
     #define UI_TEXT_CONTINUE_PRINT          "Druck fortsetzen"
     #define UI_TEXT_PAUSE_MILL              "Fr" STR_auml "sen pausieren"
@@ -817,7 +833,6 @@
     #define UI_TEXT_Z_MODE                  "Z Anzeige: %zm"
     #define UI_TEXT_Z_MODE_Z_ORIGIN         "Z Urspr."
     #define UI_TEXT_FIND_Z_ORIGIN_ABORTED   "Suche abgebrochen"
-    #define UI_TEXT_TEST_STRAIN_GAUGE_ABORTED   "Test abgebrochen"
     #define UI_TEXT_RESTORE_DEFAULTS        "Werkseinstellungen"
     #define UI_TEXT_RESTORE_DEFAULTS4       UI_TEXT_RESTORE_DEFAULTS,UI_TEXT_CONFIGURATION "?","%mYJa","%mNNein"
     #define UI_TEXT_PRINT_TIME              "Gesamte Druckzeit"
@@ -831,10 +846,13 @@
     #define UI_TEXT_STOP_MILL_ACK           "Fr" STR_auml "sen abbrechen?","","%mYJa","%mNNein"
     #define UI_TEXT_TEMPERATURE_MANAGER     "Temperatur Manager"
     #define UI_TEXT_INVALID_MATRIX          "Ung" STR_uuml" ltige Matrix"
-    #define UI_TEXT_TEMPERATURE_WRONG       "Temperatur falsch"
-    
+    #define UI_TEXT_TEMPERATURE_WRONG       "Temperatur falsch"    
 #else
-    
+    #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"
+    #define UI_TEXT_FREQ_DBL                "DblF:%Xgmm/s"
+    #define UI_TEXT_EXTR_ADVANCE_L_E0       "E0-AdvanceL:%Xb"
+    #define UI_TEXT_EXTR_ADVANCE_L_E1       "E1-AdvanceL:%Xc"
+    #define UI_TEXT_STRAIN_GAUGE            "F:%s1 L:%Fs%%%%11F: %s1 V: %om%%%"
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F:%s1 V:%om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min Kontakt uho."
     #define UI_TEXT_EXTRUDER_OFFSET_X       "Extr. Abstand X"
@@ -889,7 +907,6 @@
     #define UI_TEXT_Z_MODE                  "Z Anz.: %zm"
     #define UI_TEXT_Z_MODE_Z_ORIGIN         "Z Urs."
     #define UI_TEXT_FIND_Z_ORIGIN_ABORTED   "Suche abgebr."
-    #define UI_TEXT_TEST_STRAIN_GAUGE_ABORTED   "Test abgebr."
     #define UI_TEXT_RESTORE_DEFAULTS        "Werkseinstell."
     #define UI_TEXT_RESTORE_DEFAULTS4       UI_TEXT_RESTORE_DEFAULTS,UI_TEXT_CONFIGURATION "?","%mYJa","%mNNein"
     #define UI_TEXT_PRINT_TIME              "Ges. Druckzeit"
@@ -905,7 +922,7 @@
     #define UI_TEXT_INVALID_MATRIX          "Ung. Matrix"   
     #define UI_TEXT_TEMPERATURE_WRONG       "Temp. falsch"  
 
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+#endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 
 
 #endif // UI_LANGUAGE==1

@@ -162,105 +162,10 @@ void SDCard::startPrint()
 {
     if(!sdactive) return;
     sdmode = true;
-    Printer::setMenuMode(MENU_MODE_SD_PRINTING,true);
-    Printer::setMenuMode(MENU_MODE_PAUSED,false);
-    Printer::setMenuMode(MENU_MODE_PRINTING,false);
-
+    Printer::setPrinting(true);
+    Printer::setMenuMode(MENU_MODE_SD_PRINTING, true);
+    Printer::setMenuMode(MENU_MODE_PAUSED, false);
 } // startPrint
-
-
-void SDCard::abortPrint()
-{
-    if( !sd.sdactive )
-    {
-        return;
-    }
-    Printer::setMenuMode(MENU_MODE_SD_PRINTING,false);
-    Printer::setMenuMode(MENU_MODE_PAUSED,false);
-    
-    if( Printer::debugInfo() )
-    {
-        Com::printFLN(PSTR("SD print aborted."));
-    }
-
-    g_uBlockSDCommands = 1;
-
-    HAL::delayMilliseconds( 250 );
-
-    InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
-
-    sdmode   = false;
-    sdpos    = 0;
-    filesize = 0;
-
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-    Com::printFLN(PSTR("G-Code buffer reset"));
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
-    GCode::resetBuffer();
-
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-    Com::printFLN(PSTR("Path planner reset"));
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
-    PrintLine::resetPathPlanner();
-
-#if DEBUG_SHOW_DEVELOPMENT_LOGS
-    Com::printFLN(PSTR("Line buffer reset"));
-#endif // DEBUG_SHOW_DEVELOPMENT_LOGS
-
-    PrintLine::resetLineBuffer();
-
-    Printer::stepperDirection[X_AXIS]   = 0;
-    Printer::stepperDirection[Y_AXIS]   = 0;
-    Printer::stepperDirection[Z_AXIS]   = 0;
-    Extruder::current->stepperDirection = 0;
-
-    // we have to tell the firmware about its real current position
-    Printer::queuePositionLastSteps[X_AXIS] = Printer::queuePositionCurrentSteps[X_AXIS];
-    Printer::queuePositionLastSteps[Y_AXIS] = Printer::queuePositionCurrentSteps[Y_AXIS];
-    Printer::queuePositionLastSteps[Z_AXIS] = Printer::queuePositionCurrentSteps[Z_AXIS];
-    Printer::updateCurrentPosition( true );
-
-    noInts.unprotect();
-
-    BEEP_ABORT_PRINTING
-
-#if FEATURE_PAUSE_PRINTING
-    if( g_pauseStatus != PAUSE_STATUS_NONE )
-    {
-        // the printing is paused at the moment
-        noInts.protect();
-
-        g_uPauseTime  = 0;
-        g_pauseStatus = PAUSE_STATUS_NONE;
-        g_pauseMode   = PAUSE_MODE_NONE;
-
-        g_nContinueSteps[X_AXIS] = 0;
-        g_nContinueSteps[Y_AXIS] = 0;
-        g_nContinueSteps[Z_AXIS] = 0;
-        g_nContinueSteps[E_AXIS] = 0;
-
-        noInts.unprotect();
-    }
-#endif // FEATURE_PAUSE_PRINTING
-
-    // wait until all moves are done
-    while( PrintLine::linesCount )
-    {
-        HAL::delayMilliseconds( 1 );
-        Commands::checkForPeriodicalActions();
-    }
-
-    if( Printer::debugInfo() )
-    {
-        Com::printFLN(PSTR("Abort complete"));
-    }
-
-    g_uStopTime = HAL::timeInMilliseconds();
-
-} // abortPrint
-
 
 void SDCard::writeCommand(GCode *code)
 {
@@ -613,14 +518,9 @@ void SDCard::deleteFile(char *filename)
 {
     if(!sdactive) return;
 
-    if(Printer::isMenuMode(MENU_MODE_SD_PRINTING))
+    if(sdmode)
     {
         // we do not allow to delete a file while we are printing/milling from the SD card
-        if( Printer::debugErrors() )
-        {
-            Com::printFLN(PSTR("It is not possible to delete a file from the SD card until the current processing has finished."));
-        }
-
         showError( (void*)ui_text_delete_file, (void*)ui_text_operation_denied );
         return;
     }

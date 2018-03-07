@@ -57,10 +57,10 @@ private:
     flag8_t             dir;                        ///< Direction of movement. 1 = X+, 2 = Y+, 4= Z+, values can be combined.
     int32_t             delta[4];                   ///< Steps we want to move.
     int32_t             error[4];                   ///< Error calculation for Bresenham algorithm
-    float               speedX;                     ///< Speed in x direction at fullInterval in mm/s
-    float               speedY;                     ///< Speed in y direction at fullInterval in mm/s
-    float               speedZ;                     ///< Speed in z direction at fullInterval in mm/s
-    float               speedE;                     ///< Speed in E direction at fullInterval in mm/s
+    float               speedX;                     ///< Speed in x direction at vMax in mm/s
+    float               speedY;                     ///< Speed in y direction at vMax in mm/s
+    float               speedZ;                     ///< Speed in z direction at vMax in mm/s
+    float               speedE;                     ///< Speed in E direction at vMax in mm/s
     float               fullSpeed;                  ///< Desired speed mm/s
     float               invFullSpeed;               ///< 1.0/fullSpeed for faster computation
     float               accelerationDistance2;      ///< Real 2.0*distance*acceleration mm²/s²
@@ -69,7 +69,7 @@ private:
     float               endSpeed;                   ///< Exit speed in mm/s
     float               minSpeed;
     float               distance;
-    ticks_t             fullInterval;               ///< interval at full speed in ticks/step.
+    //ticks_t             fullInterval;               ///< interval at full speed in ticks/step.
     uint32_t            accelSteps;                 ///< How much steps does it take, to reach the plateau.
     uint32_t            decelSteps;                 ///< How much steps does it take, to reach the end speed.
     uint32_t            accelerationPrim;           ///< Acceleration along primary axis
@@ -194,10 +194,12 @@ public:
     {
         if(isCheckEndstops())
         {
+            //Min-Axis:
             if(isXNegativeMove() && Printer::isXMinEndstopHit())
                 setXMoveFinished();
             if(isYNegativeMove() && Printer::isYMinEndstopHit())
                 setYMoveFinished();
+            //Max-Axis:
             if(isXPositiveMove() && Printer::isXMaxEndstopHit()){
                 setXMoveFinished();
                 if(forQueue){
@@ -205,7 +207,7 @@ public:
                 }else{
                   Printer::directPositionLastSteps[X_AXIS] = Printer::directPositionTargetSteps[X_AXIS] = Printer::directPositionCurrentSteps[X_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
                 }
-                Printer::updateCurrentPosition();
+                Printer::updateCurrentPosition(true);
             }
             if(isYPositiveMove() && Printer::isYMaxEndstopHit()){
                 setYMoveFinished();
@@ -214,14 +216,23 @@ public:
                 }else{
                   Printer::directPositionLastSteps[Y_AXIS] = Printer::directPositionTargetSteps[Y_AXIS] = Printer::directPositionCurrentSteps[Y_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
                 }
-                Printer::updateCurrentPosition();
+                Printer::updateCurrentPosition(true);
+            }
+            if(isZPositiveMove() && (Printer::isZMaxEndstopHit() || Printer::currentZSteps > (Printer::maxSteps[Z_AXIS] /*- Printer::minSteps[Z_AXIS]*/) + abs(Z_OVERRIDE_MAX * 2) ))
+            {
+                setZMoveFinished();
+                if(forQueue){
+                  Printer::queuePositionLastSteps[Z_AXIS] = Printer::queuePositionTargetSteps[Z_AXIS] = Printer::queuePositionCurrentSteps[Z_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
+                }else{
+                  Printer::directPositionLastSteps[Z_AXIS] = Printer::directPositionTargetSteps[Z_AXIS] = Printer::directPositionCurrentSteps[Z_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
+                }
+                Printer::updateCurrentPosition(true);
             }
         }
 
-        // Test Z-Axis every step if necessary, otherwise it could easyly ruin your printer!
+        // Test Z-Axis every step, otherwise it could easyly ruin your printer!
         if(isZNegativeMove() && Printer::isZMinEndstopHit())
         {
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
             if( Printer::isAxisHomed(Z_AXIS) && PrintLine::direct.task != TASK_MOVE_FROM_BUTTON)
             {
                 if( Printer::currentZSteps <= -Z_OVERRIDE_MAX )
@@ -232,18 +243,7 @@ public:
                     return;
                 }
             }
-#endif // FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
             setZMoveFinished();
-        }
-        if(isZPositiveMove() && Printer::isZMaxEndstopHit())
-        {
-            setZMoveFinished();
-            if(forQueue){
-              Printer::queuePositionLastSteps[Z_AXIS] = Printer::queuePositionTargetSteps[Z_AXIS] = Printer::queuePositionCurrentSteps[Z_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
-            }else{
-              Printer::directPositionLastSteps[Z_AXIS] = Printer::directPositionTargetSteps[Z_AXIS] = Printer::directPositionCurrentSteps[Z_AXIS]; //Wenn man G28 und G1 Z200 macht, er vorher gestoppt wird und man zurückfährt, landet er im Minus. Weil der Drucker denkt, er wäre von 200 gestartet.
-            }
-            Printer::updateCurrentPosition();
         }
     } // checkEndstops
 
@@ -379,53 +379,40 @@ public:
         linesPos = linesWritePos;
     } // resetPathPlanner
 
-    inline static void resetLineBuffer()
-    {
-        cur = NULL;
-        memset( lines, 0, sizeof( PrintLine ) * MOVE_CACHE_SIZE );
-    } // resetLineBuffer
-
 #if USE_ADVANCE
     inline void updateAdvanceSteps(speed_t v,uint8_t max_loops,bool accelerate)
     {
         if(!Printer::isAdvanceActivated()) return;
 #ifdef ENABLE_QUADRATIC_ADVANCE
         long advanceTarget = Printer::advanceExecuted;
-        if(accelerate)
-        {
-            for(uint8_t loop = 0; loop<max_loops; loop++) advanceTarget += advanceRate;
-            if(advanceTarget>advanceFull)
+        if(accelerate) {
+            for(uint8_t loop = 0; loop < max_loops; loop++) advanceTarget += advanceRate;
+            if(advanceTarget > advanceFull)
                 advanceTarget = advanceFull;
-        }
-        else
-        {
-            for(uint8_t loop = 0; loop<max_loops; loop++) advanceTarget -= advanceRate;
-            if(advanceTarget<advanceEnd)
+        } else {
+            for(uint8_t loop = 0; loop < max_loops; loop++) advanceTarget -= advanceRate;
+            if(advanceTarget < advanceEnd)
                 advanceTarget = advanceEnd;
         }
-        long h = HAL::mulu16xu16to32(v,advanceL);
+        long h = HAL::mulu16xu16to32(v, advanceL);
         int tred = ((advanceTarget + h) >> 16);
-
         HAL::forbidInterrupts();
-        Printer::extruderStepsNeeded += tred-Printer::advanceStepsSet;
-        if(tred>0 && Printer::advanceStepsSet<=0)
+        Printer::extruderStepsNeeded += tred - Printer::advanceStepsSet;
+        if(tred > 0 && Printer::advanceStepsSet <= 0)
             Printer::extruderStepsNeeded += Extruder::current->advanceBacklash;
-        else if(tred<0 && Printer::advanceStepsSet>=0)
+        else if(tred < 0 && Printer::advanceStepsSet >= 0)
             Printer::extruderStepsNeeded -= Extruder::current->advanceBacklash;
-
         Printer::advanceStepsSet = tred;
         HAL::allowInterrupts();
         Printer::advanceExecuted = advanceTarget;
 #else
-        int tred = HAL::mulu6xu16shift16(v,advanceL);
+        int tred = HAL::mulu6xu16shift16(v, advanceL);
         HAL::forbidInterrupts();
         Printer::extruderStepsNeeded += tred - Printer::advanceStepsSet;
-
-        if(tred>0 && Printer::advanceStepsSet<=0)
+        if(tred > 0 && Printer::advanceStepsSet <= 0)
             Printer::extruderStepsNeeded += (Extruder::current->advanceBacklash << 1);
-        else if(tred<0 && Printer::advanceStepsSet>=0)
+        else if(tred < 0 && Printer::advanceStepsSet >= 0)
             Printer::extruderStepsNeeded -= (Extruder::current->advanceBacklash << 1);
-
         Printer::advanceStepsSet = tred;
         HAL::allowInterrupts();
         (void)max_loops;
@@ -438,7 +425,7 @@ public:
     {
         if(stepsRemaining <= static_cast<int32_t>(decelSteps))
         {
-            if (!(flags & FLAG_DECELERATING))
+            if (!(flags & FLAG_DECELERATING)) //reset "timer" only once.
             {
                 Printer::timer = 0;
                 flags |= FLAG_DECELERATING;
@@ -453,34 +440,13 @@ public:
         return Printer::stepNumber <= accelSteps;
     } // moveAccelerating
 
-    INLINE void startXStep()
-    {
-        ANALYZER_ON(ANALYZER_CH6);
-        ANALYZER_ON(ANALYZER_CH2);
-        WRITE(X_STEP_PIN,HIGH);
-
-#if FEATURE_TWO_XSTEPPER
-        WRITE(X2_STEP_PIN,HIGH);
-#endif // FEATURE_TWO_XSTEPPER
-    } // startXStep
-
-    INLINE void startYStep()
-    {
-        ANALYZER_ON(ANALYZER_CH7);
-        ANALYZER_ON(ANALYZER_CH3);
-        WRITE(Y_STEP_PIN,HIGH);
-
-#if FEATURE_TWO_YSTEPPER
-        WRITE(Y2_STEP_PIN,HIGH);
-#endif // FEATURE_TWO_YSTEPPER
-    } // startYStep
-
     void updateStepsParameter();
-    inline float safeSpeed();
-    void calculateQueueMove(float axis_diff[],uint8_t pathOptimize);
+    inline float safeSpeed(fast8_t drivingAxis);
+    void calculateQueueMove(float axis_diff[],uint8_t pathOptimize, fast8_t drivingAxis, float feedrate
+    );
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-    void calculateDirectMove(float axis_diff[],uint8_t pathOptimize);
+    void calculateDirectMove(float axis_diff[],uint8_t pathOptimize, fast8_t drivingAxis);
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
     INLINE long getWaitTicks()
@@ -517,7 +483,7 @@ public:
         nextPlannerIndex(linesWritePos);
         InterruptProtectedBlock noInts;
         linesCount++;
-        g_uStartOfIdle = 0; //line not here in newest repetier
+        g_uStartOfIdle = 0; //tell the printer work is being done.
     } // pushLine
 
     static PrintLine *getNextWriteLine()
@@ -541,7 +507,7 @@ public:
     static inline void backwardPlanner(uint8_t p,uint8_t last);
     static void updateTrapezoids();
     static uint8_t insertWaitMovesIfNeeded(uint8_t pathOptimize, uint8_t waitExtraLines);
-    static void prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize);
+    static void prepareQueueMove(uint8_t check_endstops, uint8_t pathOptimize, float feedrate);
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     static void prepareDirectMove( void );
@@ -557,7 +523,7 @@ public:
 
     static INLINE void previousPlannerIndex(uint8_t &p)
     {
-        p = (p ? p-1 : MOVE_CACHE_SIZE-1);
+        p = (p ? p - 1 : MOVE_CACHE_SIZE - 1);
     } // previousPlannerIndex
 
     static INLINE void nextPlannerIndex(uint8_t& p)
@@ -602,11 +568,11 @@ public:
         if(isZMove())
         {
             Printer::enableZStepper();
-            Printer::unsetAllSteppersDisabled();
             Printer::setZDirection(isZPositiveMove());
         }
         if(isEMove())
         {
+            Printer::unmarkAllSteppersDisabled(); //doesnt fit into Extruder::enable() because of forward declare -> TODO
             Extruder::enable();
 #if USE_ADVANCE
             if(!Printer::isAdvanceActivated()) // Set direction if no advance/OPS enabled
@@ -614,87 +580,29 @@ public:
                   Extruder::setDirection(isEPositiveMove());
         }
         started = 1;
-
     } // enableSteppers
 
 };
 
-
-inline void prepareBedUp( void )
-{
-    WRITE( Z_DIR_PIN, INVERT_Z_DIR );
-
-#if FEATURE_TWO_ZSTEPPER
-    WRITE( Z2_DIR_PIN, INVERT_Z_DIR );
-#endif // FEATURE_TWO_ZSTEPPER
-
-#if FEATURE_CONFIGURABLE_Z_ENDSTOPS
-    Printer::decreaseLastZDirection();
-#endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
-} // prepareBedUp
-
-
-inline void prepareBedDown( void )
-{
-    WRITE( Z_DIR_PIN, !INVERT_Z_DIR );
-
-#if FEATURE_TWO_ZSTEPPER
-    WRITE( Z2_DIR_PIN, !INVERT_Z_DIR );
-#endif // FEATURE_TWO_ZSTEPPER
-
-#if FEATURE_CONFIGURABLE_Z_ENDSTOPS
-    Printer::increaseLastZDirection();
-#endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
-} // prepareBedDown
-
-
-inline void startZStep( char nDirection )
-{
-    WRITE( Z_STEP_PIN,HIGH );
-
-#if FEATURE_TWO_ZSTEPPER
-    WRITE( Z2_STEP_PIN,HIGH );
-#endif // FEATURE_TWO_ZSTEPPER
-
-#if FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
-    Printer::currentZSteps += nDirection;
-#endif //FEATURE_Z_MIN_OVERRIDE_VIA_GCODE
-
-} // startZStep
-
-
-inline void endZStep( void )
-{
-    WRITE( Z_STEP_PIN, LOW );
-
-#if FEATURE_TWO_ZSTEPPER
-    WRITE( Z2_STEP_PIN, LOW );
-#endif // FEATURE_TWO_ZSTEPPER
-
-} // endZStep
-
-inline bool isDirectOrQueueXMove(){
+inline bool isQueueXMove(){
     if( PrintLine::cur ) if( PrintLine::cur->isXMove() ) return true;
-    if( PrintLine::direct.isXMove() ) return true;
     return false;
-} //isDirectOrQueueXMove
-inline bool isDirectOrQueueYMove(){
+} //isQueueXMove
+inline bool isQueueYMove(){
     if( PrintLine::cur ) if( PrintLine::cur->isYMove() ) return true;
-    if( PrintLine::direct.isYMove() ) return true;
     return false;
-} //isDirectOrQueueYMove
+} //isQueueYMove
+inline bool isQueueEMove(){
+    if( PrintLine::cur ) if( PrintLine::cur->isEMove() ) return true;
+    return false;
+} //isQueueEMove
+
 inline bool isDirectOrQueueOrCompZMove(){
     if( PrintLine::cur ) if( PrintLine::cur->isZMove() ) return true;
-    if( PrintLine::direct.isZMove() ) return true;
+    if( Printer::directPositionCurrentSteps[Z_AXIS] != Printer::directPositionTargetSteps[Z_AXIS] ) return true; 
+    // davor version conrad 1.39, auskommentiert version nibbels: if( PrintLine::direct.isZMove() ) return true;
     if( Printer::endZCompensationStep ) return true;
     return false;
 } //isDirectOrQueueOrCompZMove
-inline bool isDirectOrQueueEMove(){
-    if( PrintLine::cur ) if( PrintLine::cur->isEMove() ) return true;
-    if( PrintLine::direct.isEMove() ) return true;
-    return false;
-} //isDirectOrQueueEMove
 
 #endif // MOTION_H
