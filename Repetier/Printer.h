@@ -143,6 +143,7 @@ public:
     static volatile char    blockAll;
 
     static volatile long    currentZSteps;
+    static uint16_t         ZOverrideMax;
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
     static volatile long    compensatedPositionTargetStepsZ;
@@ -233,6 +234,10 @@ public:
     static short            g_pressure_offset;
 #endif // FEATURE_ZERO_DIGITS
 
+#if FEATURE_ADJUSTABLE_MICROSTEPS
+    static uint8_t          motorMicroStepsModeValue[5]; //1=2MS, 2=4MS, 3=8MS, 4=16MS, 5=32MS, 6=64MS, 7=128MS, 8=256MS
+#endif // FEATURE_ADJUSTABLE_MICROSTEPS
+
     static INLINE void setMenuMode(uint8_t mode,bool on)
     {
         if(on)
@@ -294,7 +299,7 @@ public:
 #endif // STEPPER_ON_DELAY
 
         // when the stepper is disabled we loose our home position because somebody else can move our mechanical parts
-        setHomed( /*false ,*/ false , -1 , -1 );
+        setHomed( false , -1 , -1 );
         cleanupXPositions();
 
     } // disableXStepper
@@ -315,7 +320,7 @@ public:
 #endif // STEPPER_ON_DELAY
 
         // when the stepper is disabled we loose our home position because somebody else can move our mechanical parts
-        setHomed( /*false ,*/ -1, false , -1 );
+        setHomed( -1, false , -1 );
         cleanupYPositions();
 
     } // disableYStepper
@@ -324,7 +329,7 @@ public:
     static INLINE void disableZStepper()
     {
         // when the stepper is disabled we loose our home position because somebody else can move our mechanical parts
-        setHomed( /*false ,*/ -1 , -1 , false ); // disable CMP mit wait ist bei unhome Z mit drin. //Printer::disableCMPnow(true); //fahre vom heizbett auf 0 bevor stepper aus.
+        setHomed( -1 , -1 , false ); // disable CMP mit wait ist bei unhome Z mit drin. //Printer::disableCMPnow(true); //fahre vom heizbett auf 0 bevor stepper aus.
 
 #if (Z_ENABLE_PIN > -1)
         WRITE(Z_ENABLE_PIN,!Z_ENABLE_ON);
@@ -614,14 +619,11 @@ public:
         return (bool)(Printer::isAxisHomed(Z_AXIS) && Printer::isAxisHomed(Y_AXIS) && Printer::isAxisHomed(X_AXIS));
     } // areAxisHomed
 
-    static inline void setHomed(/*uint8_t b,*/ int8_t x = -1, int8_t y = -1, int8_t z = -1)
+    static inline void setHomed(int8_t x = -1, int8_t y = -1, int8_t z = -1)
     {
-        //flag1 = (b ? flag1 | PRINTER_FLAG1_HOMED : flag1 & ~PRINTER_FLAG1_HOMED);
         if(x != -1) flag3 = (x ? flag3 | PRINTER_FLAG3_X_HOMED : flag3 & ~PRINTER_FLAG3_X_HOMED);
         if(y != -1) flag3 = (y ? flag3 | PRINTER_FLAG3_Y_HOMED : flag3 & ~PRINTER_FLAG3_Y_HOMED);
         if(z != -1) flag3 = (z ? flag3 | PRINTER_FLAG3_Z_HOMED : flag3 & ~PRINTER_FLAG3_Z_HOMED);  
-        //if((flag3 & PRINTER_FLAG3_X_HOMED) && (flag3 & PRINTER_FLAG3_Y_HOMED) && (flag3 & PRINTER_FLAG3_Z_HOMED)) flag1 |= PRINTER_FLAG1_HOMED;
-        //if(!(flag3 & PRINTER_FLAG3_X_HOMED) && !(flag3 & PRINTER_FLAG3_Y_HOMED) && !(flag3 & PRINTER_FLAG3_Z_HOMED)) flag1 &= ~PRINTER_FLAG1_HOMED;
         
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         if( !isAxisHomed(Z_AXIS) ){
@@ -784,10 +786,6 @@ public:
             }
 
             // the last z-direction is unknown or the heat bed has been moved upwards, thus we have to assume that the z-min endstop is hit
-#if FEATURE_CONFIGURABLE_Z_ENDSTOPS && DEBUG_CONFIGURABLE_Z_ENDSTOPS
-            Com::printF( PSTR( "Z-Min hit") );
-#endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS && DEBUG_CONFIGURABLE_Z_ENDSTOPS
-
             endstopZMinHit = ENDSTOP_IS_HIT;
             endstopZMaxHit = ENDSTOP_NOT_HIT;
             return true;
@@ -881,21 +879,14 @@ public:
 
             if( Printer::isAxisHomed(Z_AXIS) )
             {
-                if( currentZSteps < Z_MIN_DISTANCE )
+                if( currentZSteps < long(Printer::axisStepsPerMM[Z_AXIS])*5 )
                 {
-                    // we are close to z-min, so z-max can not become hit right now
-  #if DEBUG_CONFIGURABLE_Z_ENDSTOPS
-                    Com::printF( PSTR( "Z-Max not hit") );
-  #endif // DEBUG_CONFIGURABLE_Z_ENDSTOPS
+                    // we are close to z-min, so z-max can not become hit right now -> Nibbels: was wenn der drucker unten aufwacht? dann ist erst currentZSteps 0 und .. ??? TODO
                     return false;
                 }
             }
 
             // the last z-direction is unknown or the heat bed has been moved downwards, thus we have to assume that the z-max endstop is hit
-  #if FEATURE_CONFIGURABLE_Z_ENDSTOPS && DEBUG_CONFIGURABLE_Z_ENDSTOPS
-            Com::printF( PSTR( "Z-Max hit") );
-  #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS && DEBUG_CONFIGURABLE_Z_ENDSTOPS
-
             endstopZMinHit = ENDSTOP_NOT_HIT;
             endstopZMaxHit = ENDSTOP_IS_HIT;
             return true;
@@ -932,7 +923,7 @@ public:
         flag0 |= PRINTER_FLAG0_STEPPER_DISABLED;
 
         // when the stepper is disabled we loose our home position because somebody else can move our mechanical parts
-        setHomed( /*false ,*/ false, false, false ); //mag sein, dass wir das nicht brauchen, weil sowieso die einzelnen stepper deaktiviert werden müssen.
+        setHomed( false, false, false ); //mag sein, dass wir das nicht brauchen, weil sowieso die einzelnen stepper deaktiviert werden müssen.
         setZOriginSet(false);
     } // markAllSteppersDisabled
 

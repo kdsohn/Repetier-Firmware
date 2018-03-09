@@ -395,7 +395,7 @@ public:
 
     } // U16SquaredToU32
 
-    static inline unsigned int ComputeV(long timer,long accel)
+    static inline speed_t ComputeV(long timer,long accel)
     {
         unsigned int res;
 

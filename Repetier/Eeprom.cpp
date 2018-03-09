@@ -70,7 +70,8 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
     Printer::axisStepsPerMM[X_AXIS] = XAXIS_STEPS_PER_MM;
     Printer::axisStepsPerMM[Y_AXIS] = YAXIS_STEPS_PER_MM;
     Printer::axisStepsPerMM[Z_AXIS] = ZAXIS_STEPS_PER_MM;
-    Printer::axisStepsPerMM[E_AXIS] = 1;
+    Printer::axisStepsPerMM[E_AXIS] = 1; //man könnte auch vom current extruder die id auslesen und dann EXT0_STEPS_PER_MM oder EXT1_STEPS_PER_MM ? 
+                                         // -> ist autokorrigiert wenn man einmal einen extruder auswählt. Siehe unten.
     Printer::maxFeedrate[X_AXIS] = MAX_FEEDRATE_X;
     Printer::maxFeedrate[Y_AXIS] = MAX_FEEDRATE_Y;
     Printer::maxFeedrate[Z_AXIS] = MAX_FEEDRATE_Z;
@@ -155,9 +156,9 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
     e->tempControl.pidMax = EXT0_PID_MAX;
     e->tempControl.sensorType = EXT0_TEMPSENSOR_TYPE;
 
-    e->zOffset = EXT0_Z_OFFSET;
-    e->yOffset = EXT0_Y_OFFSET;
-    e->xOffset = EXT0_X_OFFSET;
+    e->zOffset = int32_t(EXT0_Z_OFFSET_MM * Printer::axisStepsPerMM[Z_AXIS]);
+    e->yOffset = int32_t(EXT0_Y_OFFSET_MM * Printer::axisStepsPerMM[Y_AXIS]);
+    e->xOffset = int32_t(EXT0_X_OFFSET_MM * Printer::axisStepsPerMM[X_AXIS]);
     e->watchPeriod = EXT0_WATCHPERIOD;
 
 #if RETRACT_DURING_HEATUP
@@ -190,9 +191,9 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
     e->tempControl.pidMax = EXT1_PID_MAX;
     e->tempControl.sensorType = EXT1_TEMPSENSOR_TYPE;
 
-    e->zOffset = EXT1_Z_OFFSET;
-    e->yOffset = EXT1_Y_OFFSET;
-    e->xOffset = EXT1_X_OFFSET;
+    e->zOffset = int32_t(EXT1_Z_OFFSET_MM * Printer::axisStepsPerMM[Z_AXIS]);
+    e->yOffset = int32_t(EXT1_Y_OFFSET_MM * Printer::axisStepsPerMM[Y_AXIS]);
+    e->xOffset = int32_t(EXT1_X_OFFSET_MM * Printer::axisStepsPerMM[X_AXIS]);
     e->watchPeriod = EXT1_WATCHPERIOD;
 
 #if RETRACT_DURING_HEATUP
@@ -266,9 +267,31 @@ ich glaube gesehen zu haben, dass acceleration und feedrates nicht neu eingelese
         //setMotorCurrent( stp+1, uMotorCurrentUse[stp] ); //driver ist 1-basiert //hier nur config laden
     }
 
+#if FEATURE_MILLING_MODE
+    if( Printer::operatingMode == OPERATING_MODE_PRINT )
+    {
+#endif // FEATURE_MILLING_MODE
+        g_nPauseSteps[X_AXIS]  = long(Printer::axisStepsPerMM[X_AXIS] * DEFAULT_PAUSE_MM_X_PRINT);
+        g_nPauseSteps[Y_AXIS]  = long(Printer::axisStepsPerMM[Y_AXIS] * DEFAULT_PAUSE_MM_Y_PRINT);
+        g_nPauseSteps[Z_AXIS]  = long(Printer::axisStepsPerMM[Z_AXIS] * DEFAULT_PAUSE_MM_Z_PRINT);
+#if FEATURE_MILLING_MODE
+    }
+    else
+    {
+        g_nPauseSteps[X_AXIS]  = long(Printer::axisStepsPerMM[X_AXIS] * DEFAULT_PAUSE_MM_X_MILL);
+        g_nPauseSteps[Y_AXIS]  = long(Printer::axisStepsPerMM[Y_AXIS] * DEFAULT_PAUSE_MM_Y_MILL);
+        g_nPauseSteps[Z_AXIS]  = long(Printer::axisStepsPerMM[Z_AXIS] * DEFAULT_PAUSE_MM_Z_MILL);
+    }
+#endif // FEATURE_MILLING_MODE
+
     Printer::updateDerivedParameter();
     Extruder::selectExtruderById(Extruder::current->id);
     Extruder::initHeatedBed();
+    
+    g_nManualSteps[X_AXIS] = uint32_t(Printer::axisStepsPerMM[X_AXIS] * DEFAULT_MANUAL_MM_X); 
+    g_nManualSteps[Y_AXIS] = uint32_t(Printer::axisStepsPerMM[Y_AXIS] * DEFAULT_MANUAL_MM_Y);
+    g_nManualSteps[Z_AXIS] = uint32_t(Printer::axisStepsPerMM[Z_AXIS] * DEFAULT_MANUAL_MM_Z);
+    g_nManualSteps[E_AXIS] = uint32_t(Extruder::current->stepsPerMM * DEFAULT_MANUAL_MM_E);
 
     if( Printer::debugInfo() )
     {
@@ -430,9 +453,9 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
         HAL::eprSetByte(o+EPR_EXTRUDER_PID_MAX,e->tempControl.pidMax);
         HAL::eprSetByte(o+EPR_EXTRUDER_SENSOR_TYPE,e->tempControl.sensorType);
 
-        HAL::eprSetFloat(o+EPR_EXTRUDER_X_OFFSET,e->xOffset/XAXIS_STEPS_PER_MM);
-        HAL::eprSetFloat(o+EPR_EXTRUDER_Y_OFFSET,e->yOffset/YAXIS_STEPS_PER_MM);
-        HAL::eprSetFloat(o+EPR_EXTRUDER_Z_OFFSET,e->zOffset/ZAXIS_STEPS_PER_MM);   //e->zOffset  Nibbels
+        HAL::eprSetFloat(o+EPR_EXTRUDER_X_OFFSET,e->xOffset*Printer::invAxisStepsPerMM[X_AXIS]);
+        HAL::eprSetFloat(o+EPR_EXTRUDER_Y_OFFSET,e->yOffset*Printer::invAxisStepsPerMM[Y_AXIS]);
+        HAL::eprSetFloat(o+EPR_EXTRUDER_Z_OFFSET,e->zOffset*Printer::invAxisStepsPerMM[Z_AXIS]);   //e->zOffset  Nibbels
 
         HAL::eprSetInt16(o+EPR_EXTRUDER_WATCH_PERIOD,e->watchPeriod);
 
@@ -623,6 +646,12 @@ void EEPROM::readDataFromEEPROM()
     Printer::ZOffset = HAL::eprGetInt32(EPR_RF_Z_OFFSET);
     Printer::ZMode = HAL::eprGetByte(EPR_RF_Z_MODE);
     g_staticZSteps = (Printer::ZOffset * Printer::axisStepsPerMM[Z_AXIS]) / 1000;
+    Printer::ZOverrideMax = uint16_t(Printer::axisStepsPerMM[Z_AXIS] * Z_ENDSTOP_DRIVE_OVER);
+    
+    g_minZCompensationSteps    = long(HEAT_BED_Z_COMPENSATION_MIN_MM * Printer::axisStepsPerMM[Z_AXIS]); //load the values with applied micro-steps
+    g_maxZCompensationSteps    = long(HEAT_BED_Z_COMPENSATION_MAX_MM * Printer::axisStepsPerMM[Z_AXIS]);
+    g_diffZCompensationSteps   = g_maxZCompensationSteps - g_minZCompensationSteps;
+    
     Printer::moveMode[X_AXIS] = HAL::eprGetByte(EPR_RF_MOVE_MODE_X);
     Printer::moveMode[Y_AXIS] = HAL::eprGetByte(EPR_RF_MOVE_MODE_Y);
     Printer::moveMode[Z_AXIS] = HAL::eprGetByte(EPR_RF_MOVE_MODE_Z);
@@ -807,9 +836,13 @@ void EEPROM::readDataFromEEPROM()
     Printer::MillerType = HAL::eprGetByte( EPR_RF_MILLER_TYPE ) == MILLER_TYPE_ONE_TRACK ? MILLER_TYPE_ONE_TRACK : MILLER_TYPE_TWO_TRACKS;
 #endif // FEATURE_CONFIGURABLE_MILLER_TYPE
 
+    g_nManualSteps[X_AXIS] = uint32_t(Printer::axisStepsPerMM[X_AXIS] * DEFAULT_MANUAL_MM_X); 
+    g_nManualSteps[Y_AXIS] = uint32_t(Printer::axisStepsPerMM[Y_AXIS] * DEFAULT_MANUAL_MM_Y);
     const unsigned long stepsize_table[NUM_ACCEPTABLE_STEP_SIZE_TABLE] PROGMEM = ACCEPTABLE_STEP_SIZE_TABLE;
-    g_nManualSteps[Z_AXIS] = (unsigned long)constrain( (unsigned long)HAL::eprGetInt32( EPR_RF_MOD_Z_STEP_SIZE ) , 1 , stepsize_table[NUM_ACCEPTABLE_STEP_SIZE_TABLE-1] ); //limit stepsize to value in config.
-
+    //diese z-step-size aus dem eeprom verdoppelt/halbiert sich mit den microsteps. testpatch: diese stepsizes stammen von 2560steps/mm. Das ändert sich wie die microsteps. also ist der faktor "stepsmm/2560"
+    g_nManualSteps[Z_AXIS] = uint32_t(constrain( (unsigned long)HAL::eprGetInt32( EPR_RF_MOD_Z_STEP_SIZE )*Printer::axisStepsPerMM[Z_AXIS]/2560 , 1 , stepsize_table[NUM_ACCEPTABLE_STEP_SIZE_TABLE-1]*Printer::axisStepsPerMM[Z_AXIS]/2560 ) ); //limit stepsize to value in config.
+    g_nManualSteps[E_AXIS] = uint32_t(Extruder::current->stepsPerMM * DEFAULT_MANUAL_MM_E); //current extruder stepsPerMM weil hier noch kein update für Printer::axisStepsPerMM[E_AXIS] gemacht wurde!
+    
 #if FEATURE_HEAT_BED_Z_COMPENSATION
     g_ZOSTestPoint[X_AXIS] = HAL::eprGetByte( EPR_RF_MOD_ZOS_SCAN_POINT_X );
     if(g_ZOSTestPoint[X_AXIS] != 0){ //constrain if not 0 = random.
@@ -930,6 +963,7 @@ void EEPROM::readDataFromEEPROM()
         storeDataIntoEEPROM(false); // Store new fields for changed version
     }
     Printer::updateDerivedParameter();
+    Extruder::selectExtruderById(Extruder::current->id);
     Extruder::initHeatedBed();
 
 #endif // EEPROM_MODE!=0

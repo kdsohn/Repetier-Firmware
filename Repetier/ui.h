@@ -199,6 +199,10 @@
 //FEATURE_ALIGN_EXTRUDERS
 #define UI_ACTION_ALIGN_EXTRUDERS           1706
 
+#define UI_ACTION_MICROSTEPS_XY             1707
+#define UI_ACTION_MICROSTEPS_Z              1708
+#define UI_ACTION_MICROSTEPS_E              1709
+
 #define UI_ACTION_FET1_OUTPUT               2001
 #define UI_ACTION_FET2_OUTPUT               2002
 

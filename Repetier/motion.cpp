@@ -371,9 +371,9 @@ void PrintLine::stopDirectMove( void ) //Funktion ist bereits zur ausführzeit v
     if( PrintLine::direct.isXYZMove() )
     {
         // decelerate and stop
-        if( PrintLine::direct.stepsRemaining > RF_MICRO_STEPS )
+        if( PrintLine::direct.stepsRemaining > 32 ) //die genaue anzahl der Decelerate Steps sollte hier eigentlich fast egal sein. Besser evtl. die Microsteps der Hauptachse?
         {
-            PrintLine::direct.stepsRemaining = RF_MICRO_STEPS;
+            PrintLine::direct.stepsRemaining = 32;
         }
     }
     return;
@@ -1353,9 +1353,10 @@ long PrintLine::performPauseCheck(){
 #endif //FEATURE_PAUSE_PRINTING
 
         // Pause a bit, if z-compensation is way out of line: this is usefull when starting prints using very deep bed-leveling and custom z-endstop switches which can override a lot.
-        short ZcmpNachlauf = abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ );
+        uint16_t ZcmpNachlauf = abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ );
 
-        if( ZcmpNachlauf > ZAXIS_STEPS_PER_MM * 0.25f && Printer::compensatedPositionTargetStepsZ ){
+        //wenn die zkompensation wegen z.B. Startposition über 0.25mm hinterherhängt: pause und warten.
+        if( ZcmpNachlauf > (uint16_t(Printer::axisStepsPerMM[Z_AXIS]) >> 2) && Printer::compensatedPositionTargetStepsZ ){
             HAL::forbidInterrupts();
             return true;
         }
@@ -1606,16 +1607,63 @@ long PrintLine::performDirectMove()
 void PrintLine::performDirectSteps( void )
 {
     static unsigned long g_uLastDirectStepTime = 0;
-    if( (HAL::timeInMilliseconds() - g_uLastDirectStepTime) >= MANUAL_MOVE_INTERVAL )
+    uint16_t moveinterval = 1000; //ns default.
+    
+    //fix that microstepping and steps/mm settings are not constraining speed of buttons/.. extrusion.
+    bool x_needed = Printer::directPositionCurrentSteps[X_AXIS] != Printer::directPositionTargetSteps[X_AXIS];
+    bool y_needed = Printer::directPositionCurrentSteps[Y_AXIS] != Printer::directPositionTargetSteps[Y_AXIS];
+    bool z_needed = Printer::directPositionCurrentSteps[Z_AXIS] != Printer::directPositionTargetSteps[Z_AXIS];
+    bool e_needed = Printer::directPositionCurrentSteps[E_AXIS] != Printer::directPositionTargetSteps[E_AXIS];
+    bool some_needed = x_needed || y_needed || z_needed || e_needed;
+    
+    if(some_needed){
+        //suche den gröbsten beteiligten stepper, denn der braucht ein limit. -> STEPS/s
+        uint16_t fastest = 65535; //steps/mm*1 -> steps/s sind im bereich um 150 bis 3000 -> man kann bis grob 10mm/s per uint16_t rechnen.
+        uint8_t axis = 255;
+        if(e_needed){
+            if(uint16_t(Printer::axisStepsPerMM[E_AXIS]) /* x 1mm/s = Steps/s */ < fastest){
+                fastest = uint16_t(Printer::axisStepsPerMM[E_AXIS]/* x 1mm/s = Steps/s */);
+                axis = E_AXIS;
+            }
+        }
+        if(x_needed){
+            if(uint16_t(Printer::axisStepsPerMM[X_AXIS]) /* x 1mm/s = Steps/s */ < fastest){
+                fastest = uint16_t(Printer::axisStepsPerMM[X_AXIS]/* x 1mm/s = Steps/s */);
+                axis = X_AXIS;
+            }
+        }
+        if(y_needed){
+            if(uint16_t(Printer::axisStepsPerMM[Y_AXIS]) /* x 1mm/s = Steps/s */ < fastest){
+                fastest = uint16_t(Printer::axisStepsPerMM[Y_AXIS]/* x 1mm/s = Steps/s */);
+                axis = Y_AXIS;
+            }
+        }
+        if(z_needed){
+            if(uint16_t(Printer::axisStepsPerMM[Z_AXIS]) /* x 1mm/s = Steps/s */ < fastest){
+                fastest = uint16_t(Printer::axisStepsPerMM[Z_AXIS]/* x 1mm/s = Steps/s */);
+                axis = Z_AXIS;
+            }
+        }
+        //fastest: 150..6000 Steps/s -> 0.15 bis 6 Steps/ms
+        if(axis < 255){
+            moveinterval = uint16_t(Printer::invAxisStepsPerMM[axis]*262144); //bei 1mm/s sind das sekunden/Step -> *1000000 -> microsekunden/Step -> etwas schneller ist besser.
+        }
+    }else{
+        return;
+    }
+    
+    
+    if( abs(HAL::timeInMicroseconds() - g_uLastDirectStepTime) >= moveinterval /*ns*/ )
     {
         bool bDone = false;
-        g_uLastDirectStepTime = HAL::timeInMilliseconds();
+        g_uLastDirectStepTime = HAL::timeInMicroseconds();
         
         if( Printer::directPositionCurrentSteps[E_AXIS] > Printer::directPositionTargetSteps[E_AXIS] )
         {
             bDone = true;
 #if USE_ADVANCE
-            if( Printer::isAdvanceActivated() ) // Use interrupt for movement
+            //Advance ist bei Directsteps nicht so gut wenn man extrem viele Steps/mm hat. Dann läuft das nach!
+            if( Printer::isAdvanceActivated() && abs(Printer::extruderStepsNeeded) < 500 ) // Use interrupt for movement but dont just sum up the advance too fast.
             {
                 Printer::extruderStepsNeeded--;
                 Printer::directPositionCurrentSteps[E_AXIS] --;
@@ -1817,7 +1865,7 @@ void PrintLine::performDirectSteps( void )
             if( Printer::directPositionCurrentSteps[E_AXIS] < Printer::directPositionTargetSteps[E_AXIS] )
             {
 #if USE_ADVANCE
-                if( Printer::isAdvanceActivated() ) // Use interrupt for movement
+                if( Printer::isAdvanceActivated() && abs(Printer::extruderStepsNeeded) < 500 ) // Use interrupt for movement but dont just sum up the advance too fast.
                 {
                     Printer::extruderStepsNeeded++;
                     Printer::directPositionCurrentSteps[E_AXIS] ++;
@@ -1850,7 +1898,6 @@ void PrintLine::performDirectSteps( void )
             }
         }
     }
-
 } // performDirectSteps
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
@@ -2027,7 +2074,7 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
     interval          -> actual sent interval that might be manipulated 
     v                 -> not manipulated active speed
     ***/
-    unsigned int v;
+    speed_t v;
 
     Printer::stepNumber += max_loops;
     Printer::timer      += (max_loops == 1 ?  Printer::interval       : 

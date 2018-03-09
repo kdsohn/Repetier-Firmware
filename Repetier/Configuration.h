@@ -48,8 +48,11 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
 //#define MOTHERBOARD                         DEVICE_TYPE_RF2000v2
 
 #ifndef MOTHERBOARD
-#error Device type (RF1000 / RF2000 / RF2000v2) is not defined. Edit Configuration.h or pass the corresponding option to the compiler.
+    #error Device type (RF1000 / RF2000 / RF2000v2) is not defined. Edit Configuration.h or pass the corresponding option to the compiler.
 #endif
+#if MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+    #error This Firmware does not support RF2000v2 yet. Renkforce did not releas any validated RF2000V2.h yet.
+#endif // MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 
 #define PROTOTYPE_PCB                       0                                                   // 1 = first PCB's / 0 = Final
 
@@ -72,11 +75,13 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 /** \brief Allows to use 6 additional hardware buttons */
 #define FEATURE_EXTENDED_BUTTONS            1                                                   // 1 = on, 0 = off
 
-/** \brief Enables automatic compensation in z direction for the operationg mode "print" */
-#define FEATURE_HEAT_BED_Z_COMPENSATION     1                                                   // 1 = on, 0 = off
 
 /** \brief Allows to pause the processing of G-Codes */
 #define FEATURE_PAUSE_PRINTING              1                                                   // 1 = on, 0 = off
+/** \brief Enables/diables the emergency pause in case of too high pressure ... the emergency pause can be turned on only in case the general pause functionality is available */
+#if FEATURE_PAUSE_PRINTING
+  #define FEATURE_EMERGENCY_PAUSE           1                                                   // 1 = on, 0 = off
+#endif // FEATURE_PAUSE_PRINTING
 
 /** \brief Specifies if you want to see the pressure digits within the repetier-server/repetier-host temperature message */
 #define FEATURE_PRINT_PRESSURE              1                                                   // 1 = on, 0 = off
@@ -84,21 +89,15 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 /** \brief Specifies if you want to adjust your average pressure to zero digits after homing. This pushes the weight-scale to zero by adding the idle pressure as an offset. */
 #define FEATURE_ZERO_DIGITS                 1
 
-/** \brief Auto-Retract within hardcoded scripts: Pause / Output_Object / ... Vom Hotend abhängig! V2: 10mm, E3D: 1mm (?) */
+/** \brief Auto-Retract within hardcoded scripts: Pause / Output_Object / ... Vom Hotend abhängig! V2: 10mm, E3D: 1-2mm (?) */
 #define SCRIPT_RETRACT_MM                   1                                                   //[mm] Firmwares E-Retract */
 
-/** \brief Enables/diables the emergency pause in case of too high pressure ... the emergency pause can be turned on only in case the general pause functionality is available */
-#if FEATURE_PAUSE_PRINTING
-  #define FEATURE_EMERGENCY_PAUSE           1                                                   // 1 = on, 0 = off
-#endif // FEATURE_PAUSE_PRINTING
-
+/** \brief Enables automatic compensation in z direction for the operationg mode "print" */
+#define FEATURE_HEAT_BED_Z_COMPENSATION     1                                                   // 1 = on, 0 = off
 /** \brief Enables the precise heat bed scan */
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-
   #define FEATURE_PRECISE_HEAT_BED_SCAN       1                                                 // 1 = on, 0 = off
-
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
-
 /** \brief Specifies the number of pressure values which shall be averaged for inprint live z-adjustment */
 #if FEATURE_HEAT_BED_Z_COMPENSATION
   #define FEATURE_DIGIT_Z_COMPENSATION           1                                               // 1 = on, 0 = off
@@ -112,9 +111,6 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
     #define SENSIBLE_PRESSURE_INTERVAL                  100                                      //weniger macht keinen sinn. ob diese einschränkung sinn macht, aber sie bleibt vorerst mal da!
   #endif // FEATURE_SENSIBLE_PRESSURE
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
-
-/** \brief Allows to change the amount of Z-Offset which is changed by a push of the Z-Up or Z-Down button ONLY within the Mod Menu Page 2 */
-#define Z_OFFSET_BUTTON_STEPS               5
 
 /** \brief The Firmwares disalowes movement before you at least: pressed a printers button, set a temperature, homed once 
 If you did not do this, a previous watchdog reset is assumed and fail-drive against some border without homing is blocked thatway. 
@@ -200,9 +196,20 @@ WARNING: Servos can draw a considerable amount of current. Make sure your system
 /** \brief Define the to-be-used micro steps.
 Note that high MICRO_STEPS limit your speed because of the limit in 8bit-CPU calculation power.
 See "configuration of the speed vs. cpu usage" within RF1000.h / RF2000.h
- */
-#define RF_MICRO_STEPS                      32                                              
 
+Your way to high microsteps is dual-stepping, quadstepping, octostepping. On high speeds that packs steps together to save CPU. Read rf1000.de for the downside. Menu->Stepper->DblFQ: is the setting for the shifting speed.
+High microstepping make your speed low. Dont use 256, avoid 128.
+256 Microsteps sound very bad and is slower 30mm/s in X and Y. Avoid it! 128 is not much better. 64 might be ok for XY.
+Better dont rise Z because it is already slow with 2560steps/mm @32 Microsteps.
+Change your EEPROMs Steps/mm accordingly if you change RF_MICRO_STEPS_ in this configuration. Steps/mm are autoadjusted if you use FEATURE_ADJUSTABLE_MICROSTEPSs Menu!
+ */
+ 
+#define RF_MICRO_STEPS_Z                    32                                                   // standard/best 32 or 16
+#define RF_MICRO_STEPS_XY                   32                                                   // standard/best 32 or 64
+#define RF_MICRO_STEPS_E                    32                                                   // standard/best 32 or 64 (or 128?? --> untested!)
+
+/** \brief Enables/disables that you can switch the micro step setting within Menu->Configuration->Stepper and it is saved in hidden EEPROM */
+#define FEATURE_ADJUSTABLE_MICROSTEPS       1
 
 // ##########################################################################################
 // ##   debugging
@@ -225,9 +232,6 @@ See "configuration of the speed vs. cpu usage" within RF1000.h / RF2000.h
 
 /** \brief Enables debug outputs about the heat bed temperature compensation */
 #define DEBUG_HEAT_BED_TEMP_COMPENSATION    0                                                   // 1 = on, 0 = off
-
-/** \brief Enables debug outputs about the configurable z endstops */
-#define DEBUG_CONFIGURABLE_Z_ENDSTOPS       0                                                   // 1 = on, 0 = off
 
 /** \brief Allows M111 to set bit 5 (16) which disables all commands except M111. This can be used
 to test your data througput or search for communication problems. */
@@ -332,9 +336,9 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 #if FEATURE_PARK
 
 /** \brief Specifies the park position, in [mm] */
-#define PARK_POSITION_X                     0
-#define PARK_POSITION_Y                     120
-#define PARK_POSITION_Z                     175
+#define PARK_POSITION_X                     0                                                  // [mm]
+#define PARK_POSITION_Y                     120                                                // [mm]
+#define PARK_POSITION_Z                     175                                                // [mm]
 
 #endif // FEATURE_PARK
 
@@ -568,16 +572,12 @@ instead of driving both with a single stepper. The same works for the other axis
 #if FEATURE_EXTENDED_BUTTONS
 
 /** \brief Configuration of the manual steps */
-#define DEFAULT_MANUAL_STEPS_X              (XAXIS_STEPS_PER_MM /20)
-#define MAXIMAL_MANUAL_STEPS_X              (XAXIS_STEPS_PER_MM *10)
-#define DEFAULT_MANUAL_STEPS_Y              (XAXIS_STEPS_PER_MM /20)
-#define MAXIMAL_MANUAL_STEPS_Y              (YAXIS_STEPS_PER_MM *10)
-#define DEFAULT_MANUAL_STEPS_Z              (RF_MICRO_STEPS *2)
-#define MAXIMAL_MANUAL_STEPS_Z              (ZAXIS_STEPS_PER_MM *10)
-#define DEFAULT_MANUAL_STEPS_E              (EXT0_STEPS_PER_MM /5)
-#define MAXIMAL_MANUAL_STEPS_E              (EXT0_STEPS_PER_MM *10)
+#define DEFAULT_MANUAL_MM_X                    0.1f                            // [mm]
+#define DEFAULT_MANUAL_MM_Y                    0.1f                            // [mm]
+#define DEFAULT_MANUAL_MM_Z                    0.01f                           // [mm] -> Wert im Menü->Position->Z-Steps: xxx um!
+#define DEFAULT_MANUAL_MM_E                    0.25f                           // [mm]
 
-//Das hier drunter sind einigermaßen sinnvolle Stepsizes, wenn man Microsteps = 32 eingestellt hat.
+//Das hier drunter sind einigermaßen sinnvolle Stepsizes, wenn man Microsteps = 32 eingestellt hat, bei 16 verdoppeln sich die Zahlenwerte in mm.
 //Siehe: https://github.com/RF1000community/Repetier-Firmware/issues/4
 //Dieser statische Ansatz wird evtl. mal umgebaut. Man könnte auch eine Funktion schreiben, die sinnvolle Einstellwerte automatisch anhand Microsteps und Mikrometertabelle sucht.
 #define NUM_ACCEPTABLE_STEP_SIZE_TABLE    7
@@ -775,17 +775,16 @@ we use blocks of 2 kByte size for the structure of our EEPROM
 // ##   miscellaneous configurations
 // ##########################################################################################
 
-/** \brief Specifies the minimal distance from z-min which must be reached before it is plausible that z-max is hit */
-#define Z_MIN_DISTANCE                      (ZAXIS_STEPS_PER_MM * 5)
+/** \brief Defines the Z-Offset stepsize interval for the Menu-Action in [um] */
+#define Z_OFFSET_MENU_STEPS                 25
+/** \brief Allows to change the amount of Z-Offset which is changed by a push of the Z-Up or Z-Down button ONLY within the Mod Menu Page 2 */
+#define Z_OFFSET_BUTTON_STEPS               5
 
-/** \brief Defines the Z-Offset stepsize in um */
-#define Z_OFFSET_STEP                       25
+/** \brief Defines the default z scale */
+#define DEFAULT_Z_SCALE_MODE                Z_VALUE_MODE_Z_MIN
 
 /** \brief Minimal temperature which can be reached by cooling */
-#define MAX_ROOM_TEMPERATURE                40
-
-/** \brief Specifies the interval which is used for the manual moves (from the hardware buttons and from the pause functionality) */
-#define MANUAL_MOVE_INTERVAL                1                                                   // [ms]
+#define MAX_ROOM_TEMPERATURE                40                                                  // [°C]
 
 /** \brief Defines the I2C address for the strain gauge */
 #define I2C_ADDRESS_STRAIN_GAUGE            0x49
@@ -882,11 +881,6 @@ the power will be turned on without the need to call M80 if initially started. *
 boards you might need to make it inverting. */
 #define POWER_INVERTING                     false
 
-/** \brief What shall the printer do, when it receives an M112 emergency stop signal?
- 0 = Disable heaters/motors, wait forever until someone presses reset.
- 1 = restart by resetting the AVR controller. The USB connection will not reset if managed by a different chip! */
-#define KILL_METHOD                         1
-
 /** \brief Cache size for incoming commands.
 There should be no reason to increase this cache. Commands are nearly immediately sent to
 execution. */
@@ -930,10 +924,6 @@ and it is elsewise difficult to know, what your reprap is currently doing. */
 #define DEFAULT_MOVE_MODE_Y                 MOVE_MODE_SINGLE_STEPS
 #define DEFAULT_MOVE_MODE_Z                 MOVE_MODE_SINGLE_STEPS
 
-/** \brief Defines the default z scale */
-#define DEFAULT_Z_SCALE_MODE                Z_VALUE_MODE_Z_MIN
-
-
 /** \brief For Nibbels external interrupt 3 plus an extra pin is used for reading digital calipers. You will have to solder some logic-converter from 1.8v to 5v see http://www.instructables.com/id/Reading-Digital-Callipers-with-an-Arduino-USB/ */
 #define FEATURE_READ_CALIPER               0                                                   // 0 = OFF, 1 = ON
 #define FEATURE_READ_CALIPER_INT_PIN       RESERVE_DIGITAL_PIN_PD3                             // RF2000/RF1000: RESERVE_DIGITAL_PIN_PD3 is INT3 for having clocks falling edges collected
@@ -957,7 +947,7 @@ You can activate this to 1 and connect some Button. If you connect ground to pul
 #define FEATURE_SEE_DISPLAY                 1
 
 /** \brief This feature allows you to extrude into thin air to messure the filaments viscosity value using dms sensors */
-#define FEATURE_VISCOSITY_TEST              1
+#define FEATURE_VISCOSITY_TEST              0
 
 /** \brief This is some testing function for reading the stepper drivers status bits while operation */
 #define FEATURE_READ_STEPPER_STATUS         0

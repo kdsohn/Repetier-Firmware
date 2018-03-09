@@ -132,6 +132,7 @@ volatile char   Printer::stepperDirection[3]          = {0, 0, 0};
 volatile char   Printer::blockAll = 0;
 
 volatile long   Printer::currentZSteps = 0;  //das ist der Z-Zähler der GCodes zum Zählen des tiefsten Schalterdruckpunkts /Schaltercrash.
+uint16_t        Printer::ZOverrideMax  = uint16_t(ZAXIS_STEPS_PER_MM * Z_ENDSTOP_DRIVE_OVER);  //das ist der Z-Zähler der GCodes zum Zählen des tiefsten Schalterdruckpunkts /Schaltercrash.
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 volatile long   Printer::compensatedPositionTargetStepsZ = 0;
@@ -223,6 +224,11 @@ uint8_t         Printer::motorCurrent[5] = {0,0,0,0,0};
 bool            Printer::g_pressure_offset_active = true;
 short           Printer::g_pressure_offset = 0;
 #endif // FEATURE_ZERO_DIGITS
+
+#if FEATURE_ADJUSTABLE_MICROSTEPS
+//RF_MICRO_STEPS_ have values 0=FULL 1=2MS, 2=4MS, 3=8MS, 4=16MS, 5=32MS, 6=64MS, 7=128MS, 8=256MS
+uint8_t         Printer::motorMicroStepsModeValue[5] = {0,0,0,0,0}; //init later because of recalculation of value
+#endif // FEATURE_ADJUSTABLE_MICROSTEPS
 
 void Printer::constrainQueueDestinationCoords()
 {
@@ -730,7 +736,6 @@ void Printer::setup()
     Printer::homingFeedrate[Z_AXIS] = HOMING_FEEDRATE_Z_PRINT;
 #endif // FEATURE_MILLING_MODE
 
-    //HAL::delayMilliseconds(500);  // add a delay at startup to give hardware time for initalization
     HAL::hwSetup();
 
     HAL::allowInterrupts();
@@ -1704,11 +1709,6 @@ void Printer::homeXAxis()
         PrintLine::moveRelativeDistanceInSteps(axisStepsPerMM[X_AXIS] * 2 * ENDSTOP_X_BACK_MOVE * nHomeDir,0,0,0,homingFeedrate[X_AXIS] / ENDSTOP_X_RETEST_REDUCTION_FACTOR,true,true);
         setHoming(false);
 
-#if defined(ENDSTOP_X_BACK_ON_HOME)
-        if(ENDSTOP_X_BACK_ON_HOME > 0)
-            PrintLine::moveRelativeDistanceInSteps(axisStepsPerMM[X_AXIS] * -ENDSTOP_X_BACK_ON_HOME * nHomeDir,0,0,0,homingFeedrate[X_AXIS],true,false);
-#endif // defined(ENDSTOP_X_BACK_ON_HOME)
-
         queuePositionLastSteps[X_AXIS]    = (nHomeDir == -1) ? minSteps[X_AXIS]-offX : maxSteps[X_AXIS]+offX;
         queuePositionCurrentSteps[X_AXIS] = queuePositionLastSteps[X_AXIS];
 
@@ -1727,7 +1727,7 @@ void Printer::homeXAxis()
 
         // show that we are active
         previousMillisCmd = HAL::timeInMilliseconds();
-        setHomed( /*false ,*/ true , -1 , -1);
+        setHomed( true , -1 , -1);
     }
 
 } // homeXAxis
@@ -1768,11 +1768,6 @@ void Printer::homeYAxis()
         PrintLine::moveRelativeDistanceInSteps(0,axisStepsPerMM[Y_AXIS]*2*ENDSTOP_Y_BACK_MOVE * nHomeDir,0,0,homingFeedrate[Y_AXIS]/ENDSTOP_X_RETEST_REDUCTION_FACTOR,true,true);
         setHoming(false);
 
-#if defined(ENDSTOP_Y_BACK_ON_HOME)
-        if(ENDSTOP_Y_BACK_ON_HOME > 0)
-            PrintLine::moveRelativeDistanceInSteps(0,axisStepsPerMM[Y_AXIS]*-ENDSTOP_Y_BACK_ON_HOME * nHomeDir,0,0,homingFeedrate[Y_AXIS],true,false);
-#endif // defined(ENDSTOP_Y_BACK_ON_HOME)
-
         queuePositionLastSteps[Y_AXIS]    = (nHomeDir == -1) ? minSteps[Y_AXIS]-offY : maxSteps[Y_AXIS]+offY;
         queuePositionCurrentSteps[Y_AXIS] = queuePositionLastSteps[Y_AXIS];
 
@@ -1791,7 +1786,7 @@ void Printer::homeYAxis()
 
         // show that we are active
         previousMillisCmd = HAL::timeInMilliseconds();
-        setHomed( /*false ,*/ -1 , true , -1);
+        setHomed( -1 , true , -1);
     }
 
 } // homeYAxis
@@ -1802,14 +1797,14 @@ void Printer::homeZAxis()
     char    nHomeDir = Printer::anyHomeDir(Z_AXIS);
 
     if( nHomeDir )
-    {    
+    {
         // if we have circuit-type Z endstops and we don't know at which endstop we currently are, first move down a bit
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
         if( Printer::ZEndstopUnknown ) {
             //verzweifelter rausfahrversuch beim RF1000, ohne ahnung ob man den schalter quetscht oder entlastet.
             //stimmt hier überhaupt homedir * -1 ?? sollte der drucker nicht besser immer nach unten das rausfahren testen?
             //sollte man nicht für diese aktion evtl. den motorstrom in z runternehmen und während hin und herfahren schrittweise anheben bis man frei ist?
-            PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS] * -1 * ENDSTOP_Z_BACK_MOVE * nHomeDir,0,homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR,true,false);
+            PrintLine::moveRelativeDistanceInSteps(0, 0, axisStepsPerMM[Z_AXIS] * ENDSTOP_Z_BACK_MOVE /* * nHomeDir * -1*/, 0, homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR, true, false); //drucker muss immer nach unten fahren, egal wie die homedir steht! unten ist der endschalter stabiler als oben mit düse usw.
             //evtl. am besten: Stop und Meldung "Please release Z-Endstop and restart printer"
         }
 #endif
@@ -1828,7 +1823,7 @@ void Printer::homeZAxis()
         directPositionLastSteps[Z_AXIS]    = 0;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
-        setHomed( /*false ,*/ -1 , -1 , false);
+        setHomed( -1 , -1 , false);
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         g_nZScanZPosition = 0;
@@ -1863,15 +1858,8 @@ void Printer::homeZAxis()
         // when the milling mode is active and we are in operating mode "mill", we use the z max endstop and we free the z-max endstop after it has been hit
         if( Printer::operatingMode == OPERATING_MODE_MILL )
         {
-            PrintLine::moveRelativeDistanceInSteps(0,0,LEAVE_Z_MAX_ENDSTOP_AFTER_HOME,0,homingFeedrate[Z_AXIS],true,false);
+            PrintLine::moveRelativeDistanceInSteps(0,0,long(axisStepsPerMM[Z_AXIS] * LEAVE_Z_MAX_ENDSTOP_AFTER_HOME * nHomeDir * -1),0,homingFeedrate[Z_AXIS],true,false);
         }
-#else
-
-#if defined(ENDSTOP_Z_BACK_ON_HOME)
-        if(ENDSTOP_Z_BACK_ON_HOME > 0){
-            PrintLine::moveRelativeDistanceInSteps(0,0,axisStepsPerMM[Z_AXIS]*-ENDSTOP_Z_BACK_ON_HOME * nHomeDir,0,homingFeedrate[Z_AXIS],true,false);
-        }
-#endif // defined(ENDSTOP_Z_BACK_ON_HOME)
 #endif // FEATURE_MILLING_MODE
 
         queuePositionLastSteps[Z_AXIS]    = (nHomeDir == -1) ? minSteps[Z_AXIS] : maxSteps[Z_AXIS];
@@ -1881,7 +1869,7 @@ void Printer::homeZAxis()
 
         // show that we are active
         previousMillisCmd = HAL::timeInMilliseconds();
-        setHomed( /*false ,*/ -1 , -1 , true);
+        setHomed( -1 , -1 , true);
 
         setZOriginSet(false);
 

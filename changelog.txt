@@ -1,6 +1,35 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.41.00.Mod alpha (2018-03-06) 
+- deleted M3002 and M3003 because they are not needed anymore. (We use M3007 and M3008 for this functionality. Not using M3007/M3008 it is even better because this mod has an automatic mode for placing those two values right :D)
+- deleted M3100 because we have a smart menu point (Menu->Position->Z-Step: XXX um) for that and this functionality is only used in menu.
+- deleted M3101 because there is no real need for this adjustment. Normal extrusion is not "directsteps over button"
+- deleted M3102 because we have M3105 to configure Pause-Position in [mm]
+- made the automatic startline a bit shorter when having dual hotend (i always forget to change x-axis-length when testswitching)
+- the automatic startline only shifts in y when having a dual hotend, not on single anymore.
+- split RF_MICRO_STEPS to {RF_MICRO_STEPS_XY, RF_MICRO_STEPS_Z, RF_MICRO_STEPS_E}
+- added menu for changing Micro Steps: 
+    XY is unlocked for 16,32,64 Microsteps
+    Z is unlocked for 16,32 Microsteps
+    E is unlocked for 16,32,64,128 Microsteps.
+  (High Microsteps are only usefull if you have low steps/mm. Otherwise you just get a slow printer. My testprint worked fine on E=64, Z=32, XY=64.
+   Using 128+ Microsteps on XY sounds horrible and is slower than 128=65mm/s or 256=32mm/s -> not a good choice!
+   I think E shouldnt have more Steps/mm than ~1200 max. that corresponds to a speed < 25mm/s for retracts.)
+- changed some minor details to unhook RF_MICRO_STEPS from (some) places of use without inheritance.
+- Z_OVERRIDE_MAX is now Printer::ZOverrideMax.
+- reduced automatic startline spacing (for multiple lines) to 1.5mm instead of 2.0mm.
+- removed and replaced some configuration with STEPS inside, because they are not good for configurable Micro_Steps and bad for EEPROM-configurable steps/mm. This totally cleaned up HBS-Scan configuration. :)
+- removed static XAXIS_STEPS_PER_MM, YAXIS_STEPS_PER_MM, ZAXIS_STEPS_PER_MM from places which are no pre-initialisers.
+- removed some configuration lines which had no effect anywhere
+- disabled FEATURE_VISCOSITY_TEST by default to save rom space.
+- included mhiers push https://github.com/Nibbels/Repetier-Firmware/commit/8c4a33112d4323a205822558c1870ae9309ab808 of changing WORK_PART_SCAN_X_STEP_SIZE_MIN_MM 5 (etc.) into Nibbels branch too.
+- g_nManualSteps[E_AXIS] and g_nPauseSteps[E_AXIS] are now updated according to active steps/mm when choosing an extruder. Extruder Button speed should now stay the same when changing steps/mm.
+- investigating g_nManualSteps[E_AXIS] and PrintLine::performDirectSteps(); 
+    1) i found a second reason for the E_Axis to have a time lag using PrintLine::performDirectSteps() -> Hal.cpp OCR1A = too high at the end of the function.
+    2) i found a third reason for the E_Axis to have a time lag using 128 Microsteps / 0.9° Stepper = 2560Steps/s: Advance might just fill up working too slow. -> Stay beneath 1280 Steps/mm
+- fixed RF2000 optional temperature sensor. We removed Temptable 15 and renamed it to 14. I forgot to change this default Tempsensor as well. (See V RF.01.38.Mod (2017-12-28))
+
 V RF.01.39+.Mod (2018-03-05) 
 - fixing rf1k-mhj11's bug that M109 cannot shut down temperature in some situations.
 - fixing rf1k-mhj11's bug that M190 cannot shut down temperature.

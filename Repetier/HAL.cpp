@@ -859,7 +859,7 @@ ISR(TIMER1_COMPA_vect)
     else waitRelax--;
 
     stepperWait = 0;        // Important because of optimization in asm at begin
-    OCR1A = 65500;        //1000 like repetier does  // Wait for next move
+    OCR1A = 3000;           // Nicht zu hohe Werte, weil sonst die DirectSteps limitiert werden. Ansonsten hoch.
 
     DEBUG_MEMORY;
     sbi(TIMSK1, OCIE1A);

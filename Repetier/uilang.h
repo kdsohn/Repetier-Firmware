@@ -398,6 +398,10 @@
 #define UI_TEXT_FLOW_DF                "dFlow:   :%CF%%%"
 #define UI_TEXT_FLOW_DV                "dFeed:   :%CE%%%"
 
+#define UI_TEXT_MICRO_STEPS_XY         "MicroStepXY:%Xx"
+#define UI_TEXT_MICRO_STEPS_Z          "MicroStepsZ:%Xz"
+#define UI_TEXT_MICRO_STEPS_E          "MicroStepsE:%XE"
+
 #if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
     #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"
     #define UI_TEXT_FREQ_DBL                "DblFq:%Xgmm/s"
@@ -769,6 +773,10 @@
 #define UI_TEXT_FLOW_MAX               "Digit Max:%CO"
 #define UI_TEXT_FLOW_DF                "dFlow:   :%CF%%%"
 #define UI_TEXT_FLOW_DV                "dFeed:   :%CE%%%"
+
+#define UI_TEXT_MICRO_STEPS_XY         "MicroStepXY:%Xx"
+#define UI_TEXT_MICRO_STEPS_Z          "MicroStepsZ:%Xz"
+#define UI_TEXT_MICRO_STEPS_E          "MicroStepsE:%XE"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
     #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"

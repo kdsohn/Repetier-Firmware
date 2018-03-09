@@ -1857,38 +1857,7 @@ void Commands::executeGCode(GCode *com)
 
 void Commands::emergencyStop()
 {
-#if defined(KILL_METHOD) && KILL_METHOD==1
     HAL::resetHardware(); //RF2000 / RF1000!
-#else
-    InterruptProtectedBlock noInts; //BEGIN_INTERRUPT_PROTECTED
-    Printer::kill(false);
-    Extruder::manageTemperatures();
-
-    for(uint8_t i=0; i<NUM_EXTRUDER+3; i++)
-        pwm_pos[i] = 0;
-
-    pwm_pos[0] = pwm_pos[NUM_EXTRUDER] = pwm_pos[NUM_EXTRUDER+1] = pwm_pos[NUM_EXTRUDER+2]=0;
-
-#if EXT0_HEATER_PIN>-1
-    WRITE(EXT0_HEATER_PIN,HEATER_PINS_INVERTED);
-#endif // EXT0_HEATER_PIN>-1
-
-#if defined(EXT1_HEATER_PIN) && EXT1_HEATER_PIN>-1 && NUM_EXTRUDER>1
-    WRITE(EXT1_HEATER_PIN,HEATER_PINS_INVERTED);
-#endif // defined(EXT1_HEATER_PIN) && EXT1_HEATER_PIN>-1 && NUM_EXTRUDER>1
-
-#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
-    WRITE(FAN_PIN,0);
-#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
-
-#if HEATED_BED_HEATER_PIN>-1
-    WRITE(HEATED_BED_HEATER_PIN,HEATER_PINS_INVERTED);
-#endif // HEATED_BED_HEATER_PIN>-1
-
-    while(1) {}
-    //noInts.unprotect(); //END_INTERRUPT_PROTECTED
-#endif // defined(KILL_METHOD) && KILL_METHOD==1
-
 } // emergencyStop
 
 
