@@ -305,8 +305,8 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 // ##########################################################################################
 
 /** \brief The following script allows to configure the exact behavior of the automatic object output */
-#define OUTPUT_OBJECT_SCRIPT_PRINT          "G21\nG91\nG1 E-" xstr(SCRIPT_RETRACT_MM) "\nG90\nG1 Z200 F5000\nG1 Y245 F7500"
-#define OUTPUT_OBJECT_SCRIPT_MILL           "G28 Z0\nG21\nG91\nG1 Y245 F7500"
+#define OUTPUT_OBJECT_SCRIPT_PRINT          "G21\nG91\nG1 E-" xstr(SCRIPT_RETRACT_MM) "\nG90\nG1 Z200 F720\nG1 Y245 F4800"
+#define OUTPUT_OBJECT_SCRIPT_MILL           "G28 Z0\nG21\nG91\nG1 Y245 F4800"
 
 // ##########################################################################################
 // ##   configuration of the pause functionality
