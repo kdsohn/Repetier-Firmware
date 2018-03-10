@@ -738,18 +738,18 @@ can set it on for safety. */
 #define LOOP_INTERVAL                       2000                                                // [ms]
 
 /** \brief Automatic filament change, unmounting of the filament - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
-#define UNMOUNT_FILAMENT_SCRIPT_WITH_HEATING        "M109 S" xstr(UI_SET_EXTRUDER_TEMP_UNMOUNT) "\nG21\nG90\nG92 E0\nG1 E-90 F500\nM104 S0"
+#define UNMOUNT_FILAMENT_SCRIPT_WITH_HEATING        "M109 S" xstr(UI_SET_EXTRUDER_TEMP_UNMOUNT) "\nG21\nG92 E0\nG1 E-90 F500\nG92 E0\nM104 S0"
 
 /** \brief Automatic filament change, unmounting of the filament - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
-#define UNMOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING     "G21\nG90\nG92 E0\nG1 E-90 F500"
+#define UNMOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING     "G21\nG92 E0\nG1 E-90 F500\nG92 E0"
 
 /** \brief Automatic filament change, mounting of the filament with heating - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
-#define MOUNT_FILAMENT_SCRIPT_WITH_HEATING          "M109 S" xstr(UI_SET_PRESET_EXTRUDER_TEMP_ABS) "\nG21\nG90\nG92 E0\nG1 E90 F100\nM104 S0"
+#define MOUNT_FILAMENT_SCRIPT_WITH_HEATING          "M109 S" xstr(UI_SET_PRESET_EXTRUDER_TEMP_ABS) "\nG21\nG92 E0\nG1 E40 F80\nG92 E0\nM104 S0"
 
 /** \brief Automatic filament change, mounting of the filament without heating - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
-#define MOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING       "G21\nG90\nG92 E0\nG1 E90 F100"
+#define MOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING       "G21\nG92 E0\nG1 E40 F80\nG92 E0"
 
-/** \brief speed of the PWM signal, 0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz, 3 = 122.06Hz */
+/** \brief speed of the PWM signal, 0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz, 3 = 122.06Hz, 4 = 244.12Hz */
 #define HEATER_PWM_SPEED                    1
 #define COOLER_PWM_SPEED                    0
 

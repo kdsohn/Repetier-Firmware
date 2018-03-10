@@ -668,7 +668,7 @@ Values must be in range 1..255 */
 #define UI_SET_PRESET_EXTRUDER_TEMP_ABS     210
 
 /** \brief Values used for unload(unmount)/load(mount) filament */
-#define UI_SET_EXTRUDER_TEMP_UNMOUNT        120
+#define UI_SET_EXTRUDER_TEMP_UNMOUNT        140
 #define UI_SET_EXTRUDER_TEMP_MOUNT          200
 
 /** \brief Extreme values */
