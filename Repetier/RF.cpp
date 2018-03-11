@@ -227,7 +227,6 @@ unsigned long   uLastZPressureTime_IgnoreUntil = 0;
 #if FEATURE_FIND_Z_ORIGIN
 volatile unsigned char g_nFindZOriginStatus = 0;
 long            g_nZOriginPosition[3]       = { 0, 0, 0 };
-int             g_nZOriginSet               = 0;
 #endif // FEATURE_FIND_Z_ORIGIN
 
 #if FEATURE_ALIGN_EXTRUDERS
@@ -12406,7 +12405,7 @@ void cleanupZPositions( void ) //kill all! -> für stepper disabled
     g_nZOriginPosition[X_AXIS] = 0;
     g_nZOriginPosition[Y_AXIS] = 0;
     g_nZOriginPosition[Z_AXIS] = 0;
-    g_nZOriginSet              = 0;
+    Printer::setZOriginSet(false); //flag wegen statusnachricht
 #endif // FEATURE_FIND_Z_ORIGIN
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
@@ -12461,7 +12460,7 @@ void setZOrigin( void )
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
     g_nZOriginPosition[Z_AXIS] = 0;
-    g_nZOriginSet              = 1;
+    Printer::setZOriginSet(true); //flag wegen statusnachricht
 #endif // FEATURE_FIND_Z_ORIGIN
 
     Printer::updateCurrentPosition();
@@ -12478,7 +12477,7 @@ void setZOrigin( void )
     Printer::originOffsetMM[Z_AXIS]             = 0;
     
     g_nZScanZPosition                           = 0;
-    Printer::currentZSteps                      = 0;
+    Printer::currentZSteps                      = 0; //an dieser variable darf man im druckmodus eigentlich nie rumspielen ^^.
 
     Printer::updateDerivedParameter();
     Printer::updateCurrentPosition(true);
@@ -12493,8 +12492,6 @@ void setZOrigin( void )
 #endif // EEPROM_MODE!=0
     
     Commands::printCurrentPosition();
-
-    Printer::setZOriginSet(true);
 
     BEEP_ACCEPT_SET_POSITION
 

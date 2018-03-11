@@ -664,7 +664,6 @@ extern bool             g_nDigitZCompensationDigits_active;
 #if FEATURE_FIND_Z_ORIGIN
 extern volatile unsigned char g_nFindZOriginStatus;
 extern long            g_nZOriginPosition[3];
-extern int             g_nZOriginSet;
 #endif // FEATURE_FIND_Z_ORIGIN
 
 #if FEATURE_ALIGN_EXTRUDERS

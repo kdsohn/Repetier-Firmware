@@ -535,7 +535,6 @@ void Printer::updateCurrentPosition(bool copyLastCmd)
         queuePositionCommandMM[Y_AXIS] = queuePositionLastMM[Y_AXIS];
         queuePositionCommandMM[Z_AXIS] = queuePositionLastMM[Z_AXIS];
     }
-
 } // updateCurrentPosition
 
 
@@ -1803,70 +1802,81 @@ void Printer::homeZAxis()
         UI_STATUS_UPD( UI_TEXT_HOME_Z );
         uid.lock();
 
+        //homing ausschalten und zCMP (...) auch.
+        setHomed( -1 , -1 , false);
+
 #if FEATURE_FIND_Z_ORIGIN
+        //das ist die Z-Origin-Position und ihre XY-Scan-Stelle.
         g_nZOriginPosition[X_AXIS] = 0;
         g_nZOriginPosition[Y_AXIS] = 0;
         g_nZOriginPosition[Z_AXIS] = 0;
+        Printer::setZOriginSet(false); //removes flag wegen statusnachricht
 #endif // FEATURE_FIND_Z_ORIGIN
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
+        //nullen und in jedem fall sofort aufhören per directSteps zu fahren!
         directPositionTargetSteps[Z_AXIS]  = 0;
         directPositionCurrentSteps[Z_AXIS] = 0;
         directPositionLastSteps[Z_AXIS]    = 0;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
-        setHomed( -1 , -1 , false);
-
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
+        //das ist diese Scan-Positions-Z-Zusatzachse für MoveZ-Bewegungen.
         g_nZScanZPosition = 0;
-        //disable CMP ist bei Z unhome hier drüber schon mit drin. //Printer::disableCMPnow(true); //true == wait for move while HOMING
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
-        long achslaenge_dist = (maxSteps[Z_AXIS] - minSteps[Z_AXIS]) * nHomeDir;
-        queuePositionLastSteps[Z_AXIS] = -achslaenge_dist;
+        /*
+        moveRelativeDistanceInSteps bedeutet: Printer::queuePositionTargetSteps[Z_AXIS] = Printer::queuePositionLastSteps[Z_AXIS] + deltaZ;
+        dann ab in den MOVE_CACHE
+        dann warten
+        dann updateposition
+        */
+        //wir tun so als wären wir JETZT am anderen koordinaten-ende. Maximal weit weg vom Schalter.
+        queuePositionLastSteps[Z_AXIS] = (nHomeDir == -1) ? maxSteps[Z_AXIS] : minSteps[Z_AXIS];
+                
         //1. Schnelles Fahren bis zum Schalterkontakt:
-        PrintLine::moveRelativeDistanceInSteps(0, 0, long( 2 * achslaenge_dist ), 0, homingFeedrate[Z_AXIS], true, true); //Anfahren bis zum Schalterkontakt. Ist der Schalter gedrückt, wird sofort abgebrochen.
-        queuePositionLastSteps[Z_AXIS] = (nHomeDir == -1) ? minSteps[Z_AXIS] : maxSteps[Z_AXIS];
+            //Ist der Schalter gedrückt, wird sofort geskipped. 
+            //Ansonsten bis Schalter fahren. Doppelte mögliche Distanz, sodass Fahrt nicht zu früh aufhören kann.
+        PrintLine::moveRelativeDistanceInSteps(0, 0, long( 2 * abs(maxSteps[Z_AXIS] - minSteps[Z_AXIS]) * nHomeDir ), 0, homingFeedrate[Z_AXIS], true, true); 
         
         //2. in jedem Fall Freifahren vom Schalterkontakt:
-        //ENDSTOP_Z_BACK_MOVE größer als 32768+wenig ist eigentlich nicht möglich, nicht sinnvoll und würde, da das überfahren bei 32microsteps von der z-matrix >-12,7mm abhängig ist verboten sein.
-        //darum ist uint16_t ok.
+            //ENDSTOP_Z_BACK_MOVE größer als 32768 ist eigentlich nicht möglich, nicht sinnvoll und würde, da das überfahren bei 32microsteps von der z-matrix >-12,7mm abhängig ist verboten sein.
+            //darum ist uint16_t in jedem fall ohne overflow.
         for(uint16_t step = 0; step < uint16_t(axisStepsPerMM[Z_AXIS] * ENDSTOP_Z_BACK_MOVE); step += uint16_t(0.1f * axisStepsPerMM[Z_AXIS]) ){
-            //faktor *2 und *5 : doppelt/5x so schnell beim zurücksetzen als nachher beim hinfahren.
+            //faktor *2 und *5 : doppelt/5x so schnell beim Zurücksetzen als nachher beim langsamst hinfahren. Sonst dauert das ewig.
             if(Printer::isZMinEndstopHit()){
-                //schalter noch gedrückt, wir müssen weiter zurück, aber keinesfalls mehr als ENDSTOP_Z_BACK_MOVE
-                PrintLine::moveRelativeDistanceInSteps(0, 0, long(axisStepsPerMM[Z_AXIS] * 0.1f * -1 * nHomeDir),                     0, float(homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR * 5.0f), true, false);
+                //schalter noch gedrückt, wir müssen weiter aus dem schalter rausfahren, aber keinesfalls mehr als ENDSTOP_Z_BACK_MOVE
+                PrintLine::moveRelativeDistanceInSteps(0, 0, long(axisStepsPerMM[Z_AXIS] * 0.1f * (-1 * nHomeDir) ),                     0, float(homingFeedrate[Z_AXIS] / ENDSTOP_Z_RETEST_REDUCTION_FACTOR * 5.0f), true, false);
             }else{ //wir sind aus dem schalterbereich raus, müssten also nicht weiter zurücksetzen:
                 //1) egal ob der schalter zu anfang überfahren war oder nicht: etwas zurücksetzen, nachdem der schalter angefahren wurde.
                 //2) hier wird in jedem Fall etwas weiter weggefahren, sodass man wieder neu auf Z anfahren kann.
-                PrintLine::moveRelativeDistanceInSteps(0, 0, long(axisStepsPerMM[Z_AXIS] * Z_ENDSTOP_MAX_HYSTERESIS * -1 * nHomeDir), 0, float(homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR * 2.0f), true, false);
+                PrintLine::moveRelativeDistanceInSteps(0, 0, long(axisStepsPerMM[Z_AXIS] * Z_ENDSTOP_MAX_HYSTERESIS * (-1 * nHomeDir) ), 0, float(homingFeedrate[Z_AXIS] / ENDSTOP_Z_RETEST_REDUCTION_FACTOR * 2.0f), true, false);
                 break;
             }
         }
         
         //3. langsames Fahren bis zum Schalterkontakt:
-        PrintLine::moveRelativeDistanceInSteps(0, 0, long(axisStepsPerMM[Z_AXIS] * (0.1f + ENDSTOP_Z_BACK_MOVE) * nHomeDir),          0, float(homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR),        true, true);
+        PrintLine::moveRelativeDistanceInSteps(0, 0, long(axisStepsPerMM[Z_AXIS] * (0.1f + ENDSTOP_Z_BACK_MOVE) * nHomeDir),          0, float(homingFeedrate[Z_AXIS] / ENDSTOP_Z_RETEST_REDUCTION_FACTOR), true, true);
 
 #if FEATURE_MILLING_MODE
         //4. Wenn Millingmode dann nochmal freifahren und Koordinate nullen.
         if( Printer::operatingMode == OPERATING_MODE_MILL )
         {
             // when the milling mode is active and we are in operating mode "mill", we use the z max endstop and we free the z-max endstop after it has been hit
-            PrintLine::moveRelativeDistanceInSteps(0, 0, long(axisStepsPerMM[Z_AXIS] * (LEAVE_Z_MAX_ENDSTOP_AFTER_HOME+Z_ENDSTOP_MAX_HYSTERESIS) * nHomeDir * -1), 0, float(homingFeedrate[Z_AXIS]),             true, false);
+            PrintLine::moveRelativeDistanceInSteps(0, 0, long(axisStepsPerMM[Z_AXIS] * (LEAVE_Z_MAX_ENDSTOP_AFTER_HOME + Z_ENDSTOP_MAX_HYSTERESIS) * (-1 * nHomeDir) ), 0, float(homingFeedrate[Z_AXIS]), true, false);
         }
 #endif // FEATURE_MILLING_MODE
 
+        //5. Setzen der aktuellen End-Position auf die Koordinate, zu der das Homing gehört.
         queuePositionLastSteps[Z_AXIS]    = (nHomeDir == -1) ? minSteps[Z_AXIS] : maxSteps[Z_AXIS];
         queuePositionCurrentSteps[Z_AXIS] = queuePositionLastSteps[Z_AXIS];
+        currentZSteps                     = queuePositionLastSteps[Z_AXIS]; //das ist die Z-Koordinate, die die Z-Steps per Dir-Pin abzählt.
 
-        currentZSteps                     = queuePositionLastSteps[Z_AXIS];
+        //6. Korrektur der Flags
+        setHomed( -1 , -1 , true);
 
         // show that we are active
         previousMillisCmd = HAL::timeInMilliseconds();
-        setHomed( -1 , -1 , true);
-
-        setZOriginSet(false); //removes flag
-
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
         ZEndstopUnknown = false;
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS

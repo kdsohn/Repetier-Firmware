@@ -1327,7 +1327,7 @@ void UIDisplay::parse(char *txt,bool ram)
                                 }
                                 else
                                 {
-                                    if ( !g_nZOriginSet )
+                                    if ( !Printer::isZOriginSet() )
                                     {
                                         parse(statusMsg,true);
                                     }

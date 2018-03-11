@@ -347,9 +347,7 @@ public:
         Printer::lastZDirection = 0;
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
 
-        setZOriginSet(false);
         cleanupZPositions();
-
     } // disableZStepper
 
     /** \brief Enable stepper motor for x direction. */
@@ -921,10 +919,8 @@ public:
     static INLINE void markAllSteppersDisabled()
     {
         flag0 |= PRINTER_FLAG0_STEPPER_DISABLED;
-
         // when the stepper is disabled we loose our home position because somebody else can move our mechanical parts
         setHomed( false, false, false ); //mag sein, dass wir das nicht brauchen, weil sowieso die einzelnen stepper deaktiviert werden müssen.
-        setZOriginSet(false);
     } // markAllSteppersDisabled
 
     static INLINE void unmarkAllSteppersDisabled()
