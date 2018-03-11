@@ -1,6 +1,11 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.39.01+.Mod (2018-03-05)
+- fast fix for UNMOUNT/MOUNT Filament (added G92 E0 at the ends) Thx@ easygo25
+- fast fix for RF2000 optional Temp sensor 15 -> 14
+- adjust output object script speeds to possible speeds in Z. And standard homing speed for Y. Thx@ AtlonXP
+
 V RF.01.39+.Mod (2018-03-05) 
 - fixing rf1k-mhj11's bug that M109 cannot shut down temperature in some situations.
 - fixing rf1k-mhj11's bug that M190 cannot shut down temperature.
