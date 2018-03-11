@@ -1,7 +1,19 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
-V RF.01.41.00.Mod alpha (2018-03-06) 
+V RF.01.41.02.Mod alpha (2018-03-10) 
+This is the "intelligent filament load update"
+- new M3913 P[digits] which mounts/extrudes filament until Pxxxx digits are reached then stops. 
+- new M3914 P[digits] which unmounts the extruder by slowly heating and checking force. It is/was quite hard to test out good settings for unmount. This might be updated in future, but I like it.
+- inserted M3913 and M3914 into MOUNT_FILAMENT_SCRIPT_... and UNMOUNT_FILAMENT_SCRIPT_... to vastly improve "Menu->Extruder->(Un)Load Filament"
+- compressed functions for MOUNT_FILAMENT_SCRIPT_WITH_HEATING and MOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING functions to one, because they where quite identical.
+
+V RF.01.41.01.Mod alpha (2018-03-10) 
+- output object speeds are now limited to normal homing speeds. OctaStepping made that too fast. Thx@ AtlonXP
+- MOUNT and UNMOUNT Scripts got an extra G92 E0 to in some cases prevent undo afterwards. Thx@ easygo25
+- sync of UNMOUNT_FILAMENT_SCRIPTs and MOUNT_FILAMENT_SCRIPTs for both devices (RF2000/RF1000)
+
+V RF.01.41.00.Mod alpha (2018-03-09) 
 - deleted M3002 and M3003 because they are not needed anymore. (We use M3007 and M3008 for this functionality. Not using M3007/M3008 it is even better because this mod has an automatic mode for placing those two values right :D)
 - deleted M3100 because we have a smart menu point (Menu->Position->Z-Step: XXX um) for that and this functionality is only used in menu.
 - deleted M3101 because there is no real need for this adjustment. Normal extrusion is not "directsteps over button"

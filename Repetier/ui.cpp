@@ -5059,108 +5059,28 @@ void UIDisplay::executeAction(int action)
                 Printer::kill( true );
                 break;
             }
+            case UI_ACTION_MOUNT_FILAMENT:
             case UI_ACTION_UNMOUNT_FILAMENT:
             {
-                if( Extruder::current->tempControl.targetTemperatureC == 0 )
-                {
-                    char    unlock = !uid.locked;
-
-                    g_uStartOfIdle = 0;
-                    uid.executeAction(UI_ACTION_TOP_MENU);
-                    UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT );
-                    uid.lock();
-
+                g_uStartOfIdle = 0;
+                bool unmount = (action==UI_ACTION_UNMOUNT_FILAMENT);
+                char unlock = !uid.locked;
+                uid.executeAction(UI_ACTION_TOP_MENU);
+                if(unmount){ UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT ); }
+                else       { UI_STATUS_UPD( UI_TEXT_MOUNT_FILAMENT ); }
+                uid.lock();
+                if( unmount ){
                     GCode::executeFString(Com::tUnmountFilamentWithHeating);
-
-                    if( unlock )
+                }else{
+                    if( Extruder::current->tempControl.targetTemperatureC < UI_SET_MIN_EXTRUDER_TEMP )
                     {
-                        uid.unlock();
+                        GCode::executeFString(Com::tMountFilamentWithHeating);
+                    }else{
+                        GCode::executeFString(Com::tMountFilamentWithoutHeating);
                     }
-                    g_uStartOfIdle = HAL::timeInMilliseconds();
                 }
-                else
-                {
-#if !EXTRUDER_ALLOW_COLD_MOVE
-                    if( Extruder::current->tempControl.currentTemperatureC < UI_SET_EXTRUDER_TEMP_UNMOUNT )
-                    {
-                        // we do not allow to move the extruder in case it is not heated up enough
-                        if( Printer::debugErrors() )
-                        {
-                            Com::printFLN( PSTR( "Unload Filament: extruder output: aborted" ) );
-                        }
-
-                        showError( (void*)ui_text_extruder, (void*)ui_text_operation_denied );
-                        break;
-                    }
-#endif // !EXTRUDER_ALLOW_COLD_MOVE
-
-                    char    unlock = !uid.locked;
-
-                    g_uStartOfIdle = 0;
-                    uid.executeAction(UI_ACTION_TOP_MENU);
-                    UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT );
-                    uid.lock();
-
-                    GCode::executeFString(Com::tUnmountFilamentWithoutHeating);
-
-                    if( unlock )
-                    {
-                        uid.unlock();
-                    }
-                    g_uStartOfIdle = HAL::timeInMilliseconds();
-                }
-                break;
-            }
-            case UI_ACTION_MOUNT_FILAMENT:
-            {
-                if( Extruder::current->tempControl.targetTemperatureC == 0 )
-                {
-                    char    unlock = !uid.locked;
-
-                    g_uStartOfIdle = 0;
-                    uid.executeAction(UI_ACTION_TOP_MENU);
-                    UI_STATUS_UPD( UI_TEXT_MOUNT_FILAMENT );
-                    uid.lock();
-
-                    GCode::executeFString(Com::tMountFilamentWithHeating);
-
-                    if( unlock )
-                    {
-                        uid.unlock();
-                    }
-                    g_uStartOfIdle = HAL::timeInMilliseconds();
-                }
-                else
-                {
-#if !EXTRUDER_ALLOW_COLD_MOVE
-                    if( Extruder::current->tempControl.currentTemperatureC < UI_SET_MIN_EXTRUDER_TEMP )
-                    {
-                        // we do not allow to move the extruder in case it is not heated up enough
-                        if( Printer::debugErrors() )
-                        {
-                            Com::printFLN( PSTR( "Load Filament: aborted" ) );
-                        }
-
-                        showError( (void*)ui_text_extruder, (void*)ui_text_operation_denied );
-                        break;
-                    }
-#endif // !EXTRUDER_ALLOW_COLD_MOVE
-
-                    char    unlock = !uid.locked;
-
-                    g_uStartOfIdle = 0;
-                    uid.executeAction(UI_ACTION_TOP_MENU);
-                    UI_STATUS_UPD( UI_TEXT_MOUNT_FILAMENT );
-                    uid.lock();
-
-                    GCode::executeFString(Com::tMountFilamentWithoutHeating);
-
-                    if( unlock )
-                    {
-                        uid.unlock();
-                    }
-                    g_uStartOfIdle = HAL::timeInMilliseconds();
-                }
+                if( unlock ) uid.unlock();
+                g_uStartOfIdle = HAL::timeInMilliseconds();
                 break;
             }
             case UI_ACTION_SET_E_ORIGIN:

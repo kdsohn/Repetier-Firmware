@@ -339,7 +339,6 @@ public:
     FSTRINGVAR(tOutputObjectPrint)
     FSTRINGVAR(tOutputObjectMill)
     FSTRINGVAR(tUnmountFilamentWithHeating)
-    FSTRINGVAR(tUnmountFilamentWithoutHeating)
     FSTRINGVAR(tMountFilamentWithHeating)
     FSTRINGVAR(tMountFilamentWithoutHeating)
 

@@ -10763,7 +10763,115 @@ void processCommand( GCode* pCommand )
             }
 #endif //FEATURE_STARTLINE
 
-            case 3919: // 3919 [S]mikrometer - Testfunction for Dip-Down-Hotend beim T1: Einstellen des extruderspezifischen Z-Offsets
+            case 3913: //M3913 input filament until DMS Sensor tells us to stop or Extrusion amount is reached
+            {
+                Commands::waitUntilEndOfAllMoves(); //loadfilament
+                Com::printFLN( PSTR( "Load Filament" ) );
+                g_uStartOfIdle = 0;
+
+                uint8_t Extrusion = 65; //max, wenn kein wiederstand. (ca. hotendlänge)
+                uint8_t eFeedrate = 1;
+                if ( pCommand->hasF() ) eFeedrate = constrain( abs( static_cast<uint8_t>(pCommand->F) ) , 1 , 50 );
+                short maxP = 2000; //to overwrite .. safety.
+                if ( pCommand->hasP() ) maxP = constrain( abs( static_cast<short>(pCommand->P) ) , EMERGENCY_PAUSE_DIGITS_MIN , EMERGENCY_PAUSE_DIGITS_MAX );
+                bool save_relativeExtruderCoordinateMode = Printer::relativeExtruderCoordinateMode;
+                Printer::relativeExtruderCoordinateMode = false; //M82:
+                uint8_t saveunitIsInches = Printer::unitIsInches;
+                Printer::unitIsInches = 0; //to save possible G21 .. weiß net ob das so wichtig wäre ^^.
+                Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0; //G92 E0:
+
+                float e = 0.0f;
+                while(e < float(Extrusion) ){
+                    if( g_uBlockCommands || abs(readStrainGauge( ACTIVE_STRAIN_GAUGE )) > maxP /* digits sind soweit gestiegen, dass abbruch.*/ ) break;
+                    e += 0.02; //kleine schritte
+                    Printer::moveToReal( IGNORE_COORDINATE, IGNORE_COORDINATE, IGNORE_COORDINATE, e, eFeedrate);
+                }
+
+                Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0; //G92 E0:
+                Printer::relativeExtruderCoordinateMode = save_relativeExtruderCoordinateMode;
+                Printer::unitIsInches = saveunitIsInches;
+                Printer::updateCurrentPosition();
+                g_uStartOfIdle = HAL::timeInMilliseconds();
+                break;
+            }
+            case 3914: //M3914 coldpull filament very gently
+            {
+                Commands::waitUntilEndOfAllMoves(); //loadfilament
+                Com::printFLN( PSTR( "Unload Filament" ) );
+                g_uStartOfIdle = 0;
+
+                //init
+                uint8_t outputLength = 100; //9cm max Output, wenn kein übertriebener wiederstand. Unser Hotend ist nicht ganz so lang.
+                float   eFeedrate = 0.3f;   /*mm/s*/
+                short   maxForce = 4000;    //3500+ might work well! You should stay underneath the force causing step loss.
+                if ( pCommand->hasP() ) maxForce = constrain( abs( static_cast<short>(pCommand->P) ) , EMERGENCY_PAUSE_DIGITS_MIN , EMERGENCY_PAUSE_DIGITS_MAX );
+                float t = float(UI_SET_EXTRUDER_MIN_TEMP_UNMOUNT);
+                
+                //preheat / precool
+                Extruder::setTemperatureForExtruder(t,Extruder::current->id,true);
+                Extruder::current->tempControl.waitForTargetTemperature(15);
+
+                //set stuff
+                bool save_relativeExtruderCoordinateMode = Printer::relativeExtruderCoordinateMode;
+                Printer::relativeExtruderCoordinateMode = false; //M82:
+                uint8_t saveunitIsInches = Printer::unitIsInches;
+                Printer::unitIsInches = 0; //to save possible G21 .. weiß net ob das so wichtig wäre ^^.
+                Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0; //G92 E0:
+
+                //work
+                float e = 0.0f;
+                float de = 0.005f;
+                uint8_t retry = 5;
+                while( t < float(UI_SET_EXTRUDER_MAX_TEMP_UNMOUNT) && fabs(e) < float(outputLength) ){
+                    millis_t time = HAL::timeInMilliseconds() + 2000;
+                    while( HAL::timeInMilliseconds() <= time ){
+                        UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT );
+                        Commands::printTemperatures();
+                        Commands::checkForPeriodicalActions( WaitHeater );
+                        if( g_uBlockCommands ) break;
+                    }
+                    if( g_uBlockCommands ) break;
+                    while( fabs(e) < float(outputLength) ){
+                        if( g_uBlockCommands ) break;
+                        if( abs(readStrainGauge( ACTIVE_STRAIN_GAUGE )) > maxForce /* digits sind soweit INS MINUS gestiegen, dass abbruch.*/ ){
+                            t += 3.33; // +1°K
+                            break;
+                        }
+                        e -= de; //mm - kleine schritte auf Zug
+                        if( fabs(e) >  5.0f /*mm*/ && eFeedrate < 10.0f /*mm/s*/ ){
+                            eFeedrate += (fabs(e) > 10.0f ? 0.01f : 0.001f ); // mm/s
+                        } 
+                        if( fabs(e) > 15.0f /*mm*/ && eFeedrate < 20.0f /*mm/s*/ ){
+                            eFeedrate += 0.01f; // mm/s
+                            if(de <= 0.02f) de += 0.0001f;
+                        } 
+                        Printer::moveToReal( IGNORE_COORDINATE, IGNORE_COORDINATE, IGNORE_COORDINATE, e, eFeedrate);
+                    }
+                    if( g_uBlockCommands ) break;
+                    if( t > Extruder::current->tempControl.targetTemperatureC && fabs(e) < 10.0f /*mm*/ ){
+                        //wenn der extruder nicht weiterkommt und die bisherige wegstrecke unter 10mm ist, dann etwas die Temperatur erhöhen und nochmal ziehen.
+                        Extruder::setTemperatureForExtruder(t,Extruder::current->id,false);
+                        Extruder::current->tempControl.waitForTargetTemperature();
+                    }else if(fabs(e) >= 10.0f /*mm*/){
+                        //das filament kam schon etwas raus, hängt aber nun.
+                        if(!retry--){
+                            BEEP_ABORT_HEAT_BED_SCAN
+                            break;
+                        }
+                    }
+                    eFeedrate = 0.3f;
+                }
+                Extruder::setTemperatureForExtruder(0,Extruder::current->id,false);
+                //cleanup
+                Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0; //G92 E0:
+                Printer::relativeExtruderCoordinateMode = save_relativeExtruderCoordinateMode;
+                Printer::unitIsInches = saveunitIsInches;
+                Printer::updateCurrentPosition();
+                g_uStartOfIdle = HAL::timeInMilliseconds();
+                break;
+            }
+            
+            case 3919: // M3919 [S]mikrometer - Testfunction for Dip-Down-Hotend beim T1: Einstellen des extruderspezifischen Z-Offsets
             {
                 /* Eigentlich kann man das mit jedem Extruder machen, aber ich lasse das nur für T1 zu, weil ich nur das testen kann. Der Rechte Extruder kann damit absinken, wenn das Filament ihn runterdrückt. Der Linke bleibt in jedem Fall gleich hoch auf der Höhe des Homings! */
                 if ( pCommand->hasZ() && (pCommand->Z <= 0 && pCommand->Z >= -2.0f) ){
