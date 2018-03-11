@@ -639,6 +639,7 @@ Crash with backside metal RFx000: ~ >10.0..12.0f
 Overflow in Z-Matrix: >12.7f 
 */
 #define Z_ENDSTOP_DRIVE_OVER                 1.3f                              //mm
+#define Z_ENDSTOP_MAX_HYSTERESIS             0.1f                              //mm
 
 /** \brief By default all endstops are pulled up to HIGH. You need a pullup if you
 use a mechanical endstop connected with GND. Set value to false for no pullup
@@ -684,9 +685,9 @@ on this endstop. */
 #define max_software_endstop_z              true
 
 /** \brief If during homing the endstop is reached, how many mm should the printer move back for the second try */
-#define ENDSTOP_X_BACK_MOVE                 5
-#define ENDSTOP_Y_BACK_MOVE                 5
-#define ENDSTOP_Z_BACK_MOVE                 float(0.1f+Z_ENDSTOP_DRIVE_OVER) //0.1mm sind theoretische maximale hysterese beim Schalter loslassen. Original RF2000: <0.01
+#define ENDSTOP_X_BACK_MOVE                 5.0f
+#define ENDSTOP_Y_BACK_MOVE                 5.0f
+#define ENDSTOP_Z_BACK_MOVE                 float(Z_ENDSTOP_MAX_HYSTERESIS+Z_ENDSTOP_DRIVE_OVER) //0.1mm sind theoretische maximale hysterese beim Schalter loslassen. Original RF2000: <0.01
 
 /** \brief For higher precision you can reduce the speed for the second test on the endstop
 during homing operation. The homing speed is divided by the value. 1 = same speed, 2 = half speed */

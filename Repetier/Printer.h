@@ -40,7 +40,7 @@
 #define PRINTER_FLAG1_Z_ORIGIN_SET              64
 
 #define PRINTER_FLAG2_RESET_FILAMENT_USAGE      4
-#define PRINTER_FLAG2_HOMING                    64
+//#define PRINTER_FLAG2_HOMING                    64
  
 #define PRINTER_FLAG3_X_HOMED                   1 // flag3 alike original repetier
 #define PRINTER_FLAG3_Y_HOMED                   2 // flag3 alike original repetier
@@ -935,7 +935,7 @@ public:
         pwm_pos[NUM_EXTRUDER+1] = 255;
 #endif // FAN_BOARD_PIN
     } // unmarkAllSteppersDisabled
-    
+
     static void disableAllSteppersNow()
     {
         markAllSteppersDisabled();
@@ -944,16 +944,6 @@ public:
         disableZStepper();
         Extruder::disableAllExtruders();
     } // disableAllSteppersNow
-    
-    static INLINE uint8_t isHoming()
-    {
-        return flag2 & PRINTER_FLAG2_HOMING;
-    }
-
-    static INLINE void setHoming(uint8_t b)
-    {
-        flag2 = (b ? flag2 | PRINTER_FLAG2_HOMING : flag2 & ~PRINTER_FLAG2_HOMING);
-    }
 
     static INLINE bool isAnyTempsensorDefect()
     {

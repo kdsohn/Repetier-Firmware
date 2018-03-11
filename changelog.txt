@@ -1,6 +1,11 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.41.03.Mod alpha (2018-03-10) 
+- some tiny tweaks
+- cleanup of homeZ for better reading. Inserted a lot of casts.
+- removed some functions which are not needed anymore because their purpose already got removed.
+
 V RF.01.41.02.Mod alpha (2018-03-10) 
 This is the "intelligent filament load update"
 - new M3913 P[digits] which mounts/extrudes filament until Pxxxx digits are reached then stops. 
