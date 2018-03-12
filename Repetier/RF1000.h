@@ -742,7 +742,7 @@ can set it on for safety. */
 #define UNMOUNT_FILAMENT_SCRIPT_WITH_HEATING        "M3914 P4500"
 
 /** \brief Automatic filament mount, mounting of the filament with heating. Stop @ 3500 digits */
-#define MOUNT_FILAMENT_SCRIPT_WITH_HEATING          "M109 S" xstr(UI_SET_PRESET_EXTRUDER_TEMP_ABS) "\nM3913 P3500 F3\nM104 S0"
+#define MOUNT_FILAMENT_SCRIPT_WITH_HEATING          "M3913 P3500 F3"
 
 /** \brief Automatic filament mount, mounting of the filament without heating. Stop @ 3500 digits */
 #define MOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING       "M3913 P3500 F3"

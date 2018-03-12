@@ -1,7 +1,12 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
-V RF.01.41.04.Mod alpha (2018-03-10) 
+V RF.01.41.05.Mod alpha (2018-03-12) 
+- corrected unit calculation in void Printer::MemoryPosition()
+- rise of LOW_TICKS_PER_MOVE to 500k (It might not have a big effect but maybe on some parts)
+- removed some old TODOs on which I am now absolut sure how to handle them.
+
+V RF.01.41.04.Mod alpha (2018-03-12) 
 - added FEATURE_DEBUG_MOVE_CACHE_TIMING to debug movecache fill while printing.
     if you want to adjust LOW_TICKS_PER_MOVE to default: M3993 P300000 (LOW_TICKS_PER_MOVE is 300000)
     if you want to read and drop statistics:             M3993

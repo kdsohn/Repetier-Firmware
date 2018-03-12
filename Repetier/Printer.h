@@ -964,30 +964,12 @@ public:
         flag0 = (on ? flag0 | PRINTER_FLAG0_MANUAL_MOVE_MODE : flag0 & ~PRINTER_FLAG0_MANUAL_MOVE_MODE);
     } // setManualMoveMode
 
-    static INLINE float lastCalculatedXPosition()
-    {
-        // return all values in [mm]
-        return queuePositionLastMM[X_AXIS];
-    } // lastCalculatedXPosition
-
-    static INLINE float lastCalculatedYPosition()
-    {
-        // return all values in [mm]
-        return queuePositionLastMM[Y_AXIS];
-    } // lastCalculatedYPosition
-
-    static INLINE float lastCalculatedZPosition()
-    {
-        // return all values in [mm]
-        return queuePositionLastMM[Z_AXIS];
-    } // lastCalculatedZPosition
-
     static INLINE void lastCalculatedPosition(float &xp,float &yp,float &zp)
     {
         // return all values in [mm]
-        xp = lastCalculatedXPosition();
-        yp = lastCalculatedYPosition();
-        zp = lastCalculatedZPosition();
+        xp = queuePositionLastMM[X_AXIS];
+        yp = queuePositionLastMM[Y_AXIS];
+        zp = queuePositionLastMM[Z_AXIS];
     } // lastCalculatedPosition
 
     static INLINE float targetXPosition()

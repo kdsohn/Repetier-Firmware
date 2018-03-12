@@ -10808,7 +10808,7 @@ void processCommand( GCode* pCommand )
                 
                 //preheat / precool
                 Extruder::setTemperatureForExtruder(t,Extruder::current->id,true);
-                Extruder::current->tempControl.waitForTargetTemperature(15);
+                Extruder::current->tempControl.waitForTargetTemperature(10);
 
                 //set stuff
                 bool save_relativeExtruderCoordinateMode = Printer::relativeExtruderCoordinateMode;
@@ -12350,9 +12350,9 @@ void cleanupXPositions( void )
 
     Printer::queuePositionCurrentSteps[X_AXIS] =
     Printer::queuePositionLastSteps[X_AXIS]    =
-    Printer::queuePositionTargetSteps[X_AXIS]  =
+    Printer::queuePositionTargetSteps[X_AXIS]  = 0;
     Printer::queuePositionLastMM[X_AXIS]       =
-    Printer::queuePositionCommandMM[X_AXIS]    = 0;
+    Printer::queuePositionCommandMM[X_AXIS]    = 0.0f;
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     Printer::directPositionTargetSteps[X_AXIS]  = 
@@ -12378,9 +12378,9 @@ void cleanupYPositions( void )
 
     Printer::queuePositionCurrentSteps[Y_AXIS] =
     Printer::queuePositionLastSteps[Y_AXIS]    =
-    Printer::queuePositionTargetSteps[Y_AXIS]  =
+    Printer::queuePositionTargetSteps[Y_AXIS]  = 0;
     Printer::queuePositionLastMM[Y_AXIS]       =
-    Printer::queuePositionCommandMM[Y_AXIS]    = 0;
+    Printer::queuePositionCommandMM[Y_AXIS]    = 0.0f;
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     Printer::directPositionTargetSteps[Y_AXIS]  = 
@@ -12406,9 +12406,9 @@ void cleanupZPositions( void ) //kill all! -> für stepper disabled
 
     Printer::queuePositionCurrentSteps[Z_AXIS] =
     Printer::queuePositionLastSteps[Z_AXIS]    =
-    Printer::queuePositionTargetSteps[Z_AXIS]  =
+    Printer::queuePositionTargetSteps[Z_AXIS]  = 0;
     Printer::queuePositionLastMM[Z_AXIS]       =
-    Printer::queuePositionCommandMM[Z_AXIS]    = 
+    Printer::queuePositionCommandMM[Z_AXIS]    = 0.0f;
 
     Printer::currentZSteps                     = 0;
 

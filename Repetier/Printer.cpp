@@ -1272,11 +1272,9 @@ void Printer::defaultLoopActions()
 void Printer::MemoryPosition()
 {
     updateCurrentPosition(false);
-    lastCalculatedPosition(memoryX,memoryY,memoryZ);
-    memoryE = queuePositionLastSteps[E_AXIS]*axisStepsPerMM[E_AXIS];
-
+    lastCalculatedPosition(memoryX,memoryY,memoryZ); //fill with queuePositionLastMM[]
+    memoryE = queuePositionLastSteps[E_AXIS]*invAxisStepsPerMM[E_AXIS];
 } // MemoryPosition
-
 
 void Printer::GoToMemoryPosition(bool x,bool y,bool z,bool e,float feed)
 {
@@ -1893,7 +1891,7 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
 #endif //FEATURE_UNLOCK_MOVEMENT
 
     float   startX,startY,startZ;
-    lastCalculatedPosition(startX,startY,startZ);
+    lastCalculatedPosition(startX,startY,startZ); //fill with queuePositionLastMM[]
 
     char    homingOrder;
 #if FEATURE_MILLING_MODE
@@ -1911,13 +1909,10 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
 
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
     //ich weiß nicht ob das überhaupt ein gutes verhalten ist. Es ist nicht gut, wenn die z-schraube zu weit reingeschraubt ist und daher z-homing über dem bett verboten sein sollte.
-    //Printer::ZEndstopUnknown = 1 gibts nur, wenn der RF1000 mit Circuitschaltung mit einem der z-endstops gedrückt aufwacht, oder man in dieser position auf den endstop umstellt.
-    //super wäre, wenn die düse dann nicht über dem bett wäre. -> test sollte erst nach unten stattfinden, dann ist nur ein schalter am ende, wenn was schief geht, niemals aber die düse oder das hotend -> emergency-block hilft aber.
-    
-    //evtl. am besten: Stop und Meldung "Please release Z-Endstop and restart printer"
-    
-    //if( Printer::ZEndstopUnknown && homingOrder < 5 /*not z first -> do z first*/ ) )
-    /*{
+    //Printer::ZEndstopUnknown == 1 gibts nur, wenn der RF1000 mit Circuitschaltung mit einem der z-endstops gedrückt aufwacht, oder man in dieser position auf den endstop umstellt.
+    //Ein Z-Homing mit EndstopUnknown == 1 fährt immer erst nach unten, also ist unsere Druckerdüse safe, wenn wir erst Z homen bevor X und Y gehomed werden darf.
+    if( Printer::ZEndstopUnknown && homingOrder < 5 /*not z first -> do z first*/ ) )
+    {
         if(homingOrder == HOME_ORDER_XYZ
         || homingOrder == HOME_ORDER_XZY)
         {
@@ -1929,7 +1924,6 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
                 homingOrder = HOME_ORDER_ZYX;
         }
     }
-    */
 #endif //FEATURE_CONFIGURABLE_Z_ENDSTOPS
     
 #if FEATURE_MILLING_MODE
@@ -2000,19 +1994,19 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
     //###############################
     if(xaxis)
     {
-        char xhomedir = Printer::anyHomeDir(X_AXIS);
+        int8_t xhomedir = Printer::anyHomeDir(X_AXIS);
         if(xhomedir < 0)      startX = Printer::minMM[X_AXIS];
         else if(xhomedir > 0) startX = Printer::minMM[X_AXIS]+Printer::lengthMM[X_AXIS];
     }
     if(yaxis)
     {
-        char yhomedir = Printer::anyHomeDir(Y_AXIS);
+        int8_t yhomedir = Printer::anyHomeDir(Y_AXIS);
         if(yhomedir < 0)      startY = Printer::minMM[Y_AXIS];
         else if(yhomedir > 0) startY = Printer::minMM[Y_AXIS]+Printer::lengthMM[Y_AXIS];
     }
     if(zaxis)
     {
-        char zhomedir = Printer::anyHomeDir(Z_AXIS);
+        int8_t zhomedir = Printer::anyHomeDir(Z_AXIS);
         if(zhomedir < 0)      startZ = 0;                           //switch is zero. no min Z available in this printer.
         else if(zhomedir > 0) startZ = Printer::lengthMM[Z_AXIS];
     }

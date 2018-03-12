@@ -5074,7 +5074,10 @@ void UIDisplay::executeAction(int action)
                 }else{
                     if( Extruder::current->tempControl.targetTemperatureC < UI_SET_MIN_EXTRUDER_TEMP )
                     {
+                        Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_ABS,Extruder::current->id,true);
+                        Extruder::current->tempControl.waitForTargetTemperature();
                         GCode::executeFString(Com::tMountFilamentWithHeating);
+                        Extruder::setTemperatureForExtruder(0,Extruder::current->id,false);
                     }else{
                         GCode::executeFString(Com::tMountFilamentWithoutHeating);
                     }

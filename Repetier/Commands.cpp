@@ -502,8 +502,8 @@ void Commands::executeGCode(GCode *com)
 #endif
     if(com->hasG())
     {
-        switch(com->G)
-        {
+      switch(com->G)
+      {
         case 0: // G0 -> G1
         {
             if(!isMovingAllowed(PSTR("G0")))
@@ -548,11 +548,11 @@ void Commands::executeGCode(GCode *com)
             }
 
             float position[3];
-            Printer::lastCalculatedPosition(position[X_AXIS],position[Y_AXIS],position[Z_AXIS]);
+            Printer::lastCalculatedPosition(position[X_AXIS],position[Y_AXIS],position[Z_AXIS]); //fill with queuePositionLastMM[]
             if(!Printer::setDestinationStepsFromGCode(com)) break; // For X Y Z E F
 
             float offset[2] = {Printer::convertToMM(com->hasI()?com->I:0),Printer::convertToMM(com->hasJ()?com->J:0)};
-            float target[4] = {Printer::lastCalculatedXPosition(),Printer::lastCalculatedYPosition(),Printer::lastCalculatedZPosition(),Printer::queuePositionTargetSteps[E_AXIS]*Printer::invAxisStepsPerMM[E_AXIS]};
+            float target[4] = {Printer::queuePositionLastMM[X_AXIS],Printer::queuePositionLastMM[Y_AXIS],Printer::queuePositionLastMM[Z_AXIS],Printer::queuePositionTargetSteps[E_AXIS]*Printer::invAxisStepsPerMM[E_AXIS]};
             float r;
             if (com->hasR())
             {
@@ -857,25 +857,18 @@ void Commands::executeGCode(GCode *com)
             }
             if(com->hasE())
             {
-                Printer::queuePositionLastSteps[E_AXIS] = Printer::convertToMM(com->E)*Printer::axisStepsPerMM[E_AXIS];
-                
-                //?? Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = Printer::convertToMM(com->E)*Printer::axisStepsPerMM[E_AXIS];
-                
+                Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = Printer::convertToMM(com->E) * Printer::axisStepsPerMM[E_AXIS];
                 /* Repetier: https://github.com/repetier/Repetier-Firmware/commit/a63c660289b760faf033fdfd86bbc69c1050cfc9 ?
                   Printer::destinationSteps[E_AXIS] = Printer::currentPositionSteps[E_AXIS] = Printer::convertToMM(com->E) * Printer::axisStepsPerMM[E_AXIS];
                 wissen:
                 Printer::queuePositionTargetSteps[axis] <---> Printer::destinationSteps[axis]
                 Printer::currentPositionSteps[axis] <---> Printer::queuePositionCurrentSteps[axis]
-                -> vermutlich in dieser firmware korrekt:
-
-                Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = Printer::convertToMM(com->E) * Printer::axisStepsPerMM[E_AXIS];
                 */
             }
+            break;
         }
-        break;
-
-        }
-        previousMillisCmd = HAL::timeInMilliseconds();
+      }
+      previousMillisCmd = HAL::timeInMilliseconds();
     }
     else if(com->hasM())    // Process M Code
     {
