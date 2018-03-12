@@ -1792,11 +1792,8 @@ void Printer::homeZAxis()
         // if we have circuit-type Z endstops and we don't know at which endstop we currently are, first move down a bit
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
         if( Printer::ZEndstopUnknown ) {
-            //verzweifelter rausfahrversuch beim RF1000, ohne ahnung ob man den schalter quetscht oder entlastet.
-            //stimmt hier überhaupt homedir * -1 ?? sollte der drucker nicht besser immer nach unten das rausfahren testen?
-            //sollte man nicht für diese aktion evtl. den motorstrom in z runternehmen und während hin und herfahren schrittweise anheben bis man frei ist?
-            PrintLine::moveRelativeDistanceInSteps(0, 0, axisStepsPerMM[Z_AXIS] * ENDSTOP_Z_BACK_MOVE /* * nHomeDir * -1*/, 0, homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR, true, false); //drucker muss immer nach unten fahren, egal wie die homedir steht! unten ist der endschalter stabiler als oben mit düse usw.
-            //evtl. am besten: Stop und Meldung "Please release Z-Endstop and restart printer"
+            //RF1000 und Min-oder-Max gedrückt - nicht klar welcher. Man fährt immer nach unten! Der Schalter hält das aus.
+            PrintLine::moveRelativeDistanceInSteps(0, 0, axisStepsPerMM[Z_AXIS] * ENDSTOP_Z_BACK_MOVE, 0, homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR, true, false); //drucker muss immer nach 
         }
 #endif
         UI_STATUS_UPD( UI_TEXT_HOME_Z );
@@ -1806,7 +1803,7 @@ void Printer::homeZAxis()
         setHomed( -1 , -1 , false);
 
 #if FEATURE_FIND_Z_ORIGIN
-        //das ist die Z-Origin-Position und ihre XY-Scan-Stelle.
+        //das ist die Z-Origin-Höhe und ihre XY-Scan-Stelle.
         g_nZOriginPosition[X_AXIS] = 0;
         g_nZOriginPosition[Y_AXIS] = 0;
         g_nZOriginPosition[Z_AXIS] = 0;
