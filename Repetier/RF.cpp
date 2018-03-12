@@ -10984,7 +10984,31 @@ void processCommand( GCode* pCommand )
             }
 #endif //FEATURE_USER_INT3
 
-            case 3998: // M3999 : proof that dummy function/additional hardware button works! || by Nibbels
+#if FEATURE_DEBUG_MOVE_CACHE_TIMING
+            case 3993: // M3993 : gather statistics and output them for optimization of the best LOW_TICKS_PER_MOVE for RFx000 Printers || by Nibbels
+            {
+                Com::printFLN( PSTR( "Output cache statistics for LOW_TICKS_PER_MOVE=" ), int32_t(low_ticks_per_move) );
+                Com::printFLN( PSTR( "Moves:" ), move_cache_stats_count );
+                Com::printFLN( PSTR( "Lowered moves:" ), move_cache_stats_count_limited );
+                for(uint8_t cachepos = 0; cachepos < MOVE_CACHE_SIZE; cachepos++){
+                    Com::printF( PSTR( "MOVE_CACHE " ), cachepos );
+                    Com::printFLN( PSTR( "=" ), move_cache_stats[cachepos] );
+                    move_cache_stats[cachepos] = 0; //delete old stats after output.
+                }
+                move_cache_stats_count = 0;         //delete old stats after output.
+                move_cache_stats_count_limited = 0; //delete old stats after output.
+
+                //set new temporary value to low_ticks_per_move using P
+                //output+delete everything collected and set to standard by "M3993 P300000"
+                if ( pCommand->hasP() ){
+                    low_ticks_per_move = float(constrain( static_cast<int32_t>(pCommand->P), 100000, 2000000 ));
+                }
+                break;
+            }
+#endif //FEATURE_DEBUG_MOVE_CACHE_TIMING
+
+/*
+            case 3998: // M3998 : this proofs how to write data to sd
             {
                 Com::printF( PSTR( "File Write: " ) );
                 char filename[] = "SVDat___.csv";
@@ -11005,6 +11029,7 @@ void processCommand( GCode* pCommand )
                 Com::printFLN( PSTR( "END" ) );
                 break;
             }
+*/
 
 #if FEATURE_READ_CALIPER
             case 3999: // M3999 : proof that dummy function/additional hardware button works! || by Nibbels

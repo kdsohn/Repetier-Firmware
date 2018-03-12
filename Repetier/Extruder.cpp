@@ -380,7 +380,7 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
     if( extr >= NUM_EXTRUDER )
     {
         // do not set the temperature for an extruder which is not present - this attempt could heat up the extruder without any control and could significantly overheat the extruder
-        Com::printFLN( PSTR( "setTemperatureForExtruder(): aborted" ) );
+        Com::printFLN( PSTR( "setTemperatureForExtruder(): cant set Temp for Extr. T" ), extr );
         return;
     }
 

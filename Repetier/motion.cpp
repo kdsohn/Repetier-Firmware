@@ -76,6 +76,13 @@ float               maxadvspeed         = 0;
 uint8_t             pwm_pos[NUM_EXTRUDER+3];                // 0-NUM_EXTRUDER = Heater 0-NUM_EXTRUDER of extruder, NUM_EXTRUDER = Heated bed, NUM_EXTRUDER+1 Board fan, NUM_EXTRUDER+2 = Fan
 volatile int        waitRelax           = 0;                // Delay filament relax at the end of print, could be a simple timeout
 
+#if FEATURE_DEBUG_MOVE_CACHE_TIMING
+float               low_ticks_per_move  = LOW_TICKS_PER_MOVE; //float weil vergleichsparameter timeForMove auch float ist und ich da nichts ändern will. 4 byte ram bleiben gleich.
+uint32_t            move_cache_stats[MOVE_CACHE_SIZE] = {0};  //0 als ungefüllt kommt dazu.
+uint32_t            move_cache_stats_count = 0;
+uint32_t            move_cache_stats_count_limited = 0;
+#endif //FEATURE_DEBUG_MOVE_CACHE_TIMING
+
 PrintLine PrintLine::lines[MOVE_CACHE_SIZE];            // Cache for print moves.
 PrintLine *PrintLine::cur = 0;                          // Current printing line
 
@@ -384,19 +391,29 @@ void PrintLine::stopDirectMove( void ) //Funktion ist bereits zur ausführzeit v
 void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, fast8_t drivingAxis, float feedrate)
 {
     long    axisInterval[4];
-    float timeForMove = (float)(F_CPU) * distance / feedrate; // time is in ticks
-    
+    float   timeForMove = (float)(F_CPU) * distance / feedrate; // time is in ticks
+
+#if FEATURE_DEBUG_MOVE_CACHE_TIMING
+    move_cache_stats_count++;
+    move_cache_stats[ (linesCount < MOVE_CACHE_SIZE ? linesCount : MOVE_CACHE_SIZE-1) ]++;
+    if(linesCount < MOVE_CACHE_LOW && timeForMove < low_ticks_per_move)   // Limit speed to keep cache full.
+#else
     if(linesCount < MOVE_CACHE_LOW && timeForMove < LOW_TICKS_PER_MOVE)   // Limit speed to keep cache full.
+#endif //FEATURE_DEBUG_MOVE_CACHE_TIMING
+    
     {
-        //OUT_P_I("L:",lines_count);
-        timeForMove += (3 * (LOW_TICKS_PER_MOVE - timeForMove)) / (linesCount + 1); // Increase time if queue gets empty. Add more time if queue gets smaller.
-        //OUT_P_F_LN("Slow ",time_for_move);
+#if FEATURE_DEBUG_MOVE_CACHE_TIMING
+        move_cache_stats_count_limited++;
+        timeForMove += ((low_ticks_per_move - timeForMove)) * 3 / (linesCount + 1); // Increase time if queue gets empty. Add more time if queue gets smaller.
+#else
+        timeForMove += ((LOW_TICKS_PER_MOVE - timeForMove)) * 3 / (linesCount + 1); // Increase time if queue gets empty. Add more time if queue gets smaller.
+#endif //FEATURE_DEBUG_MOVE_CACHE_TIMING
     }
     timeInTicks = timeForMove;
     // Compute the solwest allowed interval (ticks/step), so maximum feedrate is not violated
     int32_t limitInterval0;
     int32_t limitInterval = limitInterval0 = timeForMove/stepsRemaining; // until not violated by other constraints it is your target speed
-    float toTicks = static_cast<float>(F_CPU) / stepsRemaining;
+    float   toTicks = static_cast<float>(F_CPU) / stepsRemaining;
     if(isXMove())
     {
         axisInterval[X_AXIS] = axisDistanceMM[X_AXIS] * toTicks / (Printer::maxFeedrate[X_AXIS]); // mm*ticks/s/(mm/s*steps) = ticks/step

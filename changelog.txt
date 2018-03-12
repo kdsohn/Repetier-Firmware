@@ -1,6 +1,11 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.41.04.Mod alpha (2018-03-10) 
+- added FEATURE_DEBUG_MOVE_CACHE_TIMING to debug movecache fill while printing.
+    if you want to adjust LOW_TICKS_PER_MOVE to default: M3993 P300000 (LOW_TICKS_PER_MOVE is 300000)
+    if you want to read and drop statistics:             M3993
+
 V RF.01.41.03.Mod alpha (2018-03-10) 
 - some tiny tweaks
 - cleanup of homeZ for better reading. Inserted a lot of casts.

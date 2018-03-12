@@ -290,6 +290,8 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 
 #endif // ANALYZER
 
+/** \brief Adds a M3993 / or like "M3993 P300000" to set another or default LOW_TICKS_PER_MOVE and gather statistics about the fill level of the MOVE_CACHE while printing */
+#define FEATURE_DEBUG_MOVE_CACHE_TIMING              0
 
 // ##########################################################################################
 // ##   configuration of the extended buttons

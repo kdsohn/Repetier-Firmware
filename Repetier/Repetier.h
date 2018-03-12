@@ -130,6 +130,13 @@ extern volatile uint8   osAnalogInputPos; // Current sampling position
 extern volatile uint    osAnalogInputValues[ANALOG_INPUTS];
 extern uint8_t          pwm_pos[NUM_EXTRUDER+3]; // 0-NUM_EXTRUDER = Heater 0-NUM_EXTRUDER of extruder, NUM_EXTRUDER = Heated bed, NUM_EXTRUDER+1 Board fan, NUM_EXTRUDER+2 = Fan
 
+#if FEATURE_DEBUG_MOVE_CACHE_TIMING
+extern float            low_ticks_per_move;
+extern uint32_t         move_cache_stats[MOVE_CACHE_SIZE];
+extern uint32_t         move_cache_stats_count;
+extern uint32_t         move_cache_stats_count_limited;
+#endif //FEATURE_DEBUG_MOVE_CACHE_TIMING
+
 #if USE_ADVANCE
 #ifdef ENABLE_QUADRATIC_ADVANCE
 extern int              maxadv;
