@@ -10883,8 +10883,6 @@ void processCommand( GCode* pCommand )
                         if(pCommand->Z <= 0 && pCommand->Z >= -2.0f) actExtruder->zOffset = int32_t((float)pCommand->Z * Printer::axisStepsPerMM[Z_AXIS]);
                         //Nur wenn aktuell der extruder mit ID1 aktiv ist, dann sofort nachstellen, ohne T0/T1/... :
                         if(Extruder::current->id == extruder[1].id){
-                            //Printer::extruderOffset[Z_AXIS] = -Extruder::current->zOffset*Printer::invAxisStepsPerMM[Z_AXIS];
-                            //Printer::updateCurrentPosition();        ... besser ist es, den zweiten extruder neu auszuwählen:
                             Extruder::selectExtruderById(Extruder::current->id);     
                         }
                         Com::printFLN( PSTR( "M3919 T1 Spring displace: " ), actExtruder->zOffset * Printer::invAxisStepsPerMM[Z_AXIS] );

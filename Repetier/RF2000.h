@@ -867,7 +867,7 @@ don't care about empty buffers during print. */
 /** \brief Cycles per move, if move cache is low.
 This value must be high enough, that the buffer has time to fill up. The problem only occurs at the beginning of a print or
 if you are printing many very short segments at high speed.*/
-#define LOW_TICKS_PER_MOVE                  300000
+#define LOW_TICKS_PER_MOVE                  500000
 
 //For configuration of speed vs. cpu RF_MICRO_STEPS_ @ CONFIGURATION.h as well!
 

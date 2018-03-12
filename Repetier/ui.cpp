@@ -4646,7 +4646,7 @@ void UIDisplay::executeAction(int action)
             case UI_ACTION_TOP_MENU:
             {
                 menuLevel = 0;
-                if(uid.menuPos[0] == 1) uid.menuPos[0] = 0;
+                uid.menuPos[menuLevel] = 0;
                 break;
             }
             case UI_ACTION_EMERGENCY_STOP:
