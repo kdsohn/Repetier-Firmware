@@ -223,7 +223,7 @@ void createGenericTable(short table[GENERIC_THERM_NUM_ENTRIES][2],short minTemp,
         if(adc > 4092) adc = 4092;
         table[i][0] = (adc >> (ANALOG_REDUCE_BITS));
         table[i][1] = static_cast<int>(t);
-#ifdef DEBUG_GENERIC
+#ifdef DEBUG_GENERIC_TEMP_TABLE
         Com::printF(Com::tGenTemp,table[i][0]);
         Com::printFLN(Com::tComma,table[i][1]);
 #endif

@@ -618,7 +618,6 @@ UI_MENU_ACTIONCOMMAND(ui_menu_toggle_FET2_output,UI_TEXT_FET2_OUTPUT,UI_ACTION_F
 #define OUTPUT_FET2_COUNT 0
 #endif // FEATURE_24V_FET_OUTPUTS
 
-#if FEATURE_RESET_VIA_MENU
 UI_MENU_ACTION4C(ui_menu_quick_reset_ack,UI_ACTION_RF_RESET_ACK,UI_TEXT_RESET_ACK)
 UI_MENU_ACTIONSELECTOR(ui_menu_quick_reset,UI_TEXT_RESET,ui_menu_quick_reset_ack)
 #define RESET_VIA_MENU_COUNT 1
@@ -626,7 +625,6 @@ UI_MENU_ACTIONSELECTOR(ui_menu_quick_reset,UI_TEXT_RESET,ui_menu_quick_reset_ack
 #else
 #define RESET_VIA_MENU_COUNT 0
 #define RESET_VIA_MENU_ENTRY 
-#endif // FEATURE_RESET_VIA_MENU
 
 #ifdef DEBUG_PRINT
 UI_MENU_ACTIONCOMMAND(ui_menu_quick_debug,"Write Debug",UI_ACTION_WRITE_DEBUG)

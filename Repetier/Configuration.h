@@ -75,7 +75,6 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 /** \brief Allows to use 6 additional hardware buttons */
 #define FEATURE_EXTENDED_BUTTONS            1                                                   // 1 = on, 0 = off
 
-
 /** \brief Allows to pause the processing of G-Codes */
 #define FEATURE_PAUSE_PRINTING              1                                                   // 1 = on, 0 = off
 /** \brief Enables/diables the emergency pause in case of too high pressure ... the emergency pause can be turned on only in case the general pause functionality is available */
@@ -135,9 +134,6 @@ XYZ_POSITION_BUTTON_DIRECTION = 1 : This fits more if you want to stick to stand
 /** \brief Enables/disables the park feature */
 #define FEATURE_PARK                        0                                                   // 1 = on, 0 = off
 
-/** \brief Enables/disables the reset via the printer menu */
-#define FEATURE_RESET_VIA_MENU              1                                                   // 1 = on, 0 = off
-
 /** \brief Specifies whether the x, y and z-positions can be changed manually (e.g. via the "Position X/Y/Z" menus or via the hardware buttons) in case the according axis is unknown.
 The position of an axis is unknown until the axis has been homed. The position of an axis becomes unknown in case its stepper is disabled.
 Enabling of the following feature can be dangerous because it allows to manually drive the printer above its max x/y/z position. */
@@ -182,9 +178,6 @@ is always running and is not hung up for some unknown reason. */
 Servos are controlled by a pulse width normally between 500 and 2500 with 1500ms in center position. 0 turns servo off.
 WARNING: Servos can draw a considerable amount of current. Make sure your system can handle this or you may risk your hardware! */
 #define FEATURE_SERVO                       1                                                   // 1 = on, 0 = off
-
-/** \brief Allows to choose whether pressing of the right menu button shall enter the file menu directly */
-#define FEATURE_RIGHT_BUTTON_MENU           0                                                   // 1 = on, 0 = off
 
 // ##########################################################################################
 // ##   common configuration
@@ -250,7 +243,7 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 #endif // DEBUG_FREE_MEMORY
 
 /** \brief If enabled, writes the created generic table to serial port at startup. */
-//#define DEBUG_GENERIC
+//#define DEBUG_GENERIC_TEMP_TABLE
 
 /** \brief This enables code to make M666 drop an ok, so you get problems with communication. It is to test host robustness. */
 //#define DEBUG_COM_ERRORS

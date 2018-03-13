@@ -4438,7 +4438,6 @@ void UIDisplay::finishAction(int action)
 {
     switch( action )
     {
-#if FEATURE_RESET_VIA_MENU
         case UI_ACTION_RF_RESET_ACK:
         {
             if( g_nYesNo != 1 )
@@ -4446,16 +4445,11 @@ void UIDisplay::finishAction(int action)
                 // continue only in case the user has chosen "Yes"
                 break;
             }
-
-            if( Printer::debugInfo() )
-            {
-                Com::printFLN( PSTR( "processButton(): restart" ) );
-            }
+            Com::printFLN( PSTR( "Reset via Menu" ) );
             HAL::delayMilliseconds( 100 );
             Commands::emergencyStop();
             break;
         }
-#endif // FEATURE_RESET_VIA_MENU
 
         case UI_ACTION_STOP_ACK:
         {
@@ -5132,9 +5126,6 @@ void UIDisplay::executeAction(int action)
                 break;
             }
 
-#if FEATURE_RIGHT_BUTTON_MENU
-            case UI_ACTION_RIGHT:   // fall through
-#endif // FEATURE_RIGHT_BUTTON_MENU
             case UI_ACTION_SD_PRINT:
             {
                 if(sd.sdactive)
