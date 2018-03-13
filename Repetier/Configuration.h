@@ -186,9 +186,6 @@ WARNING: Servos can draw a considerable amount of current. Make sure your system
 /** \brief Allows to choose whether pressing of the right menu button shall enter the file menu directly */
 #define FEATURE_RIGHT_BUTTON_MENU           0                                                   // 1 = on, 0 = off
 
-/** \brief Allows to use M42 pin change GCODE. I did not like the Gcode because Functions should be programmed and not written to pins. */
-#define FEATURE_M42_TEMPER_WITH_PINS        0                                                   // 1 = on, 0 = off
-
 // ##########################################################################################
 // ##   common configuration
 // ##########################################################################################

@@ -18,10 +18,6 @@
 
 #include "Repetier.h"
 
-#if FEATURE_M42_TEMPER_WITH_PINS
-const int   sensitive_pins[] PROGMEM     = SENSITIVE_PINS;  // Sensitive pin list for M42
-#endif //FEATURE_M42_TEMPER_WITH_PINS
-
 int         Commands::lowestRAMValue     = MAX_RAM;
 int         Commands::lowestRAMValueSend = MAX_RAM;
 
@@ -957,37 +953,6 @@ void Commands::executeGCode(GCode *com)
                 }
                 break;
 #endif // SDSUPPORT
-
-#if FEATURE_M42_TEMPER_WITH_PINS
-            case 42: // M42 - Change pin status via gcode
-            {
-                if (com->hasS() && com->hasP() && com->S>=0 && com->S<=255)
-                {
-                    int pin_number = com->P;
-                    for(uint8_t i = 0; i < (uint8_t)sizeof(sensitive_pins); i++)
-                    {
-                        if (pgm_read_byte(&sensitive_pins[i]) == pin_number)
-                        {
-                            pin_number = -1;
-                            break;
-                        }
-                    }
-                    if (pin_number > -1)
-                    {
-                        HAL::pinMode(pin_number, OUTPUT);
-                        HAL::digitalWrite(pin_number, com->S);
-                        analogWrite(pin_number, com->S);
-
-                        if( Printer::debugInfo() )
-                        {
-                            Com::printF(Com::tSetOutputSpace,pin_number);
-                            Com::printFLN(Com::tSpaceToSpace,(int)com->S);
-                        }
-                    }
-                }
-                break;
-            }
-#endif //FEATURE_M42_TEMPER_WITH_PINS
 
             case 104: // M104 - set extruder temp
             {
