@@ -127,6 +127,7 @@ public:
     static float            memoryY;
     static float            memoryZ;
     static float            memoryE;
+    static float            memoryF;
 #endif // FEATURE_MEMORY_POSITION
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
@@ -227,7 +228,7 @@ public:
     static unsigned char    g_unlock_movement;
 #endif //FEATURE_UNLOCK_MOVEMENT
 
-    static uint8_t          motorCurrent[5];
+    static uint8_t          motorCurrent[DRV8711_NUM_CHANNELS];
 
 #if FEATURE_ZERO_DIGITS
     static bool             g_pressure_offset_active;
@@ -235,7 +236,7 @@ public:
 #endif // FEATURE_ZERO_DIGITS
 
 #if FEATURE_ADJUSTABLE_MICROSTEPS
-    static uint8_t          motorMicroStepsModeValue[5]; //1=2MS, 2=4MS, 3=8MS, 4=16MS, 5=32MS, 6=64MS, 7=128MS, 8=256MS
+    static uint8_t          motorMicroStepsModeValue[DRV8711_NUM_CHANNELS]; //1=2MS, 2=4MS, 3=8MS, 4=16MS, 5=32MS, 6=64MS, 7=128MS, 8=256MS
 #endif // FEATURE_ADJUSTABLE_MICROSTEPS
 
     static INLINE void setMenuMode(uint8_t mode,bool on)

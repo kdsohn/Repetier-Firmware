@@ -35,10 +35,10 @@ uint8_t             Extruder::dittoMode = 0;
 
 #if ANALOG_INPUTS>0
 const uint8         osAnalogInputChannels[] PROGMEM = ANALOG_INPUT_CHANNELS;
-volatile uint8      osAnalogInputCounter[ANALOG_INPUTS];
-volatile uint       osAnalogInputBuildup[ANALOG_INPUTS];
+volatile uint8      osAnalogInputCounter[ANALOG_INPUTS] = {0};
+volatile uint       osAnalogInputBuildup[ANALOG_INPUTS] = {0};
 volatile uint8      osAnalogInputPos=0; // Current sampling position
-volatile uint       osAnalogInputValues[ANALOG_INPUTS];
+volatile uint       osAnalogInputValues[ANALOG_INPUTS] = {0};
 #endif // ANALOG_INPUTS>0
 
 #ifdef USE_GENERIC_THERMISTORTABLE_1

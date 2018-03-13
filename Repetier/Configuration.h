@@ -587,9 +587,6 @@ Select the language to use.
 1 = German */
 #define UI_LANGUAGE                         0
 
-/** \brief Animate switches between menus etc. */
-#define UI_ANIMATION                        false
-
 /** \brief How many ms should a single page be shown, until it is switched to the next one.*/
 #define UI_PAGES_DURATION                   4000
 

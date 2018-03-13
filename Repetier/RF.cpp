@@ -11885,8 +11885,6 @@ void nextPreviousZAction( int8_t increment )
 
 #if STEPPER_CURRENT_CONTROL==CURRENT_CONTROL_DRV8711
 
-#define DRV8711_NUM_CHANNELS                5
-
 void drv8711Transmit( unsigned short command )
 {
     char    i;

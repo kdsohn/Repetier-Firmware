@@ -292,24 +292,6 @@ void GCode::echoCommand()
 
 } // echoCommand
 
-
-void GCode::debugCommandBuffer()
-{
-    Com::printF(PSTR("CommandBuffer"));
-    for(int i=0; i<commandsReceivingWritePosition; i++)
-        Com::printF(Com::tColon,(int)commandReceiving[i]);
-    Com::println();
-    Com::printFLN(PSTR("Binary:"),(int)sendAsBinary);
-
-    if(!sendAsBinary)
-    {
-        Com::print((char*)commandReceiving);
-        Com::println();
-    }
-
-} // debugCommandBuffer
-
-
 /** \brief Execute commands in progmem stored string. Multiple commands are seperated by \n */
 void GCode::executeFString(FSTRINGPARAM(cmd))
 {
@@ -934,7 +916,7 @@ bool GCode::parseAscii(char *line,bool fromSerial)
         }// end switch
     }// end while
     if(wasLastCommandReceivedAsBinary && !hasChecksum && fromSerial && !waitUntilAllCommandsAreParsed) {
-        Com::printErrorFLN("Checksum required when switching back to ASCII protocol.");
+        Com::printErrorFLN(PSTR("Checksum required when switching back to ASCII protocol."));
         return false;
     }
     return true;
@@ -1014,14 +996,3 @@ void GCode::printCommand()
     Com::println();
 
 } // printCommand
-
-
-void GCode::resetBuffer()
-{
-    bufferLength     = 0;
-    bufferWriteIndex = 0;
-    bufferReadIndex  = 0;
-
-    memset( commandsBuffered, 0, sizeof( GCode ) * GCODE_BUFFER_SIZE );
-
-} // resetBuffer

@@ -601,25 +601,6 @@ UIDisplay::UIDisplay()
     locked = 0;
 } // UIDisplay
 
-
-#if UI_ANIMATION
-void slideIn(uint8_t row,FSTRINGPARAM(text))
-{
-    char *empty="";
-    int8_t i = 0;
-    uid.col=0;
-    uid.addStringP(text);
-    printCols[uid.col]=0;
-    for(i=UI_COLS-1; i>=0; i--)
-    {
-        uid.printRow(row,empty,printCols,i);
-    HAL::delayMilliseconds(10);
-    }
-
-} // slideIn
-#endif // UI_ANIMATION
-
-
 void UIDisplay::initialize()
 {
     oldMenuLevel = -2;
@@ -649,7 +630,6 @@ void UIDisplay::initialize()
     initializeLCD(false);
     initCspecchars();
 
-#if UI_ANIMATION==false || UI_DISPLAY_TYPE==5
 #if UI_DISPLAY_TYPE == 5
     //u8g picture loop
     u8g_FirstPage(&u8g);
@@ -671,17 +651,6 @@ void UIDisplay::initialize()
     }
     while( u8g_NextPage(&u8g) );  //end picture loop
 #endif // UI_DISPLAY_TYPE == 5
-#else
-    slideIn(0, versionString);
-    strcpy(displayCache[0], printCols);
-    slideIn(1, PSTR(UI_PRINTER_NAME));
-    strcpy(displayCache[1], printCols);
-
-#if UI_ROWS>2
-    slideIn(UI_ROWS-1, PSTR(UI_PRINTER_COMPANY));
-    strcpy(displayCache[UI_ROWS-1], printCols);
-#endif // UI_ROWS>2
-#endif // UI_ANIMATION==false || UI_DISPLAY_TYPE==5
 
 #endif // UI_DISPLAY_TYPE>0
 
@@ -2660,20 +2629,6 @@ void UIDisplay::refreshPage()
     // Compute transition
     uint8_t transition = 0; // 0 = display, 1 = up, 2 = down, 3 = left, 4 = right
 
-#if UI_ANIMATION
-    if(menuLevel != oldMenuLevel && !PrintLine::hasLines())
-    {
-        if(oldMenuLevel == 0 || oldMenuLevel == -2)
-            transition = 1;
-        else if(menuLevel == 0)
-            transition = 2;
-        else if(menuLevel>oldMenuLevel)
-            transition = 3;
-        else
-            transition = 4;
-    }
-#endif // UI_ANIMATION
-
     uint8_t loops = 1;
     uint8_t dt = 1,y;
     if(transition == 1 || transition == 2) loops = UI_ROWS;
@@ -2694,25 +2649,6 @@ void UIDisplay::refreshPage()
     {
         uint8_t len = strlen(displayCache[y]);
         off[y] = len>UI_COLS ? RMath::min(len-UI_COLS,off0) : 0;
-
-#if UI_ANIMATION
-        if(transition == 3)
-        {
-            for(r=len; r<MAX_COLS; r++)
-            {
-                displayCache[y][r] = 32;
-            }
-            displayCache[y][MAX_COLS] = 0;
-        }
-        else if(transition == 4)
-        {
-            for(r=strlen(cache[y]); r<MAX_COLS; r++)
-            {
-                cache[y][r] = 32;
-            }
-            cache[y][MAX_COLS] = 0;
-        }
-#endif // UI_ANIMATION
     }
     for(uint8_t l=0; l<loops; l++)
     {
@@ -2727,82 +2663,7 @@ void UIDisplay::refreshPage()
             for(y=0; y<UI_ROWS; y++)
                 printRow(y,&cache[y][off[y]],NULL,UI_COLS);
         }
-#if UI_ANIMATION
-        else
-        {
-            if(transition == 1)   // up
-            {
-                if(scroll > UI_ROWS)
-                {
-                    scroll = UI_ROWS;
-                    l = loops;
-                }
-                for(y=0; y<UI_ROWS-scroll; y++)
-                {
-                    r = y+scroll;
-                    printRow(y,&displayCache[r][off[r]],NULL,UI_COLS);
-                }
-                for(y=0; y<scroll; y++)
-                {
-                    printRow(UI_ROWS-scroll+y,cache[y],NULL,UI_COLS);
-                }
-            }
-            else if(transition == 2)     // down
-            {
-                if(scroll > UI_ROWS)
-                {
-                    scroll = UI_ROWS;
-                    l = loops;
-                }
-                for(y=0; y<scroll; y++)
-                {
-                    printRow(y,cache[UI_ROWS-scroll+y],NULL,UI_COLS);
-                }
-                for(y=0; y<UI_ROWS-scroll; y++)
-                {
-                    r = y+scroll;
-                    printRow(y+scroll,&displayCache[y][off[y]],NULL,UI_COLS);
-                }
-            }
-            else if(transition == 3)     // left
-            {
-                if(scroll > UI_COLS)
-                {
-                    scroll = UI_COLS;
-                    l = loops;
-                }
-                for(y=0; y<UI_ROWS; y++)
-                {
-                    printRow(y,&displayCache[y][off[y]+scroll],cache[y],UI_COLS-scroll);
-                }
-            }
-            else     // right
-            {
-                if(scroll > UI_COLS)
-                {
-                    scroll = UI_COLS;
-                    l = loops;
-                }
-                for(y=0; y<UI_ROWS; y++)
-                {
-                    printRow(y,cache[y]+UI_COLS-scroll,&displayCache[y][off[y]],scroll);
-                }
-            }
-#if DISPLAY_TYPE != 5
-            HAL::delayMilliseconds(transition<3 ? 200 : 70);
-#endif // DISPLAY_TYPE != 5
     }
-#endif // UI_ANIMATION
-    }
-
-#if UI_ANIMATION
-    // copy to last cache
-    if(transition != 0)
-        for(y=0; y<UI_ROWS; y++)
-            strcpy(displayCache[y],cache[y]);
-    oldMenuLevel = menuLevel;
-#endif // UI_ANIMATION
-
 } // refreshPage
 
 
@@ -4333,7 +4194,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
                 bool updateextruder = false;
                 
                 //anpassen der eeprom-werte und anpassen der steps/mm sodass die geschwindigkeit weiterhin passt.
-                for(int i = 0; i < 5; i++){
+                for(int i = 0; i < DRV8711_NUM_CHANNELS; i++){
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
                     if((!changed[i] && updateall) || changed[i]){ //erstes oder veränderndes schreiben
                         HAL::eprSetByte( EPR_RF_MICRO_STEPS_X+i, Printer::motorMicroStepsModeValue[i] );
@@ -4386,11 +4247,12 @@ void UIDisplay::nextPreviousAction(int8_t next)
                             case E_AXIS+1:
                             {
                                 //i-3 ist hier 0 oder 1
-                                extruder[i-3].stepsPerMM *= stepsmm_korrekturfactor;
+                                uint8_t etr = i-3; //3-3 =0 oder 4-1 =1
+                                extruder[etr].stepsPerMM *= stepsmm_korrekturfactor;
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
-                                HAL::eprSetFloat(EEPROM::getExtruderOffset(i-3)+EPR_EXTRUDER_STEPS_PER_MM,extruder[i-3].stepsPerMM);
+                                HAL::eprSetFloat(EEPROM::getExtruderOffset(etr)+EPR_EXTRUDER_STEPS_PER_MM,extruder[etr].stepsPerMM);
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-                                if(i-3 == Extruder::current->id) updateextruder = true; //übernehmen der werte in offsets und infaxissteps, accel usw..
+                                if(etr == Extruder::current->id) updateextruder = true; //übernehmen der werte in offsets und infaxissteps, accel usw..
                                 break;
                             }
                         }

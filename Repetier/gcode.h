@@ -175,7 +175,6 @@ public:
     static void executeFString(FSTRINGPARAM(cmd));
     static void executeString(char *cmd);
     static uint8_t computeBinarySize(char *ptr);
-    static void resetBuffer();
     static void keepAlive(enum FirmwareState state);
     static uint32_t keepAliveInterval;
 
@@ -183,7 +182,6 @@ public:
     friend class UIDisplay;
 
 private:
-    void debugCommandBuffer();
     void checkAndPushCommand();
     static void requestResend();
 

@@ -858,7 +858,7 @@ void Commands::executeGCode(GCode *com)
                   Printer::destinationSteps[E_AXIS] = Printer::currentPositionSteps[E_AXIS] = Printer::convertToMM(com->E) * Printer::axisStepsPerMM[E_AXIS];
                 wissen:
                 Printer::queuePositionTargetSteps[axis] <---> Printer::destinationSteps[axis]
-                Printer::currentPositionSteps[axis] <---> Printer::queuePositionCurrentSteps[axis]
+                Printer::queuePositionCurrentSteps[axis] <---> Printer::currentPositionSteps[axis]
                 */
             }
             break;

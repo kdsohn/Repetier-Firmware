@@ -492,6 +492,7 @@ The following variables are used for movements in x/y/z direction:
 
 */
 
+#define DRV8711_NUM_CHANNELS                5
 
 extern const char   ui_text_error[]                 PROGMEM;
 extern const char   ui_text_warning[]               PROGMEM;

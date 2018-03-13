@@ -167,10 +167,6 @@ extern void motorCurrentControlInit();
 
 
 extern long baudrate;
-#if OS_ANALOG_INPUTS>0
-// Get last result for pin x
-extern volatile uint osAnalogInputValues[OS_ANALOG_INPUTS];
-#endif // OS_ANALOG_INPUTS>0
 
 #include "HAL.h"
 

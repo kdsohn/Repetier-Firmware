@@ -82,18 +82,18 @@ long            Printer::advanceExecuted;                               ///< Exe
 volatile int    Printer::advanceStepsSet;
 #endif // USE_ADVANCE
 
-long            Printer::maxSteps[3];                                   ///< For software endstops, limit of move in positive direction.
-long            Printer::minSteps[3];                                   ///< For software endstops, limit of move in negative direction.
-float           Printer::lengthMM[3];
-float           Printer::minMM[2];
+long            Printer::maxSteps[3] = {0};                             ///< For software endstops, limit of move in positive direction.
+long            Printer::minSteps[3] = {0};                             ///< For software endstops, limit of move in negative direction.
+float           Printer::lengthMM[3] = {0};                             ///< Maximale Achskoordinate soll
+float           Printer::minMM[2] = {0};                                ///< Minimale Achskoordinate -> normal ist das 0, ausser geänderte config.
 float           Printer::feedrate;                                      ///< Last requested feedrate.
-int             Printer::feedrateMultiply = 1;                              ///< Multiplier for feedrate in percent (factor 1 = 100)
-int             Printer::extrudeMultiply = 1;                               ///< Flow multiplier in percdent (factor 1 = 100)
+int             Printer::feedrateMultiply = 1;                          ///< Multiplier for feedrate in percent (factor 1 = 100)
+int             Printer::extrudeMultiply = 1;                           ///< Flow multiplier in percdent (factor 1 = 100)
 float           Printer::extrudeMultiplyError = 0;
 float           Printer::extrusionFactor = 1.0;
 float           Printer::maxJerk;                                       ///< Maximum allowed jerk in mm/s
 float           Printer::maxZJerk;                                      ///< Maximum allowed jerk in z direction in mm/s
-float           Printer::extruderOffset[3];                             ///< offset for different extruder positions.
+float           Printer::extruderOffset[3] = {0};                       ///< offset for different extruder positions.
 unsigned int    Printer::vMaxReached;                                   ///< Maximum reached speed
 unsigned long   Printer::msecondsPrinting;                              ///< Milliseconds of printing time (means time with heated extruder)
 unsigned long   Printer::msecondsMilling;                               ///< Milliseconds of milling time
@@ -112,6 +112,7 @@ float           Printer::memoryX;
 float           Printer::memoryY;
 float           Printer::memoryZ;
 float           Printer::memoryE;
+float           Printer::memoryF;
 #endif // FEATURE_MEMORY_POSITION
 
 #ifdef DEBUG_PRINT
@@ -218,7 +219,7 @@ unsigned char   Printer::wrongType;
 unsigned char   Printer::g_unlock_movement = 0;
 #endif //FEATURE_UNLOCK_MOVEMENT
 
-uint8_t         Printer::motorCurrent[5] = {0,0,0,0,0};
+uint8_t         Printer::motorCurrent[DRV8711_NUM_CHANNELS] = {0};
 
 #if FEATURE_ZERO_DIGITS
 bool            Printer::g_pressure_offset_active = true;
@@ -227,7 +228,7 @@ short           Printer::g_pressure_offset = 0;
 
 #if FEATURE_ADJUSTABLE_MICROSTEPS
 //RF_MICRO_STEPS_ have values 0=FULL 1=2MS, 2=4MS, 3=8MS, 4=16MS, 5=32MS, 6=64MS, 7=128MS, 8=256MS
-uint8_t         Printer::motorMicroStepsModeValue[5] = {0,0,0,0,0}; //init later because of recalculation of value
+uint8_t         Printer::motorMicroStepsModeValue[DRV8711_NUM_CHANNELS] = {0}; //init later because of recalculation of value
 #endif // FEATURE_ADJUSTABLE_MICROSTEPS
 
 void Printer::constrainQueueDestinationCoords()
@@ -1252,9 +1253,12 @@ void Printer::defaultLoopActions()
 #if FEATURE_MEMORY_POSITION
 void Printer::MemoryPosition()
 {
+    //https://github.com/repetier/Repetier-Firmware/blob/652d86aa5ad778222cab738f4448f6495bb85245/src/ArduinoAVR/Repetier/Printer.cpp#L1309
+    Commands::waitUntilEndOfAllMoves(); //MemoryPosition: Repetier hat hier schon geupdated aber alles auf CURRENT nicht auf LAST position? Macht das einen Unterschied?
     updateCurrentPosition(false);
     lastCalculatedPosition(memoryX,memoryY,memoryZ); //fill with queuePositionLastMM[]
     memoryE = queuePositionLastSteps[E_AXIS]*invAxisStepsPerMM[E_AXIS];
+    memoryF = feedrate;
 } // MemoryPosition
 
 void Printer::GoToMemoryPosition(bool x,bool y,bool z,bool e,float feed)
@@ -1265,6 +1269,8 @@ void Printer::GoToMemoryPosition(bool x,bool y,bool z,bool e,float feed)
                ,(all || z ? memoryZ : IGNORE_COORDINATE)
                ,(e ? memoryE:IGNORE_COORDINATE),
                feed);
+    feedrate = memoryF;
+    updateCurrentPosition(false);
 } // GoToMemoryPosition
 #endif // FEATURE_MEMORY_POSITION
 
@@ -1525,6 +1531,8 @@ int8_t Printer::checkHome(int8_t axis) //X_AXIS 0, Y_AXIS 1, Z_AXIS 2
     //do not allow Z jet because we have to check compensation behaviour
     Com::printFLN( PSTR( "checkHome: start axis" ), axis );
     //if(axis == Z_AXIS) return -1; //noch verboten, weil solange das läuft der emergency-Stop nicht funktioniert. funktion wird evtl. wie HBS oder ZOS geteilt.
+    
+    if(axis > Z_AXIS) return -1;
     
     //do not allow checkHome without Home
     if( !Printer::isAxisHomed(axis) ) return -1;

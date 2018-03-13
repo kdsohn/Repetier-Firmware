@@ -7,6 +7,9 @@ V RF.01.41.05.Mod alpha (2018-03-12)
 - removed some old TODOs on which I am now absolut sure how to handle them.
 - dont show "setTemperatureForExtruder(): cant set Temp for Extr." when it is set to 0°C.
 - switched MOVE_CACHE back to 17 for testing reasons.
+- update void Printer::MemoryPosition() close towards repetier
+- fix missing PSTR -> https://github.com/repetier/Repetier-Firmware/issues/763
+- deleted UI_ANIMATION and some unused functions
 
 V RF.01.41.04.Mod alpha (2018-03-12) 
 - added FEATURE_DEBUG_MOVE_CACHE_TIMING to debug movecache fill while printing.
