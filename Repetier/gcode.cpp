@@ -619,13 +619,11 @@ bool GCode::parseBinary(uint8_t *buffer, bool fromSerial)
     }
     sum1 -= *p++;
     sum2 -= *p;
+
+    bool corrupted = false;
     if(sum1 | sum2)
     {
-        if(Printer::debugErrors())
-        {
-            Com::printErrorF(Com::tWrongChecksum);
-        }
-        return false;
+        corrupted = true;
     }
 
     p = buffer;
@@ -676,7 +674,7 @@ bool GCode::parseBinary(uint8_t *buffer, bool fromSerial)
         {
             text = (char*)p;
             text[textlen] = 0; // Terminate string overwriting checksum
-            waitUntilAllCommandsAreParsed = true; // Don't destroy string until executed
+            if(!corrupted) waitUntilAllCommandsAreParsed = true; // Don't destroy string until executed
         }
     }
     else
@@ -739,8 +737,14 @@ bool GCode::parseBinary(uint8_t *buffer, bool fromSerial)
         {
             text = (char*)p;
             text[textlen] = 0; // Terminate string overwriting checksum
-            waitUntilAllCommandsAreParsed = true; // Don't destroy string until executed
+            if(!corrupted) waitUntilAllCommandsAreParsed = true; // Don't destroy string until executed
         }
+    }
+    if(corrupted)
+    {
+        Com::printErrorFLN(Com::tWrongChecksum);
+        GCode::debugCommandBuffer();
+        return false;
     }
     return true;
 } // parseBinary
@@ -902,10 +906,8 @@ bool GCode::parseAscii(char *line,bool fromSerial)
 #endif
             if(checksum != checksum_given)
             {
-                if(Printer::debugErrors())
-                {
-                    Com::printErrorFLN(Com::tWrongChecksum);
-                }
+                Com::printErrorFLN(Com::tWrongChecksum);
+                GCode::debugCommandBuffer();
                 return false; // mismatch
             }
 			hasChecksum = true;
@@ -928,19 +930,19 @@ void GCode::printCommand()
     if(hasN())
     {
         Com::print('N');
-        Com::print((int)N);
+        Com::print(int32_t(N)); //65536 wäre max, nicht 32768 -> sonst sind N-xxx in der Log
         Com::print(' ');
     }
     if(hasM())
     {
         Com::print('M');
-        Com::print((int)M);
+        Com::print(int32_t(M));
         Com::print(' ');
     }
     if(hasG())
     {
         Com::print('G');
-        Com::print((int)G);
+        Com::print(int32_t(G));
         Com::print(' ');
     }
     if(hasT())
@@ -951,15 +953,15 @@ void GCode::printCommand()
     }
     if(hasX())
     {
-        Com::printF(Com::tX,X);
+        Com::printF(Com::tX,X,3);
     }
     if(hasY())
     {
-        Com::printF(Com::tY,Y);
+        Com::printF(Com::tY,Y,3);
     }
     if(hasZ())
     {
-        Com::printF(Com::tZ,Z);
+        Com::printF(Com::tZ,Z,3);
     }
     if(hasE())
     {
@@ -967,7 +969,7 @@ void GCode::printCommand()
     }
     if(hasF())
     {
-        Com::printF(Com::tF,F);
+        Com::printF(Com::tF,F,3);
     }
     if(hasS())
     {
@@ -979,15 +981,15 @@ void GCode::printCommand()
     }
     if(hasI())
     {
-        Com::printF(Com::tI,I);
+        Com::printF(Com::tI,I,3);
     }
     if(hasJ())
     {
-        Com::printF(Com::tJ,J);
+        Com::printF(Com::tJ,J,3);
     }
     if(hasR())
     {
-        Com::printF(Com::tR,R);
+        Com::printF(Com::tR,R,3);
     }
     if(hasString())
     {
@@ -996,3 +998,24 @@ void GCode::printCommand()
     Com::println();
 
 } // printCommand
+
+void GCode::debugCommandBuffer()
+{
+    if((int)sendAsBinary){
+        Com::printF(PSTR("B "));
+    }else{
+        Com::printF(PSTR("A "));
+    }
+    Com::printF(PSTR("ComBuffer"));
+    for(int i=0; i<commandsReceivingWritePosition; i++) Com::printF(Com::tColon,(int)commandReceiving[i]);
+    Com::println();
+    
+    if(!sendAsBinary)
+    {
+        Com::print((char*)commandReceiving);
+        Com::println();
+    }else{
+        Com::printF(PSTR("Corrupted: "));
+        GCode::printCommand();
+    }
+} // debugCommandBuffer

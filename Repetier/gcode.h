@@ -182,6 +182,7 @@ public:
     friend class UIDisplay;
 
 private:
+    void debugCommandBuffer();
     void checkAndPushCommand();
     static void requestResend();
 

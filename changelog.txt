@@ -1,6 +1,13 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
 TODO: Testing, testing ..
 
+V RF.01.41.06.Mod alpha (2018-03-12) 
+- more testing on serial -> Fletcher error correction really seems to work flawless.
+- re-/implemented some debugging gode for serial errors
+- fixed formats in GCode::printCommand()
+- fixed sending Com::tWrongChecksum when using parseBinary (I once forgot newline)
+- we temporarily set Z_ENDSTOP_MAX_HYSTERESIS 0.5f for mhiers tests
+
 V RF.01.41.05.Mod alpha (2018-03-12) 
 - corrected unit calculation in void Printer::MemoryPosition()
 - rise of LOW_TICKS_PER_MOVE to 500k (It might not have a big effect but maybe on some parts)

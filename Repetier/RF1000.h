@@ -632,7 +632,7 @@ Crash with backside metal RFx000: ~ >10.0..12.0f
 Overflow in Z-Matrix: >12.7f 
 */
 #define Z_ENDSTOP_DRIVE_OVER                 0.8f                              //mm
-#define Z_ENDSTOP_MAX_HYSTERESIS             0.3f                              //mm
+#define Z_ENDSTOP_MAX_HYSTERESIS             0.5f                              //mm
 
 /** \brief By default all endstops are pulled up to HIGH. You need a pullup if you
 use a mechanical endstop connected with GND. Set value to false for no pullup
