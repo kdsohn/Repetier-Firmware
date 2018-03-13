@@ -742,7 +742,6 @@ can set it on for safety. */
 
 #define XYZ_STEPPER_HIGH_DELAY              100                                                 // [us]
 #define XYZ_STEPPER_LOW_DELAY               100                                                 // [us]
-#define LOOP_INTERVAL                       2000                                                // [ms]
 
 /** \brief Automatic filament change, unmounting of the filament - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
 #define UNMOUNT_FILAMENT_SCRIPT_WITH_HEATING        "M3914 P4500"
