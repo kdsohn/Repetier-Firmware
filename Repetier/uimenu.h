@@ -622,9 +622,6 @@ UI_MENU_ACTION4C(ui_menu_quick_reset_ack,UI_ACTION_RF_RESET_ACK,UI_TEXT_RESET_AC
 UI_MENU_ACTIONSELECTOR(ui_menu_quick_reset,UI_TEXT_RESET,ui_menu_quick_reset_ack)
 #define RESET_VIA_MENU_COUNT 1
 #define RESET_VIA_MENU_ENTRY ,&ui_menu_quick_reset
-#else
-#define RESET_VIA_MENU_COUNT 0
-#define RESET_VIA_MENU_ENTRY 
 
 #ifdef DEBUG_PRINT
 UI_MENU_ACTIONCOMMAND(ui_menu_quick_debug,"Write Debug",UI_ACTION_WRITE_DEBUG)
