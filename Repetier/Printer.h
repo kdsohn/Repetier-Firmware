@@ -1139,7 +1139,6 @@ public:
     static void defaultLoopActions();
     static uint8_t setDestinationStepsFromGCode(GCode *com);
     static uint8_t setDestinationStepsFromMenu( float relativeX, float relativeY, float relativeZ );
-    static void moveTo(float x,float y,float z,float e,float feedrate);
     static void moveToReal(float x,float y,float z,float e,float feedrate);
     static void homeAxis(bool xaxis,bool yaxis,bool zaxis); /// Home axis
     static void setOrigin(float xOff,float yOff,float zOff);
@@ -1163,7 +1162,6 @@ public:
     static bool allowDirectMove( void );
     static bool allowDirectSteps( void );
     static bool processAsDirectSteps( void );
-    static void resetDirectPosition( void );
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION

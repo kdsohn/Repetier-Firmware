@@ -442,25 +442,6 @@ void Printer::updateAdvanceFlags()
 #endif // USE_ADVANCE
 } // updateAdvanceFlags
 
-
-// This is for untransformed move to coordinates in printers absolute Cartesian space
-void Printer::moveTo(float x,float y,float z,float e,float feedrate)
-{
-    if(x != IGNORE_COORDINATE)
-        queuePositionTargetSteps[X_AXIS] = (x + Printer::extruderOffset[X_AXIS]) * axisStepsPerMM[X_AXIS];
-    if(y != IGNORE_COORDINATE)
-        queuePositionTargetSteps[Y_AXIS] = (y + Printer::extruderOffset[Y_AXIS]) * axisStepsPerMM[Y_AXIS];
-    if(z != IGNORE_COORDINATE)
-        queuePositionTargetSteps[Z_AXIS] = (z + Printer::extruderOffset[Z_AXIS]) * axisStepsPerMM[Z_AXIS];
-    if(e != IGNORE_COORDINATE)
-        queuePositionTargetSteps[E_AXIS] = e * axisStepsPerMM[E_AXIS];
-    if(feedrate == IGNORE_COORDINATE) feedrate = Printer::feedrate;
-
-    PrintLine::prepareQueueMove(ALWAYS_CHECK_ENDSTOPS, true, feedrate);
-    updateCurrentPosition(false);
-
-} // moveTo
-
 /** Move to transformed Cartesian coordinates, mapping real (model) space to printer space.
 */
 void Printer::moveToReal(float x,float y,float z,float e,float feedrate)
@@ -2115,37 +2096,6 @@ bool Printer::processAsDirectSteps( void )
 
 } // processAsDirectSteps
 
-
-void Printer::resetDirectPosition( void )
-{
-    unsigned char   axis;
-
-
-    // we may have to update our x/y/z queue positions - there is no need/sense to update the extruder queue position
-    for( axis=0; axis<3; axis++ )
-    {
-        if( directPositionCurrentSteps[axis] )
-        {
-            queuePositionCurrentSteps[axis] += directPositionCurrentSteps[axis];
-            queuePositionLastSteps[axis]    += directPositionCurrentSteps[axis];
-            queuePositionTargetSteps[axis]  += directPositionCurrentSteps[axis];
-
-            queuePositionCommandMM[axis]    = 
-            queuePositionLastMM[axis]       = (float)(queuePositionLastSteps[axis])*invAxisStepsPerMM[axis];
-        }
-    }
-
-    directPositionTargetSteps[X_AXIS]  = 
-    directPositionTargetSteps[Y_AXIS]  = 
-    directPositionTargetSteps[Z_AXIS]  = 
-    directPositionTargetSteps[E_AXIS]  = 
-    directPositionCurrentSteps[X_AXIS] = 
-    directPositionCurrentSteps[Y_AXIS] = 
-    directPositionCurrentSteps[Z_AXIS] = 
-    directPositionCurrentSteps[E_AXIS] = 0;
-    return;
-
-} // resetDirectPosition
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 
