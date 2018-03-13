@@ -470,6 +470,10 @@ void Com::printF(FSTRINGPARAM(text),float value,uint8_t digits,bool komma_as_dot
     printFloat(value,digits,komma_as_dot);
 } // printF
 
+void Com::printSharpLine(){
+    for(uint8_t nnn = 0; nnn < 70; nnn++) Com::printF( PSTR("#") );
+    Com::println();
+}
 
 void Com::print(const char *text)
 {

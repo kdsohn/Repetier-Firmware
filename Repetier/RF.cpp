@@ -2929,9 +2929,9 @@ bool calculateZScrewCorrection( void )
         // |+0-|..Puffer..|Warm-Soll-Einstellung|
         
         /* TIPP: -> Schraube bis maxNachdehnungInMikrons ~ 150um weiter runter(=Bett weiter hoch =Drehsinn Minus) empfehlen, wenn der Drucker aktuell "mehr druchgewärmt" wäre. */    
-                
-        Com::printFLN( PSTR( " " ) );
-        Com::printFLN( PSTR( "#############" ) );
+
+        Com::println();
+        Com::printSharpLine();
         Com::printF( PSTR( "Sollkorrektur: " ) , SollkorrekturWarm , 0 ); 
         Com::printF( PSTR( " [um] = " ), SollkorrekturWarm*0.001f,3  ); 
         Com::printFLN( PSTR( " [mm]" ) );
@@ -2971,8 +2971,8 @@ bool calculateZScrewCorrection( void )
             //meldung:
             g_ZSchraubeOk = 1; //pos
         } 
-#endif    
-        Com::printFLN( PSTR( "#############" ) );
+#endif
+        Com::printSharpLine();
         returnwert = true;
     }else{
         Com::printFLN( Com::tError, g_ZCompensationMatrix[0][0] );
@@ -10426,7 +10426,8 @@ void processCommand( GCode* pCommand )
                             if(hochrunter > 0.2f) hochrunter = 0.2f;
                             if(hochrunter < -0.2f) hochrunter = -0.2f;
 
-                            Com::printFLN( PSTR( "#############################################################################") );
+                            Com::printSharpLine();
+
                             if(hochrunter < 0.0f){
                                 Com::printFLN( PSTR( "M3902: Duese-Bett-Abstand wird kleiner gemacht. "), hochrunter );
                             }else if(hochrunter > 0.0f){
@@ -10436,7 +10437,8 @@ void processCommand( GCode* pCommand )
                             }
                             Com::printFLN( PSTR( "M3902: -Z heisst Bett hoch/weniger Abstand, +Z heisst Bett runter/mehr Abstand. ") );
                             Com::printFLN( PSTR( "M3902: Bei Z=0 ändert sich nichts, doch es wird das aktuelle Offset in die Matrix verrechnet. ") );
-                            Com::printFLN( PSTR( "#############################################################################") );
+
+                            Com::printSharpLine();
 
                             // determine the minimal distance between extruder and heat bed
                             determineCompensationOffsetZ(); //-> schreibt kleinsten abstand in g_offsetZCompensationSteps, sollte schon drin sein, aber man weiß nie.
