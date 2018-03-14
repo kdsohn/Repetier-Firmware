@@ -877,7 +877,7 @@ execution. */
 #define GCODE_BUFFER_SIZE                   2
 
 /** \brief Appends the linenumber after every ok send, to acknowledge the received command. Uncomment for plain ok ACK if your host has problems with this */
-#define ACK_WITH_LINENUMBER
+#define ACK_WITH_LINENUMBER                 1
 
 /** \brief Communication errors can swollow part of the ok, which tells the host software to send
 the next command. Not receiving it will cause your printer to stop. Sending this string every

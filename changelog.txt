@@ -1,7 +1,11 @@
 TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has this possibly been fixed by removing halfstepping in 1.37u4?
+TODO: Maybe tracing down communication errors which seem to appear from time to time (but dont have any effect because they get autocorrected within ~12ms.)
 TODO: Testing, testing ..
 
-V RF.01.41.06.Mod alpha (2018-03-12) 
+V RF.01.41.07.Mod alpha (2018-03-14) 
+- Support for REPETIER_PROTOCOL:3
+
+V RF.01.41.06.Mod alpha (2018-03-13) 
 - more testing on serial -> Fletcher error correction really seems to work flawless.
 - re-/implemented some debugging gode for serial errors
 - fixed formats in GCode::printCommand()

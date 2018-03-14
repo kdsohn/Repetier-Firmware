@@ -18,7 +18,15 @@
 
 #include "Repetier.h"
 
-FSTRINGVALUE(Com::tFirmware,"FIRMWARE_NAME:Repetier_" REPETIER_VERSION " FIRMWARE_URL:https://github.com/RF1000community/Repetier-Firmware PROTOCOL_VERSION:1.0 MACHINE_TYPE:Mendel EXTRUDER_COUNT:" XSTR(NUM_EXTRUDER) " REPETIER_PROTOCOL:2")
+#ifndef FIRMWARE_URL
+    #define FIRMWARE_URL "https://github.com/RF1000community/Repetier-Firmware"
+#endif // FIRMWARE_URL
+
+#ifndef MACHINE_TYPE
+    #define MACHINE_TYPE "Mendel"
+#endif
+
+FSTRINGVALUE(Com::tFirmware, "FIRMWARE_NAME:Repetier_" REPETIER_VERSION " COMPILED:" __DATE__ " FIRMWARE_URL:" FIRMWARE_URL " PROTOCOL_VERSION:1.0 MACHINE_TYPE:" MACHINE_TYPE " EXTRUDER_COUNT:" XSTR(NUM_EXTRUDER) " REPETIER_PROTOCOL:3")
 
 FSTRINGVALUE(Com::tDebug,"Debug:")
 FSTRINGVALUE(Com::tOk,"ok")
@@ -34,16 +42,24 @@ FSTRINGVALUE(Com::tOkSpace,"ok ")
 FSTRINGVALUE(Com::tWrongChecksum,"Wrong checksum")
 FSTRINGVALUE(Com::tMissingChecksum,"Missing checksum")
 FSTRINGVALUE(Com::tDonePrinting,"Done printing file")
-FSTRINGVALUE(Com::tX," X")
-FSTRINGVALUE(Com::tY," Y")
-FSTRINGVALUE(Com::tZ," Z")
-FSTRINGVALUE(Com::tE," E")
-FSTRINGVALUE(Com::tF," F")
-FSTRINGVALUE(Com::tS," S")
-FSTRINGVALUE(Com::tP," P")
-FSTRINGVALUE(Com::tI," I")
-FSTRINGVALUE(Com::tJ," J")
-FSTRINGVALUE(Com::tR," R")
+FSTRINGVALUE(Com::tX, " X")
+FSTRINGVALUE(Com::tY, " Y")
+FSTRINGVALUE(Com::tZ, " Z")
+FSTRINGVALUE(Com::tE, " E")
+FSTRINGVALUE(Com::tF, " F")
+FSTRINGVALUE(Com::tS, " S")
+FSTRINGVALUE(Com::tP, " P")
+FSTRINGVALUE(Com::tI, " I")
+FSTRINGVALUE(Com::tJ, " J")
+FSTRINGVALUE(Com::tR, " R")
+FSTRINGVALUE(Com::tD, " D")
+FSTRINGVALUE(Com::tC, " C")
+FSTRINGVALUE(Com::tH, " H")
+FSTRINGVALUE(Com::tA, " A")
+FSTRINGVALUE(Com::tB, " B")
+FSTRINGVALUE(Com::tK, " K")
+FSTRINGVALUE(Com::tL, " L")
+FSTRINGVALUE(Com::tO, " O")
 FSTRINGVALUE(Com::tSDReadError,"SD read error")
 FSTRINGVALUE(Com::tExpectedLine,"Error:expected line ")
 FSTRINGVALUE(Com::tGot," got ")
@@ -553,8 +569,9 @@ void Com::printFloat(float number, uint8_t digits, bool komma_as_dot)
 
     // Round correctly so that print(1.999, 2) prints as "2.00"
     float rounding = 0.5;
-    for (uint8_t i=0; i<digits; ++i)
-        rounding /= 10.0;
+    for (uint8_t i=0; i<digits; ++i) rounding *= 0.1;
+    /* *=0.1 evtl. besser als /= 10, aber "With g++, 200.f / 10 and 200.f * 0.1 emit exactly the same code. – Johan Kotlinski Nov 8 '10 at 15:31"
+            Source: https://stackoverflow.com/questions/4125033/floating-point-division-vs-floating-point-multiplication*/
 
     number += rounding;
 
