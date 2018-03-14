@@ -7192,10 +7192,10 @@ void determinePausePosition( void )
 
         if( g_nPauseSteps[X_AXIS] < 0 )
         {
-            if( Temp < PAUSE_X_SPACING * Printer::axisStepsPerMM[X_AXIS] )
+            if( Temp < PAUSE_X_SPACING_MM * Printer::axisStepsPerMM[X_AXIS] )
             {
                 // we can move only partially
-                Temp = PAUSE_X_SPACING * Printer::axisStepsPerMM[X_AXIS] - Printer::directPositionTargetSteps[X_AXIS];
+                Temp = PAUSE_X_SPACING_MM * Printer::axisStepsPerMM[X_AXIS] - Printer::directPositionTargetSteps[X_AXIS];
                 Temp -= Printer::queuePositionCurrentSteps[X_AXIS];
 
                 Printer::directPositionTargetSteps[X_AXIS] += Temp;
@@ -7209,7 +7209,7 @@ void determinePausePosition( void )
         }
         else if( g_nPauseSteps[X_AXIS] > 0 )
         {
-            long  Max = long((Printer::lengthMM[X_AXIS] - PAUSE_X_SPACING) * Printer::axisStepsPerMM[X_AXIS]) ;
+            long  Max = long((Printer::lengthMM[X_AXIS] - PAUSE_X_SPACING_MM) * Printer::axisStepsPerMM[X_AXIS]) ;
             if( Temp > Max )
             {
                 // we can move only partially
@@ -7237,10 +7237,10 @@ void determinePausePosition( void )
 
         if( g_nPauseSteps[Y_AXIS] < 0 )
         {
-            if( Temp < PAUSE_Y_SPACING * Printer::axisStepsPerMM[Y_AXIS] )
+            if( Temp < PAUSE_Y_SPACING_MM * Printer::axisStepsPerMM[Y_AXIS] )
             {
                 // we can move only partially
-                Temp =  PAUSE_Y_SPACING * Printer::axisStepsPerMM[Y_AXIS] - Printer::directPositionTargetSteps[Y_AXIS];
+                Temp =  PAUSE_Y_SPACING_MM * Printer::axisStepsPerMM[Y_AXIS] - Printer::directPositionTargetSteps[Y_AXIS];
                 Temp -= Printer::queuePositionCurrentSteps[Y_AXIS];
 
                 Printer::directPositionTargetSteps[Y_AXIS] += Temp;
@@ -7254,7 +7254,7 @@ void determinePausePosition( void )
         }
         else if( g_nPauseSteps[Y_AXIS] > 0 )
         {
-            long  Max = long((Printer::lengthMM[Y_AXIS] - PAUSE_Y_SPACING) * Printer::axisStepsPerMM[Y_AXIS]);
+            long  Max = long((Printer::lengthMM[Y_AXIS] - PAUSE_Y_SPACING_MM) * Printer::axisStepsPerMM[Y_AXIS]);
             if( Temp > Max )
             {
                 // we can move only partially
@@ -7288,7 +7288,7 @@ void determineZPausePositionForPrint( void )
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         Temp += Printer::directPositionTargetSteps[Z_AXIS];
 
-        long Max  =  long((Printer::lengthMM[Z_AXIS] - PAUSE_Z_MAX_SPACING) * Printer::axisStepsPerMM[Z_AXIS]);
+        long Max  =  long((Printer::lengthMM[Z_AXIS] - PAUSE_Z_MAX_SPACING_MM) * Printer::axisStepsPerMM[Z_AXIS]);
 
         if( Temp <= Max )
         {

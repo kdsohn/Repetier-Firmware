@@ -51,7 +51,7 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
     #error Device type (RF1000 / RF2000 / RF2000v2) is not defined. Edit Configuration.h or pass the corresponding option to the compiler.
 #endif
 #if MOTHERBOARD == DEVICE_TYPE_RF2000_V2
-    #error This Firmware does not support RF2000v2 yet. Renkforce did not releas any validated RF2000V2.h yet.
+    #error This Firmware does not support RF2000v2 yet. Renkforce did not release any validated RF2000V2.h yet.
 #endif // MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 
 #define PROTOTYPE_PCB                       0                                                   // 1 = first PCB's / 0 = Final

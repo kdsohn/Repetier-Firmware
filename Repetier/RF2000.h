@@ -111,7 +111,7 @@ If EEPROM is enabled these values will be overidden with the values in the EEPRO
 
 #define X_MAX_LENGTH_MILL                   (long)230
 #define Y_MAX_LENGTH                        (long)245
-#define Z_MAX_LENGTH                        (long)200 //RF2000 von Nibbels: ~194,86 -> PAUSE_Z_MAX_SPACING großzügig einplanen
+#define Z_MAX_LENGTH                        (long)200 //RF2000 von Nibbels: ~194,86 -> PAUSE_Z_MAX_SPACING_MM großzügig einplanen
 
 /** \brief Coordinates for the minimum axis. Can also be negative if you want to have the bed start at 0 and the printer can go to the left side
 of the bed. Maximum coordinate is given by adding the above MAX_LENGTH values. */
@@ -1107,18 +1107,18 @@ Above this value the z compensation will distribute the roughness of the surface
 /** \brief Configuration of the pause steps */
 //Nibbels: 29122017 dont know what happens if pause hits max endstop etc. ... might get shifted coordinates!
   //look here if you want to prevent clamp crashes while milling! choose your pause position right.
-#define DEFAULT_PAUSE_MM_X_MILL             0                                                                       // [mm]
-#define DEFAULT_PAUSE_MM_X_PRINT           -200                                                                     // [mm]
-#define DEFAULT_PAUSE_MM_Y_MILL             200                                                                     // [mm]
-#define DEFAULT_PAUSE_MM_Y_PRINT            200                                                                     // [mm]
-#define DEFAULT_PAUSE_MM_Z_MILL             20                                                                      // [mm]
-#define DEFAULT_PAUSE_MM_Z_PRINT            20                                                                      // [mm]
-#define DEFAULT_PAUSE_MM_E                  SCRIPT_RETRACT_MM                                                       // [mm] Zahl immer positiv, sie wird abgezogen = Retract!
+#define DEFAULT_PAUSE_MM_X_MILL                0                                                                     // [mm]
+#define DEFAULT_PAUSE_MM_X_PRINT            -200                                                                     // [mm]
+#define DEFAULT_PAUSE_MM_Y_MILL              200                                                                     // [mm]
+#define DEFAULT_PAUSE_MM_Y_PRINT            -200                                                                     // [mm]
+#define DEFAULT_PAUSE_MM_Z_MILL               20                                                                     // [mm]
+#define DEFAULT_PAUSE_MM_Z_PRINT              20                                                                     // [mm]
+#define DEFAULT_PAUSE_MM_E                   SCRIPT_RETRACT_MM                                                       // [mm] Zahl immer positiv, sie wird abgezogen = Retract!
 
-#define PAUSE_X_SPACING                     5                                                                       // [mm]
-#define PAUSE_Y_SPACING                     5                                                                       // [mm]
-#define PAUSE_Z_MAX_SPACING                 15                                                                      // [mm]
-#define PAUSE_COOLDOWN                      100                                                // [°C] 0=Off and 1..255=Temp down while paused
+#define PAUSE_X_SPACING_MM                     5                                                                     // [mm]
+#define PAUSE_Y_SPACING_MM                     5                                                                     // [mm]
+#define PAUSE_Z_MAX_SPACING_MM                15                                                                     // [mm]
+#define PAUSE_COOLDOWN                       100                                                // [°C] 0=Off and 1..255=Temp down while paused
 
 #endif // FEATURE_PAUSE_PRINTING
 
@@ -1131,8 +1131,8 @@ Above this value the z compensation will distribute the roughness of the surface
 
 #define SEARCH_Z_ORIGIN_CONTACT_PRESSURE_DELTA  500                                             // [digits]
 #define SEARCH_Z_ORIGIN_BREAKOUT_DELAY          100                                             // [ms]
-#define SEARCH_Z_ORIGIN_BED_UP_MM               -0.05f                                          // [mm]
-#define SEARCH_Z_ORIGIN_BED_DOWN_MM             0.025f                                          // [mm]
+#define SEARCH_Z_ORIGIN_BED_UP_MM                -0.05f                                         // [mm]
+#define SEARCH_Z_ORIGIN_BED_DOWN_MM               0.025f                                        // [mm]
 
 /** \brief The following commands are executed before the z-origin is set to 0. */
 #define FIND_Z_ORIGIN_SCRIPT                    "G91\nG1 Z15 F5000"
