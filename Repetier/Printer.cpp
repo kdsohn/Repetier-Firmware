@@ -1789,6 +1789,7 @@ void Printer::homeZAxis()
         //homing ausschalten und zCMP (...) auch.
         setHomed( -1 , -1 , false);
 
+        InterruptProtectedBlock noInts;
 #if FEATURE_FIND_Z_ORIGIN
         //das ist die Z-Origin-Höhe und ihre XY-Scan-Stelle.
         g_nZOriginPosition[X_AXIS] = 0;
@@ -1808,7 +1809,7 @@ void Printer::homeZAxis()
         //das ist diese Scan-Positions-Z-Zusatzachse für MoveZ-Bewegungen.
         g_nZScanZPosition = 0;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-
+        
         /*
         moveRelativeDistanceInSteps bedeutet: Printer::queuePositionTargetSteps[Z_AXIS] = Printer::queuePositionLastSteps[Z_AXIS] + deltaZ;
         dann ab in den MOVE_CACHE
@@ -1817,6 +1818,7 @@ void Printer::homeZAxis()
         */
         //wir tun so als wären wir JETZT am anderen koordinaten-ende. Maximal weit weg vom Schalter.
         queuePositionLastSteps[Z_AXIS] = (nHomeDir == -1) ? maxSteps[Z_AXIS] : minSteps[Z_AXIS];
+        noInts.unprotect();
                 
         //1. Schnelles Fahren bis zum Schalterkontakt:
             //Ist der Schalter gedrückt, wird sofort geskipped. 
@@ -1852,9 +1854,11 @@ void Printer::homeZAxis()
 #endif // FEATURE_MILLING_MODE
 
         //5. Setzen der aktuellen End-Position auf die Koordinate, zu der das Homing gehört.
+        noInts.protect();
         queuePositionLastSteps[Z_AXIS]    = (nHomeDir == -1) ? minSteps[Z_AXIS] : maxSteps[Z_AXIS];
         queuePositionCurrentSteps[Z_AXIS] = queuePositionLastSteps[Z_AXIS];
         currentZSteps                     = queuePositionLastSteps[Z_AXIS]; //das ist die Z-Koordinate, die die Z-Steps per Dir-Pin abzählt.
+        noInts.unprotect();
 
         //6. Korrektur der Flags
         setHomed( -1 , -1 , true);
