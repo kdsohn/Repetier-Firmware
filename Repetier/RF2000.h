@@ -1029,14 +1029,14 @@ Above this value the z compensation will distribute the roughness of the surface
 
 // configuration for the head bet offset search (M3900 command)
 #define SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA   40                                                                  // [digits]
-#define SEARCH_HEAT_BED_OFFSET_RETRY_PRESSURE_DELTA     20                                                                  // [digits]
+#define SEARCH_HEAT_BED_OFFSET_RETRY_PRESSURE_DELTA     30                                                                  // [digits]
 #define SEARCH_HEAT_BED_OFFSET_IDLE_PRESSURE_DELTA      0                                                                   // [digits]
 // scan position defined by the index of the heat bed matrix, counting from 1
 #define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_INDEX_X    5
 #define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_INDEX_Y    5
 #define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_RAND_MM    3
 // number of scanning iterations 2+
-#define SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS          2
+#define SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS          1
     
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 

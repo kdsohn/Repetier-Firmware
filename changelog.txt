@@ -2,6 +2,10 @@ TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has th
 TODO: Maybe tracing down communication errors which seem to appear from time to time (but dont have any effect because they get autocorrected within ~12ms.)
 TODO: Testing, testing ..
 
+V RF.01.41.09.Mod alpha (2018-03-15) 
+- making the Z-Offset-Scan faster.
+- small fix for M3913 / M3914 abort.
+
 V RF.01.41.08.Mod alpha (2018-03-15) 
 - abort M3913 / M3914 (when moving) by ok-Button and back-Button
 - commented all g_uStartOfIdle to find bugs -> adjusted some idle-times for better usability

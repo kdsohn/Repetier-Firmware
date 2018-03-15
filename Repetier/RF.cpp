@@ -2515,12 +2515,10 @@ void searchZOScan( void )
                 GCode::keepAlive( Processing );
                 moveZDownFast();
                 g_nZOSScanStatus = 9;
-                Com::printFLN( PSTR( "7" ) );
                 break;
             }
             case 9:
             {
-                Com::printFLN( PSTR( "9" ) );
 #if DEBUG_HEAT_BED_SCAN == 2
                 Com::printFLN( PSTR( "Idle Pressure" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
@@ -2555,15 +2553,12 @@ void searchZOScan( void )
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 GCode::keepAlive( Processing );
                 g_nZOSScanStatus = 10;
-                Com::printFLN( PSTR( "9e" ) );
                 break;
             }
             case 10:
             {
-                Com::printFLN( PSTR( "10" ) );
-#if DEBUG_HEAT_BED_SCAN == 2
                 Com::printFLN( PSTR( "Approaching HeatBed" ) );
-#endif // DEBUG_HEAT_BED_SCAN == 2
+
                 // move to the surface
                 long oldZsteps = g_nZScanZPosition;
 
@@ -2576,7 +2571,6 @@ void searchZOScan( void )
                     if(g_scanRetries > 0) g_abortZScan = 0; //funktion soll wenn retrys übrig sind nie abbrechen, das g_abortZScan kommt aus readAveragePressure() -> hat einfluss auf HBS-Abort!!
                     g_retryZScan = 1;
                 }
-                Com::printFLN( PSTR( "10a" ) );
 
                 long didZsteps = abs(g_nZScanZPosition - oldZsteps);
                 Com::printFLN( PSTR( "FastUp:" ), didZsteps );
@@ -2585,7 +2579,6 @@ void searchZOScan( void )
                 long revertZsteps = (didZsteps > 2*abs(g_nScanHeatBedUpFastSteps) ? 2*abs(g_nScanHeatBedUpFastSteps) : didZsteps );
                 Com::printFLN( PSTR( "RevertDown:" ), revertZsteps );
                 moveZ( revertZsteps ); // ++
-                Com::printFLN( PSTR( "10b" ) );
 
                 HAL::delayMilliseconds( g_nScanSlowStepDelay );
                 //rescan force and look if you reverted the contact pressure to the old state:
@@ -2594,16 +2587,13 @@ void searchZOScan( void )
                     if(g_scanRetries > 0) g_abortZScan = 0; //funktion soll wenn retrys übrig sind nie abbrechen, das g_abortZScan kommt aus readAveragePressure() -> hat einfluss auf HBS-Abort!!
                     g_retryZScan = 1;
                 } 
-                Com::printFLN( PSTR( "10c" ) );
                 //check if the old pressure state is reached again, retry if not. If not you measured some melted plastic or your DMS is driving away.
                 if(abs(nTempPressureUp - nTempPressure) < SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA){
                     if(g_scanRetries > 0) g_abortZScan = 0; //funktion soll wenn retrys übrig sind nie abbrechen, das g_abortZScan kommt aus readAveragePressure() -> hat einfluss auf HBS-Abort!!
                     g_retryZScan = 1;
                 }
-                Com::printF( PSTR( "RevertPdelta:" ), abs(nTempPressureUp - nTempPressure) );
-                Com::printFLN( PSTR( "/" ), SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA );
+                Com::printF( PSTR( "RevertPdelta:" ), abs(nTempPressureUp - nTempPressure) ); Com::printFLN( PSTR( "/" ), SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA );
 
-                Com::printFLN( PSTR( "10d" ) );
                 if(g_scanRetries > 0 && g_retryZScan){
                     g_retryZScan = 0;
                     g_scanRetries--;
@@ -2612,7 +2602,6 @@ void searchZOScan( void )
                     g_nZOSScanStatus = 7;
                     break;
                 }
-                Com::printFLN( PSTR( "10e" ) );
                
                 // check for error
                 if(g_abortZScan) {
@@ -2624,49 +2613,36 @@ void searchZOScan( void )
 
                 GCode::keepAlive( Processing );
                 g_nZOSScanStatus = 20;
-                Com::printFLN( PSTR( "10f" ) );
                 break;
             }
             case 20:
-            {   
-                Com::printFLN( PSTR( "20" ) );
-#if DEBUG_HEAT_BED_SCAN == 2
+            {
                 Com::printFLN( PSTR( "Testing Surface " ));
-#endif // DEBUG_HEAT_BED_SCAN
                 bool prebreak = false;
-                uint8_t acuteness = 2;
                 // we have roughly found the surface, now we perform the precise slow scan SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS times  
-                for(int i=0; i<SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS; ++i) {
+                for(int i=1; i <= SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS; i++) {
                       Com::printFLN( PSTR( "10." ), i );
-#if DEBUG_HEAT_BED_SCAN == 2
-                      Com::printF( PSTR( " " ), (i+1) );
-                      Com::printFLN( PSTR( "x" ) );
-#endif // DEBUG_HEAT_BED_SCAN
                       long Z = g_nZScanZPosition;
+
                       // move from moveZUpFast() down again -> für neuen anlauf
-                      moveZ( 2*abs(g_nScanHeatBedUpSlowSteps)/acuteness ); // +++..
-                      
+                      moveZ( abs(g_nScanHeatBedUpSlowSteps) ); // +++..
                       Com::printFLN( PSTR( "DownFine:" ), (g_nZScanZPosition-Z) );
                       Z = g_nZScanZPosition;
-                      
-                      HAL::delayMilliseconds( g_nScanSlowStepDelay );
 
                       // move slowly to the surface
                       short nTempPressure;
-                      
-                      
-                      moveZUpSlow( &nTempPressure, acuteness ); // -
-                      
+                      moveZUpSlow( &nTempPressure, 2 ); // -
                       Com::printFLN( PSTR( "UpFine:" ), (g_nZScanZPosition-Z) );
                       Z = g_nZScanZPosition;
-                      
+
+                      // kraft zurückfahren
                       g_nLastZScanZPosition = 0; //dont remember any old z-positions -> no check if deltaZ got too high.
-                      moveZDownSlow(acuteness*4); // +
-                      
+                      moveZDownSlow(8); // +
                       Com::printFLN( PSTR( "DownFine:" ), (g_nZScanZPosition-Z) );
+                      // messen
                       Z = g_nZScanZPosition;
-                      
-                      acuteness++;
+
+                      // check for error / errorhandling
                       if(g_scanRetries > 0 && g_retryZScan){
                         g_retryZScan = 0;
                         g_scanRetries--;
@@ -2675,25 +2651,22 @@ void searchZOScan( void )
                         g_nZOSScanStatus = 7;
                         prebreak = true; break;
                       }
-                      // check for error
                       if(g_abortZScan) {
                         g_abortZScan = 0;  // will be set in case of error inside moveZUpFast/Slow -> != 0 AFTER RETURN would temper with normal HBS-Scan function @ABORT
                         Com::printFLN( PSTR( "ERROR::cannot find surface in slow scan" ) );
                         abortSearchHeatBedZOffset(false);
                         prebreak = true; break;
                       }
-                      
-                      
+
                       // keep the minimum as the final result
-                      if(i && g_nZScanZPosition < g_min_nZScanZPosition) g_min_nZScanZPosition = g_nZScanZPosition;
+                      if(g_nZScanZPosition < g_min_nZScanZPosition) g_min_nZScanZPosition = g_nZScanZPosition;
 
+                      // show height
                       Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition * Printer::invAxisStepsPerMM[Z_AXIS],4 );
-
                       GCode::keepAlive( Processing );
                 }
                 if(prebreak) break;
                 g_nZOSScanStatus = 50;
-                Com::printFLN( PSTR( "10e" ) );
                 break;
             }
             case 50:
@@ -2713,9 +2686,6 @@ void searchZOScan( void )
                 
                 //Nibbels: scaling nZ according to learning Rate for additional corrective scans
                 nZ = (long)((float)nZ * g_ZOSlearningRate);
-#if DEBUG_HEAT_BED_SCAN == 2
-                Com::printFLN( PSTR( "nZ*g_ZOSlearningRate = " ), nZ );
-#endif // DEBUG_HEAT_BED_SCAN 
                 
                 //Nibbels: weight change because of distance. lerne bettwinkelausgleich.
                 float x_bed_len_quadrat = (float)((g_uZMatrixMax[X_AXIS]-2)*(g_uZMatrixMax[X_AXIS]-2)); //index zwischenabstamd x_n - x_0
@@ -2725,10 +2695,7 @@ void searchZOScan( void )
                 float xy_weight = 0;
                 long weighted_nZ = 0;
                 long newValue = 0;
-#if DEBUG_HEAT_BED_SCAN == 2
-                Com::printFLN( PSTR( "INFO: weighted_nZ = g_ZOSlearningGradient*xy_weight*nZ + (1.0-g_ZOSlearningGradient)*nZ" ) );
-#endif // DEBUG_HEAT_BED_SCAN
-                
+
                 for(short x=1; x<=g_uZMatrixMax[X_AXIS]; x++) {
                   for(short y=1; y<=g_uZMatrixMax[Y_AXIS]; y++) {
                     x_dist = (g_ZOSTestPoint[X_AXIS]-x)*(g_ZOSTestPoint[X_AXIS]-x)/x_bed_len_quadrat; //normierter indexabstand
@@ -2752,9 +2719,6 @@ void searchZOScan( void )
                 if(overflow) {
                   // load the unaltered compensation matrix from the EEPROM since the current in-memory matrix is invalid
                   Com::printFLN( PSTR( "Matrix Overflow!" ) );
-#if DEBUG_HEAT_BED_SCAN == 2
-                  Com::printFLN( PSTR( "ReLoading zMatrix from EEPROM to RAM" ) );
-#endif // DEBUG_HEAT_BED_SCAN
                   abortSearchHeatBedZOffset(true);
                   break;
                 }
@@ -2774,12 +2738,8 @@ void searchZOScan( void )
                 // fail if z>0 occurred
                 if(overnull) {
                   // load the unaltered compensation matrix from the EEPROM since the current in-memory matrix is bigger than z=zero
-                  Com::printFLN( PSTR( "WARNING::At least one measured correction is z>0!" ) );
                   Com::printFLN( PSTR( "FIX::Clean Hotend-Nozzle" ) );
                   Com::printFLN( PSTR( "FIX::Fix Z-Schraube" ) );
-#if DEBUG_HEAT_BED_SCAN == 2
-                  Com::printFLN( PSTR( "HELP::http://www.rf1000.de/viewtopic.php?f=74&t=1674&start=10#p17016" ) );
-#endif // DEBUG_HEAT_BED_SCAN
                 }
                 // determine the minimal distance between extruder and heat bed
                 determineCompensationOffsetZ();

@@ -4891,6 +4891,7 @@ void UIDisplay::executeAction(int action)
             case UI_ACTION_UNMOUNT_FILAMENT:
             {
                 g_uStartOfIdle = 0;
+                while( Printer::checkAbortKeys() ) Commands::checkForPeriodicalActions(); //dont quit script by holding the ok longer than 1ms if no temp is involved. -> min einmal OK loslassen.
                 bool unmount = (action==UI_ACTION_UNMOUNT_FILAMENT);
                 exitmenu();
                 if(unmount){ UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT ); }
