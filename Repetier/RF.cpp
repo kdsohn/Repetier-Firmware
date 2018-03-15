@@ -2799,7 +2799,7 @@ void searchZOScan( void )
                 switch(g_ZOS_Auto_Matrix_Leveling_State){
                     case 0:
                         {
-                        g_nZOSScanStatus = 100; // No AUTO_MATRIX_LEVELING
+                        g_nZOSScanStatus = 99; // No AUTO_MATRIX_LEVELING
                         }
                     break;
                     default: 
@@ -2814,6 +2814,13 @@ void searchZOScan( void )
                 }
                 break;
             }
+            case 99:
+            {
+                moveZ( Printer::axisStepsPerMM[Z_AXIS] );
+                Printer::homeAxis( false, true, false );
+                moveZ( -g_nZScanZPosition );    // g_nZScanZPosition counts z-steps. we need to move the heatbed down to be at z=0 again
+                g_nZOSScanStatus = 100; // No AUTO_MATRIX_LEVELING
+            }
             case 100:
             {
                 g_nZOSScanStatus = 0;
@@ -2826,15 +2833,8 @@ void searchZOScan( void )
                 }else{
                    UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_ABORTED );
                 }
-#if DEBUG_HEAT_BED_SCAN == 2
-                Com::printFLN( PSTR( "GOTO z=0" ) );
-#endif // DEBUG_HEAT_BED_SCAN
-                moveZ( Printer::axisStepsPerMM[Z_AXIS] );
-                Printer::homeAxis( false, true, false );
-                moveZ( -g_nZScanZPosition );    // g_nZScanZPosition counts z-steps. we need to move the heatbed down to be at z=0 again
                 //g_nZScanZPosition is 0 now.
                 BEEP_SHORT
-
                 Com::printFLN( PSTR( "ZOS finished" ) );
                 break;
             }
@@ -2874,7 +2874,7 @@ bool calculateZScrewCorrection( void )
     bool returnwert = false;
     Com::printFLN( PSTR( " " ) );
     Com::printFLN( PSTR( "Z-Schrauben-Helper: " ) );
-    if(g_ZCompensationMatrix[0][0] == EEPROM_FORMAT){
+    if(g_ZCompensationMatrix[0][0] == EEPROM_FORMAT){ //wegen dem alten overflow, müssten wir nun nicht mehr drin haben!
         /*IDEAL ist es, wenn mand den Drucker "kalt" und frisch aufgeheizt einstellt.*/
     
         //Gerade eben muss ein Z-Scan die Matrix korrigiert haben.
@@ -3602,11 +3602,7 @@ void doHeatBedZCompensation( void )
     #endif // FEATURE_DIGIT_Z_COMPENSATION
 
     }else{
-        // nNeededZCompensation += g_staticZSteps; // -> würde das offset global auch ohne CMP gültig machen. mache ich nicht!
-        
-        //zu hohe matrix, zschraube falsch, bekommt ohne dass die CMP an ist automatisch ein offset aufgebrummt, sodass man nicht crashen kann sofern die matrix stimmt.
-        if(g_offsetZCompensationSteps > 0 && Printer::isAxisHomed(Z_AXIS)) nNeededZCompensation += g_offsetZCompensationSteps;
-        //unhoming deaktiviert CMP.
+        // Nicht zCMP Offsets nutzen, wenn nur gehomed, weil das alle Scans stören kann, nur weil eine falsche Matrix geladen ist. Security hin oder her.
     }
     
     //nachprüfung wegen override des schalterdruckpunktes
@@ -5280,7 +5276,7 @@ void moveZ( int nSteps )
         
         g_nZScanZPosition += (Printer::getZDirectionIsPos() ? 1 : -1);
     }
-
+    Printer::stepperDirection[Z_AXIS] = 0; //stepper immer freigeben. moveZ läuft nie parallel zu anderen Z-Bewegungen!
 } // moveZ
 
 
@@ -6255,14 +6251,16 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 
     if( g_uStartOfIdle )
     {
-        if( (uTime - g_uStartOfIdle) > MINIMAL_IDLE_TIME ) //500ms nach config
-        {
-            // show that we are idle for a while already
-            showIdle();
-            g_uStartOfIdle  = 0;
-            g_nPrinterReady = 1;
-            Printer::setPrinting(false);
-        }
+        if( g_uStartOfIdle < uTime ){
+            if ( (uTime - g_uStartOfIdle) > MINIMAL_IDLE_TIME ) //500ms nach config
+            {
+                // show that we are idle for a while already
+                showIdle();
+                g_uStartOfIdle  = 0;
+                g_nPrinterReady = 1;
+                Printer::setPrinting(false);
+            }
+        } 
     }
 
     if( PrintLine::linesCount > 2 )

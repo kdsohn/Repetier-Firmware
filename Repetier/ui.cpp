@@ -4867,7 +4867,7 @@ void UIDisplay::executeAction(int action)
 #if HAVE_HEATED_BED==true
                 Extruder::setHeatedBedTemperature(UI_SET_PRESET_HEATED_BED_TEMP_PLA);
 #endif // HAVE_HEATED_BED==true
-            
+                g_uStartOfIdle = HAL::timeInMilliseconds() + 10000;
                 break;
             }
             case UI_ACTION_PREHEAT_ABS:
@@ -4878,17 +4878,16 @@ void UIDisplay::executeAction(int action)
 #if HAVE_HEATED_BED==true
                 Extruder::setHeatedBedTemperature(UI_SET_PRESET_HEATED_BED_TEMP_ABS);
 #endif // HAVE_HEATED_BED==true
-
+                g_uStartOfIdle = HAL::timeInMilliseconds() + 10000;
                 break;
             }
             case UI_ACTION_COOLDOWN:
             {
-                UI_STATUS_UPD( UI_TEXT_COOLDOWN );                
+                UI_STATUS_UPD( UI_TEXT_COOLDOWN );
                 Extruder::setTemperatureForAllExtruders(0, false);
 #if HAVE_HEATED_BED==true
                 Extruder::setHeatedBedTemperature(0);
 #endif // HAVE_HEATED_BED==true
-            
                 break;
             }
             case UI_ACTION_HEATED_BED_OFF:

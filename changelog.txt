@@ -4,6 +4,13 @@ TODO: Testing, testing ..
 
 V RF.01.41.07.Mod alpha (2018-03-14) 
 - Support for REPETIER_PROTOCOL:3
+- MoveZ now releases Z correctly. Printer::stepperDirection[Z_AXIS] = 0; (It was possible that the printer hung with the wrong combination of moveZ directions + waitUntilEndOfAllMoves)
+- Stability: Commands::waitUntilEndOfAllMoves() now checks if zCMP is blocked by stepper direction and ignores wait in that case.
+- cleanup of HomeY und HomeX
+- ENDSTOP_X_RETEST_REDUCTION_FACTOR is not used at homeY anymore. -> ENDSTOP_Y_RETEST_REDUCTION_FACTOR instead.
+- tuned Z_ENDSTOP_MAX_HYSTERESIS to 0.35f
+- The rule that the bed tunes down by zCMP if homed and matrix>0 is bad if you want to scan anything. -> REMOVED!
+- Preheat PLA/ABS does not block status line in display anymore.
 
 V RF.01.41.06.Mod alpha (2018-03-13) 
 - more testing on serial -> Fletcher error correction really seems to work flawless.

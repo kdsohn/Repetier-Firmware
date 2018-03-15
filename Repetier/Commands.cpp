@@ -105,7 +105,9 @@ void Commands::waitUntilEndOfAllMoves()
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
     //weiß nicht ob wir das brauchen: test
-    if( abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ ) )      bWait = 1;
+    if( abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ ) ){
+        if( !Printer::checkCMPblocked() ) bWait = 1;
+    }
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
     while( bWait )
@@ -122,57 +124,15 @@ void Commands::waitUntilEndOfAllMoves()
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
         //weiß nicht ob wir das brauchen: test
-        if( abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ ) )      bWait = 1;
+        if( abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ ) ){
+            if( !Printer::checkCMPblocked() ) bWait = 1;
+        }
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
     }
 
 } // waitUntilEndOfAllMoves
 
-
-void Commands::waitUntilEndOfAllBuffers(unsigned int maxcodes)
-{
-    GCode *code = NULL;
-    unsigned int countmax = 0;
-#ifdef DEBUG_PRINT
-    debugWaitLoop = 9;
-#endif
-
-    while(PrintLine::hasLines() || (code != NULL))
-    {
-        code = GCode::peekCurrentCommand();
-        if(code)
-        {
-#if SDSUPPORT
-            if(sd.savetosd)
-            {
-                if(!(code->hasM() && code->M == 29))   // still writing to file
-                {
-                    sd.writeCommand(code);
-                }
-                else
-                {
-                    sd.finishWrite();
-                }
-#ifdef ECHO_ON_EXECUTE
-                code->echoCommand();
-#endif
-            }
-            else
-#endif
-            Commands::executeGCode(code);
-            code->popCurrentCommand();
-            if(maxcodes && maxcodes <= ++countmax){
-#if FEATURE_UNLOCK_MOVEMENT
-                Printer::g_unlock_movement = 0; //quit accepting G1 G0 Codes to prevent any more movement - this is for stop print if it fails to tell the source of Gcodes
-#endif //FEATURE_UNLOCK_MOVEMENT
-                break;
-            }
-        }
-        Commands::checkForPeriodicalActions( Processing );
-    }
-
-} // waitUntilEndOfAllBuffers
 
 /** \brief Waits until M3900 is finished. */
 void Commands::waitUntilEndOfZOS()
@@ -191,6 +151,7 @@ void Commands::waitUntilEndOfZOS()
     }
 
 } // waitUntilEndOfZOS
+
 
 void Commands::printCurrentPosition()
 {

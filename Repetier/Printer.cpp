@@ -1341,6 +1341,11 @@ void Printer::enableCMPnow( void ){
     }
 }
 
+bool Printer::checkCMPblocked( void ){
+    return ((Printer::compensatedPositionCurrentStepsZ < Printer::compensatedPositionTargetStepsZ) && !Printer::getZDirectionIsPos())
+        || ((Printer::compensatedPositionCurrentStepsZ > Printer::compensatedPositionTargetStepsZ) &&  Printer::getZDirectionIsPos());
+}
+
 void Printer::disableCMPnow( bool wait ) {
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
@@ -1666,39 +1671,35 @@ void Printer::homeXAxis()
 
     if (nHomeDir)
     {
-        int32_t offX = 0;
+        UI_STATUS_UPD(UI_TEXT_HOME_X);
+        uid.lock();
 
+#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
+        InterruptProtectedBlock noInts;
+        directPositionTargetSteps[X_AXIS]  = 0;
+        directPositionCurrentSteps[X_AXIS] = 0;
+        directPositionLastSteps[X_AXIS]    = 0;
+        noInts.unprotect();
+#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
+
+        int32_t offX = 0;
 #if NUM_EXTRUDER>1
         // Reposition extruder that way, that all extruders can be selected at home pos.
         for(uint8_t i=0; i<NUM_EXTRUDER; i++) offX = ( nHomeDir < 0 ? RMath::max(offX,extruder[i].xOffset) : RMath::min(offX,extruder[i].xOffset) );
 #endif // NUM_EXTRUDER>1
 
 #if FEATURE_MILLING_MODE
-        if( Printer::operatingMode == OPERATING_MODE_MILL )
-        {
-            // in operating mode mill, there is no extruder offset
-            offX = 0;
-        }
+        if( Printer::operatingMode == OPERATING_MODE_MILL ) offX = 0; // in operating mode mill, there is no extruder offset
 #endif // FEATURE_MILLING_MODE
 
-        UI_STATUS_UPD(UI_TEXT_HOME_X);
-        uid.lock();
+        queuePositionLastSteps[X_AXIS] = (nHomeDir == -1) ? maxSteps[X_AXIS] + offX : minSteps[X_AXIS] - offX;
 
-        long steps = (Printer::maxSteps[X_AXIS]-Printer::minSteps[X_AXIS]) * nHomeDir;
-        queuePositionLastSteps[X_AXIS] = -steps;
-        PrintLine::moveRelativeDistanceInSteps(2*steps,0,0,0,homingFeedrate[X_AXIS],true,true);
-        queuePositionLastSteps[X_AXIS] = (nHomeDir == -1) ? minSteps[X_AXIS]- offX : maxSteps[X_AXIS] + offX;
-        
-        PrintLine::moveRelativeDistanceInSteps(axisStepsPerMM[X_AXIS] * -ENDSTOP_X_BACK_MOVE * nHomeDir,0,0,0,homingFeedrate[X_AXIS] / ENDSTOP_X_RETEST_REDUCTION_FACTOR,true,false);
-        PrintLine::moveRelativeDistanceInSteps(axisStepsPerMM[X_AXIS] * 2 * ENDSTOP_X_BACK_MOVE * nHomeDir,0,0,0,homingFeedrate[X_AXIS] / ENDSTOP_X_RETEST_REDUCTION_FACTOR,true,true);
-        queuePositionLastSteps[X_AXIS]    = (nHomeDir == -1) ? minSteps[X_AXIS]-offX : maxSteps[X_AXIS]+offX;
+        PrintLine::moveRelativeDistanceInSteps( long( 2 * abs(maxSteps[X_AXIS] - minSteps[X_AXIS] + 2*offX) * nHomeDir ), 0, 0, 0, homingFeedrate[X_AXIS], true, true);
+        PrintLine::moveRelativeDistanceInSteps( long( axisStepsPerMM[X_AXIS] * ENDSTOP_X_BACK_MOVE * (nHomeDir * -1) ),   0, 0, 0, homingFeedrate[X_AXIS] / ENDSTOP_X_RETEST_REDUCTION_FACTOR, true, false);
+        PrintLine::moveRelativeDistanceInSteps( long( 2 * axisStepsPerMM[X_AXIS] * ENDSTOP_X_BACK_MOVE * nHomeDir ),      0, 0, 0, homingFeedrate[X_AXIS] / ENDSTOP_X_RETEST_REDUCTION_FACTOR, true, true);
+
+        queuePositionLastSteps[X_AXIS]    = (nHomeDir == -1) ? minSteps[X_AXIS] - offX : maxSteps[X_AXIS] + offX;
         queuePositionCurrentSteps[X_AXIS] = queuePositionLastSteps[X_AXIS];
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-        directPositionTargetSteps[X_AXIS]  = 0;
-        directPositionCurrentSteps[X_AXIS] = 0;
-        directPositionLastSteps[X_AXIS]    = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if NUM_EXTRUDER>1
         if( offX )
@@ -1721,39 +1722,35 @@ void Printer::homeYAxis()
 
     if (nHomeDir)
     {
-        int32_t offY = 0;
-
-#if NUM_EXTRUDER>1
-        // Reposition extruder that way, that all extruders can be selected at home pos.
-        for(uint8_t i=0; i<NUM_EXTRUDER; i++) offY = ( nHomeDir < 0 ? RMath::max(offY,extruder[i].yOffset) : RMath::min(offY,extruder[i].yOffset) );
-#endif // NUM_EXTRUDER>1
-
-#if FEATURE_MILLING_MODE
-        if( Printer::operatingMode == OPERATING_MODE_MILL )
-        {
-            // in operating mode mill, there is no extruder offset
-            offY = 0;
-        }
-#endif // FEATURE_MILLING_MODE
-
         UI_STATUS_UPD(UI_TEXT_HOME_Y);
         uid.lock();
-
-        long steps = (maxSteps[Y_AXIS]-Printer::minSteps[Y_AXIS]) * nHomeDir;
-        queuePositionLastSteps[Y_AXIS] = -steps;
-        PrintLine::moveRelativeDistanceInSteps(0,2*steps,0,0,homingFeedrate[Y_AXIS],true,true);
-        queuePositionLastSteps[Y_AXIS]    = (nHomeDir == -1) ? minSteps[Y_AXIS]-offY : maxSteps[Y_AXIS]+offY;
-
-        PrintLine::moveRelativeDistanceInSteps(0,axisStepsPerMM[Y_AXIS]*-ENDSTOP_Y_BACK_MOVE * nHomeDir,0,0,homingFeedrate[Y_AXIS]/ENDSTOP_X_RETEST_REDUCTION_FACTOR,true,false);
-        PrintLine::moveRelativeDistanceInSteps(0,axisStepsPerMM[Y_AXIS]*2*ENDSTOP_Y_BACK_MOVE * nHomeDir,0,0,homingFeedrate[Y_AXIS]/ENDSTOP_X_RETEST_REDUCTION_FACTOR,true,true);
-        queuePositionLastSteps[Y_AXIS]    = (nHomeDir == -1) ? minSteps[Y_AXIS]-offY : maxSteps[Y_AXIS]+offY;
-        queuePositionCurrentSteps[Y_AXIS] = queuePositionLastSteps[Y_AXIS];
-
+        
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
+        InterruptProtectedBlock noInts;
         directPositionTargetSteps[Y_AXIS]  = 0;
         directPositionCurrentSteps[Y_AXIS] = 0;
         directPositionLastSteps[Y_AXIS]    = 0;
+        noInts.unprotect();
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
+
+        int32_t offY = 0;
+#if NUM_EXTRUDER>1
+        // Reposition extruder that way, that all extruders can be selected at home pos.
+        for(uint8_t i=0; i<NUM_EXTRUDER; i++) offY = ( nHomeDir < 0 ? RMath::max(offY, extruder[i].yOffset) : RMath::min(offY, extruder[i].yOffset) );
+#endif // NUM_EXTRUDER>1
+
+#if FEATURE_MILLING_MODE
+        if( Printer::operatingMode == OPERATING_MODE_MILL ) offY = 0; // in operating mode mill, there is no extruder offset
+#endif // FEATURE_MILLING_MODE
+
+        queuePositionLastSteps[Y_AXIS] = (nHomeDir == -1) ? maxSteps[Y_AXIS] + offY : minSteps[Y_AXIS] - offY;
+
+        PrintLine::moveRelativeDistanceInSteps(0, long( 2 * abs(maxSteps[Y_AXIS] - minSteps[Y_AXIS] + 2*offY) * nHomeDir ), 0, 0, homingFeedrate[Y_AXIS], true, true);
+        PrintLine::moveRelativeDistanceInSteps(0, long( axisStepsPerMM[Y_AXIS] * ENDSTOP_Y_BACK_MOVE * (nHomeDir * -1) ),   0, 0, homingFeedrate[Y_AXIS] / ENDSTOP_Y_RETEST_REDUCTION_FACTOR, true, false);
+        PrintLine::moveRelativeDistanceInSteps(0, long( 2 * axisStepsPerMM[Y_AXIS] * ENDSTOP_Y_BACK_MOVE * nHomeDir),       0, 0, homingFeedrate[Y_AXIS] / ENDSTOP_Y_RETEST_REDUCTION_FACTOR, true, true);
+
+        queuePositionLastSteps[Y_AXIS] = (nHomeDir == -1) ? minSteps[Y_AXIS] - offY : maxSteps[Y_AXIS] + offY;
+        queuePositionCurrentSteps[Y_AXIS] = queuePositionLastSteps[Y_AXIS];
 
 #if NUM_EXTRUDER>1
         if( offY )
@@ -1766,7 +1763,6 @@ void Printer::homeYAxis()
         previousMillisCmd = HAL::timeInMilliseconds();
         setHomed( -1 , true , -1);
     }
-
 } // homeYAxis
 
 
@@ -1780,7 +1776,7 @@ void Printer::homeZAxis()
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
         if( Printer::ZEndstopUnknown ) {
             //RF1000 und Min-oder-Max gedrückt - nicht klar welcher. Man fährt immer nach unten! Der Schalter hält das aus.
-            PrintLine::moveRelativeDistanceInSteps(0, 0, axisStepsPerMM[Z_AXIS] * ENDSTOP_Z_BACK_MOVE, 0, homingFeedrate[Z_AXIS]/ENDSTOP_Z_RETEST_REDUCTION_FACTOR, true, false); //drucker muss immer nach 
+            PrintLine::moveRelativeDistanceInSteps(0, 0, axisStepsPerMM[Z_AXIS] * ENDSTOP_Z_BACK_MOVE, 0, homingFeedrate[Z_AXIS] / ENDSTOP_Z_RETEST_REDUCTION_FACTOR, true, false); //drucker muss immer nach 
         }
 #endif
         UI_STATUS_UPD( UI_TEXT_HOME_Z );

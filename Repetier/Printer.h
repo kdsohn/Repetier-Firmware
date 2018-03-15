@@ -1170,6 +1170,7 @@ public:
 #if FEATURE_SENSIBLE_PRESSURE
     static void enableSenseOffsetnow( void );
 #endif // FEATURE_SENSIBLE_PRESSURE
+    static bool checkCMPblocked( void );
     static void enableCMPnow( void );
     static void disableCMPnow( bool wait = false );
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION

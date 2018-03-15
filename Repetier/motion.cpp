@@ -1127,7 +1127,6 @@ void PrintLine::waitForXFreeLines(uint8_t b)
 {
     while(linesCount + b > MOVE_CACHE_SIZE)     // wait for a free entry in movement cache
     {
-        //GCode::readFromSerial();
         Commands::checkForPeriodicalActions( Processing );
     }
 
