@@ -40,7 +40,6 @@
 #define UI_ACTION_BACK                      1000
 #define UI_ACTION_OK                        1001
 #define UI_ACTION_MENU_UP                   1002
-#define UI_ACTION_TOP_MENU                  1003
 #define UI_ACTION_EMERGENCY_STOP            1004
 #define UI_ACTION_XPOSITION                 1005
 #define UI_ACTION_YPOSITION                 1006
@@ -473,6 +472,7 @@ public:
 
     void lock();
     void unlock();
+    void exitmenu();
 
 };
 

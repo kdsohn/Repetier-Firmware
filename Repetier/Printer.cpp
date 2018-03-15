@@ -1682,7 +1682,6 @@ void Printer::homeXAxis()
     if (nHomeDir)
     {
         UI_STATUS_UPD(UI_TEXT_HOME_X);
-        uid.lock();
 
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         InterruptProtectedBlock noInts;
@@ -1733,8 +1732,7 @@ void Printer::homeYAxis()
     if (nHomeDir)
     {
         UI_STATUS_UPD(UI_TEXT_HOME_Y);
-        uid.lock();
-        
+
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         InterruptProtectedBlock noInts;
         directPositionTargetSteps[Y_AXIS]  = 0;
@@ -1782,6 +1780,8 @@ void Printer::homeZAxis()
 
     if( nHomeDir )
     {
+        UI_STATUS_UPD( UI_TEXT_HOME_Z );
+        
         // if we have circuit-type Z endstops and we don't know at which endstop we currently are, first move down a bit
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
         if( Printer::ZEndstopUnknown ) {
@@ -1789,8 +1789,6 @@ void Printer::homeZAxis()
             PrintLine::moveRelativeDistanceInSteps(0, 0, axisStepsPerMM[Z_AXIS] * ENDSTOP_Z_BACK_MOVE, 0, homingFeedrate[Z_AXIS] / ENDSTOP_Z_RETEST_REDUCTION_FACTOR, true, false); //drucker muss immer nach 
         }
 #endif
-        UI_STATUS_UPD( UI_TEXT_HOME_Z );
-        uid.lock();
 
         //homing ausschalten und zCMP (...) auch.
         setHomed( -1 , -1 , false);
@@ -1881,7 +1879,6 @@ void Printer::homeZAxis()
 
 void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta printer
 {
-    char    unlock = !uid.locked;
     g_uStartOfIdle = 0; //start of homing xyz
 
     //Bei beliebiger user interaktion oder Homing soll G1 etc. erlaubt werden. Dann ist der Drucker nicht abgestürzt, sondern bedient worden.
@@ -2032,13 +2029,8 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
     }
 #endif // FEATURE_ZERO_DIGITS
 
-    if( unlock )
-    {
-        uid.unlock();
-    }
     g_uStartOfIdle = HAL::timeInMilliseconds(); //homing xyz just ended
     Commands::printCurrentPosition();
-
 } // homeAxis
 
 

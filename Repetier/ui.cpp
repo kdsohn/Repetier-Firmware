@@ -605,9 +605,8 @@ void UIDisplay::initialize()
 {
     oldMenuLevel = -2;
     flags = 0;
-    menuLevel = 0;
-    shift = -2;
-    menuPos[0] = 0;
+    exitmenu();
+    shift = -2;    
     lastAction = 0;
     lastButtonAction = 0;
     activeAction = 0;
@@ -1547,33 +1546,33 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 else if(c2=='m')                                                                        // %Xm : PID drive min
                 {
-                    if(uid.menuLevel == 4 && uid.menuPos[uid.menuLevel-1] < NUM_TEMPERATURE_LOOPS){
-                        addInt(-1*tempController[uid.menuPos[uid.menuLevel-1]]->pidDriveMin,3); 
+                    if(menuLevel == 4 && menuPos[menuLevel-1] < NUM_TEMPERATURE_LOOPS){
+                        addInt(-1*tempController[menuPos[menuLevel-1]]->pidDriveMin,3); 
                     }else{
                         addInt(Extruder::current->tempControl.pidDriveMin,3);
                     }
                 }
                 else if(c2=='M')                                                                        // %XM : PID drive max
                 {
-                    if(uid.menuLevel == 4 && uid.menuPos[uid.menuLevel-1] < NUM_TEMPERATURE_LOOPS){
-                        addInt(tempController[uid.menuPos[uid.menuLevel-1]]->pidDriveMax,3); 
+                    if(menuLevel == 4 && menuPos[menuLevel-1] < NUM_TEMPERATURE_LOOPS){
+                        addInt(tempController[menuPos[menuLevel-1]]->pidDriveMax,3); 
                     }else{
                         addInt(Extruder::current->tempControl.pidDriveMax,3);
                     }
                 }
                 else if(c2=='D')                                                                        // %XD : PID max
                 {
-                    if(uid.menuLevel == 4 && uid.menuPos[uid.menuLevel-1] < NUM_TEMPERATURE_LOOPS){
-                        addInt(tempController[uid.menuPos[uid.menuLevel-1]]->pidMax*100/255,3); 
+                    if(menuLevel == 4 && menuPos[menuLevel-1] < NUM_TEMPERATURE_LOOPS){
+                        addInt(tempController[menuPos[menuLevel-1]]->pidMax*100/255,3); 
                     }else{
                         addInt(Extruder::current->tempControl.pidMax*100/255,3);
                     }
                 }
                 else if(c2=='S')                                                                        // %XS : Temperature Sensor
                 {
-                    if(uid.menuLevel == 4 && uid.menuPos[uid.menuLevel-1] < NUM_TEMPERATURE_LOOPS){
-                        addInt(tempController[uid.menuPos[uid.menuLevel-1]]->sensorType,2); //mit type 100 wärens 3 zeichen, aber das kommt in praxis nicht vor. 
-                        switch(tempController[uid.menuPos[uid.menuLevel-1]]->sensorType){
+                    if(menuLevel == 4 && menuPos[menuLevel-1] < NUM_TEMPERATURE_LOOPS){
+                        addInt(tempController[menuPos[menuLevel-1]]->sensorType,2); //mit type 100 wärens 3 zeichen, aber das kommt in praxis nicht vor. 
+                        switch(tempController[menuPos[menuLevel-1]]->sensorType){
                             case 1: {
                                 addStringP( PSTR(UI_TEXT_SENSOR_1) );
                                 break;
@@ -2489,7 +2488,7 @@ void UIDisplay::refreshPage()
     {
 #if UI_PRINT_AUTORETURN_TO_MENU_AFTER
         // Reset timeout on menu back when user active on menu
-        if (uid.encoderLast != encoderStartScreen)
+        if (encoderLast != encoderStartScreen)
             g_nAutoReturnTime=HAL::timeInMilliseconds()+UI_PRINT_AUTORETURN_TO_MENU_AFTER;
 #endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER
     }
@@ -2497,19 +2496,19 @@ void UIDisplay::refreshPage()
     {
 #if UI_MILL_AUTORETURN_TO_MENU_AFTER
         // Reset timeout on menu back when user active on menu
-        if (uid.encoderLast != encoderStartScreen)
+        if (encoderLast != encoderStartScreen)
             g_nAutoReturnTime=HAL::timeInMilliseconds()+UI_MILL_AUTORETURN_TO_MENU_AFTER;
 #endif // UI_MILL_AUTORETURN_TO_MENU_AFTER
     }
 #else
 #if UI_PRINT_AUTORETURN_TO_MENU_AFTER
     // Reset timeout on menu back when user active on menu
-    if (uid.encoderLast != encoderStartScreen)
+    if (encoderLast != encoderStartScreen)
         g_nAutoReturnTime=HAL::timeInMilliseconds()+UI_PRINT_AUTORETURN_TO_MENU_AFTER;
 #endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER
 #endif // FEATURE_MILLING_MODE
 
-    encoderStartScreen = uid.encoderLast;
+    encoderStartScreen = encoderLast;
 
     // Copy result into cache
     if(menuLevel==0)
@@ -2638,7 +2637,7 @@ void UIDisplay::refreshPage()
     }
     for(uint8_t l=0; l<loops; l++)
     {
-        if(uid.encoderLast != encoderStartScreen)
+        if(encoderLast != encoderStartScreen)
         {
             scroll = 200;
         }
@@ -2779,7 +2778,7 @@ void UIDisplay::okAction()
                 {
                     sd.startPrint();
                     BEEP_START_PRINTING
-                    uid.executeAction(UI_ACTION_TOP_MENU);
+                    exitmenu();
                 }
                 break;
             }
@@ -2844,7 +2843,7 @@ void UIDisplay::okAction()
 void UIDisplay::rightAction()
 {
 #if FEATURE_SENSIBLE_PRESSURE
-    if( uid.menuLevel == 0 && uid.menuPos[0] == 1 ){ //wenn im Mod-Menü für Z-Offset/Matrix Sense-Offset/Limiter, dann anders!
+    if( menuLevel == 0 && menuPos[0] == 1 ){ //wenn im Mod-Menü für Z-Offset/Matrix Sense-Offset/Limiter, dann anders!
         //we are in the Mod menu        
         if(g_nSensiblePressureDigits == EMERGENCY_PAUSE_DIGITS_MAX * 0.8 || g_nSensiblePressureDigits == 32767){
             //ist max, dann auf 0.
@@ -3955,8 +3954,8 @@ void UIDisplay::nextPreviousAction(int8_t next)
 
         case UI_ACTION_CHOOSE_DMIN:
         {
-            if(uid.menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
-                uint8_t heater = uid.menuPos[uid.menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
+            if(menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
+                uint8_t heater = menuPos[menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
                 if(heater < NUM_TEMPERATURE_LOOPS) {
                     int drive = tempController[heater]->pidDriveMin;
                     INCREMENT_MIN_MAX(drive,1,0,255);
@@ -3980,8 +3979,8 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
         case UI_ACTION_CHOOSE_DMAX:
         {
-            if(uid.menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
-                uint8_t heater = uid.menuPos[uid.menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
+            if(menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
+                uint8_t heater = menuPos[menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
                 if(heater < NUM_TEMPERATURE_LOOPS) {
                     int drive = tempController[heater]->pidDriveMax;
                     INCREMENT_MIN_MAX(drive,1,0,255);
@@ -4005,8 +4004,8 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
         case UI_ACTION_CHOOSE_PIDMAX:
         {
-            if(uid.menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
-                uint8_t heater = uid.menuPos[uid.menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
+            if(menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
+                uint8_t heater = menuPos[menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
                 if(heater < NUM_TEMPERATURE_LOOPS) {
                     int drive = tempController[heater]->pidMax;
                     INCREMENT_MIN_MAX(drive,1,0,255);
@@ -4030,8 +4029,8 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
         case UI_ACTION_CHOOSE_SENSOR:
         {
-            if(uid.menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
-                uint8_t heater = uid.menuPos[uid.menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
+            if(menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
+                uint8_t heater = menuPos[menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
                 if(heater < NUM_TEMPERATURE_LOOPS) {
                     int drive = tempController[heater]->sensorType;
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
@@ -4078,7 +4077,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
         case UI_ACTION_CHOOSE_MOTOR_E0:
         case UI_ACTION_CHOOSE_MOTOR_E1:
         {
-            uint8_t steppernr = uid.menuPos[uid.menuLevel];
+            uint8_t steppernr = menuPos[menuLevel];
             if(steppernr == 6) steppernr = 4; //das ist etwas stümperhaft, aber ich brauche die Zeilennummer um auszuwählen und die Einstellungen für die Extruderstepper gehören drüber, also muss Extruder 2 zwei Zeilen runter...
             if(steppernr < 5) { // aktuell gibts nur 5
                 int drive = Printer::motorCurrent[steppernr];
@@ -4306,7 +4305,7 @@ void UIDisplay::finishAction(int action)
                 // continue only in case the user has chosen "Yes"
                 break;
             }
-            uid.executeAction(UI_ACTION_TOP_MENU);
+            exitmenu();
             Printer::stopPrint();
             break;
         }
@@ -4325,7 +4324,7 @@ void UIDisplay::finishAction(int action)
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
 
             EEPROM::initializeAllOperatingModes();
-            uid.menuLevel = 0;
+            exitmenu();
             UI_STATUS( UI_TEXT_RESTORE_DEFAULTS );
             break;
         }
@@ -4341,8 +4340,8 @@ void UIDisplay::finishAction(int action)
                 // continue only in case the user has chosen "Yes"
                 break;
             }
-            unsigned char heater = uid.menuPos[uid.menuLevel-2]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
-            int method = uid.menuPos[uid.menuLevel-1]; //0..1..2..3..4..5 passt zum J-Listing des M303
+            unsigned char heater = menuPos[menuLevel-2]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
+            int method = menuPos[menuLevel-1]; //0..1..2..3..4..5 passt zum J-Listing des M303
             /*
              Line 1059: #define PRECISE_HEAT_BED_SCAN_BED_TEMP_PLA          60                                                                  // [°C]
              Line 1062: #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA     230                                                                 // [°C]
@@ -4358,8 +4357,7 @@ void UIDisplay::finishAction(int action)
             bool writeeeprom = true;
             if(heater >= NUM_TEMPERATURE_LOOPS) heater = NUM_TEMPERATURE_LOOPS -1;
             //show menu and message to user: He cant do anything until autotune is over.
-            uid.menuLevel = 0; 
-            uid.menuPos[0] = 3; //show temps
+            exitmenu(); menuPos[0] = 3; //show temps
             tempController[heater]->autotunePID(temperature,heater,cycles,writeeeprom, method);  
 #else
             Com::printFLN( PSTR( "PID Autotune Error: Noo Temperature-Loops defined!??" ) );
@@ -4392,8 +4390,7 @@ void UIDisplay::executeAction(int action)
     if(action & UI_ACTION_TOPMENU)   // Go to start menu
     {
         action -= UI_ACTION_TOPMENU;
-        menuLevel = 0;
-        if(uid.menuPos[0] == 1) uid.menuPos[0] = 0;
+        exitmenu();
     }
     else if((action>=UI_ACTION_RF_MIN_REPEATABLE && action<=UI_ACTION_RF_MAX_REPEATABLE) ||
             (action>=UI_ACTION_RF_MIN_SINGLE && action<=UI_ACTION_RF_MAX_SINGLE))
@@ -4414,7 +4411,7 @@ void UIDisplay::executeAction(int action)
             case UI_ACTION_BACK:
             {
 #if FEATURE_SENSIBLE_PRESSURE
-                if( uid.menuLevel == 0 && uid.menuPos[0] == 1 ){ //wenn im Mod-Menü für Z-Offset/Matrix Sense-Offset/Limiter, dann anders!
+                if( menuLevel == 0 && menuPos[0] == 1 ){ //wenn im Mod-Menü für Z-Offset/Matrix Sense-Offset/Limiter, dann anders!
                     //we are in the Mod menu
                     //verkleinern des Digit-Limits
                     if(g_nSensiblePressureDigits == 0){
@@ -4449,9 +4446,9 @@ void UIDisplay::executeAction(int action)
                         Printer::RGBButtonBackPressed = 1;
                     }
 #endif // FEATURE_RGB_LIGHT_EFFECTS
-                    if ( menuLevel == 1 && uid.menuPos[0] == 1 ){
+                    if ( menuLevel == 1 && menuPos[0] == 1 ){
                         //der würde in das modmenü zurückgehen, da sind aber die rechtst links tasten anders belegt, daher nicht da rein! sonst evtl. verstellen von DigitLimit.
-                        uid.menuPos[0] = 0;
+                        menuPos[0] = 0;
                     }
                     if(menuLevel>0) menuLevel--;
                     Printer::setAutomount(false);
@@ -4483,12 +4480,6 @@ void UIDisplay::executeAction(int action)
                 if(menuLevel>0) menuLevel--;
                 break;
             }
-            case UI_ACTION_TOP_MENU:
-            {
-                menuLevel = 0;
-                uid.menuPos[menuLevel] = 0;
-                break;
-            }
             case UI_ACTION_EMERGENCY_STOP:
             {
                 Commands::emergencyStop();
@@ -4507,6 +4498,7 @@ void UIDisplay::executeAction(int action)
                 {
                     break;
                 }
+                exitmenu();
                 Printer::homeAxis(true,true,true);
                 Commands::printCurrentPosition();
                 break;
@@ -4528,7 +4520,7 @@ void UIDisplay::executeAction(int action)
                 {
                     break;
                 }
-
+                exitmenu();
                 Printer::homeAxis(true,false,false);
                 Commands::printCurrentPosition();
                 break;
@@ -4550,7 +4542,7 @@ void UIDisplay::executeAction(int action)
                 {
                     break;
                 }
-
+                exitmenu();
                 Printer::homeAxis(false,true,false);
                 Commands::printCurrentPosition();
                 break;
@@ -4564,7 +4556,6 @@ void UIDisplay::executeAction(int action)
                     {
                         Com::printFLN( Com::tPrintingIsInProcessError );
                     }
-
                     showError( (void*)ui_text_home, (void*)ui_text_operation_denied );
                     break;
                 }
@@ -4572,7 +4563,7 @@ void UIDisplay::executeAction(int action)
                 {
                     break;
                 }
-
+                exitmenu();
                 Printer::homeAxis(false,false,true);
                 Commands::printCurrentPosition();
                 break;
@@ -4901,7 +4892,7 @@ void UIDisplay::executeAction(int action)
             {
                 g_uStartOfIdle = 0;
                 bool unmount = (action==UI_ACTION_UNMOUNT_FILAMENT);
-                uid.executeAction(UI_ACTION_TOP_MENU);
+                exitmenu();
                 if(unmount){ UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT ); }
                 else       { UI_STATUS_UPD( UI_TEXT_MOUNT_FILAMENT ); }
                 if( unmount ){
@@ -4976,13 +4967,13 @@ void UIDisplay::executeAction(int action)
             }
             case UI_ACTION_SD_PAUSE:
             {
-                uid.executeAction(UI_ACTION_TOP_MENU);
+                exitmenu();
                 pausePrint();
                 break;
             }
             case UI_ACTION_SD_CONTINUE:
             {
-                uid.executeAction(UI_ACTION_TOP_MENU);
+                exitmenu();
                 continuePrint();
                 break;
             }
@@ -5263,8 +5254,7 @@ void UIDisplay::executeAction(int action)
                 //macht an, wenn an, macht aus:         
                 startZOScan();
                 //gehe zurück und zeige dem User was passiert.
-                uid.menuLevel = 0; 
-                uid.menuPos[0] = 0;
+                exitmenu();
                 //wartet nur wenn an:
                 //Commands::waitUntilEndOfZOS(); -> Nein, weil der Nutzer das aktiv steuern und abbrechen können soll. Ist ja hier kein M-code in Reihe.
                 break;
@@ -5274,8 +5264,7 @@ void UIDisplay::executeAction(int action)
                 //macht an, wenn an, macht aus:         
                 startZOScan(true); //Scan aber an vielen Punkten und Gewichtet.
                 //gehe zurück und zeige dem User was passiert.
-                uid.menuLevel = 0; 
-                uid.menuPos[0] = 0;
+                exitmenu();
                 //wartet nur wenn an:
                 //Commands::waitUntilEndOfZOS(); -> Nein, weil der Nutzer das aktiv steuern und abbrechen können soll. Ist ja hier kein M-code in Reihe.
                 break;
@@ -5284,7 +5273,7 @@ void UIDisplay::executeAction(int action)
             {
                 // save the determined values to the EEPROM        
                 if(g_ZMatrixChangedInRam){
-                    uid.executeAction(UI_ACTION_TOP_MENU);
+                    exitmenu();
                     saveCompensationMatrix( (unsigned int)(EEPROM_SECTOR_SIZE * g_nActiveHeatBed) );
                     if( Printer::debugInfo() )
                     {
@@ -5300,8 +5289,7 @@ void UIDisplay::executeAction(int action)
 #if FEATURE_ALIGN_EXTRUDERS
             case UI_ACTION_ALIGN_EXTRUDERS:
             {
-                uid.menuPos[0] = 0;
-                uid.menuLevel = 0;
+                exitmenu();
                 startAlignExtruders();
                 break;
             }
@@ -5401,7 +5389,7 @@ void UIDisplay::slowAction()
         if( menu[menuLevel] != &ui_menu_message || g_nAutoReturnMessage )
         {
             lastSwitch = time;
-            menuLevel = 0;
+            exitmenu();
             activeAction = 0;
             g_nAutoReturnMessage = false;
         }
@@ -5503,7 +5491,13 @@ void UIDisplay::unlock()
 {
     locked = 0;
     return;
+} // unlock
 
+void UIDisplay::exitmenu()
+{
+    menuLevel = 0;
+    if(uid.menuPos[menuLevel] == 1 || uid.menuPos[menuLevel] > 3) uid.menuPos[menuLevel] = 0;
+    return;
 } // unlock
 
 

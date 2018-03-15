@@ -6777,8 +6777,6 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 
 void outputObject( bool showerrors )
 {
-    char    unlock = !uid.locked;
-
     if( PrintLine::linesCount )
     {
         if(showerrors) showError( (void*)ui_text_output_object, (void*)ui_text_operation_denied );
@@ -6790,11 +6788,11 @@ void outputObject( bool showerrors )
         return;
     }
 
+    g_uStartOfIdle = 0; //outputobject starts
+    UI_STATUS_UPD( UI_TEXT_OUTPUTTING_OBJECT );
     Com::printFLN( PSTR( "outputObject" ) );
     Commands::printCurrentPosition();
     uLastZPressureTime_IgnoreUntil = HAL::timeInMilliseconds()+60000L;
-    UI_STATUS_UPD( UI_TEXT_OUTPUTTING_OBJECT );
-    uid.lock();
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     // disable the fan
@@ -6817,13 +6815,8 @@ void outputObject( bool showerrors )
     // disable all steppers
     Printer::disableAllSteppersNow();
     uLastZPressureTime_IgnoreUntil = 0;
-    
-    if( unlock )
-    {
-        uid.unlock();
-    }
-    g_uStartOfIdle = HAL::timeInMilliseconds(); //outputobject ends
 
+    g_uStartOfIdle = HAL::timeInMilliseconds(); //outputobject ends
 } // outputObject
 
 #if FEATURE_PARK
@@ -6877,8 +6870,7 @@ inline void checkPauseStatus_fromTask(){
                 // we have reached the pause position - nothing except the extruder can have been moved
                 g_pauseStatus = PAUSE_STATUS_PAUSED;
                 g_uStartOfIdle = 0; //pause1
-                uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
-                uid.menuPos[uid.menuLevel] = 0;
+                uid.exitmenu();
                 UI_STATUS_UPD( UI_TEXT_PAUSED );
                 Com::printFLN( PSTR("RequestPause:") ); //repetier
                 Com::printFLN( PSTR( "// action:pause" ) ); //octoprint
@@ -6903,8 +6895,7 @@ inline void checkPauseStatus_fromTask(){
 #endif // FEATURE_MILLING_MODE
                 g_pauseStatus = PAUSE_STATUS_PAUSED;
                 g_uStartOfIdle = 0; //pause2
-                uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
-                uid.menuPos[uid.menuLevel] = 0;
+                uid.exitmenu();
                 UI_STATUS_UPD( UI_TEXT_PAUSED );
                 Com::printFLN( PSTR("RequestPause:") ); //repetier
                 Com::printFLN( PSTR( "// action:pause" ) ); //octoprint
@@ -6923,8 +6914,7 @@ inline void checkPauseStatus_fromTask(){
                 {
                     g_pauseStatus = PAUSE_STATUS_PAUSED;
                     g_uStartOfIdle = 0; //pause3
-                    uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
-                    uid.menuPos[uid.menuLevel] = 0;
+                    uid.exitmenu();
                     UI_STATUS_UPD( UI_TEXT_PAUSED );
                     Com::printFLN( PSTR("RequestPause:") ); //repetier
                     Com::printFLN( PSTR( "// action:pause" ) ); //octoprint
@@ -6962,8 +6952,7 @@ void pausePrint( void )
             if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausing..." ) );
             g_pauseMode   = PAUSE_MODE_PAUSED;
             g_uStartOfIdle  = 0; //pause1
-            uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
-            uid.menuPos[uid.menuLevel] = 0;
+            uid.exitmenu();
             UI_STATUS_UPD( UI_TEXT_PAUSING );
             Com::printFLN( PSTR("RequestPause:") ); //repetier
             Com::printFLN( PSTR( "// action:pause" ) ); //octoprint
@@ -6987,8 +6976,7 @@ void pausePrint( void )
     {
         g_pauseMode   = PAUSE_MODE_PAUSED_AND_MOVED;
         g_uStartOfIdle  = 0; //pause2
-        uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
-        uid.menuPos[uid.menuLevel] = 0;
+        uid.exitmenu();
         UI_STATUS_UPD( UI_TEXT_PAUSING );
         // in case the print is paused already, we move the printer head to the pause position
         if( Printer::debugInfo() ) Com::printFLN( PSTR( "pausePrint(): moving..." ) );
@@ -7032,7 +7020,7 @@ void continuePrint( void )
     g_uStartOfIdle    = 0; //continueprint
     UI_STATUS_UPD( UI_TEXT_CONTINUING );
     BEEP_CONTINUE
-    uid.executeAction(UI_ACTION_TOP_MENU);
+    uid.exitmenu();
 #if FEATURE_MILLING_MODE
     bool nPrintingMode = ( Printer::operatingMode == OPERATING_MODE_PRINT );
 #else
@@ -8694,13 +8682,11 @@ void processCommand( GCode* pCommand )
                     {
                         // ensure that the current text won't be overwritten
                         uid.lock();
-
                         if( Printer::debugInfo() )
                         {
                             Com::printFLN( PSTR( "M3117: lock" ) );
                         }
                     }
-
                     uid.setStatus( pCommand->text, false, true );
                     uid.refreshPage();
                 }
@@ -11238,11 +11224,9 @@ extern void processButton( int nAction )
 #if FEATURE_PRECISE_HEAT_BED_SCAN
             g_nHeatBedScanMode = 0;
 #endif // FEATURE_PRECISE_HEAT_BED_SCAN
-
             startHeatBedScan();
             //gehe zurück und zeige dem User was passiert.
-            uid.executeAction(UI_ACTION_TOP_MENU);
-            uid.menuPos[0] = 0;
+            uid.exitmenu();
             break;
         }
 #if FEATURE_PRECISE_HEAT_BED_SCAN
@@ -11251,8 +11235,7 @@ extern void processButton( int nAction )
             g_nHeatBedScanMode = HEAT_BED_SCAN_MODE_PLA;
             startHeatBedScan();
             //gehe zurück und zeige dem User was passiert.
-            uid.executeAction(UI_ACTION_TOP_MENU);
-            uid.menuPos[0] = 0;
+            uid.exitmenu();
             break;
         }
         case UI_ACTION_RF_SCAN_HEAT_BED_ABS:
@@ -11260,8 +11243,7 @@ extern void processButton( int nAction )
             g_nHeatBedScanMode = HEAT_BED_SCAN_MODE_ABS;
             startHeatBedScan();
             //gehe zurück und zeige dem User was passiert.
-            uid.executeAction(UI_ACTION_TOP_MENU);
-            uid.menuPos[0] = 0;
+            uid.exitmenu();
             break;
         }        
 #endif // FEATURE_PRECISE_HEAT_BED_SCAN
