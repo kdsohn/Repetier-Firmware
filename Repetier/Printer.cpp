@@ -1876,6 +1876,26 @@ void Printer::homeZAxis()
 
 } // homeZAxis
 
+void Printer::homeDigits(){
+#if FEATURE_ZERO_DIGITS
+    short   nTempPressure = 0;
+    if(Printer::g_pressure_offset_active){ //only adjust pressure if you do a full homing.
+        Printer::g_pressure_offset = 0; //prevent to messure already adjusted offset -> without = 0 this would only iterate some bad values.
+        if( !readAveragePressure( &nTempPressure ) ){
+            if(-5000 < nTempPressure && nTempPressure < 5000){
+                Com::printFLN( PSTR( "DigitOffset = " ), nTempPressure );
+                Printer::g_pressure_offset = nTempPressure;
+            }else{
+                //those high values shouldnt happen! fix your machine... DONT ZEROSCALE DIGITS
+                Com::printFLN( PSTR( "DigitOffset failed " ), nTempPressure );
+            }
+        } else{
+            Com::printFLN( PSTR( "DigitOffset failed reading " ) );
+            g_abortZScan = 0;
+        }
+    }
+#endif // FEATURE_ZERO_DIGITS
+}
 
 void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta printer
 {
@@ -2010,24 +2030,7 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
     moveToReal(startX,startY,startZ,IGNORE_COORDINATE,(zaxis ? homingFeedrate[Z_AXIS] : RMath::min(homingFeedrate[X_AXIS],homingFeedrate[Y_AXIS]) ));
     //###############################
     
-#if FEATURE_ZERO_DIGITS
-    short   nTempPressure = 0;
-    if(Printer::g_pressure_offset_active && xaxis && yaxis && zaxis){ //only adjust pressure if you do a full homing.
-        Printer::g_pressure_offset = 0; //prevent to messure already adjusted offset -> without = 0 this would only iterate some bad values.
-        if( !readAveragePressure( &nTempPressure ) ){
-            if(-5000 < nTempPressure && nTempPressure < 5000){
-                Com::printFLN( PSTR( "DigitOffset = " ), nTempPressure );
-                Printer::g_pressure_offset = nTempPressure;
-            }else{
-                //those high values shouldnt happen! fix your machine... DONT ZEROSCALE DIGITS
-                Com::printFLN( PSTR( "DigitOffset failed " ), nTempPressure );
-            }
-        } else{
-            Com::printFLN( PSTR( "DigitOffset failed reading " ) );
-            g_abortZScan = 0;
-        }
-    }
-#endif // FEATURE_ZERO_DIGITS
+    if(xaxis && yaxis && zaxis) Printer::homeDigits();
 
     g_uStartOfIdle = HAL::timeInMilliseconds(); //homing xyz just ended
     Commands::printCurrentPosition();

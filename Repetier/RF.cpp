@@ -10702,6 +10702,11 @@ void processCommand( GCode* pCommand )
                 Com::printFLN( PSTR( "Load Filament" ) );
                 g_uStartOfIdle = 0; //M3913
 
+#if FEATURE_ZERO_DIGITS
+                //normalize dms sensor values to 0 if allowed in options and not already done
+                if(!Printer::g_pressure_offset) Printer::homeDigits();
+#endif // FEATURE_ZERO_DIGITS
+
                 uint8_t Extrusion = 65; //max, wenn kein wiederstand. (ca. hotendlänge)
                 uint8_t eFeedrate = 1;
                 if ( pCommand->hasF() ) eFeedrate = constrain( abs( static_cast<uint8_t>(pCommand->F) ) , 1 , 50 );
@@ -10758,6 +10763,11 @@ void processCommand( GCode* pCommand )
                 uint8_t saveunitIsInches = Printer::unitIsInches;
                 Printer::unitIsInches = 0; //to save possible G21 .. weiß net ob das so wichtig wäre ^^.
                 Printer::queuePositionTargetSteps[E_AXIS] = Printer::queuePositionLastSteps[E_AXIS] = 0; //G92 E0:
+
+#if FEATURE_ZERO_DIGITS
+                //normalize dms sensor values to 0 if allowed in options and not already done
+                if(!Printer::g_pressure_offset) Printer::homeDigits();
+#endif // FEATURE_ZERO_DIGITS
 
                 //work
                 float e = 0.0f;

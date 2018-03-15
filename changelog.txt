@@ -5,6 +5,7 @@ TODO: Testing, testing ..
 V RF.01.41.09.Mod alpha (2018-03-15) 
 - making the Z-Offset-Scan faster.
 - small fix for M3913 / M3914 abort.
+- implemented digit homing for M3913 / M3914
 
 V RF.01.41.08.Mod alpha (2018-03-15) 
 - abort M3913 / M3914 (when moving) by ok-Button and back-Button
