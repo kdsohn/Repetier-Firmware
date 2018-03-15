@@ -720,7 +720,7 @@ extern float g_ZSchraubenSollDrehungenWarm_U;
 extern float g_ZSchraubenSollKorrekturWarm_mm;
 extern char g_ZSchraubeOk;
 
-extern bool calculateZScrewCorrection( void );
+extern void calculateZScrewCorrection( void );
 
 //Menüumschalter für Z-Step-Höhe
 extern void configureMANUAL_STEPS_Z( int8_t increment );

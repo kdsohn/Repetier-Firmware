@@ -1232,18 +1232,20 @@ void TemperatureController::waitForTargetTemperature(uint8_t plus_temp_tolerance
     }else{
         UI_STATUS_UPD( UI_TEXT_COOLING_DOWN );
     }
-    g_uStartOfIdle = 0;
+    g_uStartOfIdle = 0; //end waitForTargetTemperature
     while(true) {
         Commands::printTemperatures();
         Commands::checkForPeriodicalActions( WaitHeater );
         if( fabs(targetTemperatureC - currentTemperatureC) <= TEMP_TOLERANCE + plus_temp_tolerance ) break;
         if( !dirRising && currentTemperatureC < MAX_ROOM_TEMPERATURE ) break;
     }
-    g_uStartOfIdle = HAL::timeInMilliseconds();
+    g_uStartOfIdle = HAL::timeInMilliseconds(); //end waitForTargetTemperature
 }
 
 void TemperatureController::autotunePID(float temp, uint8_t controllerId, int maxCycles, bool storeValues, int method)
 {
+    g_uStartOfIdle = 0; // start autotunePID
+    UI_STATUS_UPD(UI_TEXT_PID);
     float currentTemp;
     int cycles=0;
     bool heating = true;
@@ -1399,9 +1401,8 @@ see also: http://www.mstarlabs.com/control/znrule.html
         {
             Com::printErrorFLN(Com::tAPIDFailedHigh);
             showError( (void*)ui_text_autodetect_pid, (void*)ui_text_temperature_wrong );
-            //Extruder::disableAllHeater();
             autotuneIndex = 255;
-            return;
+            break;
         }
 
         Commands::printTemperatures();
@@ -1410,15 +1411,14 @@ see also: http://www.mstarlabs.com/control/znrule.html
         {
             Com::printErrorFLN(Com::tAPIDFailedTimeout);
             showError( (void*)ui_text_autodetect_pid, (void*)ui_text_timeout );
-            //Extruder::disableAllHeater();
             autotuneIndex = 255;
-            return;
+            g_uStartOfIdle = HAL::timeInMilliseconds(); //end autotunePID timeout
+            break;
         }
         if(cycles > maxCycles)
         {
             Com::printInfoFLN(Com::tAPIDFinished);
             UI_STATUS_UPD( UI_TEXT_AUTODETECT_PID_DONE );
-            //Extruder::disableAllHeater();
             autotuneIndex = 255;
             if(storeValues)
             {
@@ -1427,9 +1427,11 @@ see also: http://www.mstarlabs.com/control/znrule.html
                 pidDGain = Kd;
                 EEPROM::storeDataIntoEEPROM();
             }
+            g_uStartOfIdle = HAL::timeInMilliseconds()+30000; //end autotunePID cycles
             return;
         }
     }
+    g_uStartOfIdle = HAL::timeInMilliseconds(); //end autotunePID with error
 } // autotunePID
 
 bool reportTempsensorError()

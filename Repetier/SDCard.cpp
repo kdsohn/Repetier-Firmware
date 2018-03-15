@@ -504,13 +504,9 @@ void SDCard::finishWrite()
     file.close();
     savetosd = false;
 
-    if( Printer::debugInfo() )
-    {
-        Com::printFLN(Com::tDoneSavingFile);
-    }
+    Com::printFLN(Com::tDoneSavingFile);
 
-    g_uStartOfIdle = HAL::timeInMilliseconds();
-
+    g_uStartOfIdle = HAL::timeInMilliseconds(); //SDCard::finishWrite() tDoneSavingFile
 } // finishWrite
 
 

@@ -438,7 +438,6 @@ public:
     UIDisplay();
     void createChar(uint8_t location,const uint8_t charmap[]);
     void initialize(); // Initialize display and keys
-    void waitForKey();
     void printRow(uint8_t r,char *txt,char *txt2,uint8_t changeAtCol); // Print row on display
     void printRowP(uint8_t r,PGM_P txt);
     void parse(char *txt,bool ram); /// Parse output and write to printCols;
@@ -535,11 +534,6 @@ void ui_check_keys(int &action)
 #endif // FEATURE_EXTENDED_BUTTONS
 
 } // ui_check_keys
-
-inline void ui_check_slow_encoder() {}
-void ui_check_slow_keys(int &action) {
-    (void)action;
-}
 #endif // UI_MAIN
 #endif // MOTHERBOARD == DEVICE_TYPE_RF1000
 
@@ -595,11 +589,6 @@ void ui_check_keys(int &action)
 #endif // FEATURE_EXTENDED_BUTTONS
 
 } // ui_check_keys
-
-inline void ui_check_slow_encoder() {}
-void ui_check_slow_keys(int &action) {
-    (void)action;
-}
 #endif // UI_MAIN
 #endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 

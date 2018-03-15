@@ -2,6 +2,12 @@ TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has th
 TODO: Maybe tracing down communication errors which seem to appear from time to time (but dont have any effect because they get autocorrected within ~12ms.)
 TODO: Testing, testing ..
 
+V RF.01.41.08.Mod alpha (2018-03-15) 
+- abort M3913 / M3914 (when moving) by ok-Button and back-Button
+- commented all g_uStartOfIdle to find bugs -> adjusted some idle-times for better usability
+- some more tweaks around checks if zCMP is blocked
+- removed matrix-version check within calculateZScrewCorrection. the reason for this was an overflow we already corrected months ago.
+
 V RF.01.41.07.Mod alpha (2018-03-14) 
 - Support for REPETIER_PROTOCOL:3
 - MoveZ now releases Z correctly. Printer::stepperDirection[Z_AXIS] = 0; (It was possible that the printer hung with the wrong combination of moveZ directions + waitUntilEndOfAllMoves)

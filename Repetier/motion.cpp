@@ -1378,8 +1378,10 @@ long PrintLine::performPauseCheck(){
         }
 
         if( ZcmpNachlauf && !Printer::doHeatBedZCompensation ){
-            HAL::forbidInterrupts();
-            return true;
+            if(!Printer::checkCMPblocked()){ //wenn blocked, kann die nächste bewegung das aufheben. Hier gehts nur um wenige steps in Z, da ist das egal, wenn mal nicht kurz pausiert wird.
+                HAL::forbidInterrupts();
+                return true;
+            }
         }
     }
     return false; //ignore this.
@@ -2209,7 +2211,7 @@ long PrintLine::performMove(PrintLine* move, char forQueue)
 #endif // FEATURE_MILLING_MODE
 
         if(linesCount == 0 && nIdle) {
-            g_uStartOfIdle = HAL::timeInMilliseconds();
+            g_uStartOfIdle = HAL::timeInMilliseconds(); //end a move from performMove
             Printer::v = 0;
         }
 

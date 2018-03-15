@@ -1341,7 +1341,17 @@ void Printer::enableCMPnow( void ){
     }
 }
 
+bool Printer::needsCMPwait( void ){
+    if( abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ ) ){
+        if( !Printer::checkCMPblocked() ) return true;
+    }
+    return false;
+}
+
 bool Printer::checkCMPblocked( void ){
+    //die zcmp läuft dann, wenn die achse nicht gegenläufig steht und reserviert ist: 
+    //true = zcmp ist blockiert -> ist mal möglich aber wenn nichts läuft ein fehler, weil die achse nicht zeitnah von einer anderen funktion freigegeben wird.
+    //false = zcmp darf sich aktuell korrigieren, wenn sonst keine prioritären Einschränkungen aktiv sind. -> auf kompensationsende warten müsste erfolgreich verlaufen
     return ((Printer::compensatedPositionCurrentStepsZ < Printer::compensatedPositionTargetStepsZ) && !Printer::getZDirectionIsPos())
         || ((Printer::compensatedPositionCurrentStepsZ > Printer::compensatedPositionTargetStepsZ) &&  Printer::getZDirectionIsPos());
 }
@@ -1872,7 +1882,7 @@ void Printer::homeZAxis()
 void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta printer
 {
     char    unlock = !uid.locked;
-    g_uStartOfIdle = 0;
+    g_uStartOfIdle = 0; //start of homing xyz
 
     //Bei beliebiger user interaktion oder Homing soll G1 etc. erlaubt werden. Dann ist der Drucker nicht abgestürzt, sondern bedient worden.
 #if FEATURE_UNLOCK_MOVEMENT
@@ -2026,7 +2036,7 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
     {
         uid.unlock();
     }
-    g_uStartOfIdle = HAL::timeInMilliseconds();
+    g_uStartOfIdle = HAL::timeInMilliseconds(); //homing xyz just ended
     Commands::printCurrentPosition();
 
 } // homeAxis
@@ -2230,3 +2240,13 @@ void Printer::stopPrint() //function for aborting USB and SD-Prints
     Commands::printCurrentPosition();
     UI_STATUS_UPD( UI_TEXT_STOP_PRINT );
 } // stopPrint
+
+extern void ui_check_keys(int &action);
+bool Printer::checkAbortKeys( void ){
+    int16_t activeKeys = 0;
+    ui_check_keys(activeKeys);
+    if(activeKeys == UI_ACTION_OK || activeKeys == UI_ACTION_BACK){
+        return true;
+    }
+    return false;
+}

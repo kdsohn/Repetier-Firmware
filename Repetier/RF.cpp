@@ -548,7 +548,7 @@ void scanHeatBed( void )
         }
 
         //UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_ABORTED );
-        g_uStartOfIdle = HAL::timeInMilliseconds();
+        g_uStartOfIdle = HAL::timeInMilliseconds() + 30000; //abort scanHeatBed
         
         BEEP_ABORT_HEAT_BED_SCAN
         showError( PSTR(UI_TEXT_HEAT_BED_SCAN_ABORTED) );
@@ -605,7 +605,7 @@ void scanHeatBed( void )
         {
             case 1:
             {
-                g_uStartOfIdle = 0;
+                g_uStartOfIdle = 0; // scanHeatBed
                 g_scanStartTime    = HAL::timeInMilliseconds();
                 g_abortZScan       = 0;
 #if DEBUG_HEAT_BED_SCAN
@@ -1973,7 +1973,7 @@ void scanHeatBed( void )
                     Com::printFLN( PSTR( "the scan has been completed" ) );
                 }
                 //UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_DONE );
-                g_uStartOfIdle = HAL::timeInMilliseconds(); //go to printer ready and ignore status
+                g_uStartOfIdle = HAL::timeInMilliseconds(); //end scanHeatBed
                 
                 BEEP_STOP_HEAT_BED_SCAN
                 showInformation( PSTR(UI_TEXT_HEAT_BED_SCAN_DONE), (void*)ui_text_saving_success, PSTR(UI_TEXT_OK) ); //tell user the scan was a success
@@ -2069,17 +2069,12 @@ void alignExtruders( void )
         // avoid to crash the extruder against the heat bed during a following move
         moveZ( int(Printer::axisStepsPerMM[Z_AXIS] *5) );
 
-        if( Printer::debugInfo() )
-        {
-            Com::printFLN( PSTR( "alignExtruders(): aborted" ) );
-        }
-
+        Com::printFLN( PSTR( "alignExtruders(): aborted" ) );
         showError( PSTR(UI_TEXT_ALIGN_EXTRUDERS_ABORTED) );
         BEEP_ABORT_ALIGN_EXTRUDERS
 
         g_nAlignExtrudersStatus  = 0;
-        g_uStartOfIdle = HAL::timeInMilliseconds();
-
+        g_uStartOfIdle = HAL::timeInMilliseconds() + 30000; //alignExtruders aborted
         return;
     }
 
@@ -2105,7 +2100,7 @@ void alignExtruders( void )
                 g_retryStatus           = 105;
                 g_nLastZScanZPosition   = 0; //sodass dass bei mehreren scans nicht die letzte position als abstands limit feststeht.
                 g_nAlignExtrudersStatus = 110;
-                g_uStartOfIdle = 0;
+                g_uStartOfIdle = 0; //align extruders
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() ) Com::printFLN( PSTR( "alignExtruders(): 100 -> 110" ) );
 #endif // DEBUG_HEAT_BED_SCAN == 2
@@ -2231,7 +2226,7 @@ void alignExtruders( void )
 
                 showInformation( PSTR(UI_TEXT_ALIGN_EXTRUDERS_DONE) );
                 BEEP_STOP_ALIGN_EXTRUDERS
-                g_uStartOfIdle = HAL::timeInMilliseconds();
+                g_uStartOfIdle = HAL::timeInMilliseconds() + 30000; //alignExtruders ended
 
                 g_nAlignExtrudersStatus = 0;
 
@@ -2824,15 +2819,13 @@ void searchZOScan( void )
             case 100:
             {
                 g_nZOSScanStatus = 0;
-                if( calculateZScrewCorrection() ){
-                   showMyPage( (void*)ui_text_heat_bed_zoffset_search_status, (void*)ui_text_heat_bed_zoffset_fix_z1, (void*)ui_text_heat_bed_zoffset_fix_z2, (void*)ui_text_statusmsg );
-                   g_nAutoReturnMessage = true;
-                   g_nAutoReturnTime    = HAL::timeInMilliseconds()+30000;
-                   //UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN );
-                   g_uStartOfIdle = HAL::timeInMilliseconds(); //go to printer ready/ignore status
-                }else{
-                   UI_STATUS_UPD( UI_TEXT_HEAT_BED_SCAN_ABORTED );
-                }
+                calculateZScrewCorrection();
+                
+                showMyPage( (void*)ui_text_heat_bed_zoffset_search_status, (void*)ui_text_heat_bed_zoffset_fix_z1, (void*)ui_text_heat_bed_zoffset_fix_z2, (void*)ui_text_statusmsg );
+                g_nAutoReturnMessage = true;
+                g_nAutoReturnTime    = HAL::timeInMilliseconds()+30000;
+                g_uStartOfIdle = HAL::timeInMilliseconds()+30000; //go to printer ready/ignore status   //end searchZOScan
+
                 //g_nZScanZPosition is 0 now.
                 BEEP_SHORT
                 Com::printFLN( PSTR( "ZOS finished" ) );
@@ -2862,124 +2855,116 @@ void abortSearchHeatBedZOffset( bool reloadMatrix )
     Printer::disableAllSteppersNow();
 
     g_ZOS_Auto_Matrix_Leveling_State = 0;
-    g_uStartOfIdle = HAL::timeInMilliseconds();
+    g_uStartOfIdle = HAL::timeInMilliseconds()+30000; //abort searchHeatBedZOffset
 } /* searchHeatBedZOffset */
 
 float g_ZSchraubenSollDrehungenWarm_U = 0;
 float g_ZSchraubenSollKorrekturWarm_mm = 0;
 char g_ZSchraubeOk = 0;
 
-bool calculateZScrewCorrection( void )
+void calculateZScrewCorrection( void )
 {
-    bool returnwert = false;
     Com::printFLN( PSTR( " " ) );
     Com::printFLN( PSTR( "Z-Schrauben-Helper: " ) );
-    if(g_ZCompensationMatrix[0][0] == EEPROM_FORMAT){ //wegen dem alten overflow, müssten wir nun nicht mehr drin haben!
-        /*IDEAL ist es, wenn mand den Drucker "kalt" und frisch aufgeheizt einstellt.*/
+
+    /*IDEAL ist es, wenn mand den Drucker "kalt" und frisch aufgeheizt einstellt.*/
+
+    //Gerade eben muss ein Z-Scan die Matrix korrigiert haben.
+    //Der Extruder darf sich seither nicht verändert (T0 -> T1) und nicht abgekühlt haben
+    //Dann wird pro °C des aktiven Extruders ~0.001mm Längung angenommen.
+    //Dann wird pro °C des Heizbettes ~0.0015mm Längung angenommen.
     
-        //Gerade eben muss ein Z-Scan die Matrix korrigiert haben.
-        //Der Extruder darf sich seither nicht verändert (T0 -> T1) und nicht abgekühlt haben
-        //Dann wird pro °C des aktiven Extruders ~0.001mm Längung angenommen.
-        //Dann wird pro °C des Heizbettes ~0.0015mm Längung angenommen.
+    //Wegen der unbekannten Nachlängung werden 0.15mm Puffer auf Z=0 angestrebt.
+    //Einfach so: wird ein Puffer von 0.05 angestrebt. Die ideale Matrix-Verschiebung wird auf 260°C Hotend / 120°C Bett, was ein Extremwert darstellen soll auf -0.05mm angepeilt.
+    
+    //Config
+    float maxExtruderTemperature = (float)EXTRUDER_MAX_TEMP;
+    float maxBedTemperature = 120.0f; //120°C ist ok... mit 180 zu rechnen wäre übertrieben.
+    float BedThermalExplansionInMikrons = 1.5f;
+    float ExtruderThermalExpansionInMikrons = 0.95f;
+    float maxNachdehnungInMikrons = 150.0f;
+    float RestAbstandInMikrons = 50.0f;
+    
+    //Ist-Abstand.
+    float MatrixMaximumInMikrons = (float)g_offsetZCompensationSteps * Printer::invAxisStepsPerMM[Z_AXIS] * 1000.0f;
         
-        //Wegen der unbekannten Nachlängung werden 0.15mm Puffer auf Z=0 angestrebt.
-        //Einfach so: wird ein Puffer von 0.05 angestrebt. Die ideale Matrix-Verschiebung wird auf 260°C Hotend / 120°C Bett, was ein Extremwert darstellen soll auf -0.05mm angepeilt.
+    float ExtruderTemperature = Extruder::current->tempControl.currentTemperatureC;
+    if(ExtruderTemperature < 20.0f) ExtruderTemperature = 20.0f; //Wenn zu kalt oder undefiniert dann Standardbedingungen annehmen.
+    
+    float BedTemperature = Extruder::getHeatedBedTemperature();    
+    if(BedTemperature == -1) maxBedTemperature = BedTemperature = 20.0f; //Wenn kein Heated-Bed dann Standardbedingungen annehmen.
         
-        //Config
-        float maxExtruderTemperature = (float)EXTRUDER_MAX_TEMP;
-        float maxBedTemperature = 120.0f; //120°C ist ok... mit 180 zu rechnen wäre übertrieben.
-        float BedThermalExplansionInMikrons = 1.5f;
-        float ExtruderThermalExpansionInMikrons = 0.95f;
-        float maxNachdehnungInMikrons = 150.0f;
-        float RestAbstandInMikrons = 50.0f;
-        
-        //Ist-Abstand.
-        float MatrixMaximumInMikrons = (float)g_offsetZCompensationSteps * Printer::invAxisStepsPerMM[Z_AXIS] * 1000.0f;
-            
-        float ExtruderTemperature = Extruder::current->tempControl.currentTemperatureC;
-        if(ExtruderTemperature < 20.0f) ExtruderTemperature = 20.0f; //Wenn zu kalt oder undefiniert dann Standardbedingungen annehmen.
-        
-        float BedTemperature = Extruder::getHeatedBedTemperature();    
-        if(BedTemperature == -1) maxBedTemperature = BedTemperature = 20.0f; //Wenn kein Heated-Bed dann Standardbedingungen annehmen.
-            
-        //Umrechnung des aktuellen Zustandes auf die heißesten Werte:
-        float MinDistanceInMikronsKalt = MatrixMaximumInMikrons 
-                + (maxExtruderTemperature - ExtruderTemperature) * ExtruderThermalExpansionInMikrons 
-                + (maxBedTemperature - BedTemperature) * BedThermalExplansionInMikrons;
-        float MinDistanceInMikronsWarm = MinDistanceInMikronsKalt + maxNachdehnungInMikrons;
-        
-        Com::printFLN( PSTR( "- Alle Werte in Mikrometern / Einheit [um] -" ) );
-        Com::printFLN( PSTR( "Matrix-Minimum: " ) , MatrixMaximumInMikrons );
-        Com::printFLN( PSTR( "Weitere Extruderausdehnung maximal: " ) , (maxExtruderTemperature - ExtruderTemperature) * ExtruderThermalExpansionInMikrons  );
-        Com::printFLN( PSTR( "Weitere Heizbettausdehnung maximal: " ) , (maxBedTemperature - BedTemperature) * BedThermalExplansionInMikrons );
-        Com::printFLN( PSTR( "Maximalwert-zMatrix bei Maximaltemperaturen (kalter Drucker): " ) , MinDistanceInMikronsKalt );
-        Com::printFLN( PSTR( "Maximalwert-zMatrix bei Maximaltemperaturen (durchgewaermter Drucker): " ) , MinDistanceInMikronsWarm  ); 
-        
-        //z.B. -200 <-- um diesen Wert dürfte man korrigieren, wenn der Drucker zum Messzeitpunkt voll durchgewärmt wäre. Weiß er aber nicht!
-        //Ein vorgewärmter Drucker justiert das Heizbett eher auf -0.2, ein kalter Drucker justiert es eher auf -0.05 bei Spitzentemperaturen. Beides ist ok.
-        //float SollkorrekturKalt = (MinDistanceInMikronsKalt + RestAbstandInMikrons); 
-        //z.B.  -50 <-- diesen Wert darf man in jedem Fall korrigieren.
-        float SollkorrekturWarm = (MinDistanceInMikronsWarm + RestAbstandInMikrons); 
-        
-        /*
-        Wenn ich den Test mit einem bereits warmen Drucker mache, plane ich unnötig eine Sicherheit ein, die ich nur einrechne, weil der Drucker aktuell kalt sein könnte. 
-        Also warmer Drucker: Bett weiter hoch justieren, also Schraube weiter rein, also Drehsinn Minus.
-        */        
-        // |+0-|..Puffer..|.......Nachdehnung........|Kalt-Soll-Einstellung|
-        // |+0-|..Puffer..|Warm-Soll-Einstellung|
-        
-        /* TIPP: -> Schraube bis maxNachdehnungInMikrons ~ 150um weiter runter(=Bett weiter hoch =Drehsinn Minus) empfehlen, wenn der Drucker aktuell "mehr druchgewärmt" wäre. */    
+    //Umrechnung des aktuellen Zustandes auf die heißesten Werte:
+    float MinDistanceInMikronsKalt = MatrixMaximumInMikrons 
+            + (maxExtruderTemperature - ExtruderTemperature) * ExtruderThermalExpansionInMikrons 
+            + (maxBedTemperature - BedTemperature) * BedThermalExplansionInMikrons;
+    float MinDistanceInMikronsWarm = MinDistanceInMikronsKalt + maxNachdehnungInMikrons;
+    
+    Com::printFLN( PSTR( "- Alle Werte in Mikrometern / Einheit [um] -" ) );
+    Com::printFLN( PSTR( "Matrix-Minimum: " ) , MatrixMaximumInMikrons );
+    Com::printFLN( PSTR( "Weitere Extruderausdehnung maximal: " ) , (maxExtruderTemperature - ExtruderTemperature) * ExtruderThermalExpansionInMikrons  );
+    Com::printFLN( PSTR( "Weitere Heizbettausdehnung maximal: " ) , (maxBedTemperature - BedTemperature) * BedThermalExplansionInMikrons );
+    Com::printFLN( PSTR( "Maximalwert-zMatrix bei Maximaltemperaturen (kalter Drucker): " ) , MinDistanceInMikronsKalt );
+    Com::printFLN( PSTR( "Maximalwert-zMatrix bei Maximaltemperaturen (durchgewaermter Drucker): " ) , MinDistanceInMikronsWarm  ); 
+    
+    //z.B. -200 <-- um diesen Wert dürfte man korrigieren, wenn der Drucker zum Messzeitpunkt voll durchgewärmt wäre. Weiß er aber nicht!
+    //Ein vorgewärmter Drucker justiert das Heizbett eher auf -0.2, ein kalter Drucker justiert es eher auf -0.05 bei Spitzentemperaturen. Beides ist ok.
+    //float SollkorrekturKalt = (MinDistanceInMikronsKalt + RestAbstandInMikrons); 
+    //z.B.  -50 <-- diesen Wert darf man in jedem Fall korrigieren.
+    float SollkorrekturWarm = (MinDistanceInMikronsWarm + RestAbstandInMikrons); 
+    
+    /*
+    Wenn ich den Test mit einem bereits warmen Drucker mache, plane ich unnötig eine Sicherheit ein, die ich nur einrechne, weil der Drucker aktuell kalt sein könnte. 
+    Also warmer Drucker: Bett weiter hoch justieren, also Schraube weiter rein, also Drehsinn Minus.
+    */        
+    // |+0-|..Puffer..|.......Nachdehnung........|Kalt-Soll-Einstellung|
+    // |+0-|..Puffer..|Warm-Soll-Einstellung|
+    
+    /* TIPP: -> Schraube bis maxNachdehnungInMikrons ~ 150um weiter runter(=Bett weiter hoch =Drehsinn Minus) empfehlen, wenn der Drucker aktuell "mehr druchgewärmt" wäre. */    
 
-        Com::println();
-        Com::printSharpLine();
-        Com::printF( PSTR( "Sollkorrektur: " ) , SollkorrekturWarm , 0 ); 
-        Com::printF( PSTR( " [um] = " ), SollkorrekturWarm*0.001f,3  ); 
-        Com::printFLN( PSTR( " [mm]" ) );
+    Com::println();
+    Com::printSharpLine();
+    Com::printF( PSTR( "Sollkorrektur: " ) , SollkorrekturWarm , 0 ); 
+    Com::printF( PSTR( " [um] = " ), SollkorrekturWarm*0.001f,3  ); 
+    Com::printFLN( PSTR( " [mm]" ) );
 
-        //meldung:
-        g_ZSchraubenSollKorrekturWarm_mm = SollkorrekturWarm*0.001f;
+    //meldung:
+    g_ZSchraubenSollKorrekturWarm_mm = SollkorrekturWarm*0.001f;
 
-        float ZSchraubenDrehungenWarm = SollkorrekturWarm * 0.002f; //[Sollkorrektur in mm] geteilt durch [Gewinde: 0.5 mm/Umdrehung] -> Sollkorrektur / 1000 / 0.5
-        Com::printF( PSTR( "Sollumdrehungen: " ) , ZSchraubenDrehungenWarm , 1 ); 
-        Com::printF( PSTR( " [U] = " ) , ZSchraubenDrehungenWarm*360 , 0 ); 
-        Com::printF( PSTR( " [Grad]" )  );
+    float ZSchraubenDrehungenWarm = SollkorrekturWarm * 0.002f; //[Sollkorrektur in mm] geteilt durch [Gewinde: 0.5 mm/Umdrehung] -> Sollkorrektur / 1000 / 0.5
+    Com::printF( PSTR( "Sollumdrehungen: " ) , ZSchraubenDrehungenWarm , 1 ); 
+    Com::printF( PSTR( " [U] = " ) , ZSchraubenDrehungenWarm*360 , 0 ); 
+    Com::printF( PSTR( " [Grad]" )  );
 
-        //meldung:
-        g_ZSchraubenSollDrehungenWarm_U = ZSchraubenDrehungenWarm;
-        
-        if(ZSchraubenDrehungenWarm > 0) Com::printFLN( PSTR( " (+ heisst rausdrehen/linksrum/gegen die Uhr)" ) ); //Bett wird nach unten justiert
-        else                             Com::printFLN( PSTR( " (- heisst reindrehen/rechtsrum/im Uhrzeigersinn)" ) ); //Bett wird nach oben justiert
-        
-        Com::printFLN( PSTR( "Je kaelter der Gesamtdrucker aktuell ist (nach langer Pause frisch angeschaltet), desto besser der Korrekturwert." ) );
-        g_ZSchraubeOk = -1; //neg -> Matrix negativ -> ok. ausser, wenn:      
+    //meldung:
+    g_ZSchraubenSollDrehungenWarm_U = ZSchraubenDrehungenWarm;
+    
+    if(ZSchraubenDrehungenWarm > 0) Com::printFLN( PSTR( " (+ heisst rausdrehen/linksrum/gegen die Uhr)" ) ); //Bett wird nach unten justiert
+    else                             Com::printFLN( PSTR( " (- heisst reindrehen/rechtsrum/im Uhrzeigersinn)" ) ); //Bett wird nach oben justiert
+    
+    Com::printFLN( PSTR( "Je kaelter der Gesamtdrucker aktuell ist (nach langer Pause frisch angeschaltet), desto besser der Korrekturwert." ) );
+    g_ZSchraubeOk = -1; //neg -> Matrix negativ -> ok. ausser, wenn:      
 #if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2 //TODO: Prüfen ob das beim RF2000v2 stimmen wird.
-        if( -0.5f <= ZSchraubenDrehungenWarm && SollkorrekturWarm < 40.0f /* [um] */){ // < 0.25mm = 0.5Umdrehungen ist mit dem RF2000 nicht machbar.
-            Com::printFLN( PSTR( " (Die Z-Schraube ist ok!)" ) ); //das ist die Änderung in M3-Regelgewinde-Z-Schrauben-Umdrehungen
-            //meldung:
-            g_ZSchraubeOk = -1; //neg
-        }else if(SollkorrekturWarm >= 40.0f /* [um] */){ //dann bin ich rechnerisch um Z = 0 (50um mit 10um toleranz, die ich fordere.)
-            //eine korrektur von mehr als +40um heißt, ich bin gerade vermutlich im Z>0
-            Com::printFLN( PSTR( " (Die Z-Schraube weiter raus! Das Bett scheint zu hoch zu liegen.)" ) ); //das ist die Änderung in M3-Regelgewinde-Z-Schrauben-Umdrehungen
-            //meldung:
-            g_ZSchraubeOk = 1; //pos
-        } 
-        Com::printFLN( PSTR( " (RF2000: Minimal eine halbe Schraubendrehung (dZ=0.25mm-Schritte) einstellbar.)" ) ); //das ist die Änderung in M3-Regelgewinde-Z-Schrauben-Umdrehungen
+    if( -0.5f <= ZSchraubenDrehungenWarm && SollkorrekturWarm < 40.0f /* [um] */){ // < 0.25mm = 0.5Umdrehungen ist mit dem RF2000 nicht machbar.
+        Com::printFLN( PSTR( " (Die Z-Schraube ist ok!)" ) ); //das ist die Änderung in M3-Regelgewinde-Z-Schrauben-Umdrehungen
+        //meldung:
+        g_ZSchraubeOk = -1; //neg
+    }else if(SollkorrekturWarm >= 40.0f /* [um] */){ //dann bin ich rechnerisch um Z = 0 (50um mit 10um toleranz, die ich fordere.)
+        //eine korrektur von mehr als +40um heißt, ich bin gerade vermutlich im Z>0
+        Com::printFLN( PSTR( " (Die Z-Schraube weiter raus! Das Bett scheint zu hoch zu liegen.)" ) ); //das ist die Änderung in M3-Regelgewinde-Z-Schrauben-Umdrehungen
+        //meldung:
+        g_ZSchraubeOk = 1; //pos
+    } 
+    Com::printFLN( PSTR( " (RF2000: Minimal eine halbe Schraubendrehung (dZ=0.25mm-Schritte) einstellbar.)" ) ); //das ist die Änderung in M3-Regelgewinde-Z-Schrauben-Umdrehungen
 #else //if MOTHERBOARD == DEVICE_TYPE_RF1000        
-        if(SollkorrekturWarm >= 40.0f /* [um] */){ //dann bin ich rechnerisch um Z = 0 (50um mit 10um toleranz, die ich fordere.)
-            //eine korrektur von mehr als +40um heißt, ich bin gerade vermutlich im Z>0
-            Com::printFLN( PSTR( " (Die Z-Schraube weiter raus! Das Bett scheint zu hoch zu liegen.)" ) ); //das ist die Änderung in M3-Regelgewinde-Z-Schrauben-Umdrehungen
-            //meldung:
-            g_ZSchraubeOk = 1; //pos
-        } 
+    if(SollkorrekturWarm >= 40.0f /* [um] */){ //dann bin ich rechnerisch um Z = 0 (50um mit 10um toleranz, die ich fordere.)
+        //eine korrektur von mehr als +40um heißt, ich bin gerade vermutlich im Z>0
+        Com::printFLN( PSTR( " (Die Z-Schraube weiter raus! Das Bett scheint zu hoch zu liegen.)" ) ); //das ist die Änderung in M3-Regelgewinde-Z-Schrauben-Umdrehungen
+        //meldung:
+        g_ZSchraubeOk = 1; //pos
+    } 
 #endif
-        Com::printSharpLine();
-        returnwert = true;
-    }else{
-        Com::printFLN( Com::tError, g_ZCompensationMatrix[0][0] );
-        Com::printFLN( Com::tError, EEPROM_FORMAT ); 
-        returnwert = false;
-    }
-    return returnwert;
+    Com::printSharpLine();
 } // calculateZScrewCorrection
 
 /**************************************************************************************************************************************/
@@ -3707,7 +3692,7 @@ void findZOrigin( void )
         UI_STATUS_UPD( UI_TEXT_FIND_Z_ORIGIN_ABORTED );
         g_nFindZOriginStatus = 0;
         
-        g_uStartOfIdle = HAL::timeInMilliseconds();
+        g_uStartOfIdle = HAL::timeInMilliseconds()+30000;  //abort findZOrigin
         return;
     }
 
@@ -4016,7 +4001,7 @@ void scanWorkPart( void )
         g_nLastZScanZPosition = 0;
         g_retryZScan          = 0;
         
-        g_uStartOfIdle = HAL::timeInMilliseconds();
+        g_uStartOfIdle = HAL::timeInMilliseconds()+30000; //scanWorkPart aborted
         return;
     }
 
@@ -5236,6 +5221,10 @@ void moveZ( int nSteps )
     int nMaxLoops;
     if( nSteps >= 0 ) nMaxLoops = nSteps;
     else              nMaxLoops = -nSteps;
+
+#if FEATURE_HEAT_BED_Z_COMPENSATION
+    while( Printer::needsCMPwait() ) Commands::checkForPeriodicalActions( Processing );
+#endif // FEATURE_HEAT_BED_Z_COMPENSATION
     
     // perform the steps
     for( int i=0; i<nMaxLoops; i++ )
@@ -6732,7 +6721,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
             mode = Printer::operatingMode;
 #endif // FEATURE_MILLING_MODE
 
-            g_uStartOfIdle = HAL::timeInMilliseconds();
+            g_uStartOfIdle = HAL::timeInMilliseconds(); //enter FEATURE_SERVICE_INTERVAL
 
             if( mode == OPERATING_MODE_PRINT )   
             {
@@ -6803,7 +6792,7 @@ void outputObject( bool showerrors )
 
     Com::printFLN( PSTR( "outputObject" ) );
     Commands::printCurrentPosition();
-    uLastZPressureTime_IgnoreUntil = HAL::timeInMilliseconds()+10000L;
+    uLastZPressureTime_IgnoreUntil = HAL::timeInMilliseconds()+60000L;
     UI_STATUS_UPD( UI_TEXT_OUTPUTTING_OBJECT );
     uid.lock();
 
@@ -6818,12 +6807,11 @@ void outputObject( bool showerrors )
         GCode::executeFString(Com::tOutputObjectMill);
     }
     else
+#endif // FEATURE_MILLING_MODE
     {
         GCode::executeFString(Com::tOutputObjectPrint);
     }
-#else
-    GCode::executeFString(Com::tOutputObjectPrint);
-#endif // FEATURE_MILLING_MODE
+
     Commands::waitUntilEndOfAllMoves(); //output object
 
     // disable all steppers
@@ -6834,7 +6822,7 @@ void outputObject( bool showerrors )
     {
         uid.unlock();
     }
-    g_uStartOfIdle = HAL::timeInMilliseconds();
+    g_uStartOfIdle = HAL::timeInMilliseconds(); //outputobject ends
 
 } // outputObject
 
@@ -6888,7 +6876,7 @@ inline void checkPauseStatus_fromTask(){
             {
                 // we have reached the pause position - nothing except the extruder can have been moved
                 g_pauseStatus = PAUSE_STATUS_PAUSED;
-                g_uStartOfIdle = 0;
+                g_uStartOfIdle = 0; //pause1
                 uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
                 uid.menuPos[uid.menuLevel] = 0;
                 UI_STATUS_UPD( UI_TEXT_PAUSED );
@@ -6914,7 +6902,7 @@ inline void checkPauseStatus_fromTask(){
             }else{
 #endif // FEATURE_MILLING_MODE
                 g_pauseStatus = PAUSE_STATUS_PAUSED;
-                g_uStartOfIdle = 0;
+                g_uStartOfIdle = 0; //pause2
                 uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
                 uid.menuPos[uid.menuLevel] = 0;
                 UI_STATUS_UPD( UI_TEXT_PAUSED );
@@ -6934,7 +6922,7 @@ inline void checkPauseStatus_fromTask(){
                 if( !processingDirectMove() )
                 {
                     g_pauseStatus = PAUSE_STATUS_PAUSED;
-                    g_uStartOfIdle = 0;
+                    g_uStartOfIdle = 0; //pause3
                     uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
                     uid.menuPos[uid.menuLevel] = 0;
                     UI_STATUS_UPD( UI_TEXT_PAUSED );
@@ -6973,7 +6961,7 @@ void pausePrint( void )
             }
             if( Printer::debugErrors() ) Com::printFLN( PSTR( "pausing..." ) );
             g_pauseMode   = PAUSE_MODE_PAUSED;
-            g_uStartOfIdle  = 0;
+            g_uStartOfIdle  = 0; //pause1
             uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
             uid.menuPos[uid.menuLevel] = 0;
             UI_STATUS_UPD( UI_TEXT_PAUSING );
@@ -6998,7 +6986,7 @@ void pausePrint( void )
     if( g_pauseMode == PAUSE_MODE_PAUSED )
     {
         g_pauseMode   = PAUSE_MODE_PAUSED_AND_MOVED;
-        g_uStartOfIdle  = 0;
+        g_uStartOfIdle  = 0; //pause2
         uid.menuLevel = 0; //uid.executeAction(UI_ACTION_TOP_MENU);
         uid.menuPos[uid.menuLevel] = 0;
         UI_STATUS_UPD( UI_TEXT_PAUSING );
@@ -7041,7 +7029,7 @@ void continuePrint( void )
     }
     countplays = 1;
     g_uPauseTime = 0; //do not drop temps later
-    g_uStartOfIdle    = 0;
+    g_uStartOfIdle    = 0; //continueprint
     UI_STATUS_UPD( UI_TEXT_CONTINUING );
     BEEP_CONTINUE
     uid.executeAction(UI_ACTION_TOP_MENU);
@@ -7143,7 +7131,7 @@ void continuePrint( void )
         if( (HAL::timeInMilliseconds() - startTime) > 5000 )
         {
             // do not loop forever
-            g_uStartOfIdle    = HAL::timeInMilliseconds();
+            g_uStartOfIdle    = HAL::timeInMilliseconds(); //continue print ends waiting forever
             timeout = 1;
             break;
         }
@@ -10766,7 +10754,7 @@ void processCommand( GCode* pCommand )
             {
                 Commands::waitUntilEndOfAllMoves(); //loadfilament
                 Com::printFLN( PSTR( "Load Filament" ) );
-                g_uStartOfIdle = 0;
+                g_uStartOfIdle = 0; //M3913
 
                 uint8_t Extrusion = 65; //max, wenn kein wiederstand. (ca. hotendlänge)
                 uint8_t eFeedrate = 1;
@@ -10781,7 +10769,15 @@ void processCommand( GCode* pCommand )
 
                 float e = 0.0f;
                 while(e < float(Extrusion) ){
-                    if( g_uBlockCommands || abs(readStrainGauge( ACTIVE_STRAIN_GAUGE )) > maxP /* digits sind soweit gestiegen, dass abbruch.*/ ) break;
+                    if( g_uBlockCommands || abs(readStrainGauge( ACTIVE_STRAIN_GAUGE )) > maxP /* digits sind soweit gestiegen, dass abbruch.*/ ){
+                        UI_STATUS_UPD( UI_TEXT_OK );
+                        break;
+                    }
+                    if( Printer::checkAbortKeys() ){
+                        UI_STATUS_UPD( UI_TEXT_ABORT_KEYPRESSED );
+                        BEEP_PAUSE
+                        break;
+                    }
                     e += 0.02; //kleine schritte
                     Printer::moveToReal( IGNORE_COORDINATE, IGNORE_COORDINATE, IGNORE_COORDINATE, e, eFeedrate);
                 }
@@ -10790,14 +10786,14 @@ void processCommand( GCode* pCommand )
                 Printer::relativeExtruderCoordinateMode = save_relativeExtruderCoordinateMode;
                 Printer::unitIsInches = saveunitIsInches;
                 Printer::updateCurrentPosition();
-                g_uStartOfIdle = HAL::timeInMilliseconds();
+                g_uStartOfIdle = HAL::timeInMilliseconds()+5000; // M3913 load filament ends
                 break;
             }
             case 3914: //M3914 coldpull filament very gently
             {
                 Commands::waitUntilEndOfAllMoves(); //loadfilament
                 Com::printFLN( PSTR( "Unload Filament" ) );
-                g_uStartOfIdle = 0;
+                g_uStartOfIdle = 0; //M3914
 
                 //init
                 uint8_t outputLength = 100; //9cm max Output, wenn kein übertriebener wiederstand. Unser Hotend ist nicht ganz so lang.
@@ -10836,6 +10832,13 @@ void processCommand( GCode* pCommand )
                             t += 3.33; // +1°K
                             break;
                         }
+                        if( Printer::checkAbortKeys() ){
+                            e = float(outputLength); //for sure exits because of no retrys
+                            retry = 0; //exits moves
+                            UI_STATUS_UPD( UI_TEXT_ABORT_KEYPRESSED );
+                            BEEP_PAUSE
+                            break;
+                        }
                         e -= de; //mm - kleine schritte auf Zug
                         if( fabs(e) >  5.0f /*mm*/ && eFeedrate < 10.0f /*mm/s*/ ){
                             eFeedrate += (fabs(e) > 10.0f ? 0.01f : 0.001f ); // mm/s
@@ -10866,7 +10869,7 @@ void processCommand( GCode* pCommand )
                 Printer::relativeExtruderCoordinateMode = save_relativeExtruderCoordinateMode;
                 Printer::unitIsInches = saveunitIsInches;
                 Printer::updateCurrentPosition();
-                g_uStartOfIdle = HAL::timeInMilliseconds();
+                g_uStartOfIdle = HAL::timeInMilliseconds()+5000; // M3914 unload filament ends
                 break;
             }
             
@@ -13038,7 +13041,7 @@ void setupForPrinting( void )
     Printer::setMenuMode( MENU_MODE_MILLER, false );
     Printer::setMenuMode( MENU_MODE_PRINTER, true );
     
-    g_uStartOfIdle = HAL::timeInMilliseconds();
+    g_uStartOfIdle = HAL::timeInMilliseconds(); //setupForPrinting
 } // setupForPrinting
 
 
@@ -13108,7 +13111,7 @@ void setupForMilling( void )
     Printer::setMenuMode( MENU_MODE_PRINTER, false );
     Printer::setMenuMode( MENU_MODE_MILLER, true );
     
-    g_uStartOfIdle = HAL::timeInMilliseconds();
+    g_uStartOfIdle = HAL::timeInMilliseconds(); //setupForMilling
 } // setupForMilling
 
 
@@ -13692,12 +13695,9 @@ void notifyAboutWrongHardwareType( unsigned char guessedHardwareType )
 void showIdle( void )
 {
     char    mode = OPERATING_MODE_PRINT;
-
-
 #if FEATURE_MILLING_MODE
     mode = Printer::operatingMode;
 #endif // FEATURE_MILLING_MODE
-
     if( mode == OPERATING_MODE_PRINT )
     {
         UI_STATUS( UI_TEXT_PRINTER_READY );
@@ -13706,8 +13706,6 @@ void showIdle( void )
     {
         UI_STATUS( UI_TEXT_MILLER_READY );
     }
-    return;
-
 } // showIdle
 
 

@@ -92,41 +92,35 @@ void Commands::checkForPeriodicalActions(enum FirmwareState state)
     commands and manages temperatures. */
 void Commands::waitUntilEndOfAllMoves()
 {
-    char    bWait = 0;
+    bool    bWait = false;
 
 #ifdef DEBUG_PRINT
     debugWaitLoop = 8;
 #endif
 
-    if( PrintLine::hasLines() )     bWait = 1;
+    if( PrintLine::hasLines() )     bWait = true;
 #if FEATURE_FIND_Z_ORIGIN
-    if( g_nFindZOriginStatus )      bWait = 1;
+    if( g_nFindZOriginStatus )      bWait = true;
 #endif // FEATURE_FIND_Z_ORIGIN
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-    //weiß nicht ob wir das brauchen: test
-    if( abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ ) ){
-        if( !Printer::checkCMPblocked() ) bWait = 1;
-    }
+    bWait = (Printer::needsCMPwait() ? true : bWait);
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
     while( bWait )
     {
         Commands::checkForPeriodicalActions( Processing );
 
-        bWait = 0;
-        if( PrintLine::hasLines() )     bWait = 1;
+        bWait = false;
+        if( PrintLine::hasLines() )     bWait = true;
         else                            GCode::readFromSerial(); //normalerweise braucht repetiert hier bei PrintLine::haslines kein readserial! aber wenn wir für die anderen wait=1 readserial wollen, evtl. schon. 
         
 #if FEATURE_FIND_Z_ORIGIN
-        if( g_nFindZOriginStatus )      bWait = 1;
+        if( g_nFindZOriginStatus )      bWait = true;
 #endif // FEATURE_FIND_Z_ORIGIN
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-        //weiß nicht ob wir das brauchen: test
-        if( abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ ) ){
-            if( !Printer::checkCMPblocked() ) bWait = 1;
-        }
+        bWait = (Printer::needsCMPwait() ? true : bWait);
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
     }
@@ -968,7 +962,7 @@ void Commands::executeGCode(GCode *com)
                     Printer::waitMove = 1; //brauche ich das, wenn ich sowieso warte bis der movecache leer ist?
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
-                    g_uStartOfIdle = 0;
+                    g_uStartOfIdle = 0; //M109
                     Commands::waitUntilEndOfAllMoves(); //M109
                     Extruder *actExtruder = Extruder::current;
                     if (com->hasT() && com->T<NUM_EXTRUDER) actExtruder = &extruder[com->T];
@@ -1045,9 +1039,8 @@ void Commands::executeGCode(GCode *com)
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                     Printer::waitMove = 0;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
+                    g_uStartOfIdle    = HAL::timeInMilliseconds(); //end of M109
                 }
-
-                g_uStartOfIdle    = HAL::timeInMilliseconds();
                 previousMillisCmd = HAL::timeInMilliseconds();
                 break;
             }
@@ -1062,7 +1055,7 @@ void Commands::executeGCode(GCode *com)
                     Printer::waitMove = 1; //brauche ich das, wenn ich sowieso warte bis der movecache leer ist?
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
-                    g_uStartOfIdle = 0;
+                    g_uStartOfIdle = 0; //M190
                     Commands::waitUntilEndOfAllMoves(); //M190
                     if (com->hasS()) Extruder::setHeatedBedTemperature(com->S,com->hasF() && com->F>0);
 
@@ -1083,10 +1076,10 @@ void Commands::executeGCode(GCode *com)
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                     Printer::waitMove = 0;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
+                    g_uStartOfIdle    = HAL::timeInMilliseconds()+5000; //end of M190
 #endif // HAVE_HEATED_BED
                 }
 
-                g_uStartOfIdle    = HAL::timeInMilliseconds();
                 previousMillisCmd = HAL::timeInMilliseconds();
                 break;
             }

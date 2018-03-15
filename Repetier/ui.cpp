@@ -683,20 +683,6 @@ void UIDisplay::createChar(uint8_t location,const uint8_t charmap[])
 #endif // UI_DISPLAY_TYPE==1 || UI_DISPLAY_TYPE==2 || UI_DISPLAY_TYPE==3
 
 
-void  UIDisplay::waitForKey()
-{
-    int nextAction = 0;
-
-
-    lastButtonAction = 0;
-    while(lastButtonAction==nextAction)
-    {
-        ui_check_slow_keys(nextAction);
-    }
-
-} // waitForKey
-
-
 void UIDisplay::printRowP(uint8_t r,PGM_P txt)
 {
     if(r >= UI_ROWS) return;
@@ -4374,8 +4360,6 @@ void UIDisplay::finishAction(int action)
             //show menu and message to user: He cant do anything until autotune is over.
             uid.menuLevel = 0; 
             uid.menuPos[0] = 3; //show temps
-            g_uStartOfIdle = 0;
-            UI_STATUS_UPD(UI_TEXT_PID);
             tempController[heater]->autotunePID(temperature,heater,cycles,writeeeprom, method);  
 #else
             Com::printFLN( PSTR( "PID Autotune Error: Noo Temperature-Loops defined!??" ) );
@@ -4861,24 +4845,22 @@ void UIDisplay::executeAction(int action)
 
             case UI_ACTION_PREHEAT_PLA:
             {
-                g_uStartOfIdle = 0;
+                g_uStartOfIdle = HAL::timeInMilliseconds() + 10000; //preheat PLA just got selected
                 UI_STATUS_UPD( UI_TEXT_PREHEAT_PLA );
                 Extruder::setTemperatureForAllExtruders(UI_SET_PRESET_EXTRUDER_TEMP_PLA, false);
 #if HAVE_HEATED_BED==true
                 Extruder::setHeatedBedTemperature(UI_SET_PRESET_HEATED_BED_TEMP_PLA);
 #endif // HAVE_HEATED_BED==true
-                g_uStartOfIdle = HAL::timeInMilliseconds() + 10000;
                 break;
             }
             case UI_ACTION_PREHEAT_ABS:
             {
-                g_uStartOfIdle = 0;
+                g_uStartOfIdle = HAL::timeInMilliseconds() + 10000; //preheat ABS just got selected
                 UI_STATUS_UPD( UI_TEXT_PREHEAT_ABS );
                 Extruder::setTemperatureForAllExtruders(UI_SET_PRESET_EXTRUDER_TEMP_ABS, false);
 #if HAVE_HEATED_BED==true
                 Extruder::setHeatedBedTemperature(UI_SET_PRESET_HEATED_BED_TEMP_ABS);
 #endif // HAVE_HEATED_BED==true
-                g_uStartOfIdle = HAL::timeInMilliseconds() + 10000;
                 break;
             }
             case UI_ACTION_COOLDOWN:
@@ -4919,11 +4901,9 @@ void UIDisplay::executeAction(int action)
             {
                 g_uStartOfIdle = 0;
                 bool unmount = (action==UI_ACTION_UNMOUNT_FILAMENT);
-                char unlock = !uid.locked;
                 uid.executeAction(UI_ACTION_TOP_MENU);
                 if(unmount){ UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT ); }
                 else       { UI_STATUS_UPD( UI_TEXT_MOUNT_FILAMENT ); }
-                uid.lock();
                 if( unmount ){
                     GCode::executeFString(Com::tUnmountFilamentWithHeating);
                 }else{
@@ -4937,8 +4917,7 @@ void UIDisplay::executeAction(int action)
                         GCode::executeFString(Com::tMountFilamentWithoutHeating);
                     }
                 }
-                if( unlock ) uid.unlock();
-                g_uStartOfIdle = HAL::timeInMilliseconds();
+                g_uStartOfIdle = HAL::timeInMilliseconds(); // UI_ACTION_UNMOUNT_FILAMENT UI_ACTION_MOUNT_FILAMENT
                 break;
             }
             case UI_ACTION_SET_E_ORIGIN:
@@ -5364,26 +5343,6 @@ void UIDisplay::slowAction()
 #if UI_HAS_KEYS==1
     // Update key buffer
     InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
-    if( (flags & (UI_FLAG_FAST_KEY_ACTION + UI_FLAG_KEY_TEST_RUNNING)) == 0 )
-    {
-        flags|=UI_FLAG_KEY_TEST_RUNNING;
-
-            noInts.unprotect(); //HAL::allowInterrupts();
-
-            int16_t nextAction = 0;
-            ui_check_slow_keys(nextAction);  //Nibbels: Das macht garnix.
-            if(lastButtonAction!=nextAction)
-            {
-                lastButtonStart = time;
-                lastButtonAction = nextAction;
-                noInts.protect(); //HAL::forbidInterrupts();
-                flags|=UI_FLAG_SLOW_KEY_ACTION;
-            }else{
-                noInts.protect(); //HAL::forbidInterrupts();
-            }
-
-        flags &= ~UI_FLAG_KEY_TEST_RUNNING;
-    }
 
     if( (flags & UI_FLAG_SLOW_ACTION_RUNNING) == 0 )
     {
