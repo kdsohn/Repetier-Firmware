@@ -983,23 +983,31 @@ void Commands::executeGCode(GCode *com)
                     millis_t    waituntil   = 0;
                     millis_t    currentTime;
                     bool        isTempReached;
-                    bool        dirRising    = actExtruder->tempControl.targetTemperature > actExtruder->tempControl.currentTemperature;
-                    bool        longTempTime = (fabs(actExtruder->tempControl.targetTemperature - actExtruder->tempControl.currentTemperature) > 40 ? true : false);
-
-                    if( dirRising ){
-                        UI_STATUS_UPD(UI_TEXT_HEATING_EXTRUDER);
-                    }else{
-                        UI_STATUS_UPD(UI_TEXT_COOLING_DOWN);
-                    }
+                    bool        longTempTime = false; // random init
+                    bool        dirRising = true;     // random init
+                    int16_t     settarget = -1;       // random init nicht in °C .. int16_t
 
                     do
                     {
                         Commands::printTemperatures();
                         Commands::checkForPeriodicalActions( WaitHeater );
-                        
+
+                        //Anpassung an die neue Situation falls der Bediener am Display-Menü des Druckers während Aufheizzeit was umstellt.
+                        if(settarget != actExtruder->tempControl.targetTemperature){
+                            settarget = actExtruder->tempControl.targetTemperature; //nicht in °C .. int16_t
+                            dirRising = (actExtruder->tempControl.targetTemperatureC > actExtruder->tempControl.currentTemperatureC);
+                            longTempTime = (fabs(actExtruder->tempControl.targetTemperatureC - actExtruder->tempControl.currentTemperatureC) > 40.0f ? true : false);
+                            if( dirRising ){
+                                UI_STATUS_UPD(UI_TEXT_HEATING_EXTRUDER);
+                            }else{
+                                UI_STATUS_UPD(UI_TEXT_COOLING_DOWN);
+                            }
+                        }
+
                         currentTime = HAL::timeInMilliseconds();
                         isTempReached = (dirRising ? actExtruder->tempControl.currentTemperatureC >= actExtruder->tempControl.targetTemperatureC - TEMP_TOLERANCE
                                                    : actExtruder->tempControl.currentTemperatureC <= actExtruder->tempControl.targetTemperatureC + TEMP_TOLERANCE);
+
 #if RETRACT_DURING_HEATUP
                         if( dirRising ){
                             if (!retracted 
@@ -1059,15 +1067,22 @@ void Commands::executeGCode(GCode *com)
                     Commands::waitUntilEndOfAllMoves(); //M190
                     if (com->hasS()) Extruder::setHeatedBedTemperature(com->S,com->hasF() && com->F>0);
 
-                    bool dirRising = heatedBedController.targetTemperatureC > heatedBedController.currentTemperatureC;
-                    if(dirRising){
-                        UI_STATUS_UPD(UI_TEXT_HEATING_BED);
-                    }else{
-                        UI_STATUS_UPD(UI_TEXT_COOLING_DOWN);
-                    }
+                    bool    dirRising = true; // random init
+                    int16_t settarget = -1;    // random init nicht in °C .. int16_t
 
                     while( fabs(heatedBedController.currentTemperatureC - heatedBedController.targetTemperatureC) > TEMP_TOLERANCE )
                     {
+                        //Init und Anpassung an die neue Situation falls der Bediener am Display-Menü des Druckers während Aufheizzeit was umstellt.
+                        if(settarget != heatedBedController.targetTemperature){
+                            settarget = heatedBedController.targetTemperature; //nicht in °C .. int16_t
+                            dirRising = (heatedBedController.targetTemperatureC > heatedBedController.currentTemperatureC);
+                            if( dirRising ){
+                                UI_STATUS_UPD(UI_TEXT_HEATING_BED);
+                            }else{
+                                UI_STATUS_UPD(UI_TEXT_COOLING_DOWN);
+                            }
+                        }
+
                         Commands::printTemperatures();
                         Commands::checkForPeriodicalActions( WaitHeater );
                         if( !dirRising && heatedBedController.currentTemperatureC <= MAX_ROOM_TEMPERATURE ) break;
