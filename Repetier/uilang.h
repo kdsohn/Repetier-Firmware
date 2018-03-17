@@ -174,9 +174,7 @@
 #define UI_TEXT_JERK                    "X/Y-Jerk:%aj"
 #define UI_TEXT_ZJERK                   "Z-Jerk  :%aJ"
 #define UI_TEXT_ACCELERATION            "Acceleration"
-#if FEATURE_MILLING_MODE
- #define UI_TEXT_ACCEL_MILL              "Accelerat.: %XZ"
-#endif //FEATURE_MILLING_MODE
+#define UI_TEXT_ACCEL_MILL              "Accelerat.: %XZ"
 #define UI_TEXT_DBG_ECHO                "Echo   : %do"
 #define UI_TEXT_DBG_INFO                "Info   : %di"
 #define UI_TEXT_DBG_ERROR               "Errors : %de"
@@ -569,9 +567,7 @@
 #define UI_TEXT_MOVE_Z                  "Bewegen Z:%aZ"
 #define UI_TEXT_MOVE_Z_DELTA            "Bewegen:%aZ"
 #define UI_TEXT_ACCELERATION            "Beschleunigung"
-#if FEATURE_MILLING_MODE
- #define UI_TEXT_ACCEL_MILL              "Fr" STR_auml "sbeschl.:%XZ"
-#endif // FEATURE_MILLING_MODE
+#define UI_TEXT_ACCEL_MILL              "Fr" STR_auml "sbeschl.:%XZ"
 #define UI_TEXT_DBG_ECHO                "Echo       :%do"
 #define UI_TEXT_DBG_INFO                "Info       :%di"
 #define UI_TEXT_DBG_ERROR               "Fehler     :%de"

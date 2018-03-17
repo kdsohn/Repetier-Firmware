@@ -911,9 +911,10 @@ extern void nextPreviousZAction( int8_t increment );
 extern void setMotorCurrent( unsigned char driver, uint8_t level );
 
 // adjust/set Microsteps()
+extern unsigned short drv8711Axis_2_InitMicrosteps(uint8_t axis);
 extern unsigned short drv8711ModeValue_2_MicroSteps(uint8_t modeValue);
-extern uint8_t drv8711MicroSteps_2_ModeValue(unsigned short microsteps);
-extern void drv8711adjustMicroSteps(unsigned char driver);
+extern uint8_t        drv8711MicroSteps_2_ModeValue(unsigned short microsteps);
+extern void           drv8711adjustMicroSteps(unsigned char driver);
 
 // motorCurrentControlInit()
 extern void motorCurrentControlInit( void );

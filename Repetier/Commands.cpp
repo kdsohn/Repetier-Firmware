@@ -298,6 +298,7 @@ void Commands::reportPrinterUsage()
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
         if( Printer::debugInfo() )
         {
             float dist = Printer::filamentPrinted*0.001+HAL::eprGetFloat(EPR_PRINTING_DISTANCE);
@@ -345,6 +346,7 @@ void Commands::reportPrinterUsage()
             Com::printFLN(Com::tSpaceMin);
         }
 #endif // FEATURE_SERVICE_INTERVAL
+#if FEATURE_MILLING_MODE
     }
     else
     {
@@ -381,59 +383,8 @@ void Commands::reportPrinterUsage()
         }
 #endif // FEATURE_SERVICE_INTERVAL
     }
-
-#else
-    if( Printer::debugInfo() )
-    {
-        float dist = Printer::filamentPrinted*0.001+HAL::eprGetFloat(EPR_PRINTING_DISTANCE);
-        Com::printF(Com::tPrintedFilament,dist,2);
-        Com::printF(Com::tSpacem);
-    }
-    bool alloff = true;
-
-    for(uint8_t i=0; i<NUM_EXTRUDER; i++)
-        if(tempController[i]->targetTemperatureC>15) alloff = false;
-
-    if( Printer::debugInfo() )
-    {
-        int32_t seconds =  (alloff ? 0 : (HAL::timeInMilliseconds()-Printer::msecondsPrinting)/1000) + HAL::eprGetInt32(EPR_PRINTING_TIME);
-        int32_t tmp     =  seconds/86400;
-        seconds         -= tmp*86400;
-
-        Com::printF(Com::tPrintingTime,tmp);
-        tmp = seconds/3600;
-        Com::printF(Com::tSpaceDaysSpace,tmp);
-        seconds -= tmp*3600;
-        tmp = seconds/60;
-
-        Com::printF(Com::tSpaceHoursSpace,tmp);
-        Com::printFLN(Com::tSpaceMin);
-    }
-#if FEATURE_SERVICE_INTERVAL
-    if( Printer::debugInfo() )
-        {
-            float dist_service = Printer::filamentPrinted*0.001+HAL::eprGetFloat(EPR_PRINTING_DISTANCE_SERVICE);
-            Com::printF(Com::tPrintedFilamentService,dist_service,2);
-            Com::printF(Com::tSpacem);
-
-            int32_t uSecondsServicePrint =  (alloff ? 0 : (HAL::timeInMilliseconds()-Printer::msecondsPrinting)/1000) + HAL::eprGetInt32(EPR_PRINTING_TIME_SERVICE);
-            int32_t tmp_service     =  uSecondsServicePrint/86400;
-            uSecondsServicePrint            -= tmp_service*86400;
-
-            Com::printF(Com::tPrintingTimeService,tmp_service);
-            tmp_service = uSecondsServicePrint/3600;
-            Com::printF(Com::tSpaceDaysSpace,tmp_service);
-            uSecondsServicePrint -= tmp_service*3600;
-            tmp_service = uSecondsServicePrint/60;
-
-            Com::printF(Com::tSpaceHoursSpace,tmp_service);
-            Com::printFLN(Com::tSpaceMin);
-
-        }
-#endif // FEATURE_SERVICE_INTERVAL
 #endif // FEATURE_MILLING_MODE
 #endif // EEPROM_MODE
-
 } // reportPrinterUsage
 
 
@@ -1337,17 +1288,16 @@ void Commands::executeGCode(GCode *com)
 #if FEATURE_MILLING_MODE
                 if( Printer::operatingMode == OPERATING_MODE_PRINT )
                 {
+#endif // FEATURE_MILLING_MODE
                     // in operating mode "print", the min endstop is used
                     Com::printF(Com::tZMinColon);
                     Com::printF(Printer::isZMinEndstopHit()?Com::tHSpace:Com::tLSpace);
+#if FEATURE_MILLING_MODE
                 }
-                else
+                /* else
                 {
                     // in operating mode "mill", the min endstop is not used
-                }
-#else
-                Com::printF(Com::tZMinColon);
-                Com::printF(Printer::isZMinEndstopHit()?Com::tHSpace:Com::tLSpace);
+                } */
 #endif // FEATURE_MILLING_MODE
 #endif // (Z_MIN_PIN > -1) && MIN_HARDWARE_ENDSTOP_Z
 
@@ -1363,19 +1313,14 @@ void Commands::executeGCode(GCode *com)
                 }
                 else
                 {
+#endif // FEATURE_MILLING_MODE
                     if( Printer::ZEndstopType == ENDSTOP_TYPE_CIRCUIT )
                     {
                         // in operating mode "print", the max endstop is used only in case both z-endstops are in a circle
                         Com::printF(Com::tZMaxColon);
                         Com::printF(Printer::isZMaxEndstopHit()?Com::tHSpace:Com::tLSpace);
                     }
-                }
-#else
-                if( Printer::ZEndstopType == ENDSTOP_TYPE_CIRCUIT )
-                {
-                    // in operating mode "print", the max endstop is used only in case both z-endstops are in a circle
-                    Com::printF(Com::tZMaxColon);
-                    Com::printF(Printer::isZMaxEndstopHit()?Com::tHSpace:Com::tLSpace);
+#if FEATURE_MILLING_MODE
                 }
 #endif // FEATURE_MILLING_MODE
 #else
@@ -1388,10 +1333,10 @@ void Commands::executeGCode(GCode *com)
                 }
                 else
                 {
+#endif // FEATURE_MILLING_MODE
                     // in operating mode "print", the max endstop is used only in case both z-endstops are in a circle
+#if FEATURE_MILLING_MODE
                 }
-#else
-                // in operating mode "print", the max endstop is used only in case both z-endstops are in a circle
 #endif // FEATURE_MILLING_MODE
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
 #endif // MOTHERBOARD == DEVICE_TYPE_RF1000
@@ -1630,11 +1575,7 @@ void Commands::executeGCode(GCode *com)
             {
 #if EEPROM_MODE!=0
                 EEPROM::storeDataIntoEEPROM(false);
-
-                if( Printer::debugInfo() )
-                {
-                    Com::printInfoF(Com::tConfigStoredEEPROM);
-                }
+                Com::printInfoF(Com::tConfigStoredEEPROM);
 #else
                 if( Printer::debugErrors() )
                 {
@@ -1668,8 +1609,8 @@ void Commands::executeGCode(GCode *com)
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
                 EEPROM::storeDataIntoEEPROM(false);
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-
                 EEPROM::initializeAllOperatingModes();
+
                 UI_STATUS( UI_TEXT_RESTORE_DEFAULTS );
                 showInformation( PSTR(UI_TEXT_CONFIGURATION), PSTR(UI_TEXT_RESTORE_DEFAULTS), PSTR(UI_TEXT_OK) );
                 break;

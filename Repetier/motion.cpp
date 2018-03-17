@@ -1331,16 +1331,14 @@ long PrintLine::performPauseCheck(){
                 case PAUSE_STATUS_PREPARE_CONTINUE2_1: //Move back
                 {
 #if FEATURE_MILLING_MODE
-                    bool modeprint = ( Printer::operatingMode == OPERATING_MODE_PRINT );
-#else
-                    bool modeprint = true;
-#endif // FEATURE_MILLING_MODE
-                    if( modeprint )
+                    if( Printer::operatingMode == OPERATING_MODE_PRINT )
                     {
+#endif // FEATURE_MILLING_MODE
                         Printer::directPositionTargetSteps[X_AXIS] += g_nContinueSteps[X_AXIS];
                         Printer::directPositionTargetSteps[Y_AXIS] += g_nContinueSteps[Y_AXIS];
                         Printer::directPositionTargetSteps[Z_AXIS] += g_nContinueSteps[Z_AXIS];
                         Printer::directPositionTargetSteps[E_AXIS] += g_nContinueSteps[E_AXIS];
+#if FEATURE_MILLING_MODE
                     }
                     else
                     {
@@ -1348,6 +1346,7 @@ long PrintLine::performPauseCheck(){
                         Printer::directPositionTargetSteps[X_AXIS] += g_nContinueSteps[X_AXIS];
                         Printer::directPositionTargetSteps[Y_AXIS] += g_nContinueSteps[Y_AXIS];
                     }
+#endif // FEATURE_MILLING_MODE
                     PrintLine::prepareDirectMove();
                     g_pauseStatus = PAUSE_STATUS_PAUSED;
                     break;

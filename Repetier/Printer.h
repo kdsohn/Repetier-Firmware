@@ -744,15 +744,16 @@ public:
 #if FEATURE_MILLING_MODE
             if( operatingMode == OPERATING_MODE_PRINT )
             {
+#endif // FEATURE_MILLING_MODE
                 // in case there is only one z-endstop and we are in operating mode "print", the z-min endstop must be connected
                 return READ(Z_MIN_PIN) != ENDSTOP_Z_MIN_INVERTING;
+#if FEATURE_MILLING_MODE
             }
-
-            // in case there is only one z-endstop and we are in operating mode "mill", the z-min endstop is not connected and can not be detected
-            return false;
-#else // FEATURE_MILLING_MODE
-            // in case there is only one z-endstop and we are in operating mode "print", the z-min endstop must be connected
-            return READ(Z_MIN_PIN) != ENDSTOP_Z_MIN_INVERTING;
+            else
+            {
+                // in case there is only one z-endstop and we are in operating mode "mill", the z-min endstop is not connected and can not be detected
+                return false;
+            }
 #endif // FEATURE_MILLING_MODE
         }
 

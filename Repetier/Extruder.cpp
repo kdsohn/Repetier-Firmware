@@ -461,10 +461,10 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
 #if FEATURE_MILLING_MODE
         if( Printer::operatingMode == OPERATING_MODE_PRINT )
         {
+#endif // FEATURE_MILLING_MODE
             EEPROM::updatePrinterUsage();
+#if FEATURE_MILLING_MODE
         }
-#else
-        EEPROM::updatePrinterUsage();
 #endif // FEATURE_MILLING_MODE
     }
 #endif // EEPROM_MODE != 0
@@ -547,19 +547,11 @@ void Extruder::disableCurrentExtruderMotor()
 
 void Extruder::disableAllExtruders()
 {
-    Extruder*   e;
-    uint8_t     mode = OPERATING_MODE_PRINT;
-
-
 #if FEATURE_MILLING_MODE
-    if( Printer::operatingMode == OPERATING_MODE_MILL )
+    if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
-        mode = OPERATING_MODE_MILL;
-    }
 #endif // FEATURE_MILLING_MODE
-
-    if( mode == OPERATING_MODE_PRINT )
-    {
+        Extruder*   e;
         for(uint8_t i=0; i<NUM_EXTRUDER; i++ )
         {
             e = &extruder[i];
@@ -567,14 +559,15 @@ void Extruder::disableAllExtruders()
             if(e->enablePin > -1)
                 HAL::digitalWrite(e->enablePin,!e->enableOn);
 
-#if STEPPER_ON_DELAY
+ #if STEPPER_ON_DELAY
             e->enabled = 0;
-#endif // STEPPER_ON_DELAY
+ #endif // STEPPER_ON_DELAY
         }
+#if FEATURE_MILLING_MODE
     }
+#endif // FEATURE_MILLING_MODE
 
     cleanupEPositions();
-
 } // disableAllExtruders
 
 
@@ -1464,20 +1457,16 @@ bool reportTempsensorError()
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
         if( Printer::debugErrors() )
         {
             Com::printErrorFLN(Com::tDryModeUntilRestart);
         }
-    }
-#else
-    if( Printer::debugErrors() )
-    {
-        Com::printErrorFLN(Com::tDryModeUntilRestart);
+#if FEATURE_MILLING_MODE
     }
 #endif // FEATURE_MILLING_MODE
 
     return true;
-
 } // reportTempsensorError
 
 

@@ -1271,6 +1271,7 @@ void UIDisplay::parse(char *txt,bool ram)
 #if FEATURE_MILLING_MODE
                                 if( Printer::operatingMode == OPERATING_MODE_PRINT )
                                 {
+#endif // FEATURE_MILLING_MODE
                                     addStringP(PSTR(UI_TEXT_PRINT_POS));
                                     unsigned long percent;
                                     if(sd.filesize<20000000) percent=sd.sdpos*100/sd.filesize;
@@ -1278,6 +1279,7 @@ void UIDisplay::parse(char *txt,bool ram)
                                     addInt((int)percent,3);
                                     if(col<MAX_COLS)
                                         printCols[col++]='%';
+#if FEATURE_MILLING_MODE
                                 }
                                 else
                                 {
@@ -1297,15 +1299,6 @@ void UIDisplay::parse(char *txt,bool ram)
                                             printCols[col++]='%';
                                     }
                                 }
-#else
-                                addStringP(PSTR(UI_TEXT_PRINT_POS));
-
-                                unsigned long percent;
-                                if(sd.filesize<20000000) percent=sd.sdpos*100/sd.filesize;
-                                else percent = (sd.sdpos>>8)*100/(sd.filesize>>8);
-                                addInt((int)percent,3);
-                                if(col<MAX_COLS)
-                                    printCols[col++]='%';
 #endif // FEATURE_MILLING_MODE
                             }
                         }
@@ -1947,11 +1940,8 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 else if(c2=='2')                                                                             // replace line with new line
                 {
-                    char    mode = OPERATING_MODE_PRINT;
 #if FEATURE_MILLING_MODE
-                    mode = Printer::operatingMode;
-#endif // FEATURE_MILLING_MODE
-                    if ( mode == OPERATING_MODE_MILL )
+                    if ( Printer::operatingMode == OPERATING_MODE_MILL )
                     {
                         for(uint8_t n = 0; n < MAX_COLS+1 ; n++) printCols[n]=0; //clear all text
                         col = 0; //reset linemarker
@@ -1974,6 +1964,7 @@ void UIDisplay::parse(char *txt,bool ram)
  #endif
 #endif //FEATURE_230V_OUTPUT
                     }
+#endif // FEATURE_MILLING_MODE
                 }
                 break;
             }
@@ -2072,15 +2063,10 @@ void UIDisplay::parse(char *txt,bool ram)
                 {
 #if FEATURE_SERVICE_INTERVAL
 #if EEPROM_MODE!=0
-                    char    mode = OPERATING_MODE_PRINT;
-
-
 #if FEATURE_MILLING_MODE
-                    mode = Printer::operatingMode;
-#endif // FEATURE_MILLING_MODE
-
-                    if ( mode == OPERATING_MODE_PRINT )
+                    if ( Printer::operatingMode == OPERATING_MODE_PRINT )
                     {
+#endif // FEATURE_MILLING_MODE
                         bool alloff = true;
                         for(uint8_t i=0; i<NUM_EXTRUDER; i++)
                             if(tempController[i]->targetTemperatureC>15) alloff = false;
@@ -2097,6 +2083,7 @@ void UIDisplay::parse(char *txt,bool ram)
                         tmp_service = uSecondsServicePrint/60;
                         addInt(tmp_service,2,'0');
                         addStringP(PSTR(UI_TEXT_PRINTTIME_MINUTES));
+#if FEATURE_MILLING_MODE
                     }
                     else
                     {
@@ -2113,40 +2100,27 @@ void UIDisplay::parse(char *txt,bool ram)
                         addInt(tmp_service,2,'0');
                         addStringP(PSTR(UI_TEXT_PRINTTIME_MINUTES));
                     }
+#endif // FEATURE_MILLING_MODE
 #endif // EEPROM_MODE
 #endif // FEATURE_SERVICE_INTERVAL
                 }
                 else if(c2=='3')                                                                        // Shows text printed filament since last service
                 {
 #if FEATURE_SERVICE_INTERVAL
-                    char    mode = OPERATING_MODE_PRINT;
-
-
 #if FEATURE_MILLING_MODE
-                    mode = Printer::operatingMode;
+                    if ( Printer::operatingMode == OPERATING_MODE_PRINT )
 #endif // FEATURE_MILLING_MODE
-
-                    if ( mode == OPERATING_MODE_PRINT )
                     {
                         addStringP(PSTR(UI_TEXT_PRINT_FILAMENT));
-                    }
-                    else if ( mode == OPERATING_MODE_MILL )
-                    {
-                        //addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
                     }
 #endif // FEATURE_SERVICE_INTERVAL
                 }
                 else if(c2=='4')                                                                        // Shows printed filament since last service
                 {
 #if FEATURE_SERVICE_INTERVAL
-                    char    mode = OPERATING_MODE_PRINT;
-
-
-#if FEATURE_MILLING_MODE
-                    mode = Printer::operatingMode;
-#endif // FEATURE_MILLING_MODE
-
-                    if ( mode == OPERATING_MODE_PRINT )
+ #if FEATURE_MILLING_MODE
+                    if ( Printer::operatingMode == OPERATING_MODE_PRINT )
+ #endif // FEATURE_MILLING_MODE
                     {
 #if EEPROM_MODE!=0
                         float dist_service = Printer::filamentPrinted*0.001+HAL::eprGetFloat(EPR_PRINTING_DISTANCE_SERVICE);
@@ -2154,42 +2128,30 @@ void UIDisplay::parse(char *txt,bool ram)
                         addStringP( PSTR( " m" ));
 #endif // EEPROM_MODE
                     }
-                    else if ( mode == OPERATING_MODE_MILL )
-                    {
-                        //addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
-                    }
 #endif // FEATURE_SERVICE_INTERVAL
                 }
                 else if(c2=='5')                                                                        // Shows text printing/milling time
                 {
-                    char    mode = OPERATING_MODE_PRINT;
-
-
 #if FEATURE_MILLING_MODE
-                    mode = Printer::operatingMode;
-#endif // FEATURE_MILLING_MODE
-
-                    if ( mode == OPERATING_MODE_PRINT )
+                    if ( Printer::operatingMode == OPERATING_MODE_PRINT )
                     {
+#endif // FEATURE_MILLING_MODE
                         addStringP(PSTR(UI_TEXT_PRINT_TIME));
+#if FEATURE_MILLING_MODE
                     }
-                    else if ( mode == OPERATING_MODE_MILL )
+                    else
                     {
                         addStringP(PSTR(UI_TEXT_MILL_TIME));
                     }
+#endif // FEATURE_MILLING_MODE
                 }
                 else if(c2=='6')                                                                        // Shows printing/milling time                                                  
                 {
 #if EEPROM_MODE!=0
-                    char    mode = OPERATING_MODE_PRINT;
-
-
-#if FEATURE_MILLING_MODE
-                    mode = Printer::operatingMode;
-#endif // FEATURE_MILLING_MODE
-
-                    if ( mode == OPERATING_MODE_PRINT )
+ #if FEATURE_MILLING_MODE
+                    if ( Printer::operatingMode == OPERATING_MODE_PRINT )
                     {
+ #endif // FEATURE_MILLING_MODE
                         bool alloff = true;
                         for(uint8_t i=0; i<NUM_EXTRUDER; i++)
                             if(tempController[i]->targetTemperatureC>15) alloff = false;
@@ -2206,6 +2168,7 @@ void UIDisplay::parse(char *txt,bool ram)
                         tmp = seconds/60;
                         addInt(tmp,2,'0');
                         addStringP(PSTR(UI_TEXT_PRINTTIME_MINUTES));
+ #if FEATURE_MILLING_MODE
                     }
                     else
                     {
@@ -2222,47 +2185,20 @@ void UIDisplay::parse(char *txt,bool ram)
                         addInt(tmp,2,'0');
                         addStringP(PSTR(UI_TEXT_PRINTTIME_MINUTES));
                     }
+ #endif // FEATURE_MILLING_MODE
 #endif // EEPROM_MODE
                 }
                 else if(c2=='7')                                                                        // Shows text printed filament
                 {
-                    char    mode = OPERATING_MODE_PRINT;
-
-
-#if FEATURE_MILLING_MODE
-                    mode = Printer::operatingMode;
-#endif // FEATURE_MILLING_MODE
-
-                    if ( mode == OPERATING_MODE_PRINT )
-                    {
-                        addStringP(PSTR(UI_TEXT_PRINT_FILAMENT));
-                    }
-                    else if ( mode == OPERATING_MODE_MILL )
-                    {
-                        //addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
-                    }
+                    addStringP(PSTR(UI_TEXT_PRINT_FILAMENT));
                 }
                 else if(c2=='8')                                                                        // Shows printed filament
                 {
-                    char    mode = OPERATING_MODE_PRINT;
-
-
-#if FEATURE_MILLING_MODE
-                    mode = Printer::operatingMode;
-#endif // FEATURE_MILLING_MODE
-
-                    if ( mode == OPERATING_MODE_PRINT )
-                    {
 #if EEPROM_MODE!=0
-                        float dist = Printer::filamentPrinted*0.001+HAL::eprGetFloat(EPR_PRINTING_DISTANCE);
-                        addFloat(dist,6,1);
-                        addStringP( PSTR( " m" ));
+                    float dist = Printer::filamentPrinted*0.001+HAL::eprGetFloat(EPR_PRINTING_DISTANCE);
+                    addFloat(dist,6,1);
+                    addStringP( PSTR( " m" ));
 #endif // EEPROM_MODE
-                    }
-                    else if ( mode == OPERATING_MODE_MILL )
-                    {
-                        //addStringP( PSTR( "" )); //TODO: Nibbels: Ist leerer string nötig?? Glaube nicht.
-                    }
                 }
                 break;
             }
@@ -2486,11 +2422,13 @@ void UIDisplay::refreshPage()
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
 #if UI_PRINT_AUTORETURN_TO_MENU_AFTER
         // Reset timeout on menu back when user active on menu
         if (encoderLast != encoderStartScreen)
             g_nAutoReturnTime=HAL::timeInMilliseconds()+UI_PRINT_AUTORETURN_TO_MENU_AFTER;
 #endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER
+#if FEATURE_MILLING_MODE
     }
     else
     {
@@ -2500,12 +2438,6 @@ void UIDisplay::refreshPage()
             g_nAutoReturnTime=HAL::timeInMilliseconds()+UI_MILL_AUTORETURN_TO_MENU_AFTER;
 #endif // UI_MILL_AUTORETURN_TO_MENU_AFTER
     }
-#else
-#if UI_PRINT_AUTORETURN_TO_MENU_AFTER
-    // Reset timeout on menu back when user active on menu
-    if (encoderLast != encoderStartScreen)
-        g_nAutoReturnTime=HAL::timeInMilliseconds()+UI_PRINT_AUTORETURN_TO_MENU_AFTER;
-#endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER
 #endif // FEATURE_MILLING_MODE
 
     encoderStartScreen = encoderLast;
@@ -2999,23 +2931,19 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if UI_HAS_KEYS==1
     if(menuLevel==0)
     {
-        char    mode = OPERATING_MODE_PRINT;
-
-
-#if FEATURE_MILLING_MODE
-        mode = Printer::operatingMode;
-#endif // FEATURE_MILLING_MODE
-
         lastSwitch = HAL::timeInMilliseconds();
         if((UI_INVERT_MENU_DIRECTION && next<0) || (!UI_INVERT_MENU_DIRECTION && next>0))
         {
-            if ( mode == OPERATING_MODE_PRINT )
+#if FEATURE_MILLING_MODE
+            if ( Printer::operatingMode == OPERATING_MODE_PRINT )
             {
+#endif // FEATURE_MILLING_MODE
                 menuPos[0]++;
                 if(menuPos[0]>=UI_NUM_PAGES)
                     menuPos[0]=0;
+#if FEATURE_MILLING_MODE
             }
-            else if ( mode == OPERATING_MODE_MILL )
+            else
             {
                 menuPos[0]++;
                 if ( menuPos[0] == 1 || menuPos[0] == 3 ) //kein modmenü und kein temperaturmenü im Millingmode
@@ -3027,14 +2955,18 @@ void UIDisplay::nextPreviousAction(int8_t next)
                     menuPos[0]=0;
                 }
             }
+#endif // FEATURE_MILLING_MODE
         }
         else
         {
-            if ( mode == OPERATING_MODE_PRINT )
+#if FEATURE_MILLING_MODE
+            if ( Printer::operatingMode == OPERATING_MODE_PRINT )
             {
+#endif // FEATURE_MILLING_MODE
                 menuPos[0] = (menuPos[0]==0 ? UI_NUM_PAGES-1 : menuPos[0]-1);
+#if FEATURE_MILLING_MODE
             }
-            else if ( mode == OPERATING_MODE_MILL )
+            else
             {
                 menuPos[0] = (menuPos[0]==0 ? UI_NUM_PAGES-1 : menuPos[0]-1);
                 if ( menuPos[0] == 1 || menuPos[0] == 3 ) //kein modmenü und kein temperaturmenü im Millingmode
@@ -3042,6 +2974,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
                     menuPos[0]--; //kann in diesem if nicht -1 werden, könnte es aber bei veränderung!
                 }
             }
+#endif // FEATURE_MILLING_MODE
         }
         return;
     }
@@ -3246,35 +3179,6 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif // EXTRUDER_ALLOW_COLD_MOVE
             break;
         }
-/*
-        case UI_ACTION_ZPOSITION_NOTEST:
-        {
-            Printer::setNoDestinationCheck(true);
-
-#if UI_SPEEDDEPENDENT_POSITIONING
-            float d = 0.01*(float)increment*lastNextAccumul;
-            if(fabs(d)*2000>Printer::maxFeedrate[Z_AXIS]*dtReal)
-                d *= Printer::maxFeedrate[Z_AXIS]*dtReal/(2000*fabs(d));
-            long steps = (long)(d*Printer::axisStepsPerMM[Z_AXIS]);
-            steps = ( increment<0 ? RMath::min(steps,(long)increment) : RMath::max(steps,(long)increment));
-            PrintLine::moveRelativeDistanceInStepsReal(0,0,steps,0,Printer::maxFeedrate[Z_AXIS],true);
-#else
-            PrintLine::moveRelativeDistanceInStepsReal(0,0,increment,0,Printer::homingFeedrate[Z_AXIS],true);
-#endif // UI_SPEEDDEPENDENT_POSITIONING
-
-            Commands::printCurrentPosition();
-            Printer::setNoDestinationCheck(false);
-            break;
-        }
-        case UI_ACTION_ZPOSITION_FAST_NOTEST:
-        {
-            Printer::setNoDestinationCheck(true);
-            PrintLine::moveRelativeDistanceInStepsReal(0,0,Printer::axisStepsPerMM[Z_AXIS]*increment,0,Printer::homingFeedrate[Z_AXIS],true);
-            Commands::printCurrentPosition();
-            Printer::setNoDestinationCheck(false);
-            break;
-        }
-*/
         case UI_ACTION_HEATED_BED_TEMP:
         {
 #if HAVE_HEATED_BED==true
@@ -3545,18 +3449,17 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if FEATURE_MILLING_MODE
             if( Printer::operatingMode == OPERATING_MODE_PRINT )
             {
+#endif // FEATURE_MILLING_MODE
                 HAL::eprSetFloat(EPR_X_HOMING_FEEDRATE_PRINT,Printer::homingFeedrate[X_AXIS]);
+#if FEATURE_MILLING_MODE
             }
             else
             {
                 HAL::eprSetFloat(EPR_X_HOMING_FEEDRATE_MILL,Printer::homingFeedrate[X_AXIS]);
             }
-#else
-            HAL::eprSetFloat(EPR_X_HOMING_FEEDRATE_PRINT,Printer::homingFeedrate[X_AXIS]);
 #endif // FEATURE_MILLING_MODE
             EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-
             break;
         }
         case UI_ACTION_HOMING_FEEDRATE_Y:
@@ -3567,14 +3470,14 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if FEATURE_MILLING_MODE
             if( Printer::operatingMode == OPERATING_MODE_PRINT )
             {
+#endif // FEATURE_MILLING_MODE
                 HAL::eprSetFloat(EPR_Y_HOMING_FEEDRATE_PRINT,Printer::homingFeedrate[Y_AXIS]);
+#if FEATURE_MILLING_MODE
             }
             else
             {
                 HAL::eprSetFloat(EPR_Y_HOMING_FEEDRATE_MILL,Printer::homingFeedrate[Y_AXIS]);
             }
-#else
-            HAL::eprSetFloat(EPR_Y_HOMING_FEEDRATE_PRINT,Printer::homingFeedrate[Y_AXIS]);
 #endif // FEATURE_MILLING_MODE
             EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
@@ -3589,14 +3492,14 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if FEATURE_MILLING_MODE
             if( Printer::operatingMode == OPERATING_MODE_PRINT )
             {
+#endif // FEATURE_MILLING_MODE
                 HAL::eprSetFloat(EPR_Z_HOMING_FEEDRATE_PRINT,Printer::homingFeedrate[Z_AXIS]);
+#if FEATURE_MILLING_MODE
             }
             else
             {
                 HAL::eprSetFloat(EPR_Z_HOMING_FEEDRATE_MILL,Printer::homingFeedrate[Z_AXIS]);
             }
-#else
-            HAL::eprSetFloat(EPR_Z_HOMING_FEEDRATE_PRINT,Printer::homingFeedrate[Z_AXIS]);
 #endif // FEATURE_MILLING_MODE
             EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
@@ -4261,9 +4164,11 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
 #if UI_PRINT_AUTORETURN_TO_MENU_AFTER!=0
         g_nAutoReturnTime=HAL::timeInMilliseconds()+UI_PRINT_AUTORETURN_TO_MENU_AFTER;
 #endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER!=0
+#if FEATURE_MILLING_MODE
     }
     else
     {
@@ -4271,10 +4176,6 @@ void UIDisplay::nextPreviousAction(int8_t next)
         g_nAutoReturnTime=HAL::timeInMilliseconds()+UI_MILL_AUTORETURN_TO_MENU_AFTER;
 #endif // UI_MILL_AUTORETURN_TO_MENU_AFTER!=0
     }
-#else
-#if UI_PRINT_AUTORETURN_TO_MENU_AFTER!=0
-    g_nAutoReturnTime=HAL::timeInMilliseconds()+UI_PRINT_AUTORETURN_TO_MENU_AFTER;
-#endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER!=0
 #endif // FEATURE_MILLING_MODE
 #endif // UI_HAS_KEYS==1
 
@@ -4322,8 +4223,8 @@ void UIDisplay::finishAction(int action)
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             EEPROM::storeDataIntoEEPROM(false);
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
-
             EEPROM::initializeAllOperatingModes();
+
             exitmenu();
             UI_STATUS( UI_TEXT_RESTORE_DEFAULTS );
             break;
@@ -4691,12 +4592,15 @@ void UIDisplay::executeAction(int action)
             {
                 char    deny = 0;
 
-
                 if( PrintLine::linesCount )     deny = 1;   // the operating mode can not be switched while the printing is in progress
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-                if( g_nHeatBedScanStatus || g_nZOSScanStatus )       deny = 1;   // the operating mode can not be switched while a heat bed scan / ZOS is in progress
+                if( g_nHeatBedScanStatus || g_nZOSScanStatus ) deny = 1;   // the operating mode can not be switched while a heat bed scan / ZOS is in progress
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
+
+#if FEATURE_ALIGN_EXTRUDERS
+                if( g_nAlignExtrudersStatus )   deny = 1;
+#endif //FEATURE_ALIGN_EXTRUDERS
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
                 if( g_nWorkPartScanStatus )     deny = 1;   // the operating mode can not be switched while a work part scan is in progress
@@ -4708,11 +4612,6 @@ void UIDisplay::executeAction(int action)
 
                 if( deny )
                 {
-                    if( Printer::debugErrors() )
-                    {
-                        Com::printFLN( Com::tPrintingIsInProcessError );
-                    }
-
                     showError( (void*)ui_text_change_mode, (void*)ui_text_operation_denied );
                     break;
                 }
@@ -5305,9 +5204,11 @@ void UIDisplay::executeAction(int action)
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
 #if UI_PRINT_AUTORETURN_TO_MENU_AFTER!=0
         g_nAutoReturnTime=HAL::timeInMilliseconds()+UI_PRINT_AUTORETURN_TO_MENU_AFTER;
 #endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER!=0
+#if FEATURE_MILLING_MODE
     }
     else
     {
@@ -5315,10 +5216,6 @@ void UIDisplay::executeAction(int action)
         g_nAutoReturnTime=HAL::timeInMilliseconds()+UI_MILL_AUTORETURN_TO_MENU_AFTER;
 #endif // UI_MILL_AUTORETURN_TO_MENU_AFTER!=0
     }
-#else
-#if UI_PRINT_AUTORETURN_TO_MENU_AFTER!=0
-    g_nAutoReturnTime=HAL::timeInMilliseconds()+UI_PRINT_AUTORETURN_TO_MENU_AFTER;
-#endif // UI_PRINT_AUTORETURN_TO_MENU_AFTER!=0
 #endif // FEATURE_MILLING_MODE
 #endif // UI_HAS_KEYS==1
 

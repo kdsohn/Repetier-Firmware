@@ -701,9 +701,11 @@ void Printer::setup()
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
         Printer::homingFeedrate[X_AXIS] = HOMING_FEEDRATE_X_PRINT;
         Printer::homingFeedrate[Y_AXIS] = HOMING_FEEDRATE_Y_PRINT;
         Printer::homingFeedrate[Z_AXIS] = HOMING_FEEDRATE_Z_PRINT;
+#if FEATURE_MILLING_MODE
     }
     else
     {
@@ -711,10 +713,6 @@ void Printer::setup()
         Printer::homingFeedrate[Y_AXIS] = HOMING_FEEDRATE_Y_MILL;
         Printer::homingFeedrate[Z_AXIS] = HOMING_FEEDRATE_Z_MILL;
     }
-#else
-    Printer::homingFeedrate[X_AXIS] = HOMING_FEEDRATE_X_PRINT;
-    Printer::homingFeedrate[Y_AXIS] = HOMING_FEEDRATE_Y_PRINT;
-    Printer::homingFeedrate[Z_AXIS] = HOMING_FEEDRATE_Z_PRINT;
 #endif // FEATURE_MILLING_MODE
 
     HAL::hwSetup();
@@ -1049,14 +1047,14 @@ void Printer::setup()
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
         lengthMM[X_AXIS] = X_MAX_LENGTH_PRINT;
+#if FEATURE_MILLING_MODE
     }
     else
     {
         lengthMM[X_AXIS] = X_MAX_LENGTH_MILL;
     }
-#else
-    lengthMM[X_AXIS] = X_MAX_LENGTH_PRINT;
 #endif // FEATURE_MILLING_MODE
 
     lengthMM[Y_AXIS] = Y_MAX_LENGTH;
@@ -1360,19 +1358,19 @@ void Printer::disableCMPnow( bool wait ) {
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
-#if FEATURE_HEAT_BED_Z_COMPENSATION
+#endif // FEATURE_MILLING_MODE
+ #if FEATURE_HEAT_BED_Z_COMPENSATION
         Printer::doHeatBedZCompensation = 0;
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION
+ #endif // FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_MILLING_MODE
+ #if FEATURE_WORK_PART_Z_COMPENSATION
     }
     else
     {
-#if FEATURE_WORK_PART_Z_COMPENSATION
         Printer::doWorkPartZCompensation = 0;
         Printer::staticCompensationZ     = 0;
-#endif // FEATURE_WORK_PART_Z_COMPENSATION
     }
-#else
-    Printer::doHeatBedZCompensation = 0;
+ #endif // FEATURE_WORK_PART_Z_COMPENSATION
 #endif // FEATURE_MILLING_MODE
     Printer::compensatedPositionTargetStepsZ = 0; //tell CMP to move to 0. TODO: Care for positive matrix beds.
     
@@ -1913,14 +1911,14 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
 #if FEATURE_MILLING_MODE
     if( operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
         homingOrder = HOMING_ORDER_PRINT;
+#if FEATURE_MILLING_MODE
     }
     else
     {
         homingOrder = HOMING_ORDER_MILL;
     }
-#else
-    homingOrder = HOMING_ORDER_PRINT;
 #endif // FEATURE_MILLING_MODE
 
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS

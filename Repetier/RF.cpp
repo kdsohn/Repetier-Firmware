@@ -5808,6 +5808,7 @@ char loadCompensationMatrix( unsigned int uAddress )
 #if FEATURE_MILLING_MODE
         if( Printer::operatingMode == OPERATING_MODE_PRINT )
         {
+#endif // FEATURE_MILLING_MODE
  #if FEATURE_HEAT_BED_Z_COMPENSATION
             // load the currently active heat bed compensation matrix
             uTemp = readWord24C256( I2C_ADDRESS_EXTERNAL_EEPROM, EEPROM_OFFSET_ACTIVE_HEAT_BED_Z_MATRIX );
@@ -5832,6 +5833,7 @@ char loadCompensationMatrix( unsigned int uAddress )
             // we do not support the heat bed compensation
             return -1;
  #endif // FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_MILLING_MODE
         }
         else
         {
@@ -5855,33 +5857,6 @@ char loadCompensationMatrix( unsigned int uAddress )
             return -1;
  #endif // FEATURE_WORK_PART_Z_COMPENSATION
         }
-        
-#else //FEATURE_MILLING_MODE
-
- #if FEATURE_HEAT_BED_Z_COMPENSATION
-        // load the currently active heat bed compensation matrix
-        uTemp = readWord24C256( I2C_ADDRESS_EXTERNAL_EEPROM, EEPROM_OFFSET_ACTIVE_HEAT_BED_Z_MATRIX );
-
-        if( uTemp < 1 || uTemp > EEPROM_MAX_HEAT_BED_SECTORS )
-        {
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( PSTR( "loadMatrix(): invalid active heat bed z matrix: " ), (int)uTemp );
-            }
-            return -1;
-        }
-
-        g_nActiveHeatBed    = (char)uTemp;
-        uAddress            = (unsigned int)(EEPROM_SECTOR_SIZE * uTemp);
-
-        if( Printer::debugErrors() )
-        {
-            Com::printFLN( PSTR( "loadMatrix(): active heat bed z matrix: " ), (int)g_nActiveHeatBed );
-        }
- #else
-        // we do not support the heat bed compensation
-        return -1;
- #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 #endif // FEATURE_MILLING_MODE
     }
 
@@ -6293,11 +6268,11 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 #if FEATURE_MILLING_MODE
                 if( Printer::operatingMode == OPERATING_MODE_PRINT )
                 {
+#endif // FEATURE_MILLING_MODE
                     // process the extruder only in case we are in mode "print"
                     nProcessExtruder = 1;
+#if FEATURE_MILLING_MODE
                 }
-#else
-                nProcessExtruder = 1;
 #endif // FEATURE_MILLING_MODE
 
                 if( nProcessExtruder )
@@ -6675,16 +6650,12 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
     {
         if ( ( HAL::timeInMilliseconds() - g_nlastServiceTime ) > 5000 )
         {
-            char    mode = OPERATING_MODE_PRINT;
-
-#if FEATURE_MILLING_MODE
-            mode = Printer::operatingMode;
-#endif // FEATURE_MILLING_MODE
-
             g_uStartOfIdle = HAL::timeInMilliseconds(); //enter FEATURE_SERVICE_INTERVAL
 
-            if( mode == OPERATING_MODE_PRINT )   
+#if FEATURE_MILLING_MODE
+            if( Printer::operatingMode == OPERATING_MODE_PRINT )   
             {
+#endif // FEATURE_MILLING_MODE
                 if( READ(5) == 0 && READ(11) == 0 && READ(42) == 0 )
                 {
                     if ( g_nServiceRequest == 1 )
@@ -6700,6 +6671,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                 {
                     g_nServiceRequest = 0;
                 }
+#if FEATURE_MILLING_MODE
             }
             else
             {
@@ -6717,6 +6689,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                     g_nServiceRequest = 0;
                 }
             }
+#endif // FEATURE_MILLING_MODE
             g_nEnteredService  = 1;
         }
     }
@@ -6851,7 +6824,9 @@ inline void checkPauseStatus_fromTask(){
                     determinePausePosition();
                     PrintLine::prepareDirectMove();
                 }
-            }else{
+            }
+            else
+            {
 #endif // FEATURE_MILLING_MODE
                 g_pauseStatus = PAUSE_STATUS_PAUSED;
                 g_uStartOfIdle = 0; //pause2
@@ -6981,16 +6956,13 @@ void continuePrint( void )
     UI_STATUS_UPD( UI_TEXT_CONTINUING );
     BEEP_CONTINUE
     uid.exitmenu();
-#if FEATURE_MILLING_MODE
-    bool nPrintingMode = ( Printer::operatingMode == OPERATING_MODE_PRINT );
-#else
-    bool nPrintingMode = true;
-#endif // FEATURE_MILLING_MODE
 
     if( g_pauseMode == PAUSE_MODE_PAUSED )
     {
-        if( nPrintingMode )
+#if FEATURE_MILLING_MODE
+        if( Printer::operatingMode == OPERATING_MODE_PRINT )
         {
+#endif // FEATURE_MILLING_MODE
             // process the extruder only in case we are in mode "print"
 #if NUM_EXTRUDER > 0
             g_pauseStatus = PAUSE_STATUS_HEATING;
@@ -7019,14 +6991,18 @@ void continuePrint( void )
                 // continue to take back retract for pause
                 waitforPauseStatus_fromButton(PAUSE_STATUS_PREPARE_CONTINUE1);
             }
+#if FEATURE_MILLING_MODE
         }
+#endif // FEATURE_MILLING_MODE
     }
     else if( g_pauseMode == PAUSE_MODE_PAUSED_AND_MOVED )
     {
         // move to the continue position
         if( Printer::debugInfo() ) Com::printFLN( PSTR( "continuePrint(): moving..." ) );
-        if( nPrintingMode )
+#if FEATURE_MILLING_MODE
+        if( Printer::operatingMode == OPERATING_MODE_PRINT )
         {
+#endif // FEATURE_MILLING_MODE
 #if NUM_EXTRUDER > 0
             g_pauseStatus = PAUSE_STATUS_HEATING;
             bool wait = false; 
@@ -7048,13 +7024,17 @@ void continuePrint( void )
                 }
             }
 #endif //NUM_EXTRUDER > 0
+#if FEATURE_MILLING_MODE
         }
+#endif // FEATURE_MILLING_MODE
         waitforPauseStatus_fromButton(PAUSE_STATUS_PREPARE_CONTINUE2_1);
-        if( !nPrintingMode && g_nContinueSteps[Z_AXIS] )
+#if FEATURE_MILLING_MODE
+        if( Printer::operatingMode == OPERATING_MODE_MILL && g_nContinueSteps[Z_AXIS] )
         {
             // we are in operating mode mill - get back into the work part now
             waitforPauseStatus_fromButton(PAUSE_STATUS_PREPARE_CONTINUE2_2);
         }
+#endif // FEATURE_MILLING_MODE
     }
 
     Com::printFLN( PSTR("RequestContinue:") ); //repetier
@@ -7090,10 +7070,18 @@ void continuePrint( void )
           else Com::printFLN( PSTR( "continuePrint(): the printing has been continued" ) );
     }
 
-    if( nPrintingMode ){ UI_STATUS_UPD( UI_TEXT_PRINT_POS ); }
-    else{ UI_STATUS_UPD( UI_TEXT_MILL_POS ); }
+#if FEATURE_MILLING_MODE
+    if( Printer::operatingMode == OPERATING_MODE_PRINT ) {
+#endif // FEATURE_MILLING_MODE
+        UI_STATUS_UPD( UI_TEXT_PRINT_POS ); 
+#if FEATURE_MILLING_MODE
+    }
+    else
+    {
+        UI_STATUS_UPD( UI_TEXT_MILL_POS ); 
+    }
+#endif // FEATURE_MILLING_MODE
     Printer::setMenuMode( MENU_MODE_PAUSED, false );
-
 } // continuePrint
 
 void determinePausePosition( void )
@@ -7101,7 +7089,9 @@ void determinePausePosition( void )
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
         determineZPausePositionForPrint();
+#if FEATURE_MILLING_MODE
     }
     else //Printer::operatingMode == OPERATING_MODE_MILL
     {
@@ -7114,8 +7104,6 @@ void determinePausePosition( void )
             return;
         }
     }
-#else
-    determineZPausePositionForPrint();
 #endif // FEATURE_MILLING_MODE
 
     if( g_nPauseSteps[X_AXIS] )
@@ -11754,11 +11742,11 @@ void nextPreviousZAction( int8_t increment )
                 else
                 {
                     //Beim Milling ist Z=0 das obere des Bauteils. Dann geht Z - ins Bauteil rein. Daher ist überfahren ok.
-                    Printer::setDestinationStepsFromMenu( 0, 0, 1 * increment );    
+                    Printer::setDestinationStepsFromMenu( 0, 0, 1 * increment );
                 }
 #endif // FEATURE_MILLING_MODE
             }else{
-                Printer::setDestinationStepsFromMenu( 0, 0, 1 * increment );                
+                Printer::setDestinationStepsFromMenu( 0, 0, 1 * increment );
             }
             
             break;
@@ -11790,11 +11778,11 @@ void nextPreviousZAction( int8_t increment )
                 else
                 {
                     //Beim Milling ist Z=0 das obere des Bauteils. Dann geht Z - ins Bauteil rein. Daher ist überfahren ok.
-                    Printer::setDestinationStepsFromMenu( 0, 0, 10 * increment );    
+                    Printer::setDestinationStepsFromMenu( 0, 0, 10 * increment );
                 }
 #endif // FEATURE_MILLING_MODE
             }else{
-                Printer::setDestinationStepsFromMenu( 0, 0, 10 * increment );                
+                Printer::setDestinationStepsFromMenu( 0, 0, 10 * increment );
             }
             break;
         }
@@ -11825,11 +11813,11 @@ void nextPreviousZAction( int8_t increment )
                 else
                 {
                     //Beim Milling ist Z=0 das obere des Bauteils. Dann geht Z - ins Bauteil rein. Daher ist überfahren ok.
-                    Printer::setDestinationStepsFromMenu( 0, 0, 50 * increment );    
+                    Printer::setDestinationStepsFromMenu( 0, 0, 50 * increment );
                 }
 #endif // FEATURE_MILLING_MODE
             }else{
-                Printer::setDestinationStepsFromMenu( 0, 0, 50 * increment );                
+                Printer::setDestinationStepsFromMenu( 0, 0, 50 * increment );
             }
             break;
         }
@@ -11839,6 +11827,10 @@ void nextPreviousZAction( int8_t increment )
 
 
 #if STEPPER_CURRENT_CONTROL==CURRENT_CONTROL_DRV8711
+
+#if DRV8711_NUM_CHANNELS != 5
+    #error Wer DRV8711_NUM_CHANNELS ändert, muss sich wirklich reindenken und von den Achszuordnungen bis zu den EEPROM-Speicherplätzen alles überdenken. Normalerweise darf dieser Wert nicht anders als 5 sein. Ausser Conrad baut ein Board mit 3 Extrudersteppern oder ähnlich.
+#endif // DRV8711_NUM_CHANNELS != 5
 
 void drv8711Transmit( unsigned short command )
 {
@@ -11973,6 +11965,16 @@ uint8_t drv8711MicroSteps_2_ModeValue(unsigned short microsteps){ //unknown step
     return getmsb(microsteps); //highest bit << 1 -> 256->8, 128->7, ... integer log2
 } //drv8711MicroSteps_2_ModeValue
 
+unsigned short drv8711Axis_2_InitMicrosteps(uint8_t axis){
+    return (axis == X_AXIS || axis == Y_AXIS ? RF_MICRO_STEPS_XY : 
+                ( axis == Z_AXIS                   ? RF_MICRO_STEPS_Z  :
+                    ( axis == E_AXIS || axis == E_AXIS + 1 ? RF_MICRO_STEPS_E : 
+                                                                RF_MICRO_STEPS_XY /*error fallback*/
+                    )
+                )
+            );
+}
+
 unsigned short drv8711ModeValue_2_MicroSteps(uint8_t modeValue){
     if (modeValue > 8) return 256; //constrain, but ERROR -> avoid this!
     return (1 << modeValue);
@@ -12027,23 +12029,7 @@ void drv8711adjustMicroSteps(unsigned char driver){
 #if FEATURE_ADJUSTABLE_MICROSTEPS
     unsigned short reg00bytes = drv8711MicroSteps_2_Register00Hex( drv8711ModeValue_2_MicroSteps(Printer::motorMicroStepsModeValue[driver-1/*=axis*/]) );
 #else
-    unsigned short reg00bytes = 0;
-    switch(driver){
-        case X_AXIS + 1:
-        case Y_AXIS + 1: {
-            reg00bytes = drv8711MicroSteps_2_Register00Hex(RF_MICRO_STEPS_XY);
-            break;
-        }
-        case Z_AXIS + 1: {
-            reg00bytes = drv8711MicroSteps_2_Register00Hex(RF_MICRO_STEPS_Z);
-            break;
-        }
-        case E_AXIS + 1:
-        case E_AXIS + 2: {
-            reg00bytes = drv8711MicroSteps_2_Register00Hex(RF_MICRO_STEPS_E);
-            break;
-        }
-    }
+    unsigned short reg00bytes = drv8711MicroSteps_2_Register00Hex( drv8711Axis_2_InitMicrosteps(driver-1) );
 #endif // FEATURE_ADJUSTABLE_MICROSTEPS
     if (reg00bytes) drv8711Transmit( reg00bytes );
     drv8711Disable( driver );
@@ -12180,12 +12166,12 @@ void motorCurrentControlInit( void )
     //init here:
     
     //man könnte sich hier noch 2 byte ram sparen. ^^
-    Printer::motorMicroStepsModeValue[0] = Printer::motorMicroStepsModeValue[1] = drv8711MicroSteps_2_ModeValue(RF_MICRO_STEPS_XY); //init later because of recalculation of value
-    Printer::motorMicroStepsModeValue[2]                                        = drv8711MicroSteps_2_ModeValue(RF_MICRO_STEPS_Z); //init later because of recalculation of value
-    Printer::motorMicroStepsModeValue[3] = Printer::motorMicroStepsModeValue[4] = drv8711MicroSteps_2_ModeValue(RF_MICRO_STEPS_E); //init later because of recalculation of value
+    for(int ax = 0 ; ax < DRV8711_NUM_CHANNELS ; ax++){
+        Printer::motorMicroStepsModeValue[ax] = drv8711MicroSteps_2_ModeValue(drv8711Axis_2_InitMicrosteps(ax)); //init
+    }
     //does EEPROM have valid values for microsteps?
     if (HAL::eprGetByte( EPR_RF_MICRO_STEPS_USED ) == 0xAB ){
-        for(int i = 0; i < 5; i++){
+        for(int i = 0; i <= E_AXIS+1; i++){
          /* #define EPR_RF_MICRO_STEPS_X              1943 //[1byte]
             #define EPR_RF_MICRO_STEPS_Y              1944 //[1byte]
             #define EPR_RF_MICRO_STEPS_Z              1945 //[1byte]
@@ -12707,8 +12693,6 @@ void setRGBLEDs( uint8_t R, uint8_t G, uint8_t B )
 void updateRGBLightStatus( void )
 {
     char    newStatus = RGB_STATUS_IDLE;
-    char    mode;
-
 
     if( Printer::RGBButtonBackPressed )
     {
@@ -12751,13 +12735,9 @@ void updateRGBLightStatus( void )
     }
 
 #if FEATURE_MILLING_MODE
-    mode = Printer::operatingMode;
-#else
-    mode = OPERATING_MODE_PRINT;
-#endif // FEATURE_MILLING_MODE
-
-    if( mode == OPERATING_MODE_PRINT )
+    if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
         // operating mode print
 #if NUM_EXTRUDER >= 1
         for(uint8_t i=0; i<NUM_EXTRUDER; i++)
@@ -12825,6 +12805,7 @@ void updateRGBLightStatus( void )
                 newStatus = RGB_STATUS_COOLING;
             }
         }
+#if FEATURE_MILLING_MODE
     }
     else
     {
@@ -12838,6 +12819,7 @@ void updateRGBLightStatus( void )
             newStatus = RGB_STATUS_IDLE;
         }
     }
+#endif // FEATURE_MILLING_MODE
 
     if( newStatus != Printer::RGBLightStatus )
     {
@@ -13069,8 +13051,6 @@ void setupForMilling( void )
 
 void prepareZCompensation( void )
 {
-    char    mode;
-
     if( COMPENSATION_MATRIX_SIZE > EEPROM_SECTOR_SIZE )
     {
         if( Printer::debugErrors() )
@@ -13083,14 +13063,10 @@ void prepareZCompensation( void )
     }
 
 #if FEATURE_MILLING_MODE
-    mode = Printer::operatingMode;
-#else
-    mode = OPERATING_MODE_PRINT;
-#endif // FEATURE_MILLING_MODE
-
-#if FEATURE_HEAT_BED_Z_COMPENSATION
-    if( mode == OPERATING_MODE_PRINT )
+    if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
+ #if FEATURE_HEAT_BED_Z_COMPENSATION
         // restore the default scan parameters
         restoreDefaultScanParameters();
     
@@ -13100,18 +13076,14 @@ void prepareZCompensation( void )
         {
             // there is no valid compensation matrix available
             initCompensationMatrix();
-
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( PSTR( "prepareZCompensation(): the compensation matrix is not available" ) );
-            }
+            Com::printFLN( PSTR( "prepareZCompensation(): the compensation matrix is not available" ) );
         }
+ #endif // FEATURE_HEAT_BED_Z_COMPENSATION
+#if FEATURE_MILLING_MODE
     }
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION
-
-#if FEATURE_WORK_PART_Z_COMPENSATION
-    if( mode == OPERATING_MODE_MILL )
+    else if( Printer::operatingMode == OPERATING_MODE_MILL )
     {
+ #if FEATURE_WORK_PART_Z_COMPENSATION
         // we must restore the default work part scan parameters
         restoreDefaultScanParameters();
 
@@ -13121,14 +13093,11 @@ void prepareZCompensation( void )
         {
             // there is no valid compensation matrix available
             initCompensationMatrix();
-
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN( PSTR( "prepareZCompensation(): the compensation matrix is not available" ) );
-            }
+            Com::printFLN( PSTR( "prepareZCompensation(): the compensation matrix is not available" ) );
         }
+ #endif // FEATURE_WORK_PART_Z_COMPENSATION
     }
-#endif // FEATURE_WORK_PART_Z_COMPENSATION
+#endif // FEATURE_MILLING_MODE
 
 } // prepareZCompensation
 
@@ -13646,18 +13615,18 @@ void notifyAboutWrongHardwareType( unsigned char guessedHardwareType )
 
 void showIdle( void )
 {
-    char    mode = OPERATING_MODE_PRINT;
 #if FEATURE_MILLING_MODE
-    mode = Printer::operatingMode;
-#endif // FEATURE_MILLING_MODE
-    if( mode == OPERATING_MODE_PRINT )
+    if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
         UI_STATUS( UI_TEXT_PRINTER_READY );
+#if FEATURE_MILLING_MODE
     }
     else
     {
         UI_STATUS( UI_TEXT_MILLER_READY );
     }
+#endif // FEATURE_MILLING_MODE
 } // showIdle
 
 
