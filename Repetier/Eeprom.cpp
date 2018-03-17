@@ -79,9 +79,11 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
         Printer::homingFeedrate[X_AXIS] = HOMING_FEEDRATE_X_PRINT;
         Printer::homingFeedrate[Y_AXIS] = HOMING_FEEDRATE_Y_PRINT;
         Printer::homingFeedrate[Z_AXIS] = HOMING_FEEDRATE_Z_PRINT;
+#if FEATURE_MILLING_MODE
     }
     else
     {
@@ -89,10 +91,6 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
         Printer::homingFeedrate[Y_AXIS] = HOMING_FEEDRATE_Y_MILL;
         Printer::homingFeedrate[Z_AXIS] = HOMING_FEEDRATE_Z_MILL;
     }
-#else
-    Printer::homingFeedrate[X_AXIS] = HOMING_FEEDRATE_X_PRINT;
-    Printer::homingFeedrate[Y_AXIS] = HOMING_FEEDRATE_Y_PRINT;
-    Printer::homingFeedrate[Z_AXIS] = HOMING_FEEDRATE_Z_PRINT;
 #endif // FEATURE_MILLING_MODE
 
     Printer::maxJerk = MAX_JERK;
@@ -118,14 +116,14 @@ void EEPROM::restoreEEPROMSettingsFromConfiguration()
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
         Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_PRINT;
+#if FEATURE_MILLING_MODE
     }
     else
     {
         Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_MILL;
     }
-#else
-    Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_PRINT;
 #endif // FEATURE_MILLING_MODE
 
     Printer::lengthMM[Y_AXIS] = Y_MAX_LENGTH;
@@ -351,9 +349,11 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
         HAL::eprSetFloat(EPR_X_HOMING_FEEDRATE_PRINT,Printer::homingFeedrate[X_AXIS]);
         HAL::eprSetFloat(EPR_Y_HOMING_FEEDRATE_PRINT,Printer::homingFeedrate[Y_AXIS]);
         HAL::eprSetFloat(EPR_Z_HOMING_FEEDRATE_PRINT,Printer::homingFeedrate[Z_AXIS]);
+#if FEATURE_MILLING_MODE
     }
     else
     {
@@ -361,10 +361,6 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
         HAL::eprSetFloat(EPR_Y_HOMING_FEEDRATE_MILL,Printer::homingFeedrate[Y_AXIS]);
         HAL::eprSetFloat(EPR_Z_HOMING_FEEDRATE_MILL,Printer::homingFeedrate[Z_AXIS]);
     }
-#else
-    HAL::eprSetFloat(EPR_X_HOMING_FEEDRATE_PRINT,Printer::homingFeedrate[X_AXIS]);
-    HAL::eprSetFloat(EPR_Y_HOMING_FEEDRATE_PRINT,Printer::homingFeedrate[Y_AXIS]);
-    HAL::eprSetFloat(EPR_Z_HOMING_FEEDRATE_PRINT,Printer::homingFeedrate[Z_AXIS]);
 #endif // FEATURE_MILLING_MODE
 
     HAL::eprSetFloat(EPR_MAX_JERK,Printer::maxJerk);
@@ -494,12 +490,14 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
 #if FEATURE_MILLING_MODE
         if( Printer::operatingMode == OPERATING_MODE_PRINT )
         {
+#endif // FEATURE_MILLING_MODE
             HAL::eprSetInt32(EPR_PRINTING_TIME,0);
             HAL::eprSetFloat(EPR_PRINTING_DISTANCE,0);
 #if FEATURE_SERVICE_INTERVAL
             HAL::eprSetInt32(EPR_PRINTING_TIME_SERVICE,0);
             HAL::eprSetFloat(EPR_PRINTING_DISTANCE_SERVICE,0);
 #endif // FEATURE_SERVICE_INTERVAL
+#if FEATURE_MILLING_MODE
         }
         else
         {
@@ -508,13 +506,6 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
             HAL::eprSetInt32(EPR_MILLING_TIME_SERVICE,0);
 #endif // FEATURE_SERVICE_INTERVAL
         }
-#else
-        HAL::eprSetInt32(EPR_PRINTING_TIME,0);
-        HAL::eprSetFloat(EPR_PRINTING_DISTANCE,0);
-#if FEATURE_SERVICE_INTERVAL
-        HAL::eprSetInt32(EPR_PRINTING_TIME_SERVICE,0);
-        HAL::eprSetFloat(EPR_PRINTING_DISTANCE_SERVICE,0);
-#endif // FEATURE_SERVICE_INTERVAL
 #endif // FEATURE_MILLING_MODE
     }
 
