@@ -109,6 +109,7 @@
 #define UI_TEXT_NO                      "No"
 #define UI_TEXT_OK                      "Ok"
 #define UI_TEXT_FAIL                    "Fail"
+#define UI_TEXT_ABORT_KEYPRESSED        "Aborted by keys"
 #define UI_TEXT_NEEDFIX                 "too high"
 #define UI_TEXT_UP                      "Up"
 #define UI_TEXT_DOWN                    "Down"
@@ -173,9 +174,7 @@
 #define UI_TEXT_JERK                    "X/Y-Jerk:%aj"
 #define UI_TEXT_ZJERK                   "Z-Jerk  :%aJ"
 #define UI_TEXT_ACCELERATION            "Acceleration"
-#if FEATURE_MILLING_MODE
- #define UI_TEXT_ACCEL_MILL              "Accelerat.: %XZ"
-#endif //FEATURE_MILLING_MODE
+#define UI_TEXT_ACCEL_MILL              "Accelerat.: %XZ"
 #define UI_TEXT_DBG_ECHO                "Echo   : %do"
 #define UI_TEXT_DBG_INFO                "Info   : %di"
 #define UI_TEXT_DBG_ERROR               "Errors : %de"
@@ -292,7 +291,6 @@
 #define UI_TEXT_ALIGN_EXTRUDERS_ABORTED "Align aborted"
 #define UI_TEXT_ALIGN_EXTRUDERS_DONE    "Align completed"
 #define UI_TEXT_ALIGN_EXTRUDERS         "Align Extruders"
-#define UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN "mOffset: %HO um"
 #define UI_TEXT_PRINT_MODE              "Printer"
 #define UI_TEXT_MILL_MODE               "Miller"
 #define UI_TEXT_Z_SINGLE                "Single"
@@ -397,6 +395,10 @@
 #define UI_TEXT_FLOW_MAX               "Digit Max:%CO"
 #define UI_TEXT_FLOW_DF                "dFlow:   :%CF%%%"
 #define UI_TEXT_FLOW_DV                "dFeed:   :%CE%%%"
+
+#define UI_TEXT_MICRO_STEPS_XY         "MicroStepXY:%Xx"
+#define UI_TEXT_MICRO_STEPS_Z          "MicroStepsZ:%Xz"
+#define UI_TEXT_MICRO_STEPS_E          "MicroStepsE:%XE"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
     #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"
@@ -510,6 +512,7 @@
 #define UI_TEXT_OK                      "Ok"
 #define UI_TEXT_NEEDFIX                 "zu hoch"
 #define UI_TEXT_FAIL                    "Fail"
+#define UI_TEXT_ABORT_KEYPRESSED        "Aborted by keys"
 #define UI_TEXT_UP                      "Hoch"
 #define UI_TEXT_DOWN                    "Runter"
 #define UI_TEXT_SEL                     "\003"
@@ -564,9 +567,7 @@
 #define UI_TEXT_MOVE_Z                  "Bewegen Z:%aZ"
 #define UI_TEXT_MOVE_Z_DELTA            "Bewegen:%aZ"
 #define UI_TEXT_ACCELERATION            "Beschleunigung"
-#if FEATURE_MILLING_MODE
- #define UI_TEXT_ACCEL_MILL              "Fr" STR_auml "sbeschl.:%XZ"
-#endif // FEATURE_MILLING_MODE
+#define UI_TEXT_ACCEL_MILL              "Fr" STR_auml "sbeschl.:%XZ"
 #define UI_TEXT_DBG_ECHO                "Echo       :%do"
 #define UI_TEXT_DBG_INFO                "Info       :%di"
 #define UI_TEXT_DBG_ERROR               "Fehler     :%de"
@@ -669,7 +670,6 @@
 // FEATURE_ALIGN_EXTRUDERS
 #define UI_TEXT_ALIGN_EXTRUDERS_ABORTED "Ausr. abgebr."
 #define UI_TEXT_ALIGN_EXTRUDERS_DONE    "Ausr. beendet"
-#define UI_TEXT_HEAT_BED_SCAN_OFFSET_MIN "mOffset: %HO um"
 #define UI_TEXT_PRINT_MODE              "Drucker"
 #define UI_TEXT_MILL_MODE               "Fr" STR_auml "ser"
 #define UI_TEXT_Z_SINGLE                "Einfach"
@@ -769,6 +769,10 @@
 #define UI_TEXT_FLOW_MAX               "Digit Max:%CO"
 #define UI_TEXT_FLOW_DF                "dFlow:   :%CF%%%"
 #define UI_TEXT_FLOW_DV                "dFeed:   :%CE%%%"
+
+#define UI_TEXT_MICRO_STEPS_XY         "MicroStepXY:%Xx"
+#define UI_TEXT_MICRO_STEPS_Z          "MicroStepsZ:%Xz"
+#define UI_TEXT_MICRO_STEPS_E          "MicroStepsE:%XE"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
     #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"

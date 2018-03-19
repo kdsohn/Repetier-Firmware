@@ -193,8 +193,16 @@ void FEATURE_READ_CALIPER_HOOK(); //read in calipers 48bit protocol bitwise!
 //undef fix gegen compiler warning   
 #define SERIAL_RX_BUFFER_SIZE   128
 #define SERIAL_RX_BUFFER_MASK   127
-#define SERIAL_TX_BUFFER_SIZE    64
-#define SERIAL_TX_BUFFER_MASK    63
+
+#undef SERIAL_TX_BUFFER_SIZE
+#undef SERIAL_TX_BUFFER_MASK
+#ifdef BIG_OUTPUT_BUFFER
+  #define SERIAL_TX_BUFFER_SIZE 128
+  #define SERIAL_TX_BUFFER_MASK 127
+#else
+  #define SERIAL_TX_BUFFER_SIZE 64
+  #define SERIAL_TX_BUFFER_MASK 63
+#endif
 
 struct ring_buffer_rx
 {
@@ -395,7 +403,7 @@ public:
 
     } // U16SquaredToU32
 
-    static inline unsigned int ComputeV(long timer,long accel)
+    static inline speed_t ComputeV(long timer,long accel)
     {
         unsigned int res;
 

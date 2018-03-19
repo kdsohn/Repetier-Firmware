@@ -48,6 +48,14 @@ public:
     FSTRINGVAR(tI)
     FSTRINGVAR(tJ)
     FSTRINGVAR(tR)
+    FSTRINGVAR(tD)
+    FSTRINGVAR(tC)
+    FSTRINGVAR(tH)
+    FSTRINGVAR(tA)
+    FSTRINGVAR(tB)
+    FSTRINGVAR(tK)
+    FSTRINGVAR(tL)
+    FSTRINGVAR(tO)
     FSTRINGVAR(tSDReadError)
     FSTRINGVAR(tExpectedLine)
     FSTRINGVAR(tGot)
@@ -127,9 +135,9 @@ public:
     FSTRINGVAR(tMillingTimeService)
 #endif // FEATURE_SERVICE_INTERVAL
 
-#ifdef DEBUG_GENERIC
+#ifdef DEBUG_GENERIC_TEMP_TABLE
     FSTRINGVAR(tGenTemp)
-#endif // DEBUG_GENERIC
+#endif // DEBUG_GENERIC_TEMP_TABLE
 
     FSTRINGVAR(tTargetExtr)
     FSTRINGVAR(tTargetBedColon)
@@ -339,7 +347,6 @@ public:
     FSTRINGVAR(tOutputObjectPrint)
     FSTRINGVAR(tOutputObjectMill)
     FSTRINGVAR(tUnmountFilamentWithHeating)
-    FSTRINGVAR(tUnmountFilamentWithoutHeating)
     FSTRINGVAR(tMountFilamentWithHeating)
     FSTRINGVAR(tMountFilamentWithoutHeating)
 
@@ -368,6 +375,7 @@ public:
     static void printFLN(FSTRINGPARAM(text),float value,uint8_t digits=2,bool komma_as_dot=false);
     static void printArrayFLN(FSTRINGPARAM(text),float *arr,uint8_t n=4,uint8_t digits=2);
     static void printArrayFLN(FSTRINGPARAM(text),int32_t *arr,uint8_t n=4);
+    static void printSharpLine();
     static void print(long value);
     static inline void print(uint32_t value) {printNumber(value);}
     static inline void print(int value) {print((int32_t)value);}

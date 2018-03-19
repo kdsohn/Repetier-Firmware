@@ -77,14 +77,6 @@
   - Examples:
   - M3001 ; turns the z-compensation on
 
-- M3002 [S] - configure the min z-compensation scope ( S - units are [steps] )
-  - Examples:
-  - M3002 S1280 ; sets the min z-compensation scope to 1280 [steps] (= 0.5 [mm] in case RF_MICRO_STEPS is 32)
-
-- M3003 [S] - configure the max z-compensation scope ( S - units are [steps] )
-  - Examples:
-  - M3003 S12800 ; sets the max z-compensation scope to 12800 [steps] (= 5.0 [mm] in case RF_MICRO_STEPS is 32)
-
 - M3006 [S] [Z] - configure the static z-offset ( S - units are [um], Z - units are [mm] )
   - Examples:
   - M3006 S-100 ; sets the static z-offset to -100 [um] (= -0.1 [mm])
@@ -216,14 +208,10 @@
   - Examples:
   - M3060 ; outputs the device type and firmware version
 
-- M3070 [S] - pause the print as if the "Pause" button would have been pressed
+- M3070 [S] - pause the print as if the "Pause" button would have been pressed and wait until the print has been continued via the "Continue" button
   - Examples:
   - M3070 S1 ; pauses the printing
   - M3070 S2 ; pauses the printing and moves away
-
-- M3071 - wait until the print has been continued via the "Continue" button
-  - Examples:
-  - M3071 ; waits until the "Continue" button has been pressed (does nothing in case the print is not paused at the moment)
 
 - M3075 [S] [P] - configure the emergency pause digits
   - Examples:
@@ -254,22 +242,6 @@
 - M3091 - erase the external EEPROM
   - Examples:
   - M3091 ; erases the external EEPROM
-
-- M3100 [S] - configure the number of manual z steps after the "Heat Bed up" or "Heat Bed down" button has been pressed
-  - Examples:
-  - M3100 S100 ; sets the number of manual z steps after the "Heat Bed up" or "Heat Bed down" button has been pressed to 100 [steps]
-
-- M3101 [S] - configure the number of manual extruder steps after the "Extruder output" or "Extruder retract" button has been pressed
-  - Examples:
-  - M3101 S100 ; sets the number of manual extruder steps after the "Extruder output" or "Extruder retract" button has been pressed to 100 [steps]
-
-- M3102 [X] [Y] [Z] [E] - configure the offset in x, y, z and e direction which shall be applied in case the "Pause Printing" button has been pressed ( units are [steps] )
-  - Examples:
-  - M3102 X100 ; sets the x-offset in case of "Pause Printing" has been pressed to 100 [steps]
-  - M3102 Y100 ; sets the y-offset in case of "Pause Printing" has been pressed to 100 [steps]
-  - M3102 Z100 ; sets the z-offset in case of "Pause Printing" has been pressed to 100 [steps]
-  - M3102 E500 ; sets the e-offset in case of "Pause Printing" has been pressed to 500 [steps]
-  - M3102 X100 Y100 Z100 E500 ; sets the x/y/z/e-offset in case of "Pause Printing" has been pressed to 100/100/100/500 [steps]
 
 - M3103 [X] [Y] [Z] - configure the x, y and z position which shall set when the printer is parked ( units are [mm] )
   - Examples:
@@ -520,6 +492,7 @@ The following variables are used for movements in x/y/z direction:
 
 */
 
+#define DRV8711_NUM_CHANNELS                5
 
 extern const char   ui_text_error[]                 PROGMEM;
 extern const char   ui_text_warning[]               PROGMEM;
@@ -692,7 +665,6 @@ extern bool             g_nDigitZCompensationDigits_active;
 #if FEATURE_FIND_Z_ORIGIN
 extern volatile unsigned char g_nFindZOriginStatus;
 extern long            g_nZOriginPosition[3];
-extern int             g_nZOriginSet;
 #endif // FEATURE_FIND_Z_ORIGIN
 
 #if FEATURE_ALIGN_EXTRUDERS
@@ -748,7 +720,7 @@ extern float g_ZSchraubenSollDrehungenWarm_U;
 extern float g_ZSchraubenSollKorrekturWarm_mm;
 extern char g_ZSchraubeOk;
 
-extern bool calculateZScrewCorrection( void );
+extern void calculateZScrewCorrection( void );
 
 //Menüumschalter für Z-Step-Höhe
 extern void configureMANUAL_STEPS_Z( int8_t increment );
@@ -856,8 +828,10 @@ extern char loadCompensationMatrix( unsigned int uAddress );
 // clearCompensationMatrix()
 extern void clearCompensationMatrix( unsigned int uAddress );
 
+#if DEBUG_REMEMBER_SCAN_PRESSURE
 // outputPressureMatrix()
 extern void outputPressureMatrix( void );
+#endif // DEBUG_REMEMBER_SCAN_PRESSURE
 
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
@@ -935,6 +909,12 @@ extern void nextPreviousZAction( int8_t increment );
 #if STEPPER_CURRENT_CONTROL==CURRENT_CONTROL_DRV8711
 // setMotorCurrent()
 extern void setMotorCurrent( unsigned char driver, uint8_t level );
+
+// adjust/set Microsteps()
+extern unsigned short drv8711Axis_2_InitMicrosteps(uint8_t axis);
+extern unsigned short drv8711ModeValue_2_MicroSteps(uint8_t modeValue);
+extern uint8_t        drv8711MicroSteps_2_ModeValue(unsigned short microsteps);
+extern void           drv8711adjustMicroSteps(unsigned char driver);
 
 // motorCurrentControlInit()
 extern void motorCurrentControlInit( void );

@@ -35,10 +35,10 @@ uint8_t             Extruder::dittoMode = 0;
 
 #if ANALOG_INPUTS>0
 const uint8         osAnalogInputChannels[] PROGMEM = ANALOG_INPUT_CHANNELS;
-volatile uint8      osAnalogInputCounter[ANALOG_INPUTS];
-volatile uint       osAnalogInputBuildup[ANALOG_INPUTS];
+volatile uint8      osAnalogInputCounter[ANALOG_INPUTS] = {0};
+volatile uint       osAnalogInputBuildup[ANALOG_INPUTS] = {0};
 volatile uint8      osAnalogInputPos=0; // Current sampling position
-volatile uint       osAnalogInputValues[ANALOG_INPUTS];
+volatile uint       osAnalogInputValues[ANALOG_INPUTS] = {0};
 #endif // ANALOG_INPUTS>0
 
 #ifdef USE_GENERIC_THERMISTORTABLE_1
@@ -223,7 +223,7 @@ void createGenericTable(short table[GENERIC_THERM_NUM_ENTRIES][2],short minTemp,
         if(adc > 4092) adc = 4092;
         table[i][0] = (adc >> (ANALOG_REDUCE_BITS));
         table[i][1] = static_cast<int>(t);
-#ifdef DEBUG_GENERIC
+#ifdef DEBUG_GENERIC_TEMP_TABLE
         Com::printF(Com::tGenTemp,table[i][0]);
         Com::printFLN(Com::tComma,table[i][1]);
 #endif
@@ -341,6 +341,9 @@ void Extruder::selectExtruderById(uint8_t extruderId)
     Printer::maxAccelerationMMPerSquareSecond[E_AXIS] = Printer::maxTravelAccelerationMMPerSquareSecond[E_AXIS] = Extruder::current->maxAcceleration;
     Printer::maxTravelAccelerationStepsPerSquareSecond[E_AXIS] = Printer::maxPrintAccelerationStepsPerSquareSecond[E_AXIS] = Printer::maxAccelerationMMPerSquareSecond[E_AXIS] * Printer::axisStepsPerMM[E_AXIS];
 
+    g_nManualSteps[E_AXIS] = uint32_t(Printer::axisStepsPerMM[E_AXIS] * DEFAULT_MANUAL_MM_E);
+    g_nPauseSteps[E_AXIS]  = long    (Printer::axisStepsPerMM[E_AXIS] * DEFAULT_PAUSE_MM_E);
+
 #if USE_ADVANCE
     Printer::maxExtruderSpeed = (uint8_t)floor(HAL::maxExtruderTimerFrequency() / (Extruder::current->maxFeedrate * Extruder::current->stepsPerMM));
     if(Printer::maxExtruderSpeed>15) Printer::maxExtruderSpeed = 15;
@@ -377,7 +380,7 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
     if( extr >= NUM_EXTRUDER )
     {
         // do not set the temperature for an extruder which is not present - this attempt could heat up the extruder without any control and could significantly overheat the extruder
-        Com::printFLN( PSTR( "setTemperatureForExtruder(): aborted" ) );
+        if(temperatureInCelsius > 0) Com::printFLN( PSTR( "setTemperatureForExtruder(): cant set Temp for Extr. T" ), extr );
         return;
     }
 
@@ -458,10 +461,10 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
 #if FEATURE_MILLING_MODE
         if( Printer::operatingMode == OPERATING_MODE_PRINT )
         {
+#endif // FEATURE_MILLING_MODE
             EEPROM::updatePrinterUsage();
+#if FEATURE_MILLING_MODE
         }
-#else
-        EEPROM::updatePrinterUsage();
 #endif // FEATURE_MILLING_MODE
     }
 #endif // EEPROM_MODE != 0
@@ -544,19 +547,11 @@ void Extruder::disableCurrentExtruderMotor()
 
 void Extruder::disableAllExtruders()
 {
-    Extruder*   e;
-    uint8_t     mode = OPERATING_MODE_PRINT;
-
-
 #if FEATURE_MILLING_MODE
-    if( Printer::operatingMode == OPERATING_MODE_MILL )
+    if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
-        mode = OPERATING_MODE_MILL;
-    }
 #endif // FEATURE_MILLING_MODE
-
-    if( mode == OPERATING_MODE_PRINT )
-    {
+        Extruder*   e;
         for(uint8_t i=0; i<NUM_EXTRUDER; i++ )
         {
             e = &extruder[i];
@@ -564,14 +559,15 @@ void Extruder::disableAllExtruders()
             if(e->enablePin > -1)
                 HAL::digitalWrite(e->enablePin,!e->enableOn);
 
-#if STEPPER_ON_DELAY
+ #if STEPPER_ON_DELAY
             e->enabled = 0;
-#endif // STEPPER_ON_DELAY
+ #endif // STEPPER_ON_DELAY
         }
+#if FEATURE_MILLING_MODE
     }
+#endif // FEATURE_MILLING_MODE
 
     cleanupEPositions();
-
 } // disableAllExtruders
 
 
@@ -1229,18 +1225,20 @@ void TemperatureController::waitForTargetTemperature(uint8_t plus_temp_tolerance
     }else{
         UI_STATUS_UPD( UI_TEXT_COOLING_DOWN );
     }
-    g_uStartOfIdle = 0;
+    g_uStartOfIdle = 0; //end waitForTargetTemperature
     while(true) {
         Commands::printTemperatures();
         Commands::checkForPeriodicalActions( WaitHeater );
         if( fabs(targetTemperatureC - currentTemperatureC) <= TEMP_TOLERANCE + plus_temp_tolerance ) break;
         if( !dirRising && currentTemperatureC < MAX_ROOM_TEMPERATURE ) break;
     }
-    g_uStartOfIdle = HAL::timeInMilliseconds();
+    g_uStartOfIdle = HAL::timeInMilliseconds(); //end waitForTargetTemperature
 }
 
 void TemperatureController::autotunePID(float temp, uint8_t controllerId, int maxCycles, bool storeValues, int method)
 {
+    g_uStartOfIdle = 0; // start autotunePID
+    UI_STATUS_UPD(UI_TEXT_PID);
     float currentTemp;
     int cycles=0;
     bool heating = true;
@@ -1396,9 +1394,8 @@ see also: http://www.mstarlabs.com/control/znrule.html
         {
             Com::printErrorFLN(Com::tAPIDFailedHigh);
             showError( (void*)ui_text_autodetect_pid, (void*)ui_text_temperature_wrong );
-            //Extruder::disableAllHeater();
             autotuneIndex = 255;
-            return;
+            break;
         }
 
         Commands::printTemperatures();
@@ -1407,15 +1404,14 @@ see also: http://www.mstarlabs.com/control/znrule.html
         {
             Com::printErrorFLN(Com::tAPIDFailedTimeout);
             showError( (void*)ui_text_autodetect_pid, (void*)ui_text_timeout );
-            //Extruder::disableAllHeater();
             autotuneIndex = 255;
-            return;
+            g_uStartOfIdle = HAL::timeInMilliseconds(); //end autotunePID timeout
+            break;
         }
         if(cycles > maxCycles)
         {
             Com::printInfoFLN(Com::tAPIDFinished);
             UI_STATUS_UPD( UI_TEXT_AUTODETECT_PID_DONE );
-            //Extruder::disableAllHeater();
             autotuneIndex = 255;
             if(storeValues)
             {
@@ -1424,9 +1420,11 @@ see also: http://www.mstarlabs.com/control/znrule.html
                 pidDGain = Kd;
                 EEPROM::storeDataIntoEEPROM();
             }
+            g_uStartOfIdle = HAL::timeInMilliseconds()+30000; //end autotunePID cycles
             return;
         }
     }
+    g_uStartOfIdle = HAL::timeInMilliseconds(); //end autotunePID with error
 } // autotunePID
 
 bool reportTempsensorError()
@@ -1459,20 +1457,16 @@ bool reportTempsensorError()
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
+#endif // FEATURE_MILLING_MODE
         if( Printer::debugErrors() )
         {
             Com::printErrorFLN(Com::tDryModeUntilRestart);
         }
-    }
-#else
-    if( Printer::debugErrors() )
-    {
-        Com::printErrorFLN(Com::tDryModeUntilRestart);
+#if FEATURE_MILLING_MODE
     }
 #endif // FEATURE_MILLING_MODE
 
     return true;
-
 } // reportTempsensorError
 
 
@@ -1492,7 +1486,7 @@ Extruder extruder[NUM_EXTRUDER] =
 {
 #if NUM_EXTRUDER>0
     {
-        0,EXT0_X_OFFSET,EXT0_Y_OFFSET,EXT0_Z_OFFSET,EXT0_STEPS_PER_MM,EXT0_ENABLE_PIN,EXT0_ENABLE_ON,
+        0,(int32_t)(EXT0_X_OFFSET_MM * XAXIS_STEPS_PER_MM),(int32_t)(EXT0_Y_OFFSET_MM * YAXIS_STEPS_PER_MM),(int32_t)(EXT0_Z_OFFSET_MM * ZAXIS_STEPS_PER_MM),EXT0_STEPS_PER_MM,EXT0_ENABLE_PIN,EXT0_ENABLE_ON,
         EXT0_MAX_FEEDRATE,EXT0_MAX_ACCELERATION,EXT0_MAX_START_FEEDRATE,0,EXT0_WATCHPERIOD
         ,EXT0_WAIT_RETRACT_TEMP,EXT0_WAIT_RETRACT_UNITS,0
 
@@ -1524,7 +1518,7 @@ Extruder extruder[NUM_EXTRUDER] =
 
 #if NUM_EXTRUDER>1
     ,{
-        1,EXT1_X_OFFSET,EXT1_Y_OFFSET,EXT1_Z_OFFSET,EXT1_STEPS_PER_MM,EXT1_ENABLE_PIN,EXT1_ENABLE_ON,
+        1,(int32_t)(EXT1_X_OFFSET_MM * XAXIS_STEPS_PER_MM),(int32_t)(EXT1_Y_OFFSET_MM * YAXIS_STEPS_PER_MM),(int32_t)(EXT1_Z_OFFSET_MM * ZAXIS_STEPS_PER_MM),EXT1_STEPS_PER_MM,EXT1_ENABLE_PIN,EXT1_ENABLE_ON,
         EXT1_MAX_FEEDRATE,EXT1_MAX_ACCELERATION,EXT1_MAX_START_FEEDRATE,0,EXT1_WATCHPERIOD
         ,EXT1_WAIT_RETRACT_TEMP,EXT1_WAIT_RETRACT_UNITS,0
 
