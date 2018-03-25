@@ -1925,7 +1925,7 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
     //ich weiß nicht ob das überhaupt ein gutes verhalten ist. Es ist nicht gut, wenn die z-schraube zu weit reingeschraubt ist und daher z-homing über dem bett verboten sein sollte.
     //Printer::ZEndstopUnknown == 1 gibts nur, wenn der RF1000 mit Circuitschaltung mit einem der z-endstops gedrückt aufwacht, oder man in dieser position auf den endstop umstellt.
     //Ein Z-Homing mit EndstopUnknown == 1 fährt immer erst nach unten, also ist unsere Druckerdüse safe, wenn wir erst Z homen bevor X und Y gehomed werden darf.
-    if( Printer::ZEndstopUnknown && homingOrder < 5 /*not z first -> do z first*/ ) )
+    if( Printer::ZEndstopUnknown && homingOrder < 5 /*not z first -> do z first*/ )
     {
         if(homingOrder == HOME_ORDER_XYZ
         || homingOrder == HOME_ORDER_XZY)
