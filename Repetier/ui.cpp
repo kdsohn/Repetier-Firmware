@@ -2069,7 +2069,7 @@ void UIDisplay::parse(char *txt,bool ram)
 #endif // FEATURE_MILLING_MODE
                         bool alloff = true;
                         for(uint8_t i=0; i<NUM_EXTRUDER; i++)
-                            if(tempController[i]->targetTemperatureC>15) alloff = false;
+                            if(tempController[i]->targetTemperatureC > 0) alloff = false;
 
                         long uSecondsServicePrint = (alloff ? 0 : (HAL::timeInMilliseconds()-Printer::msecondsPrinting)/1000) + HAL::eprGetInt32(EPR_PRINTING_TIME_SERVICE);
                         long tmp_service = uSecondsServicePrint/86400;
@@ -2154,7 +2154,7 @@ void UIDisplay::parse(char *txt,bool ram)
  #endif // FEATURE_MILLING_MODE
                         bool alloff = true;
                         for(uint8_t i=0; i<NUM_EXTRUDER; i++)
-                            if(tempController[i]->targetTemperatureC>15) alloff = false;
+                            if(tempController[i]->targetTemperatureC > 0) alloff = false;
 
                         long seconds = (alloff ? 0 : (HAL::timeInMilliseconds()-Printer::msecondsPrinting)/1000) + HAL::eprGetInt32(EPR_PRINTING_TIME);
                         long tmp = seconds/86400;

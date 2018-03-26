@@ -3096,7 +3096,7 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
             for( uint8_t h=0; h<NUM_TEMPERATURE_LOOPS; h++ )
             {
                 TemperatureController *act = tempController[h];
-                if( act->targetTemperatureC > 30 && fabs( act->targetTemperatureC - act->currentTemperatureC ) > TEMP_TOLERANCE )
+                if( act->targetTemperatureC > MAX_ROOM_TEMPERATURE && fabs( act->targetTemperatureC - act->currentTemperatureC ) > TEMP_TOLERANCE )
                 {
                     allReached = false;
                 }
@@ -3225,7 +3225,7 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
                 for( uint8_t h=0; h<NUM_TEMPERATURE_LOOPS; h++ )
                 {
                     TemperatureController *act = tempController[h];
-                    if( act->targetTemperatureC > 30 && fabs( act->targetTemperatureC - act->currentTemperatureC ) > TEMP_TOLERANCE )
+                    if( act->targetTemperatureC > MAX_ROOM_TEMPERATURE && fabs( act->targetTemperatureC - act->currentTemperatureC ) > TEMP_TOLERANCE )
                     {
                         allReached = false;
                     }

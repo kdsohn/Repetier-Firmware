@@ -308,7 +308,7 @@ void Commands::reportPrinterUsage()
         bool alloff = true;
 
         for(uint8_t i=0; i<NUM_EXTRUDER; i++)
-            if(tempController[i]->targetTemperatureC>15) alloff = false;
+            if(tempController[i]->targetTemperatureC > 0) alloff = false;
 
         if( Printer::debugInfo() )
         {
@@ -936,7 +936,7 @@ void Commands::executeGCode(GCode *com)
                     bool        isTempReached;
                     bool        longTempTime = false; // random init
                     bool        dirRising = true;     // random init
-                    int16_t     settarget = -1;       // random init nicht in °C .. int16_t
+                    float       settarget = -1;       // random init in °C
 
                     do
                     {
@@ -944,8 +944,8 @@ void Commands::executeGCode(GCode *com)
                         Commands::checkForPeriodicalActions( WaitHeater );
 
                         //Anpassung an die neue Situation falls der Bediener am Display-Menü des Druckers während Aufheizzeit was umstellt.
-                        if(settarget != actExtruder->tempControl.targetTemperature){
-                            settarget = actExtruder->tempControl.targetTemperature; //nicht in °C .. int16_t
+                        if(settarget != actExtruder->tempControl.targetTemperatureC){
+                            settarget = actExtruder->tempControl.targetTemperatureC; //in °C
                             dirRising = (actExtruder->tempControl.targetTemperatureC > actExtruder->tempControl.currentTemperatureC);
                             longTempTime = (fabs(actExtruder->tempControl.targetTemperatureC - actExtruder->tempControl.currentTemperatureC) > 40.0f ? true : false);
                             if( dirRising ){
@@ -1019,13 +1019,13 @@ void Commands::executeGCode(GCode *com)
                     if (com->hasS()) Extruder::setHeatedBedTemperature(com->S,com->hasF() && com->F>0);
 
                     bool    dirRising = true; // random init
-                    int16_t settarget = -1;    // random init nicht in °C .. int16_t
+                    float   settarget = -1;   // random init in °C
 
                     while( fabs(heatedBedController.currentTemperatureC - heatedBedController.targetTemperatureC) > TEMP_TOLERANCE )
                     {
                         //Init und Anpassung an die neue Situation falls der Bediener am Display-Menü des Druckers während Aufheizzeit was umstellt.
-                        if(settarget != heatedBedController.targetTemperature){
-                            settarget = heatedBedController.targetTemperature; //nicht in °C .. int16_t
+                        if(settarget != heatedBedController.targetTemperatureC){
+                            settarget = heatedBedController.targetTemperatureC; //in °C
                             dirRising = (heatedBedController.targetTemperatureC > heatedBedController.currentTemperatureC);
                             if( dirRising ){
                                 UI_STATUS_UPD(UI_TEXT_HEATING_BED);
@@ -1065,7 +1065,7 @@ void Commands::executeGCode(GCode *com)
                             for( uint8_t h=0; h<NUM_TEMPERATURE_LOOPS; h++ )
                             {
                                 TemperatureController *act = tempController[h];
-                                if( act->targetTemperatureC > 30 && fabs( act->targetTemperatureC-act->currentTemperatureC ) > TEMP_TOLERANCE )
+                                if( act->targetTemperatureC > MAX_ROOM_TEMPERATURE && fabs( act->targetTemperatureC-act->currentTemperatureC ) > TEMP_TOLERANCE )
                                 {
                                     allReached = false;
                                 }
