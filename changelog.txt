@@ -2,6 +2,15 @@ TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has th
 TODO: Maybe tracing down communication errors which seem to appear from time to time (but dont have any effect because they get autocorrected within ~12ms.)
 TODO: Testing, testing ..
 
+V RF.01.41.13.Mod alpha (2018-03-28) 
+- We can now skip the rest of the M3912 startline by pressing play while printing the start line. (Might save some tiny amounts of plastic from time to time.)
+- the eeproms max feedrates are dropped and overwritten if they are bigger than configuration max values.
+- the eeproms homing feedrates are dropped and overwritten if they are higher than configuration max values.
+- extruder steps/mm are corrected to default if they are set > 5540steps/mm 
+- if we press the 3 keys "Back", "OK" and "Play" while boot time the eeprom values are reset to defaults before being loaded.
+- some reordering in boot time configuration to prevent to early use of things.
+- compiling without SDSUPPORT is possible again. (~+1kb ram frei -> ~+8 MOVE_CACHE möglich)
+
 V RF.01.41.12.Mod alpha (2018-03-26) 
 - cleaned up the thermistor functions
 - depreached the use of int16_t targetTemperature and crushed void TemperatureController::setTargetTemperature(float target, float offset) to very few lines.

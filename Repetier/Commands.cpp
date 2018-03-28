@@ -42,7 +42,7 @@ void Commands::commandLoop()
 #endif
         }
         else
-#endif
+#endif //SDSUPPORT
             Commands::executeGCode(code);
         code->popCurrentCommand();
     }

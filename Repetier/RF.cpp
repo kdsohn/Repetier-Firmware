@@ -6935,7 +6935,6 @@ void continuePrint( void )
 {
     static char countplays = 1;
     if(g_pauseMode == PAUSE_MODE_NONE || g_pauseStatus != PAUSE_STATUS_PAUSED){
-        if( Printer::debugErrors() ) Com::printFLN( PSTR( "continuePrint(): we are not paused." ) );
         if(     !g_nHeatBedScanStatus 
 #if FEATURE_ALIGN_EXTRUDERS
                 && !g_nAlignExtrudersStatus 
@@ -10642,6 +10641,8 @@ void processCommand( GCode* pCommand )
                     }
                     float e =  0.0f;
 
+                    bool skip_by_keys = false;
+
                     Printer::moveToReal(x, y, AUTOADJUST_STARTMADEN_AUSSCHLUSS, IGNORE_COORDINATE, RMath::min(Printer::homingFeedrate[X_AXIS], Printer::homingFeedrate[Y_AXIS]) );
                     
                     for(uint8_t i = 1; i <= Lines; i++){
@@ -10657,17 +10658,25 @@ void processCommand( GCode* pCommand )
                             y -= (NUM_EXTRUDER > 1 ? 5.0f : 0.0f); //fahre nur bei Dual-Setting schräg.
                             e += (float)Extrusion * ((/*Printer::minMM[X_AXIS]+*/Printer::lengthMM[X_AXIS]) - 2*spacerX - spacerXd)/200;
                         }
-                        for(float i = 0.01f; i <= 1.0f; i+=0.01f){
+                        for(float i = 0.0025f; i <= 1.0f; i+=0.0025f){
                             //split full line into 100 small pieces so that we can adjust flow like speed.
                             Printer::moveToReal( x_0 + (x - x_0)*i,
                                                  y_0 + (y - y_0)*i,
                                                  IGNORE_COORDINATE,
                                                  e_0 + (e - e_0)*i, lineFeedrate);
-                            if(g_uBlockCommands) break; //mache die funktion abbrechbar.
+                            if( Printer::checkPlayKey() ){
+                                BEEP_LONG //start Printing
+                                skip_by_keys = true;
+                                break;
+                            }
+                            else if(g_uBlockCommands){
+                                break; //mache die funktion abbrechbar.
+                            }
                         }
                         if(g_uBlockCommands) break; //mache die funktion abbrechbar.
                         y += 1.5f;
                         Printer::moveToReal(IGNORE_COORDINATE, y, IGNORE_COORDINATE, IGNORE_COORDINATE, Printer::homingFeedrate[Y_AXIS] );
+                        if(skip_by_keys) break; //mache die Startmade überspringbar -> weiter zum Druck.
                     }
                     Commands::waitUntilEndOfAllMoves(); //feature startline
                     g_nDigitFlowCompensation_Fmin = save_g_nDigitFlowCompensation_Fmin;

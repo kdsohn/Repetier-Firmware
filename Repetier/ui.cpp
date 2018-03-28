@@ -2415,7 +2415,9 @@ void sdrefresh(uint8_t &r,char cache[UI_ROWS][MAX_COLS+1])
 void UIDisplay::refreshPage()
 {
     uint8_t r;
+#if SDSUPPORT
     uint8_t mtype = 0;
+#endif //SDSUPPORT
     char cache[UI_ROWS][MAX_COLS+1];
     adjustMenuPos();
 
@@ -2460,7 +2462,9 @@ void UIDisplay::refreshPage()
     {
         UIMenu *men = (UIMenu*)menu[menuLevel];
         uint16_t nr = pgm_read_word_near(&(men->numEntries));
+#if SDSUPPORT
         mtype = pgm_read_byte((void*)&(men->menuType));
+#endif //SDSUPPORT
         uint8_t offset = menuTop[menuLevel];
         UIMenuEntry **entries = (UIMenuEntry**)pgm_read_word(&(men->entries));
 
@@ -3673,8 +3677,8 @@ void UIDisplay::nextPreviousAction(int8_t next)
         case UI_ACTION_EXTR_STEPS:
         {
            if( !Printer::isMenuMode(MENU_MODE_PAUSED) && !Printer::isPrinting()){
-            INCREMENT_MIN_MAX(Extruder::current->stepsPerMM,1,1,9999);
-            Extruder::selectExtruderById(Extruder::current->id);
+            INCREMENT_MIN_MAX(Extruder::current->stepsPerMM,1,1,5440); //normalerweise <= ~1000
+            Extruder::selectExtruderById(Extruder::current->id); //(setzt auch "printer::stepspermm" richtig.)
 
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EEPROM::getExtruderOffset(Extruder::current->id)+EPR_EXTRUDER_STEPS_PER_MM,Extruder::current->stepsPerMM);

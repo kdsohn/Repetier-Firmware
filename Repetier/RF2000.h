@@ -794,7 +794,7 @@ This defines the full power duration before returning to set value. Time is in m
 #define MAX_FEEDRATE_Y                      200
 #define MAX_FEEDRATE_Z                      12
 
-/** \brief Home position speed in mm/s. Overridden if EEPROM activated. */
+/** \brief Home position speed in mm/s. Overridden if EEPROM activated. These values can be overridden by EEPROM but are considered as maximum allowed values */
 #define HOMING_FEEDRATE_X_PRINT             80
 #define HOMING_FEEDRATE_Y_PRINT             80
 #define HOMING_FEEDRATE_Z_PRINT             10
