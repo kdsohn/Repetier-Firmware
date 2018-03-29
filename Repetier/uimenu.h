@@ -113,6 +113,7 @@ List of placeholder:
 %XD : PID max
 %XS : Temperature Sensor
 %Xw : Extruder watch period in seconds
+%Xt : Description for PID autotune type in menu
 %XT : Extruder wait retract temperature
 %XU : Extruder wait retract unit
 %Xa : Advance K value
@@ -505,17 +506,19 @@ UI_MENU_ACTIONCOMMAND(ui_menu_active_extruder,UI_TEXT_ACTIVE_EXTRUDER,UI_ACTION_
 //UI_MENU_ACTIONCOMMAND(ui_menu_ext_sel1,UI_TEXT_EXTR1_SELECT,UI_ACTION_SELECT_EXTRUDER1);
 UI_MENU_ACTIONCOMMAND(ui_menu_ext_off0,UI_TEXT_EXTR0_OFF,UI_ACTION_EXTRUDER0_OFF)
 UI_MENU_ACTIONCOMMAND(ui_menu_ext_off1,UI_TEXT_EXTR1_OFF,UI_ACTION_EXTRUDER1_OFF)
+UI_MENU_ACTIONCOMMAND(ui_menu_bed_off, UI_TEXT_BED_OFF  ,UI_ACTION_HEATED_BED_OFF)
+
 UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_ext_origin,UI_TEXT_SET_E_ORIGIN,UI_ACTION_SET_E_ORIGIN,MENU_MODE_PRINTER, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED )
 
 UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_extruder_unmount_filament,UI_TEXT_UNMOUNT_FILAMENT,UI_ACTION_UNMOUNT_FILAMENT,MENU_MODE_PRINTER, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED)
 UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_extruder_mount_filament,UI_TEXT_MOUNT_FILAMENT,UI_ACTION_MOUNT_FILAMENT,MENU_MODE_PRINTER, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED)
 
 #if NUM_EXTRUDER>1
-#define UI_MENU_EXTCOND &ui_menu_ext_temp0,&ui_menu_ext_temp1,&ui_menu_ext_off0,&ui_menu_ext_off1,&ui_menu_active_extruder,
-#define UI_MENU_EXTCNT 5
+#define UI_MENU_EXTCOND &ui_menu_ext_temp0,&ui_menu_ext_temp1,&ui_menu_ext_off0,&ui_menu_ext_off1,&ui_menu_bed_off,&ui_menu_active_extruder,
+#define UI_MENU_EXTCNT 6
 #else
-#define UI_MENU_EXTCOND &ui_menu_ext_temp0,&ui_menu_ext_off0,
-#define UI_MENU_EXTCNT 2
+#define UI_MENU_EXTCOND &ui_menu_ext_temp0,&ui_menu_ext_off0,&ui_menu_bed_off,
+#define UI_MENU_EXTCNT 3
 #endif // NUM_EXTRUDER>1
 
 #if HAVE_HEATED_BED==true
@@ -902,8 +905,6 @@ UI_MENU_ACTION4C(ui_menu_pid_choose_classicpid_ack,UI_ACTION_CHOOSE_CLASSICPID,U
 UI_MENU_ACTIONSELECTOR(ui_menu_pid_choose_classicpid,UI_ACTION_TEXT_CLASSICPID,ui_menu_pid_choose_classicpid_ack)
 UI_MENU_ACTION4C(ui_menu_pid_choose_lesserintegral_ack,UI_ACTION_CHOOSE_LESSERINTEGRAL,UI_TEXT_PID_ACK)
 UI_MENU_ACTIONSELECTOR(ui_menu_pid_choose_lesserintegral,UI_ACTION_TEXT_PESSEN,ui_menu_pid_choose_lesserintegral_ack)
-UI_MENU_ACTION4C(ui_menu_pid_choose_some_ack,UI_ACTION_CHOOSE_SOME,UI_TEXT_PID_ACK)
-UI_MENU_ACTIONSELECTOR(ui_menu_pid_choose_some,UI_ACTION_TEXT_SOME,ui_menu_pid_choose_some_ack)
 UI_MENU_ACTION4C(ui_menu_pid_choose_no_ack,UI_ACTION_CHOOSE_NO,UI_TEXT_PID_ACK)
 UI_MENU_ACTIONSELECTOR(ui_menu_pid_choose_no,UI_ACTION_TEXT_NO,ui_menu_pid_choose_no_ack)
 UI_MENU_ACTION4C(ui_menu_pid_choose_tyreus_lyben_ack,UI_ACTION_CHOOSE_TYREUS_LYBEN,UI_TEXT_PID_ACK)
@@ -913,8 +914,8 @@ UI_MENU_CHANGEACTION(ui_menu_pid_choose_drivemax,UI_TEXT_EXTR_DMAX,UI_ACTION_CHO
 UI_MENU_CHANGEACTION(ui_menu_pid_choose_PIDmax,UI_TEXT_EXTR_PMAX,UI_ACTION_CHOOSE_PIDMAX)
 UI_MENU_CHANGEACTION(ui_menu_pid_choose_sensor,UI_TEXT_EXTR_SENSOR_TYPE,UI_ACTION_CHOOSE_SENSOR)
 
-#define UI_MENU_PID_CHOOSE {UI_MENU_ADDCONDBACK &ui_menu_pid_choose_classicpid ,&ui_menu_pid_choose_lesserintegral, &ui_menu_pid_choose_some, &ui_menu_pid_choose_no, &ui_menu_pid_choose_tyreus_lyben, &ui_menu_pid_choose_drivemin, &ui_menu_pid_choose_drivemax, &ui_menu_pid_choose_PIDmax, &ui_menu_pid_choose_sensor}
-UI_MENU(ui_menu_pid_choose, UI_MENU_PID_CHOOSE, 9)
+#define UI_MENU_PID_CHOOSE {UI_MENU_ADDCONDBACK &ui_menu_pid_choose_lesserintegral, &ui_menu_pid_choose_classicpid, &ui_menu_pid_choose_no, &ui_menu_pid_choose_tyreus_lyben, &ui_menu_pid_choose_drivemin, &ui_menu_pid_choose_drivemax, &ui_menu_pid_choose_PIDmax, &ui_menu_pid_choose_sensor}
+UI_MENU(ui_menu_pid_choose, UI_MENU_PID_CHOOSE, 8)
 
 UI_MENU_SUBMENU(ui_menu_pid_ext0_cond,  UI_TEXT_EXTRUDER " 0", ui_menu_pid_choose)
 #define UI_MENU_PID_EXT0_COND   &ui_menu_pid_ext0_cond

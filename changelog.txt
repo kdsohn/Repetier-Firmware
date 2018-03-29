@@ -2,6 +2,12 @@ TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has th
 TODO: Maybe tracing down communication errors which seem to appear from time to time (but dont have any effect because they get autocorrected within ~12ms.)
 TODO: Testing, testing ..
 
+V RF.01.41.14.Mod alpha (2018-03-29) 
+- removed "PID autotune some overshoot" from menu
+- gave the PID autotune submenus a description for what autotune methods are good
+- reordered PID autotune methods to start with pessen, then classic then noovershoot and finally tyreus lyben. 
+- added "heated bed off" to Extruder Menu. (At least I use this alot for testing)
+
 V RF.01.41.13.Mod alpha (2018-03-28) 
 - We can now skip the rest of the M3912 startline by pressing play while printing the start line. (Might save some tiny amounts of plastic from time to time.)
 - the eeproms max feedrates are dropped and overwritten if they are bigger than configuration max values.

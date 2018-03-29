@@ -158,10 +158,7 @@
 #define UI_TEXT_EXTR2_TEMP              "Temp. 2  :%E2\002C"
 #define UI_TEXT_EXTR0_OFF               "Extruder 0 off"
 #define UI_TEXT_EXTR1_OFF               "Extruder 1 off"
-#define UI_TEXT_EXTR2_OFF               "Extruder 2 off"
-#define UI_TEXT_EXTR0_SELECT            "%X0 Select Extr.0"
-#define UI_TEXT_EXTR1_SELECT            "%X1 Select Extr.1"
-#define UI_TEXT_EXTR2_SELECT            "%X2 Select Extr.2"
+#define UI_TEXT_BED_OFF                 "Heated Bed off"
 #define UI_TEXT_SET_E_ORIGIN            "Set E Origin"
 #define UI_TEXT_PRINT_X                 "Print X :%ax"
 #define UI_TEXT_PRINT_Y                 "Print Y :%ay"
@@ -331,7 +328,7 @@
 #define UI_TEXT_SET_ORIGIN              "Set Origin"
 #define UI_TEXT_SAVING_SUCCESS          "Saved to EEPROM"
 #define UI_TEXT_AUTODETECT_PID          "Determine PID"
-#define UI_TEXT_PID_ACK                 UI_TEXT_AUTODETECT_PID "?","(" UI_TEXT_SAVING_SUCCESS ")","%mYYes","%mNNo"
+#define UI_TEXT_PID_ACK                 UI_TEXT_AUTODETECT_PID "?","%Xt","%mYYes","%mNNo"
 #define UI_TEXT_HOME_UNKNOWN            "Home unknown"
 #define UI_TEXT_SAVING_NEEDLESS         "Saving needless"
 #define UI_TEXT_EMERGENCY_PAUSE         "Emergency Pause"
@@ -370,7 +367,6 @@
 
 #define UI_ACTION_TEXT_CLASSICPID "PID ZieglerNichols"
 #define UI_ACTION_TEXT_PESSEN "PID Pessen-Rule"
-#define UI_ACTION_TEXT_SOME "PID Some-Overshoot"
 #define UI_ACTION_TEXT_NO "PID No-Overshoot"
 #define UI_ACTION_TEXT_TYREUS_LYBEN "PID Tyreus-Lyben"
 
@@ -399,6 +395,11 @@
 #define UI_TEXT_MICRO_STEPS_XY         "MicroStepXY:%Xx"
 #define UI_TEXT_MICRO_STEPS_Z          "MicroStepsZ:%Xz"
 #define UI_TEXT_MICRO_STEPS_E          "MicroStepsE:%XE"
+
+#define UI_ACTION_TEXT_PESSEN_TIPP          "(choose for hotends)"
+#define UI_ACTION_TEXT_CLASSICPID_TIPP      "(alternat. for hotends)"
+#define UI_ACTION_TEXT_NO_TIPP              "(alternat. for beds)"
+#define UI_ACTION_TEXT_TYREUS_LYBEN_TIPP    "(choose for highpower bed)"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
     #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"
@@ -554,10 +555,7 @@
 #define UI_TEXT_Z_POS_FAST              "Pos. Z schnell"
 #define UI_TEXT_EXTR0_OFF               "Extruder 0 aus"
 #define UI_TEXT_EXTR1_OFF               "Extruder 1 aus"
-#define UI_TEXT_EXTR2_OFF               "Extruder 2 aus"
-#define UI_TEXT_EXTR0_SELECT            "W" STR_auml "hle Extr. 0"
-#define UI_TEXT_EXTR1_SELECT            "W" STR_auml "hle Extr. 1"
-#define UI_TEXT_EXTR2_SELECT            "W" STR_auml "hle Extr. 2"
+#define UI_TEXT_BED_OFF                 "Heizbett aus"
 #define UI_TEXT_PRINT_X                 "Drucken X:%ax"
 #define UI_TEXT_PRINT_Y                 "Drucken Y:%ay"
 #define UI_TEXT_PRINT_Z                 "Drucken Z:%az"
@@ -707,7 +705,7 @@
 #define UI_TEXT_INFORMATION             "Information:"
 #define UI_TEXT_SET_ORIGIN              "Setze Ursprung"
 #define UI_TEXT_AUTODETECT_PID          "PID ermitteln"
-#define UI_TEXT_PID_ACK                 UI_TEXT_AUTODETECT_PID "?","","%mYJa","%mNNein"
+#define UI_TEXT_PID_ACK                 UI_TEXT_AUTODETECT_PID "?","%Xt","%mYJa","%mNNein"
 // Temp. = Temperatur
 #define UI_TEXT_HOME_UNKNOWN            "Home unbekannt"
 #define UI_TEXT_SAVING_NEEDLESS         "Sichern sinnlos"
@@ -742,9 +740,8 @@
 #define UI_TEXT_PRINTTIME_MINUTES       ""
 #define UI_TEXT_POWER                   "ATX Netzteil an/aus"
 
-#define UI_ACTION_TEXT_CLASSICPID "PID Ziegler-Nichols"
 #define UI_ACTION_TEXT_PESSEN "PID Pessen-Rule"
-#define UI_ACTION_TEXT_SOME "PID Some-Overshoot"
+#define UI_ACTION_TEXT_CLASSICPID "PID Ziegler-Nichols"
 #define UI_ACTION_TEXT_NO "PID No-Overshoot"
 #define UI_ACTION_TEXT_TYREUS_LYBEN "PID Tyreus-Lyben"
 
@@ -773,6 +770,16 @@
 #define UI_TEXT_MICRO_STEPS_XY         "MicroStepXY:%Xx"
 #define UI_TEXT_MICRO_STEPS_Z          "MicroStepsZ:%Xz"
 #define UI_TEXT_MICRO_STEPS_E          "MicroStepsE:%XE"
+
+#define UI_ACTION_TEXT_PESSEN_TIPP "(schnelle+ Hotends)" //19
+#define UI_ACTION_TEXT_CLASSICPID_TIPP "(schnelle Hotends)" //18
+#define UI_ACTION_TEXT_NO_TIPP "(hochleist. Bett)" //17
+#define UI_ACTION_TEXT_TYREUS_LYBEN_TIPP "(hochleist.+ Bett)" //18
+
+#define UI_ACTION_TEXT_PESSEN_TIPP          "(empf. f" STR_uuml "r Hotends)"
+#define UI_ACTION_TEXT_CLASSICPID_TIPP      "(alternat. f" STR_uuml "r Hotends)"
+#define UI_ACTION_TEXT_NO_TIPP              "(alternat. f" STR_uuml "r Bett)"
+#define UI_ACTION_TEXT_TYREUS_LYBEN_TIPP    "(empf. f" STR_uuml "r highpower Bett)"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
     #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"

@@ -1596,7 +1596,28 @@ void UIDisplay::parse(char *txt,bool ram)
                 {
                     addInt(Extruder::current->watchPeriod,4);
                 }
-
+                else if(c2=='t')                                                                        // %Xt : Description for PID autotune type in menu
+                {
+                    col = 0; //reset linemarker -> start at first display char. overwrite things before this %tag -> erstes Zeichen brauchen wir in diesem menü nicht.
+                    switch(menuPos[menuLevel-1]){ //das sagt mir, in welchem untermenü ich bin. die zahl drin entspricht fast dem Jx aus dem M303, aber J0 und J1 sind der intuitiven Ordnung halber vertauscht. J2 ist rausgelassen worden, weil wir das eigentlich nicht brauchen. J3->2 J4->3
+                        case 0: {
+                            addStringP( PSTR(UI_ACTION_TEXT_PESSEN_TIPP) ); //tipp für pessen integral rule
+                            break;
+                        }
+                        case 1: {
+                            addStringP( PSTR(UI_ACTION_TEXT_CLASSICPID_TIPP) ); //tipp für classic pid
+                            break;
+                        }
+                        case 2: {
+                            addStringP( PSTR(UI_ACTION_TEXT_NO_TIPP) ); //tipp für no overshoot
+                            break;
+                        }
+                        case 3: {
+                            addStringP( PSTR(UI_ACTION_TEXT_TYREUS_LYBEN_TIPP) ); //tipp für tyreus lyben
+                            break;
+                        }
+                    }
+                }
 #if RETRACT_DURING_HEATUP
                 else if(c2=='T')                                                                        // %XT : Extruder wait retract temperature
                 {
@@ -3807,9 +3828,8 @@ void UIDisplay::nextPreviousAction(int8_t next)
         case UI_ACTION_RF_RESET_ACK:
         case UI_ACTION_STOP_ACK:
         case UI_ACTION_RESTORE_DEFAULTS:
-        case UI_ACTION_CHOOSE_CLASSICPID:
         case UI_ACTION_CHOOSE_LESSERINTEGRAL:
-        case UI_ACTION_CHOOSE_SOME:
+        case UI_ACTION_CHOOSE_CLASSICPID:
         case UI_ACTION_CHOOSE_NO:
         case UI_ACTION_CHOOSE_TYREUS_LYBEN:
         {
@@ -4234,9 +4254,8 @@ void UIDisplay::finishAction(int action)
             break;
         }
 
-        case UI_ACTION_CHOOSE_CLASSICPID:
         case UI_ACTION_CHOOSE_LESSERINTEGRAL:
-        case UI_ACTION_CHOOSE_SOME:
+        case UI_ACTION_CHOOSE_CLASSICPID:
         case UI_ACTION_CHOOSE_NO:
         case UI_ACTION_CHOOSE_TYREUS_LYBEN:
         {
@@ -4246,7 +4265,24 @@ void UIDisplay::finishAction(int action)
                 break;
             }
             unsigned char heater = menuPos[menuLevel-2]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
-            int method = menuPos[menuLevel-1]; //0..1..2..3..4..5 passt zum J-Listing des M303
+            int method = menuPos[menuLevel-1]; //0..1..2..3 passt nicht mehr zum J-Listing des M303
+            
+            //Esthetics: Switch method for better order in menu. I want the menu to start with pessen integral, because it is the most responsive one. We dont need some overshoot within menu because it has no known use for us.
+            /*
+            responsiveness of tunings: J1pessen++ J0classic+ J2someovershoot J3noovershoot- J4tyreuslyben--
+            -- is for slow beds
+            ++ is for fast hotends
+            */
+            if(method == 0){
+                method = 1; //J1
+            }else if(method == 1){
+                method = 0; //J0
+            }else if(method == 2){
+                method = 3; //J3
+            }else if(method == 3){
+                method = 4; //J4
+            }
+            
             /*
              Line 1059: #define PRECISE_HEAT_BED_SCAN_BED_TEMP_PLA          60                                                                  // [°C]
              Line 1062: #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA     230                                                                 // [°C]
