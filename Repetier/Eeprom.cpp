@@ -304,15 +304,7 @@ ich glaube gesehen zu haben, dass acceleration und feedrates nicht neu eingelese
     g_nManualSteps[Z_AXIS] = uint32_t(Printer::axisStepsPerMM[Z_AXIS] * DEFAULT_MANUAL_MM_Z);
     g_nManualSteps[E_AXIS] = uint32_t(Extruder::current->stepsPerMM * DEFAULT_MANUAL_MM_E);
 
-    if( Printer::debugInfo() )
-    {
-        Com::printInfoF(Com::tEPRConfigResetDefaults);
-    }
-#else
-    if( Printer::debugErrors() )
-    {
-        Com::printErrorF(Com::tNoEEPROMSupport);
-    }
+    Com::printInfoF(Com::tEPRConfigResetDefaults);
 #endif // EEPROM_MODE!=0
 
 } // restoreEEPROMSettingsFromConfiguration
@@ -322,10 +314,8 @@ void EEPROM::clearEEPROM()
 {
     millis_t        lastTime    = HAL::timeInMilliseconds();
     millis_t        currentTime;
-    unsigned int    i;
 
-
-    for( i=0; i<2048; i++ )
+    for(int i=0; i<2048; i++ )
     {
         HAL::eprSetByte( i, 0 );
 
@@ -592,6 +582,10 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
     HAL::eprSetByte( EPR_RF_DIGIT_CMP_STATE, (g_nDigitZCompensationDigits_active ? 1 : 2) ); //2 ist false, < 1 ist true
 #endif // FEATURE_DIGIT_Z_COMPENSATION
 
+#if FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+    HAL::eprSetFloat(EPR_ZSCAN_START_MM,g_scanStartZLiftMM);
+#endif // FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+
     // Save version and build checksum
     HAL::eprSetByte(EPR_VERSION,EEPROM_PROTOCOL_VERSION);
     EEPROM::updateChecksum();
@@ -644,9 +638,21 @@ void EEPROM::readDataFromEEPROM()
     Printer::axisStepsPerMM[X_AXIS] = HAL::eprGetFloat(EPR_XAXIS_STEPS_PER_MM);
     Printer::axisStepsPerMM[Y_AXIS] = HAL::eprGetFloat(EPR_YAXIS_STEPS_PER_MM);
     Printer::axisStepsPerMM[Z_AXIS] = HAL::eprGetFloat(EPR_ZAXIS_STEPS_PER_MM);
-    Printer::maxFeedrate[X_AXIS] = HAL::eprGetFloat(EPR_X_MAX_FEEDRATE);
-    Printer::maxFeedrate[Y_AXIS] = HAL::eprGetFloat(EPR_Y_MAX_FEEDRATE);
-    Printer::maxFeedrate[Z_AXIS] = HAL::eprGetFloat(EPR_Z_MAX_FEEDRATE);
+
+    //check da früher mehr speed erlaubt, was keinen sinn gemacht hat.
+    Printer::maxFeedrate[X_AXIS] = MAX_FEEDRATE_X;
+    Printer::maxFeedrate[Y_AXIS] = MAX_FEEDRATE_Y;
+    Printer::maxFeedrate[Z_AXIS] = MAX_FEEDRATE_Z;
+    for(uint8_t axis = X_AXIS; axis <= Z_AXIS; axis++){
+        float tmp = HAL::eprGetFloat(EPR_X_MAX_FEEDRATE+axis*4); //X dann EPR_Y_MAX_FEEDRATE dann EPR_Z_MAX_FEEDRATE
+        if(tmp > Printer::maxFeedrate[axis]){
+            HAL::eprSetFloat(EPR_X_MAX_FEEDRATE+axis*4,Printer::maxFeedrate[axis]);
+            change = true; //update checksum later in this function
+        }else{
+            Printer::maxFeedrate[axis] = tmp;
+        }
+    }
+
     Printer::ZOffset = HAL::eprGetInt32(EPR_RF_Z_OFFSET);
     Printer::ZMode = HAL::eprGetByte(EPR_RF_Z_MODE);
     g_staticZSteps = (Printer::ZOffset * Printer::axisStepsPerMM[Z_AXIS]) / 1000;
@@ -717,7 +723,13 @@ void EEPROM::readDataFromEEPROM()
     {
         int o=EEPROM::getExtruderOffset(i);
         Extruder *e = &extruder[i];
-        e->stepsPerMM = HAL::eprGetFloat(o+EPR_EXTRUDER_STEPS_PER_MM);
+        float tmpstepsPerMM = HAL::eprGetFloat(o+EPR_EXTRUDER_STEPS_PER_MM);
+        if(tmpstepsPerMM < 5540.0f){ //da hat einer ein komma vergessen ^^ so hohe Werte können kaum sinn machen, ausser wir ändern die CPU. Das wären auch zu viele interrupts pro sekunde.
+            e->stepsPerMM = tmpstepsPerMM;
+        }else{
+            HAL::eprSetFloat(o+EPR_EXTRUDER_STEPS_PER_MM,e->stepsPerMM);
+            change = true; //update checksum later in this function
+        }
         e->maxFeedrate = HAL::eprGetFloat(o+EPR_EXTRUDER_MAX_FEEDRATE);
         e->maxStartFeedrate = HAL::eprGetFloat(o+EPR_EXTRUDER_MAX_START_FEEDRATE);
         e->maxAcceleration = HAL::eprGetFloat(o+EPR_EXTRUDER_MAX_ACCELERATION);
@@ -816,24 +828,41 @@ void EEPROM::readDataFromEEPROM()
     Printer::ZEndstopType  = HAL::eprGetByte( EPR_RF_Z_ENDSTOP_TYPE ) == ENDSTOP_TYPE_CIRCUIT ? ENDSTOP_TYPE_CIRCUIT : ENDSTOP_TYPE_SINGLE;
 #endif //FEATURE_CONFIGURABLE_Z_ENDSTOPS
 
+    //reinit for check if eeprom values are too high.
+    unsigned int eeprom_homing_feedrate_position;
 #if FEATURE_MILLING_MODE
     Printer::operatingMode = HAL::eprGetByte( EPR_RF_OPERATING_MODE ) == OPERATING_MODE_MILL ? OPERATING_MODE_MILL : OPERATING_MODE_PRINT;
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
 #endif // FEATURE_MILLING_MODE
-        Printer::homingFeedrate[X_AXIS] = HAL::eprGetFloat(EPR_X_HOMING_FEEDRATE_PRINT);
-        Printer::homingFeedrate[Y_AXIS] = HAL::eprGetFloat(EPR_Y_HOMING_FEEDRATE_PRINT);
-        Printer::homingFeedrate[Z_AXIS] = HAL::eprGetFloat(EPR_Z_HOMING_FEEDRATE_PRINT);
+        eeprom_homing_feedrate_position = EPR_X_HOMING_FEEDRATE_PRINT;
+        Printer::homingFeedrate[X_AXIS] = HOMING_FEEDRATE_X_PRINT;
+        Printer::homingFeedrate[Y_AXIS] = HOMING_FEEDRATE_Y_PRINT;
+        Printer::homingFeedrate[Z_AXIS] = HOMING_FEEDRATE_Z_PRINT;
 #if FEATURE_MILLING_MODE
     }
     else
     {
-        Printer::homingFeedrate[X_AXIS] = HAL::eprGetFloat(EPR_X_HOMING_FEEDRATE_MILL);
-        Printer::homingFeedrate[Y_AXIS] = HAL::eprGetFloat(EPR_Y_HOMING_FEEDRATE_MILL);
-        Printer::homingFeedrate[Z_AXIS] = HAL::eprGetFloat(EPR_Z_HOMING_FEEDRATE_MILL);
+        eeprom_homing_feedrate_position = EPR_X_HOMING_FEEDRATE_MILL;
+        Printer::homingFeedrate[X_AXIS] = HOMING_FEEDRATE_X_MILL;
+        Printer::homingFeedrate[Y_AXIS] = HOMING_FEEDRATE_Y_MILL;
+        Printer::homingFeedrate[Z_AXIS] = HOMING_FEEDRATE_Z_MILL;
     }
 #endif // FEATURE_MILLING_MODE
-
+    //check if values are too high 
+    //this is no super complete check but if someone uses the printer bad values from old firmwares get corrected after one restart in each mode.
+        // and update them to max according configuration consts if too high.
+    for(uint8_t axis = X_AXIS; axis <= Z_AXIS; axis++){
+        float tmp = HAL::eprGetFloat(eeprom_homing_feedrate_position+axis*4); // EPR_X_HOMING_FEEDRATE_PRINT EPR_Y_HOMING_FEEDRATE_PRINT EPR_Z_HOMING_FEEDRATE_PRINT 
+                                                                              // EPR_X_HOMING_FEEDRATE_MILL EPR_Y_HOMING_FEEDRATE_MILL EPR_Z_HOMING_FEEDRATE_MILL
+        if(tmp > Printer::homingFeedrate[axis]){
+            HAL::eprSetFloat(eeprom_homing_feedrate_position+axis*4,Printer::homingFeedrate[axis]);
+            change = true; //update checksum later in this function
+        }else{
+            Printer::homingFeedrate[axis] = tmp;
+        }
+    }
+    
 #if FEATURE_CONFIGURABLE_MILLER_TYPE
     Printer::MillerType = HAL::eprGetByte( EPR_RF_MILLER_TYPE ) == MILLER_TYPE_ONE_TRACK ? MILLER_TYPE_ONE_TRACK : MILLER_TYPE_TWO_TRACKS;
 #endif // FEATURE_CONFIGURABLE_MILLER_TYPE
@@ -919,6 +948,16 @@ void EEPROM::readDataFromEEPROM()
     g_nDigitZCompensationDigits_active = ( HAL::eprGetByte( EPR_RF_DIGIT_CMP_STATE) > 1 ? false : true ); //2 ist false, < 1 ist true
 #endif // FEATURE_DIGIT_Z_COMPENSATION
 
+#if FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+    float tmpss = HAL::eprGetFloat(EPR_ZSCAN_START_MM);
+    if(tmpss >= 0.3f && tmpss <= 6.0f){
+        g_scanStartZLiftMM = tmpss; 
+    }else{
+        HAL::eprSetFloat(EPR_ZSCAN_START_MM,HEAT_BED_SCAN_Z_START_MM);
+        change = true;
+    }
+#endif // FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+
     const unsigned short    uMotorCurrentMax[] = MOTOR_CURRENT_MAX; //oberes Amperelimit
     const unsigned short    uMotorCurrentUse[] = MOTOR_CURRENT_NORMAL; //Standardwert
     uint8_t current = 0;
@@ -955,13 +994,9 @@ void EEPROM::readDataFromEEPROM()
     if( change ) EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
 
-    if(version!=EEPROM_PROTOCOL_VERSION)
+    if(version != EEPROM_PROTOCOL_VERSION)
     {
-        if( Printer::debugInfo() )
-        {
-            Com::printInfoFLN(Com::tEPRProtocolChanged);
-        }
-
+        Com::printInfoFLN(Com::tEPRProtocolChanged);
         storeDataIntoEEPROM(false); // Store new fields for changed version
     }
     Printer::updateDerivedParameter();
@@ -988,28 +1023,31 @@ void EEPROM::initBaudrate()
 void EEPROM::init()
 {
 #if EEPROM_MODE!=0
-    uint8_t check = computeChecksum();
-    uint8_t storedcheck = HAL::eprGetByte(EPR_INTEGRITY_BYTE);
+    bool kill_eeprom_because_corrupted = (computeChecksum() != HAL::eprGetByte(EPR_INTEGRITY_BYTE));
+    bool kill_eeprom_wrong_version     = (EEPROM_MODE       != HAL::eprGetByte(EPR_MAGIC_BYTE));
+    
+    bool kill_eeprom_by_back_ok_play   = (READ(ENABLE_KEY_1)==0 && READ(ENABLE_KEY_4)==0 && READ(ENABLE_KEY_E5)==0);
 
-    if(HAL::eprGetByte(EPR_MAGIC_BYTE)==EEPROM_MODE && storedcheck==check)
+    if( !(kill_eeprom_wrong_version || kill_eeprom_because_corrupted || kill_eeprom_by_back_ok_play))
     {
-        readDataFromEEPROM();
+        EEPROM::readDataFromEEPROM();
     }
     else
     {
-#if FEATURE_FULL_EEPROM_RESET
-        clearEEPROM();
-        restoreEEPROMSettingsFromConfiguration();
-#endif // FEATURE_FULL_EEPROM_RESET
+        Com::printF(PSTR("EEPROM reset"));
+        if(kill_eeprom_wrong_version) Com::printF(PSTR(" wrong version"));
+        if(kill_eeprom_because_corrupted) Com::printF(PSTR(" corrupted"));
+        if(kill_eeprom_by_back_ok_play) Com::printF(PSTR(" back+ok+play"));
+        Com::println();
 
-        storeDataIntoEEPROM(storedcheck!=check);
-        initializeAllOperatingModes();
+        EEPROM::clearEEPROM();
+        EEPROM::restoreEEPROMSettingsFromConfiguration();
+        EEPROM::storeDataIntoEEPROM(kill_eeprom_because_corrupted); //wenn corrupted dann auch die betriebszähler löschen.
+        EEPROM::initializeAllOperatingModes(); //der operatingmode der nicht aktiv ist bekommt die standardwerte ins eeprom.
 
-        UI_STATUS( UI_TEXT_RESTORE_DEFAULTS );
         showInformation( PSTR(UI_TEXT_CONFIGURATION), PSTR(UI_TEXT_FAIL), PSTR(UI_TEXT_RESTORE_DEFAULTS) );
     }
 #endif // EEPROM_MODE!=0
-
 } // init
 
 
@@ -1169,6 +1207,10 @@ void EEPROM::writeSettings()
       writeInt(EPR_RF_MILL_ACCELERATION,Com::tEPRZMillingAcceleration);
     }
 #endif // FEATURE_MILLING_MODE
+
+#if FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+    writeFloat(EPR_ZSCAN_START_MM,Com::tEPRZScanStartLift);
+#endif // FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
 
 #if FEATURE_READ_CALIPER
     writeInt( EPR_RF_CAL_STANDARD, Com::tEPRZCallStandard );

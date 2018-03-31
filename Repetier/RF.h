@@ -36,6 +36,7 @@
 #define UI_ACTION_RF_SET_Z_MATRIX_WORK_PART  519
 #define UI_ACTION_RF_SET_SCAN_DELTA_X        520
 #define UI_ACTION_RF_SET_SCAN_DELTA_Y        521
+#define UI_ACTION_RF_SCAN_START_HEIGHT       530
 
 #define UI_ACTION_RF_MAX_REPEATABLE          600
 
@@ -581,6 +582,9 @@ extern  char            g_nWorkPartScanMode;        // 0 = do not home z-axis, 1
 extern  char            g_nActiveWorkPart;
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
 
+#if FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+extern  float           g_scanStartZLiftMM;
+#endif //FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 extern  char            g_abortZScan;

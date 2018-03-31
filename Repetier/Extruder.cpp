@@ -110,7 +110,7 @@ void Extruder::manageTemperatures()
             }
         }
         if(Printer::isAnyTempsensorDefect()) continue;
-        uint8_t on = act->currentTemperature>=act->targetTemperature ? LOW : HIGH;
+        uint8_t on = act->currentTemperatureC >= act->targetTemperatureC ? LOW : HIGH;
 
         if(!on && act->isAlarm())
         {
@@ -386,7 +386,7 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
 
     bool alloffs = true;
     for(uint8_t i=0; i < NUM_EXTRUDER; i++)
-        if(tempController[i]->targetTemperatureC > 15) alloffs = false;
+        if(tempController[i]->targetTemperatureC > 0) alloffs = false;
 
 #ifdef EXTRUDER_MAX_TEMP
     if(temperatureInCelsius>EXTRUDER_MAX_TEMP) temperatureInCelsius = EXTRUDER_MAX_TEMP;
@@ -394,6 +394,7 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
 
     if(temperatureInCelsius < 0) temperatureInCelsius=0;
     TemperatureController *tc = tempController[extr];
+    if(tc->sensorType == 0) temperatureInCelsius = 0;
     tc->setTargetTemperature(temperatureInCelsius,0);
     tc->updateTempControlVars();
     if(beep && temperatureInCelsius > 30)
@@ -453,7 +454,7 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
 
     bool alloff = true;
     for(uint8_t i=0; i < NUM_EXTRUDER; i++)
-        if(tempController[i]->targetTemperatureC > 15) alloff = false;
+        if(tempController[i]->targetTemperatureC > 0) alloff = false;
 
 #if EEPROM_MODE != 0
     if(alloff && !alloffs) // All heaters are now switched off?
@@ -700,6 +701,12 @@ const short temptable_14[NUMTEMPS_14][2] PROGMEM = {
 {1001*4,9*8},{1011*4,-1*8},{1021*4,-26*8}
 };
 
+// E3D PT100 Board (direct AD voltage in / PTC type)
+#define NUMTEMPS_15 19
+const short temptable_15[NUMTEMPS_15][2] PROGMEM = {
+    {0, 0}, {908, 8}, {942, 10 * 8}, {982, 20 * 8}, {1015, 8 * 30}, {1048, 8 * 40}, {1080, 8 * 50}, {1113, 8 * 60}, {1146, 8 * 70}, {1178, 8 * 80}, {1211, 8 * 90}, {1276, 8 * 110}, {1318, 8 * 120}
+    , {1670, 8 * 230}, {2455, 8 * 500}, {3445, 8 * 900}, {3666, 8 * 1000}, {3871, 8 * 1100}, {4095, 8 * 2000}
+};
 
 #if NUM_TEMPS_USERTHERMISTOR0>0
 const short temptable_5[NUM_TEMPS_USERTHERMISTOR0][2] PROGMEM = USER_THERMISTORTABLE0 ;
@@ -713,7 +720,7 @@ const short temptable_6[NUM_TEMPS_USERTHERMISTOR1][2] PROGMEM = USER_THERMISTORT
 const short temptable_7[NUM_TEMPS_USERTHERMISTOR2][2] PROGMEM = USER_THERMISTORTABLE2 ;
 #endif // NUM_TEMPS_USERTHERMISTOR2>0
 
-const short * const temptables[14] PROGMEM = {(short int *)&temptable_1[0][0],(short int *)&temptable_2[0][0],(short int *)&temptable_3[0][0],(short int *)&temptable_4[0][0]
+const short * const temptables[15] PROGMEM = {(short int *)&temptable_1[0][0],(short int *)&temptable_2[0][0],(short int *)&temptable_3[0][0],(short int *)&temptable_4[0][0]
 #if NUM_TEMPS_USERTHERMISTOR0>0
         ,(short int *)&temptable_5[0][0]
 #else
@@ -739,20 +746,36 @@ const short * const temptables[14] PROGMEM = {(short int *)&temptable_1[0][0],(s
         ,(short int *)&temptable_12[0][0]
         ,(short int *)&temptable_13[0][0]
         ,(short int *)&temptable_14[0][0]
+        ,(short int *)&temptable_15[0][0]
     };
-const uint8_t temptables_num[14] PROGMEM = {NUMTEMPS_1,NUMTEMPS_2,NUMTEMPS_3,NUMTEMPS_4,NUM_TEMPS_USERTHERMISTOR0,NUM_TEMPS_USERTHERMISTOR1,NUM_TEMPS_USERTHERMISTOR2,NUMTEMPS_8,
-                                                NUMTEMPS_9,NUMTEMPS_10,NUMTEMPS_11,NUMTEMPS_12,NUMTEMPS_13,NUMTEMPS_14
+const uint8_t temptables_num[15] PROGMEM = {
+                                            NUMTEMPS_1,
+                                            NUMTEMPS_2,
+                                            NUMTEMPS_3,
+                                            NUMTEMPS_4,
+                                            NUM_TEMPS_USERTHERMISTOR0,
+                                            NUM_TEMPS_USERTHERMISTOR1,
+                                            NUM_TEMPS_USERTHERMISTOR2,
+                                            NUMTEMPS_8,
+                                            NUMTEMPS_9,
+                                            NUMTEMPS_10,
+                                            NUMTEMPS_11,
+                                            NUMTEMPS_12,
+                                            NUMTEMPS_13,
+                                            NUMTEMPS_14,
+                                            NUMTEMPS_15
                                            };
 
 
 void TemperatureController::updateCurrentTemperature()
 {
     uint8_t type = sensorType;
-
-
     // get raw temperature
     switch(type)
     {
+        case 0:
+            currentTemperature = 25;
+            break;
 #if ANALOG_INPUTS>0
         case 1: // Epcos B57560G0107F000
         case 2: // is 200k thermistor
@@ -772,16 +795,17 @@ void TemperatureController::updateCurrentTemperature()
         case 98: // Define Raw Thermistor and Restistor-Settings within configuration.h see USE_GENERIC_THERMISTORTABLE_2 and GENERIC_THERM_NUM_ENTRIES 
         case 99: // Define Raw Thermistor and Restistor-Settings within configuration.h see USE_GENERIC_THERMISTORTABLE_3 and GENERIC_THERM_NUM_ENTRIES 
         {
-            currentTemperature = (1023<<(2-ANALOG_REDUCE_BITS))-(osAnalogInputValues[sensorPin]>>(ANALOG_REDUCE_BITS)); // Convert to 10 bit result
+            currentTemperature = (1023 << (2 - ANALOG_REDUCE_BITS)) - (osAnalogInputValues[sensorPin] >> (ANALOG_REDUCE_BITS)); // Convert to 10 bit result
             break;
         }
         case 50: // User defined PTC table
         case 51:
         case 52:
+        case 53: // E3D PT100 Board
         case 60: // HEATER_USES_AD8495 (Delivers 5mV/degC)
         case 100: // AD595
         {
-            currentTemperature = (osAnalogInputValues[sensorPin]>>(ANALOG_REDUCE_BITS));
+            currentTemperature = (osAnalogInputValues[sensorPin] >> (ANALOG_REDUCE_BITS));
             break;
         }
 #endif // ANALOG_INPUTS>0
@@ -795,6 +819,10 @@ void TemperatureController::updateCurrentTemperature()
 
     switch(type)
     {
+        case 0:
+            currentTemperatureC = 25;
+            break;
+        //NTC
         case 1:
         case 2:
         case 3:
@@ -809,97 +837,47 @@ void TemperatureController::updateCurrentTemperature()
         case 12:
         case 13: // Conrad V3
         case 14: // Thermistor NTC 3950 100k Ohm
+        //PTC 
+        case 50: // User defined PTC thermistor 0
+        case 51: // user defined PTC thermistor 1
+        case 52: // user defined PTC thermistor 2
+        case 53: // E3D PT100 Board
         {
-            type--;
-            uint8_t num = pgm_read_byte(&temptables_num[type])<<1;
-            uint8_t i=2;
-            const short *temptable = (const short *)pgm_read_word(&temptables[type]); //pgm_read_word_near(&temptables[type]);
-            short oldraw = pgm_read_word(&temptable[0]);
-            short oldtemp = pgm_read_word(&temptable[1]);
-            short newtemp = 0;
-            int temp = (1023<<(2-ANALOG_REDUCE_BITS))-currentTemperature;
+            //###########################################TYPE DISTINCT
+            #define NTC_thermistor true
+            #define PTC_thermistor false
+            bool thermistortype = NTC_thermistor;
 
-
-            while(i<num)
-            {
-                short newraw = pgm_read_word(&temptable[i++]);
-                newtemp = pgm_read_word(&temptable[i++]);
-                if (newraw > temp)
-                {
-                    //OUT_P_I("RC O:",oldtemp);OUT_P_I_LN(" OR:",oldraw);
-                    //OUT_P_I("RC N:",newtemp);OUT_P_I_LN(" NR:",newraw);
-                    currentTemperatureC = TEMP_INT_TO_FLOAT(oldtemp + (float)(temp-oldraw)*(float)(newtemp-oldtemp)/(newraw-oldraw));
-
-#if FEATURE_HEAT_BED_TEMP_COMPENSATION
-                    float   offset = getHeatBedTemperatureOffset( currentTemperatureC );
-
-
-#if DEBUG_HEAT_BED_TEMP_COMPENSATION
-                    if( targetTemperatureC > 50 )
-                    {
-                        Com::printF( PSTR( "updateCurrentTemperature().1: " ), currentTemperatureC );
-                        Com::printF( PSTR( ", " ), offset );
-                        Com::printF( PSTR( ", " ), currentTemperature );
-                        Com::printFLN( PSTR( ", " ), targetTemperature );
-                    }
-#endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
-
-                    currentTemperatureC += offset;
-#endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
-
-                    return;
-                }
-                oldtemp = newtemp;
-                oldraw = newraw;
+            if(type >= 50 && type <= 52){
+                type -= 45; //50 -> 5 .. 52 -> 7 :: das heißt verwende user thermistor position 5..7, aber als PTC statt NTC 
+                thermistortype = PTC_thermistor;
             }
-            // Overflow: Set to last value in the table
-            currentTemperatureC = TEMP_INT_TO_FLOAT(newtemp);
+            else if(type == 53){
+                type -= 38; //53 -> 15 PT100 E3D
+                thermistortype = PTC_thermistor;
+            }
+            type--; //num to index
+            
+            uint8_t num = pgm_read_byte(&temptables_num[type]) << 1;
+            uint8_t i = 2;
+            const int16_t *temptable = (const int16_t *)pgm_read_word(&temptables[type]);
+            int16_t oldraw  = pgm_read_word(&temptable[0]);
+            int16_t oldtemp = pgm_read_word(&temptable[1]);
+            int16_t newtemp = 0;
 
-#if FEATURE_HEAT_BED_TEMP_COMPENSATION
-            float offset = getHeatBedTemperatureOffset( currentTemperatureC );
-
-
-#if DEBUG_HEAT_BED_TEMP_COMPENSATION
-            Com::printF( PSTR( "updateCurrentTemperature().2: " ), currentTemperatureC );
-            Com::printFLN( PSTR( ", " ), offset );
-#endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
-
-            currentTemperatureC += offset;
-#endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
-
-            break;
-        }
-        case 50: // User defined PTC thermistor
-        case 51:
-        case 52:
-        {
-            type-=46;
-            uint8_t num = pgm_read_byte(&temptables_num[type])<<1;
-            uint8_t i=2;
-            const short *temptable = (const short *)pgm_read_word(&temptables[type]); //pgm_read_word_near(&temptables[type]);
-            short oldraw = pgm_read_word(&temptable[0]);
-            short oldtemp = pgm_read_word(&temptable[1]);
-            short newtemp = 0;
-
+            //NTC: Suche Temperatur andersrum, weil Steigung der Umrechnungskurve invertiert ist.
+            if(thermistortype == NTC_thermistor)
+                currentTemperature = (1023 << (2 - ANALOG_REDUCE_BITS)) - currentTemperature;
 
             while(i<num)
             {
-                short newraw = pgm_read_word(&temptable[i++]);
-                newtemp = pgm_read_word(&temptable[i++]);
+                int16_t newraw = pgm_read_word(&temptable[i++]);
+                       newtemp = pgm_read_word(&temptable[i++]);
                 if (newraw > currentTemperature)
                 {
-                    currentTemperatureC = TEMP_INT_TO_FLOAT(oldtemp + (float)(currentTemperature-oldraw)*(float)(newtemp-oldtemp)/(newraw-oldraw));
-
+                    currentTemperatureC = TEMP_INT_TO_FLOAT(oldtemp + (float)(currentTemperature - oldraw) * (float)(newtemp - oldtemp) / (newraw - oldraw));
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
-                    float offset = getHeatBedTemperatureOffset( currentTemperatureC );
-
-
-#if DEBUG_HEAT_BED_TEMP_COMPENSATION
-                    Com::printF( PSTR( "updateCurrentTemperature().3: " ), currentTemperatureC );
-                    Com::printFLN( PSTR( ", " ), offset );
-#endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
-
-                    currentTemperatureC += offset;
+                    currentTemperatureC += getHeatBedTemperatureOffset( currentTemperatureC );
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
 
                     return;
@@ -909,52 +887,28 @@ void TemperatureController::updateCurrentTemperature()
             }
             // Overflow: Set to last value in the table
             currentTemperatureC = TEMP_INT_TO_FLOAT(newtemp);
-
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
-            float offset = getHeatBedTemperatureOffset( currentTemperatureC );
-
-
-#if DEBUG_HEAT_BED_TEMP_COMPENSATION
-            Com::printF( PSTR( "updateCurrentTemperature().4: " ), currentTemperatureC );
-            Com::printFLN( PSTR( ", " ), offset );
-#endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
-
-            currentTemperatureC += offset;
+            currentTemperatureC += getHeatBedTemperatureOffset( currentTemperatureC );
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
+
             break;
         }
         case 60: // AD8495 (Delivers 5mV/degC vs the AD595's 10mV)
         {
-            currentTemperatureC = ((float)currentTemperature * 1000.0f/(1024<<(2-ANALOG_REDUCE_BITS)));
-
+            currentTemperatureC = ((float)currentTemperature * 1000.0f / (1024 << (2 - ANALOG_REDUCE_BITS)));
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
-            float   offset = getHeatBedTemperatureOffset( currentTemperatureC );
-
-
-#if DEBUG_HEAT_BED_TEMP_COMPENSATION
-            Com::printF( PSTR( "updateCurrentTemperature().5: " ), currentTemperatureC );
-            Com::printFLN( PSTR( ", " ), offset );
-#endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
-
-            currentTemperatureC += offset;
+            currentTemperatureC += getHeatBedTemperatureOffset( currentTemperatureC );
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
+
             break;
         }
         case 100: // AD595
         {
-            currentTemperatureC = ((float)currentTemperature * 500.0f/(1024<<(2-ANALOG_REDUCE_BITS)));
-
+            currentTemperatureC = ((float)currentTemperature * 500.0f / (1024 << (2 - ANALOG_REDUCE_BITS)));
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
-            float   offset = getHeatBedTemperatureOffset( currentTemperatureC );
-
-
-#if DEBUG_HEAT_BED_TEMP_COMPENSATION
-            Com::printF( PSTR( "updateCurrentTemperature().6: " ), currentTemperatureC );
-            Com::printFLN( PSTR( ", " ), offset );
-#endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
-
-            currentTemperatureC += offset;
+            currentTemperatureC += getHeatBedTemperatureOffset( currentTemperatureC );
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
+
             break;
         }
 
@@ -963,43 +917,41 @@ void TemperatureController::updateCurrentTemperature()
         case 98:
         case 99:
         {
-            uint8_t i=2;
-            const short *temptable;
+            uint8_t i =  2;
+            const int16_t *temptable;
 
 #ifdef USE_GENERIC_THERMISTORTABLE_1
             if(type == 97)
-                temptable = (const short *)temptable_generic1;
+                temptable = (const int16_t *)temptable_generic1;
 #endif // USE_GENERIC_THERMISTORTABLE_1
 
 #ifdef USE_GENERIC_THERMISTORTABLE_2
             if(type == 98)
-                temptable = (const short *)temptable_generic2;
+                temptable = (const int16_t *)temptable_generic2;
 #endif // USE_GENERIC_THERMISTORTABLE_2
 
 #ifdef USE_GENERIC_THERMISTORTABLE_3
             if(type == 99)
-                temptable = (const short *)temptable_generic3;
+                temptable = (const int16_t *)temptable_generic3;
 #endif // USE_GENERIC_THERMISTORTABLE_3
 
-            short oldraw = temptable[0];
-            short oldtemp = temptable[1];
-            short newraw,newtemp;
+            int16_t oldraw = temptable[0];
+            int16_t oldtemp = temptable[1];
+            int16_t newtemp;
 
+            currentTemperature = (1023 << (2 - ANALOG_REDUCE_BITS)) - currentTemperature; //NTC -> switch to search from other side
 
-            currentTemperature = (1023<<(2-ANALOG_REDUCE_BITS))-currentTemperature;
-            while(i<GENERIC_THERM_NUM_ENTRIES*2)
+            while(i < GENERIC_THERM_NUM_ENTRIES*2)
             {
-                newraw = temptable[i++];
-                newtemp = temptable[i++];
+                int16_t newraw = temptable[i++];
+                       newtemp = temptable[i++];
                 if (newraw > currentTemperature)
                 {
-                    //OUT_P_I("RC O:",oldtemp);OUT_P_I_LN(" OR:",oldraw);
-                    //OUT_P_I("RC N:",newtemp);OUT_P_I_LN(" NR:",newraw);
-                    currentTemperatureC = TEMP_INT_TO_FLOAT(oldtemp + (float)(currentTemperature-oldraw)*(float)(newtemp-oldtemp)/(newraw-oldraw));
-
+                    currentTemperatureC = TEMP_INT_TO_FLOAT(oldtemp + (float)(currentTemperature - oldraw) * (float)(newtemp - oldtemp) / (newraw - oldraw));
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
                     currentTemperatureC += getHeatBedTemperatureOffset( currentTemperatureC );
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
+
                     return;
                 }
                 oldtemp = newtemp;
@@ -1007,10 +959,10 @@ void TemperatureController::updateCurrentTemperature()
             }
             // Overflow: Set to last value in the table
             currentTemperatureC = TEMP_INT_TO_FLOAT(newtemp);
-
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
             currentTemperatureC += getHeatBedTemperatureOffset( currentTemperatureC );
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
+
             break;
         }
 #endif // defined(USE_GENERIC_THERMISTORTABLE_1) || defined(USE_GENERIC_THERMISTORTABLE_2) || defined(USE_GENERIC_THERMISTORTABLE_3)
@@ -1022,181 +974,12 @@ void TemperatureController::updateCurrentTemperature()
 void TemperatureController::setTargetTemperature(float target, float offset)
 {
     targetTemperatureC = target;
-
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
-#if DEBUG_HEAT_BED_TEMP_COMPENSATION
-    Com::printF( PSTR( "setTargetTemperature(): " ), target );
-    Com::printFLN( PSTR( ", " ), offset );
-#endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
-
-    offsetC =  offset;
-    target  += offset;
-#endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
-
-    int temp     = TEMP_FLOAT_TO_INT(target);
-    uint8_t type = sensorType;
-
-    switch(sensorType)
-    {
-        case 1:
-        case 2:
-        case 3:
-        case 4:
-        case 5:
-        case 6:
-        case 7:
-        case 8:
-        case 9:
-        case 10:
-        case 11:
-        case 12:
-        case 13: // NTC 3950 100k thermistor - Conrad V3
-        case 14: // Thermistor NTC 3950 100k Ohm
-        {
-            type--;
-            uint8_t num = pgm_read_byte(&temptables_num[type])<<1;
-            uint8_t i=2;
-            const short *temptable = (const short *)pgm_read_word(&temptables[type]); //pgm_read_word(&temptables[type]);
-            short oldraw = pgm_read_word(&temptable[0]);
-            short oldtemp = pgm_read_word(&temptable[1]);
-            short newraw = 0;
-
-            while(i<num)
-            {
-                newraw = pgm_read_word(&temptable[i++]);
-                short newtemp = pgm_read_word(&temptable[i++]);
-                if (newtemp < temp)
-                {
-                    targetTemperature = (1023<<(2-ANALOG_REDUCE_BITS))- oldraw + (int32_t)(oldtemp-temp)*(int32_t)(oldraw-newraw)/(oldtemp-newtemp);
-
-#if DEBUG_HEAT_BED_TEMP_COMPENSATION
-                    Com::printFLN( PSTR( "setTargetTemperature().1: " ), targetTemperature );
-#endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
-
-                    return;
-                }
-                oldtemp = newtemp;
-                oldraw = newraw;
-            }
-
-            // Overflow: Set to last value in the table
-            targetTemperature = (1023<<(2-ANALOG_REDUCE_BITS))-newraw;
-
-#if DEBUG_HEAT_BED_TEMP_COMPENSATION
-            Com::printFLN( PSTR( "setTargetTemperature().2: " ), targetTemperature );
-#endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
-            break;
-        }
-        case 50: // user defined PTC thermistor
-        case 51:
-        case 52:
-        {
-            type-=46;
-            uint8_t num = pgm_read_byte(&temptables_num[type])<<1;
-            uint8_t i=2;
-            const short *temptable = (const short *)pgm_read_word(&temptables[type]); //pgm_read_word(&temptables[type]);
-            short oldraw = pgm_read_word(&temptable[0]);
-            short oldtemp = pgm_read_word(&temptable[1]);
-            short newraw = 0;
-
-            while(i<num)
-            {
-                newraw = pgm_read_word(&temptable[i++]);
-                short newtemp = pgm_read_word(&temptable[i++]);
-                if (newtemp > temp)
-                {
-                    targetTemperature = oldraw + (int32_t)(oldtemp-temp)*(int32_t)(oldraw-newraw)/(oldtemp-newtemp);
-
-#if DEBUG_HEAT_BED_TEMP_COMPENSATION
-                    Com::printFLN( PSTR( "setTargetTemperature().3: " ), targetTemperature );
-#endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
-                    return;
-                }
-                oldtemp = newtemp;
-                oldraw = newraw;
-            }
-
-            // Overflow: Set to last value in the table
-            targetTemperature = newraw;
-
-#if DEBUG_HEAT_BED_TEMP_COMPENSATION
-            Com::printFLN( PSTR( "setTargetTemperature().4: " ), targetTemperature );
-#endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
-            break;
-        }
-        case 60: // HEATER_USES_AD8495 (Delivers 5mV/degC)
-        {
-            targetTemperature = (int)((int32_t)temp * (1024<<(2-ANALOG_REDUCE_BITS))/ 1000);
-
-#if DEBUG_HEAT_BED_TEMP_COMPENSATION
-            Com::printFLN( PSTR( "setTargetTemperature().5: " ), targetTemperature );
-#endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
-            break;
-        }
-        case 100: // HEATER_USES_AD595
-        {
-            targetTemperature = (int)((int32_t)temp * (1024<<(2-ANALOG_REDUCE_BITS))/ 500);
-
-#if DEBUG_HEAT_BED_TEMP_COMPENSATION
-            Com::printFLN( PSTR( "setTargetTemperature().6: " ), targetTemperature );
-#endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
-            break;
-        }
-#if defined(USE_GENERIC_THERMISTORTABLE_1) || defined(USE_GENERIC_THERMISTORTABLE_2) || defined(USE_GENERIC_THERMISTORTABLE_3)
-        case 97:
-        case 98:
-        case 99:
-        {
-            uint8_t i=2;
-            const short *temptable;
-
-#ifdef USE_GENERIC_THERMISTORTABLE_1
-            if(type == 97)
-                temptable = (const short *)temptable_generic1;
-#endif // USE_GENERIC_THERMISTORTABLE_1
-
-#ifdef USE_GENERIC_THERMISTORTABLE_2
-            if(type == 98)
-                temptable = (const short *)temptable_generic2;
-#endif // USE_GENERIC_THERMISTORTABLE_2
-
-#ifdef USE_GENERIC_THERMISTORTABLE_3
-            if(type == 99)
-                temptable = (const short *)temptable_generic3;
-#endif // USE_GENERIC_THERMISTORTABLE_3
-
-            short oldraw = temptable[0];
-            short oldtemp = temptable[1];
-            short newraw = 0;
-            while(i<GENERIC_THERM_NUM_ENTRIES*2)
-            {
-                newraw = temptable[i++];
-                short newtemp = temptable[i++];
-                if (newtemp < temp)
-                {
-                    targetTemperature = (1023<<(2-ANALOG_REDUCE_BITS))- oldraw + (int32_t)(oldtemp-temp)*(int32_t)(oldraw-newraw)/(oldtemp-newtemp);
-
-#if FEATURE_HEAT_BED_TEMP_COMPENSATION
-                    currentTemperatureC += getHeatBedTemperatureOffset( currentTemperatureC );
-#endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
-                    return;
-                }
-                oldtemp = newtemp;
-                oldraw = newraw;
-            }
-            // Overflow: Set to last value in the table
-            targetTemperature = (1023<<(2-ANALOG_REDUCE_BITS))-newraw;
-
-#if FEATURE_HEAT_BED_TEMP_COMPENSATION
-            currentTemperatureC += getHeatBedTemperatureOffset( currentTemperatureC );
-#endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
-            break;
-        }
-#endif
-    }
+    offsetC =  offset; //this->offsetC
+#else
     (void)offset;
+#endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
 } // setTargetTemperature
-
 
 uint8_t autotuneIndex = 255;
 void Extruder::disableAllHeater()
@@ -1204,17 +987,13 @@ void Extruder::disableAllHeater()
     for(uint8_t i=0; i<NUM_TEMPERATURE_LOOPS; i++)
     {
         TemperatureController *c = tempController[i];
-        c->targetTemperature = 0;
         c->targetTemperatureC = 0;
-
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
         c->offsetC = 0;
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
-
         pwm_pos[c->pwmIndex] = 0;
     }
     autotuneIndex = 255;
-
 } // disableAllHeater
 
 void TemperatureController::waitForTargetTemperature(uint8_t plus_temp_tolerance) {
@@ -1498,7 +1277,7 @@ Extruder extruder[NUM_EXTRUDER] =
 #endif // USE_ADVANCE
 
         ,{
-            0,EXT0_TEMPSENSOR_TYPE,EXT0_SENSOR_INDEX,0,0,0,0,
+            0,EXT0_TEMPSENSOR_TYPE,EXT0_SENSOR_INDEX,0,0,0,
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
             0,
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
@@ -1530,7 +1309,7 @@ Extruder extruder[NUM_EXTRUDER] =
 #endif // USE_ADVANCE
 
         ,{
-            1,EXT1_TEMPSENSOR_TYPE,EXT1_SENSOR_INDEX,0,0,0,0,
+            1,EXT1_TEMPSENSOR_TYPE,EXT1_SENSOR_INDEX,0,0,0,
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
             0,
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
@@ -1553,7 +1332,7 @@ Extruder extruder[NUM_EXTRUDER] =
 #if HAVE_HEATED_BED
 #define NUM_TEMPERATURE_LOOPS NUM_EXTRUDER+1
 TemperatureController heatedBedController = {
-            NUM_EXTRUDER,HEATED_BED_SENSOR_TYPE,BED_SENSOR_INDEX,0,0,0,0,
+            NUM_EXTRUDER,HEATED_BED_SENSOR_TYPE,BED_SENSOR_INDEX,0,0,0,
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
             0,
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
@@ -1575,7 +1354,7 @@ Do not try to do anything other than updateCurrentTemperature and reading the Te
 TODO: Making a totally clean class, without the logic to controll something.
 */
 TemperatureController optTempController = {
-        0,RESERVE_ANALOG_SENSOR_TYPE,RESERVE_SENSOR_INDEX,0,0,0,0,
+        0,RESERVE_ANALOG_SENSOR_TYPE,RESERVE_SENSOR_INDEX,0,0,0,
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
         0,
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION

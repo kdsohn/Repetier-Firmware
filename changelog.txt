@@ -2,6 +2,32 @@ TODO: Z-Lift-Bug seems to be still present! Avoid Z-Lift: Todo @Conrad -> Has th
 TODO: Maybe tracing down communication errors which seem to appear from time to time (but dont have any effect because they get autocorrected within ~12ms.)
 TODO: Testing, testing ..
 
+V RF.01.41.15.Mod alpha (2018-03-29) 
+- added Menusupport and EEPROM Support for HEAT_BED_SCAN_Z_START_MM which sets the z-lift for moving onto the bed at every start of zscans like Z-Offset-Scan or Heat-Bed-Scan. This value needs to be high, if someone wants to work with positive matrix (/ to low zscrew). That is not recommended but helps if you have interchangeable heated beds with different heights.
+
+V RF.01.41.14.Mod alpha (2018-03-29) 
+- removed "PID autotune some overshoot" from menu
+- gave the PID autotune submenus a description for what autotune methods are good
+- reordered PID autotune methods to start with pessen, then classic then noovershoot and finally tyreus lyben. 
+- added "heated bed off" to Extruder Menu. (At least I use this alot for testing)
+
+V RF.01.41.13.Mod alpha (2018-03-28) 
+- We can now skip the rest of the M3912 startline by pressing play while printing the start line. (Might save some tiny amounts of plastic from time to time.)
+- the eeproms max feedrates are dropped and overwritten if they are bigger than configuration max values.
+- the eeproms homing feedrates are dropped and overwritten if they are higher than configuration max values.
+- extruder steps/mm are corrected to default if they are set > 5540steps/mm 
+- if we press the 3 keys "Back", "OK" and "Play" while boot time the eeprom values are reset to defaults before being loaded.
+- some reordering in boot time configuration to prevent to early use of things.
+- compiling without SDSUPPORT is possible again. (~+1kb ram frei -> ~+8 MOVE_CACHE möglich)
+
+V RF.01.41.12.Mod alpha (2018-03-26) 
+- cleaned up the thermistor functions
+- depreached the use of int16_t targetTemperature and crushed void TemperatureController::setTargetTemperature(float target, float offset) to very few lines.
+- added PT100 support on temperature sensor number 53 again. (This PT100 sensor board is sensortype no. 13 in original repetier but conrad dropped their V3 hotends sensor to this number.)
+- inserted MAX_ROOM_TEMPERATURE as the default low constraint in some locations where a temperature has to wait for the target temperature.
+- heater off now means targetTemperature=0 (not <15 or whatever in some locations).
+- added sensortype 0 as 25°C dummy (like repetier did)
+
 V RF.01.41.11.Mod alpha (2018-03-16) 
 - added a microsteps reset to the function that resets the configuration to defaults (Werksreset)
 - fixed that EEPROM::initializeAllOperatingModes() did not update checksum. (Had been forgotten when using M502 and UI_ACTION_RESTORE_DEFAULTS )

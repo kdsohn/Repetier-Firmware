@@ -158,7 +158,6 @@
 
 #define UI_ACTION_CHOOSE_CLASSICPID         1674 //pid kram
 #define UI_ACTION_CHOOSE_LESSERINTEGRAL     1675 //pid kram
-#define UI_ACTION_CHOOSE_SOME               1676 //pid kram
 #define UI_ACTION_CHOOSE_NO                 1677 //pid kram
 #define UI_ACTION_CHOOSE_TYREUS_LYBEN       1701 //pid kram
 

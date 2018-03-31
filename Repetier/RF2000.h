@@ -242,6 +242,7 @@ PTC-Thermistors
 50: USER_THERMISTORTABLE0 als PTC
 51: USER_THERMISTORTABLE1 als PTC
 52: USER_THERMISTORTABLE2 als PTC
+53: E3D PT100 Board (direct AD voltage in)
 60: HEATER_USES_AD8495 (Delivers 5mV/degC)
 100: AD595 */
 #define EXT0_TEMPSENSOR_TYPE                3
@@ -401,6 +402,7 @@ PTC-Thermistors
 50: USER_THERMISTORTABLE0 als PTC
 51: USER_THERMISTORTABLE1 als PTC
 52: USER_THERMISTORTABLE2 als PTC
+53: E3D PT100 Board (direct AD voltage in)
 60: HEATER_USES_AD8495 (Delivers 5mV/degC)
 100: AD595 */
 #define EXT1_TEMPSENSOR_TYPE                3
@@ -792,7 +794,7 @@ This defines the full power duration before returning to set value. Time is in m
 #define MAX_FEEDRATE_Y                      200
 #define MAX_FEEDRATE_Z                      12
 
-/** \brief Home position speed in mm/s. Overridden if EEPROM activated. */
+/** \brief Home position speed in mm/s. Overridden if EEPROM activated. These values can be overridden by EEPROM but are considered as maximum allowed values */
 #define HOMING_FEEDRATE_X_PRINT             80
 #define HOMING_FEEDRATE_Y_PRINT             80
 #define HOMING_FEEDRATE_Z_PRINT             10

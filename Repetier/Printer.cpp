@@ -698,26 +698,30 @@ void Printer::setup()
 
     for(uint8_t i=0; i<NUM_EXTRUDER+3; i++) pwm_pos[i]=0;
 
-#if FEATURE_MILLING_MODE
-    if( Printer::operatingMode == OPERATING_MODE_PRINT )
-    {
-#endif // FEATURE_MILLING_MODE
-        Printer::homingFeedrate[X_AXIS] = HOMING_FEEDRATE_X_PRINT;
-        Printer::homingFeedrate[Y_AXIS] = HOMING_FEEDRATE_Y_PRINT;
-        Printer::homingFeedrate[Z_AXIS] = HOMING_FEEDRATE_Z_PRINT;
-#if FEATURE_MILLING_MODE
-    }
-    else
-    {
-        Printer::homingFeedrate[X_AXIS] = HOMING_FEEDRATE_X_MILL;
-        Printer::homingFeedrate[Y_AXIS] = HOMING_FEEDRATE_Y_MILL;
-        Printer::homingFeedrate[Z_AXIS] = HOMING_FEEDRATE_Z_MILL;
-    }
-#endif // FEATURE_MILLING_MODE
+#if FEATURE_USER_INT3
+    SET_INPUT( RESERVE_DIGITAL_PIN_PD3 );
+    PULLUP( RESERVE_DIGITAL_PIN_PD3, HIGH );
+#endif //FEATURE_USER_INT3
 
-    HAL::hwSetup();
+#if FEATURE_READ_CALIPER
+// read for using pins : https://www.arduino.cc/en/Tutorial/DigitalPins
+//where the clock comes in and triggers an interrupt which reads data then:
+    SET_INPUT( FEATURE_READ_CALIPER_INT_PIN ); //input as default already this is here for explaination more than really having an input.
+    PULLUP( FEATURE_READ_CALIPER_INT_PIN, HIGH ); //do I need this pullup??
+//where data is to read when Int triggers because of clock from caliper:
+    SET_INPUT( FEATURE_READ_CALIPER_DATA_PIN ); //input as default already this is here for explaination more than really having an input.
+    PULLUP( FEATURE_READ_CALIPER_DATA_PIN, HIGH ); //do I need this pullup??
+#endif //FEATURE_READ_CALIPER
 
     HAL::allowInterrupts();
+
+#if FEATURE_USER_INT3
+    attachInterrupt( digitalPinToInterrupt(RESERVE_DIGITAL_PIN_PD3) , USER_INTERRUPT3_HOOK, FALLING );
+#endif //FEATURE_USER_INT3
+
+#if FEATURE_READ_CALIPER
+    attachInterrupt( digitalPinToInterrupt(FEATURE_READ_CALIPER_INT_PIN) , FEATURE_READ_CALIPER_HOOK, FALLING );
+#endif //FEATURE_READ_CALIPER
 
 #if FEATURE_BEEPER
     enableBeeper = BEEPER_MODE;
@@ -918,23 +922,6 @@ void Printer::setup()
 #endif // Z_MAX_PIN>-1
 #endif // MAX_HARDWARE_ENDSTOP_Z
 
-#if FEATURE_USER_INT3
-    SET_INPUT( RESERVE_DIGITAL_PIN_PD3 );
-    PULLUP( RESERVE_DIGITAL_PIN_PD3, HIGH );
-    attachInterrupt( digitalPinToInterrupt(RESERVE_DIGITAL_PIN_PD3) , USER_INTERRUPT3_HOOK, FALLING );
-#endif //FEATURE_USER_INT3
-
-#if FEATURE_READ_CALIPER
-// read for using pins : https://www.arduino.cc/en/Tutorial/DigitalPins
-//where the clock comes in and triggers an interrupt which reads data then:
-    SET_INPUT( FEATURE_READ_CALIPER_INT_PIN ); //input as default already this is here for explaination more than really having an input.
-    PULLUP( FEATURE_READ_CALIPER_INT_PIN, HIGH ); //do I need this pullup??
-    attachInterrupt( digitalPinToInterrupt(FEATURE_READ_CALIPER_INT_PIN) , FEATURE_READ_CALIPER_HOOK, FALLING );
-//where data is to read when Int triggers because of clock from caliper:
-    SET_INPUT( FEATURE_READ_CALIPER_DATA_PIN ); //input as default already this is here for explaination more than really having an input.
-    PULLUP( FEATURE_READ_CALIPER_DATA_PIN, HIGH ); //do I need this pullup??
-#endif //FEATURE_READ_CALIPER
-
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     SET_OUTPUT(FAN_PIN);
     WRITE(FAN_PIN,LOW);
@@ -964,8 +951,6 @@ void Printer::setup()
     SET_OUTPUT(EXT1_EXTRUDER_COOLER_PIN);
     WRITE(EXT1_EXTRUDER_COOLER_PIN,LOW);
 #endif // defined(EXT1_EXTRUDER_COOLER_PIN) && EXT1_EXTRUDER_COOLER_PIN>-1 && NUM_EXTRUDER>1
-
-    motorCurrentControlInit(); // Set current if it is firmware controlled
 
     feedrate = 50; ///< Current feedrate in mm/s.
     feedrateMultiply = 100;
@@ -1048,11 +1033,17 @@ void Printer::setup()
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
     {
 #endif // FEATURE_MILLING_MODE
+        Printer::homingFeedrate[X_AXIS] = HOMING_FEEDRATE_X_PRINT;
+        Printer::homingFeedrate[Y_AXIS] = HOMING_FEEDRATE_Y_PRINT;
+        Printer::homingFeedrate[Z_AXIS] = HOMING_FEEDRATE_Z_PRINT;
         lengthMM[X_AXIS] = X_MAX_LENGTH_PRINT;
 #if FEATURE_MILLING_MODE
     }
     else
     {
+        Printer::homingFeedrate[X_AXIS] = HOMING_FEEDRATE_X_MILL;
+        Printer::homingFeedrate[Y_AXIS] = HOMING_FEEDRATE_Y_MILL;
+        Printer::homingFeedrate[Z_AXIS] = HOMING_FEEDRATE_Z_MILL;
         lengthMM[X_AXIS] = X_MAX_LENGTH_MILL;
     }
 #endif // FEATURE_MILLING_MODE
@@ -1130,7 +1121,9 @@ void Printer::setup()
 
     HAL::showStartReason();
     Extruder::initExtruder();
-    EEPROM::init(); // Read settings from eeprom if wanted
+    EEPROM::init(); // Read settings from eeprom if wanted [readDataFromEEPROM or destroy corrupted eeprom]
+
+    motorCurrentControlInit(); // Set current if it is firmware controlled
 
 #if FEATURE_230V_OUTPUT
     enable230VOutput = OUTPUT_230V_DEFAULT_ON;
@@ -2201,12 +2194,16 @@ void Printer::stopPrint() //function for aborting USB and SD-Prints
     if( !Printer::isPrinting() ) return;
     g_uStartOfIdle = 0; //jetzt nicht mehr in showidle() gehen;
 
+#if SDSUPPORT
     if( sd.sdmode ) //prüfung auf !sdmode sollte hier eigenlicht nicht mehr nötig sein, aber ..
     {
          //block sdcard from reading more.
         Com::printFLN( PSTR("SD print stopped.") );
         sd.sdmode = false;
-    }else{
+    }
+    else
+#endif //SDSUPPORT
+    {
          //block some of the usb sources from sending more data
         Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetierserver to stop.
         Com::printFLN( PSTR( "// action:cancel" ) ); //tell octoprint to cancel print. > 1.3.7  https://github.com/foosel/OctoPrint/issues/2367#issuecomment-357554341
@@ -2240,6 +2237,17 @@ bool Printer::checkAbortKeys( void ){
     ui_check_keys(activeKeys);
     if(activeKeys == UI_ACTION_OK || activeKeys == UI_ACTION_BACK){
         return true;
+    }
+    return false;
+}
+
+bool Printer::checkPlayKey( void ){
+    if(g_pauseMode == PAUSE_MODE_NONE){
+        int16_t activeKeys = 0;
+        ui_check_keys(activeKeys);
+        if(activeKeys == UI_ACTION_RF_CONTINUE){
+            return true;
+        }
     }
     return false;
 }

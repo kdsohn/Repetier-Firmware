@@ -162,9 +162,6 @@ to print an object two times at the speed of one. Works only with dual extruder 
 is always running and is not hung up for some unknown reason. */
 #define FEATURE_WATCHDOG                    1                                                   // 1 = on, 0 = off
 
-/** \brief Defines whether the complete EEPROM shall be reset and filled with the values from Configuration.h whenever the EEPROM becomes corruped or its EEPROM_MODE is different to the value from Configuration.h. */
-#define FEATURE_FULL_EEPROM_RESET           1                                                   // 1 = on, 0 = off
-
 /** \brief Defines whether a change within the menu shall be stored to the EEPROM automatically or not. */
 #define FEATURE_AUTOMATIC_EEPROM_UPDATE     1                                                   // 1 = the EEPROM is updated automatically after each change via the menu, 0 = the EEPROM must be updated manually via the "Store to EEPROM" menu item
 
@@ -542,7 +539,7 @@ instead of driving both with a single stepper. The same works for the other axis
 // ##########################################################################################
 
 /** \brief  Select whether the SD card is supported. */
-#define SDSUPPORT                           true
+#define SDSUPPORT                           1
 
 /** \brief  Change to true if you get a inserted message on removal. */
 #define SDCARDDETECTINVERTED                false

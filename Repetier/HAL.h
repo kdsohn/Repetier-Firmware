@@ -117,7 +117,7 @@ public:
 #define ANALOG_REDUCE_BITS          0
 #define ANALOG_REDUCE_FACTOR        1
 
-#define MAX_RAM                     32767
+#define MAX_RAM                     8192
 
 #define bit_clear(x,y)              x&= ~(1<<y)
 #define bit_set(x,y)                x|= (1<<y)
@@ -280,10 +280,6 @@ class HAL
 public:
     HAL();
     virtual ~HAL();
-    
-    static inline void hwSetup(void)
-    {
-    } // hwSetup
 
     // return val'val
     static uint16_t integerSqrt(int32_t a);
