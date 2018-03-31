@@ -1823,7 +1823,10 @@ void UIDisplay::parse(char *txt,bool ram)
                 else if(c2=='1') addFloat(extruder[1].stepsPerMM,3,0);                                                // %S1 : Steps per mm extruder1
                 else if(c2=='e') addFloat(Extruder::current->stepsPerMM,3,0);                                         // %Se : Steps per mm current extruder
                 else if(c2=='z') addFloat(g_nManualSteps[Z_AXIS] * Printer::invAxisStepsPerMM[Z_AXIS] * 1000,4,0);    // %Sz : Mikrometer per Z-Single_Step (Z_Axis)
-                else if(c2=='M' && col<MAX_COLS) if(g_ZMatrixChangedInRam) printCols[col++]='*';                      // %SM : Matrix has changed in Ram and is ready to Save. -> *)
+                else if(c2=='M' && col<MAX_COLS){ if(g_ZMatrixChangedInRam) printCols[col++]='*'; }                   // %SM : Matrix has changed in Ram and is ready to Save. -> *)
+#if FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+                else if(c2=='s') addFloat(g_scanStartZLiftMM,1,1);                                                    // %Ss : active current value of HEAT_BED_SCAN_Z_START_MM
+#endif // FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
                 break;
             }
             case 'p':
@@ -3824,6 +3827,18 @@ void UIDisplay::nextPreviousAction(int8_t next)
             break;
         }
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
+
+#if FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+        case UI_ACTION_RF_SCAN_START_HEIGHT:
+        {
+            INCREMENT_MIN_MAX(g_scanStartZLiftMM,0.1f,0.3f,6.0f);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetFloat(EPR_ZSCAN_START_MM,g_scanStartZLiftMM); //mm zlift vor den scans.
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+#endif // FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
 
         case UI_ACTION_RF_RESET_ACK:
         case UI_ACTION_STOP_ACK:

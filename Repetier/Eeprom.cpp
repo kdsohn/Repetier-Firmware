@@ -582,6 +582,10 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
     HAL::eprSetByte( EPR_RF_DIGIT_CMP_STATE, (g_nDigitZCompensationDigits_active ? 1 : 2) ); //2 ist false, < 1 ist true
 #endif // FEATURE_DIGIT_Z_COMPENSATION
 
+#if FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+    HAL::eprSetFloat(EPR_ZSCAN_START_MM,g_scanStartZLiftMM);
+#endif // FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+
     // Save version and build checksum
     HAL::eprSetByte(EPR_VERSION,EEPROM_PROTOCOL_VERSION);
     EEPROM::updateChecksum();
@@ -944,6 +948,16 @@ void EEPROM::readDataFromEEPROM()
     g_nDigitZCompensationDigits_active = ( HAL::eprGetByte( EPR_RF_DIGIT_CMP_STATE) > 1 ? false : true ); //2 ist false, < 1 ist true
 #endif // FEATURE_DIGIT_Z_COMPENSATION
 
+#if FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+    float tmpss = HAL::eprGetFloat(EPR_ZSCAN_START_MM);
+    if(tmpss >= 0.3f && tmpss <= 6.0f){
+        g_scanStartZLiftMM = tmpss; 
+    }else{
+        HAL::eprSetFloat(EPR_ZSCAN_START_MM,HEAT_BED_SCAN_Z_START_MM);
+        change = true;
+    }
+#endif // FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+
     const unsigned short    uMotorCurrentMax[] = MOTOR_CURRENT_MAX; //oberes Amperelimit
     const unsigned short    uMotorCurrentUse[] = MOTOR_CURRENT_NORMAL; //Standardwert
     uint8_t current = 0;
@@ -1193,6 +1207,10 @@ void EEPROM::writeSettings()
       writeInt(EPR_RF_MILL_ACCELERATION,Com::tEPRZMillingAcceleration);
     }
 #endif // FEATURE_MILLING_MODE
+
+#if FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+    writeFloat(EPR_ZSCAN_START_MM,Com::tEPRZScanStartLift);
+#endif // FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
 
 #if FEATURE_READ_CALIPER
     writeInt( EPR_RF_CAL_STANDARD, Com::tEPRZCallStandard );

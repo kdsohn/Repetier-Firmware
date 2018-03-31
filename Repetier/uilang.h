@@ -402,6 +402,7 @@
 #define UI_ACTION_TEXT_TYREUS_LYBEN_TIPP    "(choose for highpower bed)"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+    #define UI_TEXT_SCAN_START_HEIGHT       "Scan Z-Lift: %Ss mm"
     #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"
     #define UI_TEXT_FREQ_DBL                "DblFq:%Xgmm/s"
     #define UI_TEXT_EXTR_ADVANCE_L_E0       "E0-Advance L:%Xb"
@@ -448,6 +449,7 @@
     #define UI_TEXT_OPERATION_DENIED        "Operation denied"
     #define UI_TEXT_TEMPERATURE_WRONG       "Temperature wrong"
 #else
+    #define UI_TEXT_SCAN_START_HEIGHT       "ScanZLift:%Ssmm"
     #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"
     #define UI_TEXT_FREQ_DBL                "DblF:%Xgmm/s"
     #define UI_TEXT_EXTR_ADVANCE_L_E0       "E0-AdvanceL:%Xb"
@@ -782,6 +784,7 @@
 #define UI_ACTION_TEXT_TYREUS_LYBEN_TIPP    "(empf. f" STR_uuml "r highpower Bett)"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+    #define UI_TEXT_SCAN_START_HEIGHT       "Scan Z-Hub: %Ss mm"
     #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"
     #define UI_TEXT_FREQ_DBL                "DblFq:%Xgmm/s"
     #define UI_TEXT_EXTR_ADVANCE_L_E0       "E0-Advance L:%Xb"
@@ -859,6 +862,7 @@
     #define UI_TEXT_INVALID_MATRIX          "Ung" STR_uuml" ltige Matrix"
     #define UI_TEXT_TEMPERATURE_WRONG       "Temperatur falsch"    
 #else
+    #define UI_TEXT_SCAN_START_HEIGHT       "Scan-ZHub:%Ssmm"
     #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"
     #define UI_TEXT_FREQ_DBL                "DblF:%Xgmm/s"
     #define UI_TEXT_EXTR_ADVANCE_L_E0       "E0-AdvanceL:%Xb"
