@@ -539,7 +539,7 @@ instead of driving both with a single stepper. The same works for the other axis
 // ##########################################################################################
 
 /** \brief  Select whether the SD card is supported. */
-#define SDSUPPORT                           1
+#define SDSUPPORT                           1                                                   // 1 = supported, 0 = not supported
 
 /** \brief  Change to true if you get a inserted message on removal. */
 #define SDCARDDETECTINVERTED                false
@@ -672,6 +672,9 @@ Values must be in range 1..255 */
 #define SPEED_MIN_MILLIS                    300
 #define SPEED_MAX_MILLIS                    50
 #define SPEED_MAGNIFICATION                 100.0f
+
+/** \brief Specifies if you want to see the TipDown Support within Z-Configuration Menu. This is only usefull if you have a dual hotend with possible servo or spring z-offset-shift.*/
+#define UI_SHOW_TIPDOWN_IN_ZCONFIGURATION   0                                                   // 1 = show, 0 = hide
 
 
 // ##########################################################################################
