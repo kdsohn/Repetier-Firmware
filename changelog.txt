@@ -7,6 +7,7 @@ V RF.01.41.18.Mod (2018-04-08)
 - removed DEBUG_FORCE_COM_ERROR
 - removed DEBUG_SPLIT
 - removed DEBUG_PRINT
+- removed ANALYZER defines
 ...
 
 V RF.01.41.17.Mod (2018-04-02) 

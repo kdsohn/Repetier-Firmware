@@ -231,34 +231,6 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 /** \brief If enabled, writes the created generic table to serial port at startup. */
 //#define DEBUG_GENERIC_TEMP_TABLE
 
-// Uncomment the following line to enable debugging. You can better control debugging below the following line
-//#define DEBUG
-
-// Uncomment if no analyzer is connected
-//#define ANALYZER
-
-// Channel->pin assignments
-#define ANALYZER_CH0                        63 // New move
-#define ANALYZER_CH1                        40 // Step loop
-#define ANALYZER_CH2                        53 // X Step
-#define ANALYZER_CH3                        65 // Y Step
-#define ANALYZER_CH4                        59 // X Direction
-#define ANALYZER_CH5                        64 // Y Direction
-#define ANALYZER_CH6                        58 // xsig
-#define ANALYZER_CH7                        57 // ysig
-
-#ifdef ANALYZER
-
-#define ANALYZER_ON(a)                      {WRITE(a,HIGH);}
-#define ANALYZER_OFF(a)                     {WRITE(a,LOW);}
-
-#else
-
-#define ANALYZER_ON(a)
-#define ANALYZER_OFF(a)
-
-#endif // ANALYZER
-
 /** \brief Adds a M3993 / or like "M3993 P300000" to set another or default LOW_TICKS_PER_MOVE and gather statistics about the fill level of the MOVE_CACHE while printing */
 #define FEATURE_DEBUG_MOVE_CACHE_TIMING              0
 
