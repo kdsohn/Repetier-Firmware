@@ -115,10 +115,6 @@ float           Printer::memoryE;
 float           Printer::memoryF;
 #endif // FEATURE_MEMORY_POSITION
 
-#ifdef DEBUG_PRINT
-int             debugWaitLoop = 0;
-#endif // DEBUG_PRINT
-
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 volatile char   Printer::doHeatBedZCompensation = false;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION

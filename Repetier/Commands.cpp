@@ -23,9 +23,6 @@ int         Commands::lowestRAMValueSend = MAX_RAM;
 
 void Commands::commandLoop()
 {
-#ifdef DEBUG_PRINT
-    debugWaitLoop = 1;
-#endif
     GCode::readFromSerial();
     GCode *code = GCode::peekCurrentCommand();
     if(code)
@@ -93,10 +90,6 @@ void Commands::checkForPeriodicalActions(enum FirmwareState state)
 void Commands::waitUntilEndOfAllMoves()
 {
     bool    bWait = false;
-
-#ifdef DEBUG_PRINT
-    debugWaitLoop = 8;
-#endif
 
     if( PrintLine::hasLines() )     bWait = true;
 #if FEATURE_FIND_Z_ORIGIN
@@ -1194,10 +1187,6 @@ void Commands::executeGCode(GCode *com)
                 if(com->hasZ())
                     Printer::disableZStepper();
                 wait += HAL::timeInMilliseconds();
-
-#ifdef DEBUG_PRINT
-                debugWaitLoop = 2;
-#endif // DEBUG_PRINT
 
                 while(wait-HAL::timeInMilliseconds() < 100000L)
                 {

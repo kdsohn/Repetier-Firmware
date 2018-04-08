@@ -243,10 +243,6 @@ extern volatile int waitRelax; // Delay filament relax at the end of print, coul
 
 extern void updateStepsParameter(PrintLine *p);
 
-#ifdef DEBUG_PRINT
-extern int                  debugWaitLoop;
-#endif // DEBUG_PRINT
-
 #define STR(s)      #s
 #define XSTR(s)     STR(s)
 

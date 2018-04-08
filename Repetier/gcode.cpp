@@ -339,9 +339,6 @@ void GCode::executeFString(FSTRINGPARAM(cmd))
         // Send command into command buffer
         if(code.parseAscii((char *)buf,false) && (code.params & 518))   // Success
         {
-#ifdef DEBUG_PRINT
-            debugWaitLoop = 7;
-#endif // DEBUG_PRINT    
             Commands::executeGCode(&code);
             Printer::defaultLoopActions();
         }
@@ -385,9 +382,6 @@ void GCode::executeString(char *cmd)
         buf[buflen]=0;
         if(code.parseAscii((char *)buf,false) && (code.params & 518))   // Success
         {
-#ifdef DEBUG_PRINT
-            debugWaitLoop = 7;
-#endif
             Commands::executeGCode(&code);
             Printer::defaultLoopActions();
         }

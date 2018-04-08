@@ -5179,27 +5179,6 @@ void UIDisplay::executeAction(int action)
             }
 #endif // MAX_HARDWARE_ENDSTOP_Z
 
-#ifdef DEBUG_PRINT
-            case UI_ACTION_WRITE_DEBUG:
-            {
-                Com::printF(PSTR("Buf. Read Idx:"),(int)GCode::bufferReadIndex);
-                Com::printF(PSTR(" Buf. Write Idx:"),(int)GCode::bufferWriteIndex);
-                Com::printF(PSTR(" Comment:"),(int)GCode::commentDetected);
-                Com::printF(PSTR(" Buf. Len:"),(int)GCode::bufferLength);
-                Com::printF(PSTR(" Wait resend:"),(int)GCode::waitingForResend);
-                Com::printFLN(PSTR(" Recv. Write Pos:"),(int)GCode::commandsReceivingWritePosition);
-                //Com::printF(PSTR("Min. XY Speed:"),Printer::minimumSpeed);
-                //Com::printF(PSTR(" Min. Z Speed:"),Printer::minimumZSpeed);
-                Com::printF(PSTR(" Buffer:"),PrintLine::linesCount);
-                Com::printF(PSTR(" Lines pos:"),(int)PrintLine::linesPos);
-                Com::printFLN(PSTR(" Write Pos:"),(int)PrintLine::linesWritePos);
-                Com::printFLN(PSTR("Wait loop:"),debugWaitLoop);
-                Com::printF(PSTR("sd mode:"),(int)sd.sdmode);
-                Com::printF(PSTR(" pos:"),sd.sdpos);
-                Com::printFLN(PSTR(" of "),sd.filesize);
-                break;
-            }
-#endif // DEBUG_PRINT
 
     #if FEATURE_ZERO_DIGITS
             case UI_ACTION_FEATURE_ZERO_DIGITS:
