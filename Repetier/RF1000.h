@@ -99,10 +99,6 @@ WARNING: Do not enable the case fan feature in case you have a second extruder a
   #define DEFAULT_Z_ENDSTOP_TYPE              ENDSTOP_TYPE_SINGLE
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
 
-/** \brief Allows to choose whether the setpoint and the current value of the heat bed temperature shall be compensated so that the temperature offset which is caused by the printing plate is reduced */
-#define FEATURE_HEAT_BED_TEMP_COMPENSATION  0                                                   // 1 = on, 0 = off
-
-
 // ##########################################################################################
 // ##   Calibration
 // ##########################################################################################
@@ -599,17 +595,16 @@ A good start is 30 lower then the optimal value. You need to leave room for cool
 
 #endif // HAVE_HEATED_BED==true && HEATED_BED_SENSOR_TYPE<101   
 
+/** \brief Allows to choose whether the setpoint and the current value of the heat bed temperature shall be compensated so that the temperature offset which is caused by the printing plate is reduced */
+#define FEATURE_HEAT_BED_TEMP_COMPENSATION  0                                                   // 1 = on, 0 = off
+
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
-
-/** \brief The following vlaue must be NumberOfTemperatures -1 */
-#define BED_TEMP_COMPENSATION_INDEX_MAX     5
-
-/** \brief The following values represent the setpoint temperatures */
-#define BED_SETPOINT_TEMPERATURES           {60, 80, 100, 120, 140, 160}
-
-/** \brief The following values represent the real temperature which is measured at the surface of the printing bed in case the temperature sensor delivers the setpoint temperatures */
-#define BED_MEASURED_TEMPERATURES           {60, 80, 100, 120, 140, 160}
-
+  /** \brief The following vlaue must be NumberOfTemperatures -1 */
+  #define BED_TEMP_COMPENSATION_INDEX_MAX     5
+  /** \brief The following values represent the setpoint temperatures */
+  #define BED_SETPOINT_TEMPERATURES           {60, 80, 100, 120, 140, 160}
+  /** \brief The following values represent the real temperature which is measured at the surface of the printing bed in case the temperature sensor delivers the setpoint temperatures */
+  #define BED_MEASURED_TEMPERATURES           {60, 80, 100, 120, 140, 160}
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
 
 
