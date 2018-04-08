@@ -732,8 +732,8 @@ can set it on for safety. */
 #define INVERT_Y_DIR                        false
 #define INVERT_Z_DIR                        false
 
-#define XYZ_STEPPER_HIGH_DELAY              100                                                 // [us]
-#define XYZ_STEPPER_LOW_DELAY               100                                                 // [us]
+#define XYZ_STEPPER_HIGH_DELAY              100                                                 // [us] speed for moveZ
+#define XYZ_STEPPER_LOW_DELAY               100                                                 // [us] speed for moveZ
 
 /** \brief Automatic filament change, unmounting of the filament - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
 #define UNMOUNT_FILAMENT_SCRIPT_WITH_HEATING        "M3914 P4500"
@@ -921,9 +921,9 @@ extruder steps are executed. This is to prevent your extruder to move unless the
 is at least molten. After havong some complains that the extruder does not work, I leave
 it 0 as default. */
 #if EXTRUDER_ALLOW_COLD_MOVE
-#define MIN_EXTRUDER_TEMP                   0
+  #define MIN_EXTRUDER_TEMP                   0
 #else
-#define MIN_EXTRUDER_TEMP                   80
+  #define MIN_EXTRUDER_TEMP                   80
 #endif
 /** \brief Enable advance algorithm.
 Without a correct adjusted advance algorithm, you get blobs at points, where acceleration changes. The
