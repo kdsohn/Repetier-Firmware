@@ -5933,13 +5933,7 @@ char loadCompensationMatrix( unsigned int uAddress )
         // the current z-compensation matrix has been determined with the current micro step setting, there is nothing to recalculate
         fMicroStepCorrection = 1.0;
     }
-    else if( uMicroSteps != 
-#if FEATURE_ADJUSTABLE_MICROSTEPS
-            drv8711ModeValue_2_MicroSteps(Printer::motorMicroStepsModeValue[Z_AXIS])
-#else
-            RF_MICRO_STEPS_Z
-#endif // FEATURE_ADJUSTABLE_MICROSTEPS
-          )
+    else
     {
         // the current z-compensation matrix has been determined with a higher than the current micro step setting, we must divide all z-correction values
         fMicroStepCorrection = (float)
