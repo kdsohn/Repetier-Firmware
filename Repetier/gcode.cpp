@@ -214,13 +214,6 @@ void GCode::checkAndPushCommand()
         {
             Commands::emergencyStop();
         }
-#ifdef DEBUG_FORCE_COM_ERROR
-        if(M==666)
-        {
-            lastLineNumber++; // force an communication error
-            return;
-        }
-#endif // DEBUG_FORCE_COM_ERROR
     }
     if(hasN())
     {

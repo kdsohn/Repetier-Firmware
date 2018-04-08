@@ -272,13 +272,6 @@ public:
         return ((debugLevel & 8)!=0);
     } // debugDryrun
 
-#ifdef INCLUDE_DEBUG_NO_MOVE
-    static INLINE bool debugNoMoves()
-    {
-        return ((debugLevel & 32)!=0);
-    }// debugNoMoves
-#endif // INCLUDE_DEBUG_NO_MOVE
-
     /** \brief Disable stepper motor for x direction. */
     static INLINE void disableXStepper()
     {

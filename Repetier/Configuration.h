@@ -217,10 +217,6 @@ Change your EEPROMs Steps/mm accordingly if you change RF_MICRO_STEPS_ in this c
 /** \brief Enables debug outputs about the heat bed temperature compensation */
 #define DEBUG_HEAT_BED_TEMP_COMPENSATION    0                                                   // 1 = on, 0 = off
 
-/** \brief Allows M111 so set bit 6 (32) which disables moves, at the first tried step. In combination
-with a dry run, you can test the speed of path computations, which are still performed. */
-//#define INCLUDE_DEBUG_NO_MOVE
-
 /** \brief Writes the free RAM to output, if it is less then at the last test. Should always return
 values >500 for safety, since it doesn't catch every function call. Nice to tweak cache
 usage or for seraching for memory induced errors. Switch it off for production, it costs execution time. */
@@ -234,9 +230,6 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 
 /** \brief If enabled, writes the created generic table to serial port at startup. */
 //#define DEBUG_GENERIC_TEMP_TABLE
-
-/** \brief This enables code to make M666 drop an ok, so you get problems with communication. It is to test host robustness. */
-//#define DEBUG_FORCE_COM_ERROR
 
 /** \brief Adds a menu point in quick settings to write debg informations to the host in case of hangs where the ui still works. */
 //#define DEBUG_PRINT
