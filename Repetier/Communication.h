@@ -135,9 +135,9 @@ public:
     FSTRINGVAR(tMillingTimeService)
 #endif // FEATURE_SERVICE_INTERVAL
 
-#ifdef DEBUG_GENERIC_TEMP_TABLE
+#ifdef PRINT_GENERIC_TEMP_TABLE
     FSTRINGVAR(tGenTemp)
-#endif // DEBUG_GENERIC_TEMP_TABLE
+#endif // PRINT_GENERIC_TEMP_TABLE
 
     FSTRINGVAR(tTargetExtr)
     FSTRINGVAR(tTargetBedColon)

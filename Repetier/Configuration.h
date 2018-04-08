@@ -228,9 +228,6 @@ usage or for seraching for memory induced errors. Switch it off for production, 
  #define DEBUG_MEMORY
 #endif // DEBUG_FREE_MEMORY
 
-/** \brief If enabled, writes the created generic table to serial port at startup. */
-//#define DEBUG_GENERIC_TEMP_TABLE
-
 /** \brief Adds a M3993 / or like "M3993 P300000" to set another or default LOW_TICKS_PER_MOVE and gather statistics about the fill level of the MOVE_CACHE while printing */
 #define FEATURE_DEBUG_MOVE_CACHE_TIMING              0
 
@@ -463,6 +460,9 @@ See http://reprap.org/wiki/MeasuringThermistorBeta for more details.
 /** \brief Number of entries in generated table. One entry takes 4 bytes. Higher number of entries increase computation time too.
 Value is used for all generic tables created. */
 #define GENERIC_THERM_NUM_ENTRIES           33
+
+/** \brief If enabled, writes the created generic table to serial port at startup. */
+//#define PRINT_GENERIC_TEMP_TABLE
 
 
 // ##########################################################################################

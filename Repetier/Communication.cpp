@@ -143,9 +143,9 @@ FSTRINGVALUE(Com::tPrintingTimeService,"Printing time since last Service:")
 FSTRINGVALUE(Com::tMillingTimeService,"Milling time since last Service:")
 #endif // FEATURE_SERVICE_INTERVAL
 
-#ifdef DEBUG_GENERIC_TEMP_TABLE
+#ifdef PRINT_GENERIC_TEMP_TABLE
 FSTRINGVALUE(Com::tGenTemp,"GenTemp:")
-#endif // DEBUG_GENERIC_TEMP_TABLE
+#endif // PRINT_GENERIC_TEMP_TABLE
 
 FSTRINGVALUE(Com::tTargetExtr,"TargetExtr")
 FSTRINGVALUE(Com::tTargetBedColon,"TargetBed:")
