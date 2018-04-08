@@ -233,7 +233,6 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 
 /** \brief Adds a menu point in quick settings to write debg informations to the host in case of hangs where the ui still works. */
 //#define DEBUG_PRINT
-//#define DEBUG_SPLIT
 
 // Uncomment the following line to enable debugging. You can better control debugging below the following line
 //#define DEBUG

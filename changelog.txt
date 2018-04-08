@@ -5,6 +5,7 @@ V RF.01.41.18.Mod (2018-04-08)
 - FEATURE_ABORT_PRINT_AFTER_TEMPERATURE_ERROR is mandatory and removed from configuration.h
 - removed INCLUDE_DEBUG_NO_MOVE
 - removed DEBUG_FORCE_COM_ERROR
+- removed DEBUG_SPLIT
 ...
 
 V RF.01.41.17.Mod (2018-04-02) 

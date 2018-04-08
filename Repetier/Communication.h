@@ -166,17 +166,6 @@ public:
     FSTRINGVAR(tTempSensorWorking)
     FSTRINGVAR(tDryModeUntilRestart)
 
-#ifdef DEBUG_SPLIT
-    FSTRINGVAR(tDBGDeltaSeconds)
-    FSTRINGVAR(tDBGDeltaZDelta)
-    FSTRINGVAR(tDBGDeltaSegments)
-    FSTRINGVAR(tDBGDeltaNumLines)
-    FSTRINGVAR(tDBGDeltaSegmentsPerLine)
-    FSTRINGVAR(tDBGDeltaMaxDS)
-    FSTRINGVAR(tDBGDeltaStepsPerSegment)
-    FSTRINGVAR(tDBGDeltaVirtualAxisSteps)
-#endif // DEBUG_SPLIT
-
 #ifdef WAITING_IDENTIFIER
     FSTRINGVAR(tWait)
 #endif // WAITING_IDENTIFIER
