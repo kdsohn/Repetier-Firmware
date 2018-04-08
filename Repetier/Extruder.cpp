@@ -497,11 +497,6 @@ void Extruder::setHeatedBedTemperature(float temperatureInCelsius,bool beep)
 
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
     offset = -getHeatBedTemperatureOffset( temperatureInCelsius );
-
-#if DEBUG_HEAT_BED_TEMP_COMPENSATION
-    Com::printF( PSTR( "setHeatedBedTemperature(): " ), temperatureInCelsius );
-    Com::printFLN( PSTR( ", " ), offset );
-#endif // DEBUG_HEAT_BED_TEMP_COMPENSATION
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
 
     heatedBedController.setTargetTemperature(temperatureInCelsius, offset);

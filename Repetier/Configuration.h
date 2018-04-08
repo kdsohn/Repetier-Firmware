@@ -44,7 +44,7 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
 
 /** \brief Define the type of your device */
 //#define MOTHERBOARD                         DEVICE_TYPE_RF1000
-//#define MOTHERBOARD                         DEVICE_TYPE_RF2000
+#define MOTHERBOARD                         DEVICE_TYPE_RF2000
 //#define MOTHERBOARD                         DEVICE_TYPE_RF2000v2
 
 #ifndef MOTHERBOARD
@@ -54,7 +54,7 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
     #error This Firmware does not support RF2000v2 yet. Renkforce did not release any validated RF2000V2.h yet.
 #endif // MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 
-#define PROTOTYPE_PCB                       0                                                   // 1 = first PCB's / 0 = Final
+
 
 /** \brief EEPROM storage mode
 Set the EEPROM_MODE to 0 if you always want to use the settings in this configuration file. If not,
@@ -96,9 +96,6 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 /** \brief Enables the precise heat bed scan */
 #if FEATURE_HEAT_BED_Z_COMPENSATION
   #define FEATURE_PRECISE_HEAT_BED_SCAN       1                                                 // 1 = on, 0 = off
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION
-/** \brief Specifies the number of pressure values which shall be averaged for inprint live z-adjustment */
-#if FEATURE_HEAT_BED_Z_COMPENSATION
   #define FEATURE_DIGIT_Z_COMPENSATION           1                                               // 1 = on, 0 = off
   #define FEATURE_DIGIT_FLOW_COMPENSATION        1                                               // 1 = on, 0 = off
   #define FEATURE_SENSIBLE_PRESSURE              1                                               // 1 = on, 0 = off
@@ -109,6 +106,8 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
     #define SENSIBLE_PRESSURE_MAX_OFFSET                180
     #define SENSIBLE_PRESSURE_INTERVAL                  100                                      //weniger macht keinen sinn. ob diese einschränkung sinn macht, aber sie bleibt vorerst mal da!
   #endif // FEATURE_SENSIBLE_PRESSURE
+  /** \brief Enables debug outputs from the heat bed scan */
+  #define DEBUG_HEAT_BED_SCAN                 0                                                   // 0 = off, 1 = on, 2 = on with more debug outputs
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
 /** \brief The Firmwares disalowes movement before you at least: pressed a printers button, set a temperature, homed once 
@@ -199,24 +198,6 @@ Change your EEPROMs Steps/mm accordingly if you change RF_MICRO_STEPS_ in this c
 // ##   debugging
 // ##########################################################################################
 
-#if FEATURE_HEAT_BED_Z_COMPENSATION 
-
-/** \brief Enables debug outputs from the heat bed scan */
-#define DEBUG_HEAT_BED_SCAN                 0                                                   // 0 = off, 1 = on, 2 = on with more debug outputs
-
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION
-
-
-#if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-
-/** \brief Enables debug outputs about the pressure which is detected during the heat bed or work part scan */
-#define DEBUG_REMEMBER_SCAN_PRESSURE        0                                                   // 1 = on, 0 = off
-
-#endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-
-/** \brief Enables debug outputs about the heat bed temperature compensation */
-#define DEBUG_HEAT_BED_TEMP_COMPENSATION    0                                                   // 1 = on, 0 = off
-
 /** \brief Writes the free RAM to output, if it is less then at the last test. Should always return
 values >500 for safety, since it doesn't catch every function call. Nice to tweak cache
 usage or for seraching for memory induced errors. Switch it off for production, it costs execution time. */
@@ -227,9 +208,6 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 #else
  #define DEBUG_MEMORY
 #endif // DEBUG_FREE_MEMORY
-
-/** \brief Adds a M3993 / or like "M3993 P300000" to set another or default LOW_TICKS_PER_MOVE and gather statistics about the fill level of the MOVE_CACHE while printing */
-#define FEATURE_DEBUG_MOVE_CACHE_TIMING              0
 
 // ##########################################################################################
 // ##   configuration of the extended buttons
@@ -746,12 +724,6 @@ we use blocks of 2 kByte size for the structure of our EEPROM
 Without this special handling, the firmware may complain about checksum errors from non-Repetier PC applications (e.g. Cura, ...) and
 non-Repetier PC applications may fall over the debug outputs of the firmware. */
 #define ALLOW_EXTENDED_COMMUNICATION        2                                                   // 0 = do not allow, 1 = allow "Wait", 2 = allow "Wait" and debug outputs
-
-/** \brief Configures the delay between the stop of a print and the clean-up like disabling of heaters, disabling of steppers and the outputting of the object */
-#define CLEAN_UP_DELAY_AFTER_STOP_PRINT     1000                                                // [ms]
-
-/** \brief Configures the duration for which the processing of commands shall be blocked. */
-#define COMMAND_BLOCK_DELAY                 1000                                                // [ms]
 
 /** \brief Configuration of the external watchdog
 The TPS3820 of the RF1000/RF2000 resets about 112/200/310 (min/typical/max) ms after the last time when it was triggered

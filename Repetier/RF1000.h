@@ -39,19 +39,27 @@
 
 #if FEATURE_MILLING_MODE
 
-/** \brief Enables automatic compensation in z direction for the operationg mode "mill" */
-#define FEATURE_WORK_PART_Z_COMPENSATION    1                                                   // 1 = on, 0 = off
+  /** \brief Enables automatic compensation in z direction for the operationg mode "mill" */
+  #define FEATURE_WORK_PART_Z_COMPENSATION    1                                                   // 1 = on, 0 = off
 
-/** \brief This feature allows to move the milling bed upwards automatically until the miller is hit. The found position is taken over as Z=0 automatically.
+  /** \brief This feature allows to move the milling bed upwards automatically until the miller is hit. The found position is taken over as Z=0 automatically.
      Be aware that mis-using of this functionality can ruin the tool (e.g. in case the tool is placed above the milling bed and not above the to-be-milled object). */
-#define FEATURE_FIND_Z_ORIGIN               1                                                   // 1 = on, 0 = off
+  #define FEATURE_FIND_Z_ORIGIN               1                                                   // 1 = on, 0 = off
 
-/** \brief Enables/disables the menu entry which allows to choose the currently installed miller type */
-#define FEATURE_CONFIGURABLE_MILLER_TYPE    1                                                   // 1 = on, 0 = off
+  /** \brief Enables/disables the menu entry which allows to choose the currently installed miller type */
+  #define FEATURE_CONFIGURABLE_MILLER_TYPE    1                                                   // 1 = on, 0 = off
 
-#if FEATURE_WORK_PART_Z_COMPENSATION && !FEATURE_FIND_Z_ORIGIN
+  #if FEATURE_WORK_PART_Z_COMPENSATION && !FEATURE_FIND_Z_ORIGIN
     #error It does not make sense to enable the work part z-compensation without enabling of the automatic detection of the z-origin
-#endif // FEATURE_WORK_PART_Z_COMPENSATION && !FEATURE_FIND_Z_ORIGIN
+  #endif // FEATURE_WORK_PART_Z_COMPENSATION && !FEATURE_FIND_Z_ORIGIN
+
+  /** \brief Define the type of the present miller hardware */
+  #define MILLER_TYPE                         MILLER_TYPE_TWO_TRACKS
+  /** \brief Define lower acceleration to reach very small speeds */
+  #define MILLER_ACCELERATION                 15
+
+  /** \brief Default operating mode */
+  #define DEFAULT_OPERATING_MODE              OPERATING_MODE_PRINT
 
 #endif // FEATURE_MILLING_MODE
 
@@ -86,25 +94,10 @@ WARNING: Do not enable the case fan feature in case you have a second extruder a
 
 #define FEATURE_CONFIGURABLE_Z_ENDSTOPS     1                                                   // 1 = the z-endstop type can be switched between z-min (= single) and z-min + z-max in one circuit (= circuit), 0 = only the z-min endstop is installed
 
-#if FEATURE_MILLING_MODE
-
-/** \brief Define the type of the present miller hardware */
-#define MILLER_TYPE                         MILLER_TYPE_TWO_TRACKS
-/** \brief Define lower acceleration to reach very small speeds */
-#define MILLER_ACCELERATION                 15
-
-/** \brief Default operating mode */
-#define DEFAULT_OPERATING_MODE              OPERATING_MODE_PRINT
-
-#endif // FEATURE_MILLING_MODE
-
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
-/** \brief Define Default z-endstop type */
-#define DEFAULT_Z_ENDSTOP_TYPE              ENDSTOP_TYPE_SINGLE
-
+  /** \brief Define Default z-endstop type */
+  #define DEFAULT_Z_ENDSTOP_TYPE              ENDSTOP_TYPE_SINGLE
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
 
 /** \brief Allows to choose whether the setpoint and the current value of the heat bed temperature shall be compensated so that the temperature offset which is caused by the printing plate is reduced */
 #define FEATURE_HEAT_BED_TEMP_COMPENSATION  0                                                   // 1 = on, 0 = off
@@ -862,6 +855,9 @@ don't care about empty buffers during print. */
 This value must be high enough, that the buffer has time to fill up. The problem only occurs at the beginning of a print or
 if you are printing many very short segments at high speed.*/
 #define LOW_TICKS_PER_MOVE                  500000
+
+/** \brief Adds a M3993 / or like "M3993 P300000" to set another or default LOW_TICKS_PER_MOVE and gather statistics about the fill level of the MOVE_CACHE while printing */
+#define FEATURE_DEBUG_MOVE_CACHE_TIMING              0
 
 //For configuration of speed vs. cpu RF_MICRO_STEPS_ @ CONFIGURATION.h as well!
 

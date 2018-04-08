@@ -832,11 +832,6 @@ extern char loadCompensationMatrix( unsigned int uAddress );
 // clearCompensationMatrix()
 extern void clearCompensationMatrix( unsigned int uAddress );
 
-#if DEBUG_REMEMBER_SCAN_PRESSURE
-// outputPressureMatrix()
-extern void outputPressureMatrix( void );
-#endif // DEBUG_REMEMBER_SCAN_PRESSURE
-
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
 // clearExternalEEPROM()
