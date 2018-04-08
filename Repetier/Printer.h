@@ -272,11 +272,6 @@ public:
         return ((debugLevel & 8)!=0);
     } // debugDryrun
 
-    static INLINE bool debugCommunication()
-    {
-        return ((debugLevel & 16)!=0);
-    } // debugCommunication
-    
 #ifdef INCLUDE_DEBUG_NO_MOVE
     static INLINE bool debugNoMoves()
     {

@@ -6633,15 +6633,13 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
             outputObject(false); //in g_uBlockCommands > 1
         }
     }
-    
-#if FEATURE_ABORT_PRINT_AFTER_TEMPERATURE_ERROR
+
     if( Printer::isAnyTempsensorDefect() && Printer::isPrinting() )
     {
         // we are printing from the SD card and a temperature sensor got defect - abort the current printing
         Com::printFLN( PSTR( "ERROR: a temperature sensor defect. aborting print" ) );
         Printer::stopPrint();
     }
-#endif // FEATURE_ABORT_PRINT_AFTER_TEMPERATURE_ERROR
 
 #if FEATURE_SERVICE_INTERVAL
     if ( !g_nEnteredService )

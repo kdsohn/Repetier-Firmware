@@ -125,9 +125,6 @@ XYZ_POSITION_BUTTON_DIRECTION = 1 : This fits more if you want to stick to stand
 /** \brief Enables/disables the emergency stop in case of too high pressure */
 #define FEATURE_EMERGENCY_STOP_ALL          1                                                   // 1 = on, 0 = off
 
-/** \brief Specifies whether the current print shall be aborted in case a temperature sensor is defect */
-#define FEATURE_ABORT_PRINT_AFTER_TEMPERATURE_ERROR     1                                       // 1 = abort, 0 = do not abort
-
 /** \brief Enables/disables the set to x/y origin feature */
 #define FEATURE_SET_TO_XY_ORIGIN            1                                                   // 1 = on, 0 = off
 
@@ -219,10 +216,6 @@ Change your EEPROMs Steps/mm accordingly if you change RF_MICRO_STEPS_ in this c
 
 /** \brief Enables debug outputs about the heat bed temperature compensation */
 #define DEBUG_HEAT_BED_TEMP_COMPENSATION    0                                                   // 1 = on, 0 = off
-
-/** \brief Allows M111 to set bit 5 (16) which disables all commands except M111. This can be used
-to test your data througput or search for communication problems. */
-//#define INCLUDE_DEBUG_COMMUNICATION
 
 /** \brief Allows M111 so set bit 6 (32) which disables moves, at the first tried step. In combination
 with a dry run, you can test the speed of path computations, which are still performed. */

@@ -392,16 +392,6 @@ void Commands::reportPrinterUsage()
 void Commands::executeGCode(GCode *com)
 {
     uint32_t codenum; //throw away variable
-#ifdef INCLUDE_DEBUG_COMMUNICATION
-    if(Printer::debugCommunication())
-    {
-        if(com->hasG() || (com->hasM() && com->M!=111))
-        {
-            previousMillisCmd = HAL::timeInMilliseconds();
-            return;
-        }
-    }
-#endif
     if(com->hasG())
     {
       switch(com->G)
