@@ -185,6 +185,8 @@ void Extruder::manageTemperatures()
             pwm_pos[tempController[i]->pwmIndex] = 0;
         }
         Printer::debugLevel |= 8; // Go into dry mode
+    }else{
+        if(!errorDetected) Printer::flag2 |= PRINTER_FLAG2_GOT_TEMPS;
     }
 
 } // manageTemperatures

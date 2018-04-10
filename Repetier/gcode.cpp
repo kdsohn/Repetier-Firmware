@@ -166,7 +166,7 @@ void GCode::keepAlive( enum FirmwareState state )
         }
         else if( state == WaitHeater )
         {
-            Com::printFLN( PSTR( "busy: heating" ) );   
+            Com::printFLN( PSTR( "busy: heating" ) );
         }
         else
         {

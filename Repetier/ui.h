@@ -270,7 +270,6 @@ extern bool     g_nAutoReturnMessage;
 extern  char    g_nYesNo;
 extern volatile char    g_nContinueButtonPressed;
 extern  char    g_nServiceRequest;
-extern  char    g_nPrinterReady;
 
 // Key codes
 #define UI_KEYS_INIT_CLICKENCODER_LOW(pinA,pinB)        SET_INPUT(pinA);SET_INPUT(pinB); PULLUP(pinA,HIGH);PULLUP(pinB,HIGH);

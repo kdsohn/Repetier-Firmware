@@ -162,7 +162,7 @@ long            g_staticZSteps              = 0;
 char            g_debugLevel                = 0;
 char            g_debugLog                  = 0;
 unsigned long   g_uStopTime                 = 0;
-unsigned long   g_uBlockCommands          = 0;
+volatile unsigned long g_uBlockCommands          = 0;
 
 #if FEATURE_EXTENDED_BUTTONS
 // other configurable parameters
@@ -6112,7 +6112,6 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                 // show that we are idle for a while already
                 showIdle();
                 g_uStartOfIdle  = 0;
-                g_nPrinterReady = 1;
                 Printer::setPrinting(false);
             }
         } 
@@ -6488,7 +6487,8 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 
     if( g_uStopTime )
     {
-        if( (uTime - g_uStopTime) > 1000 ) //jede 1 sekunden  wäre standard nach config
+        GCode::readFromSerial(); //consume gcode buffers but dont put gcodes into queue rightnow, because of g_uBlockCommands
+        if( (uTime - g_uStopTime) > 2000 ) //jede 1 sekunden  wäre standard nach config
         {
             // we have stopped the printing a few moments ago, output the object now
             if( PrintLine::linesCount )
@@ -6515,26 +6515,6 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
                     EEPROM::updatePrinterUsage();
                 }
 #endif // FEATURE_MILLING_MODE
-
-#if FEATURE_PAUSE_PRINTING
-                if( g_pauseStatus != PAUSE_STATUS_NONE )
-                {
-                    // the printing is paused at the moment
-                    InterruptProtectedBlock noInts;
-
-                    g_uPauseTime  = 0;
-                    g_pauseStatus = PAUSE_STATUS_NONE;
-                    g_pauseMode   = PAUSE_MODE_NONE;
-
-                    g_nContinueSteps[X_AXIS] = 0;
-                    g_nContinueSteps[Y_AXIS] = 0;
-                    g_nContinueSteps[Z_AXIS] = 0;
-                    g_nContinueSteps[E_AXIS] = 0;
-
-                    noInts.unprotect();
-                }
-                Printer::setMenuMode(MENU_MODE_PAUSED,false);
-#endif // FEATURE_PAUSE_PRINTING
 
                 //unaufgeräumtes beenden: Es wird sowieso der Stepper deaktiviert.
                 g_nZOSScanStatus = 0;

@@ -2175,8 +2175,24 @@ void Printer::stopPrint() //function for aborting USB and SD-Prints
     g_uBlockCommands = 1; //keine gcodes mehr ausführen bis beenden beendet.
     //now mark the print to get cleaned up after some time:
     g_uStopTime = HAL::timeInMilliseconds(); //starts output object in combination with g_uBlockCommands
+    
+#if FEATURE_PAUSE_PRINTING
+    if( g_pauseStatus != PAUSE_STATUS_NONE )
+    {
+        // the printing is paused at the moment
+        g_nContinueSteps[X_AXIS] = 0;
+        g_nContinueSteps[Y_AXIS] = 0;
+        g_nContinueSteps[Z_AXIS] = 0;
+        g_nContinueSteps[E_AXIS] = 0;
 
-    //erase the coordinates and kill the current tastkplaner:
+        g_uPauseTime  = 0;
+        g_pauseStatus = PAUSE_STATUS_NONE;
+        g_pauseMode   = PAUSE_MODE_NONE;
+    }
+    Printer::setMenuMode(MENU_MODE_PAUSED,false); //egal ob nicht gesetzt.
+#endif // FEATURE_PAUSE_PRINTING
+
+    //erase the coordinates and kill the current taskplaner:
     PrintLine::resetPathPlanner();
     PrintLine::cur = NULL;
     // we have to tell the firmware about its real current position

@@ -42,7 +42,6 @@ bool     g_nAutoReturnMessage    = false;
 char    g_nYesNo                 = 0;       // 0 = no, 1 = yes
 volatile char    g_nContinueButtonPressed = 0;
 char    g_nServiceRequest        = 0;
-char    g_nPrinterReady          = 0;
 
 void beep(uint8_t duration,uint8_t count)
 {
@@ -961,7 +960,7 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
 #endif // FEATURE_MILLING_MODE
 
-                if( !g_nPrinterReady )
+                if( !(Printer::flag2 & PRINTER_FLAG2_GOT_TEMPS) )
                 {
                     // avoid to show the current temperatures before we have measured them
                     addStringP( PSTR( "   " ));

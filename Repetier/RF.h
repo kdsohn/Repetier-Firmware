@@ -612,7 +612,7 @@ extern  char            g_debugLog;
 //extern    short           g_debugCounter[12];
 //extern    short           g_debugCounter[6];
 extern  unsigned long   g_uStopTime;
-extern  unsigned long   g_uBlockCommands;
+extern volatile unsigned long   g_uBlockCommands;
 //extern    short           g_debugInt16;
 //extern    unsigned short  g_debugUInt16;
 //extern    long            g_debugInt32;
