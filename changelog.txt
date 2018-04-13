@@ -1,5 +1,8 @@
 TODO: Testing, testing ..
 
+V RF.01.41.20.Mod (2018-04-14) 
+- fix that the printer forgot to load eeprom saved stepper currents since ~1.41.13
+
 V RF.01.41.19.Mod (2018-04-10) 
 - fix tilt when stopping USB sourced print in paused state. (thx @ easygo25)
 - fix Temperatures do not show when starting print within 500ms after boottime.

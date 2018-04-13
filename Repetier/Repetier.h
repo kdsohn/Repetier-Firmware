@@ -160,7 +160,7 @@ extern millis_t previousMillisCmd;
 extern millis_t maxInactiveTime;
 extern millis_t stepperInactiveTime;
 
-extern void motorCurrentControlInit();
+extern void drv8711Init();
 
 #include "Printer.h"
 #include "motion.h"

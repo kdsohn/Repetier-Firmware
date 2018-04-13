@@ -1082,9 +1082,13 @@ void Printer::setup()
 
     HAL::showStartReason();
     Extruder::initExtruder();
-    EEPROM::init(); // Read settings from eeprom if wanted [readDataFromEEPROM or destroy corrupted eeprom]
+    
+    // configure all DRV8711
+    drv8711Init();
+    
+    // Read settings from eeprom if wanted [readDataFromEEPROM or destroy corrupted eeprom]
+    EEPROM::init(); 
 
-    motorCurrentControlInit(); // Set current if it is firmware controlled
 
 #if FEATURE_230V_OUTPUT
     enable230VOutput = OUTPUT_230V_DEFAULT_ON;

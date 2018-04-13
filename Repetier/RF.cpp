@@ -11994,10 +11994,16 @@ void drv8711Init( void )
 #endif // DRV_RESET2
 
     HAL::delayMicroseconds( 5000 );
-  
+
     // configure all registers except the motor current (= no register 01)
-        
+
     //DRV8711_REGISTER_00:
+#if FEATURE_ADJUSTABLE_MICROSTEPS
+    //init to stock settings: update in eeprom init.
+    for(uint8_t axis = 0 ; axis < DRV8711_NUM_CHANNELS ; axis++){
+        Printer::motorMicroStepsModeValue[axis] = drv8711MicroSteps_2_ModeValue(drv8711Axis_2_InitMicrosteps(axis)); //init
+    }
+#endif // FEATURE_ADJUSTABLE_MICROSTEPS
     for( uint8_t driver=1 ; driver<=DRV8711_NUM_CHANNELS ; driver++ )
     {
         drv8711adjustMicroSteps(driver);
@@ -12039,6 +12045,19 @@ void drv8711Init( void )
     drv8711Transmit( DRV8711_REGISTER_07 );
     drv8711DisableAll();
 
+    // set all motor currents
+    const unsigned short  uMotorCurrentUse[] = MOTOR_CURRENT_NORMAL; //--> {x,y,z,e1,e2} siehe RFx000.h
+    Printer::motorCurrent[X_AXIS]   = uMotorCurrentUse[X_AXIS];
+    Printer::motorCurrent[Y_AXIS]   = uMotorCurrentUse[Y_AXIS];
+    Printer::motorCurrent[Z_AXIS]   = uMotorCurrentUse[Z_AXIS];
+    Printer::motorCurrent[E_AXIS+0] = uMotorCurrentUse[E_AXIS+0];
+    Printer::motorCurrent[E_AXIS+1] = uMotorCurrentUse[E_AXIS+1]; //egal ob NUM_EXTRUDER == 1 oder 2
+
+    for( uint8_t axis=0 ; axis<DRV8711_NUM_CHANNELS ; axis++ )
+    {
+        if(axis < 3+NUM_EXTRUDER) setMotorCurrent( axis+1, Printer::motorCurrent[axis] );
+    }
+
 } // drv8711Init
 
 
@@ -12070,46 +12089,6 @@ void setMotorCurrent( unsigned char driver, uint8_t level )
 
 } // setMotorCurrent
 
-
-void motorCurrentControlInit( void )
-{
-    const unsigned short  uMotorCurrentUse[] = MOTOR_CURRENT_NORMAL; //--> {x,y,z,e1,e2} siehe RFx000.h
-    Printer::motorCurrent[X_AXIS]   = uMotorCurrentUse[X_AXIS];
-    Printer::motorCurrent[Y_AXIS]   = uMotorCurrentUse[Y_AXIS];
-    Printer::motorCurrent[Z_AXIS]   = uMotorCurrentUse[Z_AXIS];
-    Printer::motorCurrent[E_AXIS+0] = uMotorCurrentUse[E_AXIS+0];
-    Printer::motorCurrent[E_AXIS+1] = uMotorCurrentUse[E_AXIS+1]; //egal ob NUM_EXTRUDER == 1 oder 2
-
-#if FEATURE_ADJUSTABLE_MICROSTEPS
-    //init here:
-    
-    //man könnte sich hier noch 2 byte ram sparen. ^^
-    for(int ax = 0 ; ax < DRV8711_NUM_CHANNELS ; ax++){
-        Printer::motorMicroStepsModeValue[ax] = drv8711MicroSteps_2_ModeValue(drv8711Axis_2_InitMicrosteps(ax)); //init
-    }
-    //does EEPROM have valid values for microsteps?
-    if (HAL::eprGetByte( EPR_RF_MICRO_STEPS_USED ) == 0xAB ){
-        for(int i = 0; i <= E_AXIS+1; i++){
-         /* #define EPR_RF_MICRO_STEPS_X              1943 //[1byte]
-            #define EPR_RF_MICRO_STEPS_Y              1944 //[1byte]
-            #define EPR_RF_MICRO_STEPS_Z              1945 //[1byte]
-            #define EPR_RF_MICRO_STEPS_E0             1946 //[1byte]
-            #define EPR_RF_MICRO_STEPS_E1             1947 //[1byte] */
-            uint8_t epr = HAL::eprGetByte( EPR_RF_MICRO_STEPS_X + i );
-            if(epr <= 8) Printer::motorMicroStepsModeValue[i] = epr;
-        }
-    }
-#endif // FEATURE_ADJUSTABLE_MICROSTEPS
-
-    // configure all DRV8711
-    drv8711Init();
-    // set all motor currents
-    for( uint8_t i=0 ; i<DRV8711_NUM_CHANNELS ; i++ )
-    {
-        if(i < 3+NUM_EXTRUDER) setMotorCurrent( i+1, Printer::motorCurrent[i] );
-        else setMotorCurrent( i+1, MOTOR_CURRENT_MIN );
-    }
-} // motorCurrentControlInit
 
 #if FEATURE_READ_STEPPER_STATUS
 unsigned short readMotorStatus( unsigned char driver )

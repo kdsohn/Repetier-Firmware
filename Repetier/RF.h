@@ -916,7 +916,7 @@ extern uint8_t        drv8711MicroSteps_2_ModeValue(unsigned short microsteps);
 extern void           drv8711adjustMicroSteps(unsigned char driver);
 
 // motorCurrentControlInit()
-extern void motorCurrentControlInit( void );
+extern void drv8711Init( void );
 #if FEATURE_READ_STEPPER_STATUS
 extern unsigned short readMotorStatus( unsigned char driver );
 #endif //FEATURE_READ_STEPPER_STATUS
