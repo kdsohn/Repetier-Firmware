@@ -37,13 +37,14 @@ Using linux you can flash the .hex-files to your printer with this command:
 ```avrdude -patmega2560 -cwiring -P/dev/ttyUSB0 -b115200 -D -Uflash:w:Repetier.hex:i``` 
 
 ## If you upgrade to this Version from 1.37r or earlier please do a fresh M303 PID-Autotune on all heaters!  
-- RF2000/RF1000 extruder 1: `M303 P0 X0 S230 R10 J1`  
-- RF2000 extruder 2: `M303 P1 X0 S230 R10 J1`  
-- RF2000 heated bed: `M303 P2 X0 S70 R15 J4`  
-- RF1000 heated bed: `M303 P1 X0 S70 R15 J4`  
-And start with EEPROM-values `PID I drive min = 30` and `PID I drive max = 120`  
+- RF2000/RF1000 Extruder left: Menu -> Configuration -> Temperatures -> Extruder 0 -> PID Pessen-Rule  
+- RF2000 Extruder right:       Menu -> Configuration -> Temperatures -> Extruder 1 -> PID Pessen-Rule  
+- RF2000/RF1000 Heated Bed:    Menu -> Configuration -> Temperatures -> Heated Bed -> PID Tyreus-Lyben  
+Start with an integral limit with EEPROM-values of `PID I drive min = 30` and `PID I drive max = 120`  
+- Menu -> Configuration -> Temperatures -> (...) -> I-drive min = 20 .. 30  
+- Menu -> Configuration -> Temperatures -> (...) -> I-drive max = 100 .. 130  
 
-## Version RF.01.37mod 
+## Version 1.39+.Mod
 
 http://www.rf1000.de/viewtopic.php?f=67&t=2043 (Thread to Stable 1.37v8 / 18.10.2017)
 http://www.rf1000.de/viewtopic.php?f=74&t=1674 (Nibbels/Wessix SenseOffset-Thread)  
@@ -207,7 +208,7 @@ Additions to GCode M303:
 [J0] Classic PID  
 [J1] Pessen Integral Rule (suggested for Hotend)  
 [J2] Some Overshoot  
-[J3] No Overshoot (suggested for Heated Bed)  
+[J3] No Overshoot  
 [J4] Tyreus-Luyben (suggested for Heated Bed)  
 [Rn] Configurable Autotune cycles  
 Easy autotune support via printers menu.  
@@ -219,6 +220,4 @@ Lower motor current on both extruders while paused to prevent unnecessary heat t
 Manual extrusion when paused resets automatic retract for continue.
 
 ## Wessix`s help video:
-[![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)
-
-## !! 12.11.2017: Project is Work in Progress and untested changes are possible.
+[![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)  

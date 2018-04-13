@@ -37,7 +37,6 @@ public:
     FSTRINGVAR(tOkSpace)
     FSTRINGVAR(tWrongChecksum)
     FSTRINGVAR(tMissingChecksum)
-    FSTRINGVAR(tFormatError)
     FSTRINGVAR(tDonePrinting)
     FSTRINGVAR(tX)
     FSTRINGVAR(tY)
@@ -49,6 +48,14 @@ public:
     FSTRINGVAR(tI)
     FSTRINGVAR(tJ)
     FSTRINGVAR(tR)
+    FSTRINGVAR(tD)
+    FSTRINGVAR(tC)
+    FSTRINGVAR(tH)
+    FSTRINGVAR(tA)
+    FSTRINGVAR(tB)
+    FSTRINGVAR(tK)
+    FSTRINGVAR(tL)
+    FSTRINGVAR(tO)
     FSTRINGVAR(tSDReadError)
     FSTRINGVAR(tExpectedLine)
     FSTRINGVAR(tGot)
@@ -128,9 +135,9 @@ public:
     FSTRINGVAR(tMillingTimeService)
 #endif // FEATURE_SERVICE_INTERVAL
 
-#ifdef DEBUG_GENERIC
+#ifdef PRINT_GENERIC_TEMP_TABLE
     FSTRINGVAR(tGenTemp)
-#endif // DEBUG_GENERIC
+#endif // PRINT_GENERIC_TEMP_TABLE
 
     FSTRINGVAR(tTargetExtr)
     FSTRINGVAR(tTargetBedColon)
@@ -158,17 +165,6 @@ public:
     FSTRINGVAR(tTempSensorDefect)
     FSTRINGVAR(tTempSensorWorking)
     FSTRINGVAR(tDryModeUntilRestart)
-
-#ifdef DEBUG_SPLIT
-    FSTRINGVAR(tDBGDeltaSeconds)
-    FSTRINGVAR(tDBGDeltaZDelta)
-    FSTRINGVAR(tDBGDeltaSegments)
-    FSTRINGVAR(tDBGDeltaNumLines)
-    FSTRINGVAR(tDBGDeltaSegmentsPerLine)
-    FSTRINGVAR(tDBGDeltaMaxDS)
-    FSTRINGVAR(tDBGDeltaStepsPerSegment)
-    FSTRINGVAR(tDBGDeltaVirtualAxisSteps)
-#endif // DEBUG_SPLIT
 
 #ifdef WAITING_IDENTIFIER
     FSTRINGVAR(tWait)
@@ -198,8 +194,8 @@ public:
     FSTRINGVAR(tEPRMaxJerk)
     FSTRINGVAR(tEPRXHomePos)
     FSTRINGVAR(tEPRYHomePos)
-    FSTRINGVAR(tEPRZHomePos)
     FSTRINGVAR(tEPRXMaxLength)
+    FSTRINGVAR(tEPRXMaxLengthMilling)
     FSTRINGVAR(tEPRYMaxLength)
     FSTRINGVAR(tEPRZMaxLength)
     FSTRINGVAR(tEPRXBacklash)
@@ -207,6 +203,9 @@ public:
     FSTRINGVAR(tEPRZBacklash)
     FSTRINGVAR(tEPRZAcceleration)
     FSTRINGVAR(tEPRZTravelAcceleration)
+#if FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+    FSTRINGVAR(tEPRZScanStartLift)
+#endif // FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
 #if FEATURE_MILLING_MODE
     FSTRINGVAR(tEPRZMillingAcceleration)
 #endif //FEATURE_MILLING_MODE
@@ -239,7 +238,6 @@ public:
     FSTRINGVAR(tEPROPSMinDistance)
     FSTRINGVAR(tEPROPSRetractionLength)
     FSTRINGVAR(tEPROPSRetractionBacklash)
-    FSTRINGVAR(tEPRBedHeatManager)
     FSTRINGVAR(tEPRBedPIDDriveMax)
     FSTRINGVAR(tEPRBedPIDDriveMin)
     FSTRINGVAR(tEPRBedPGain)
@@ -250,7 +248,6 @@ public:
     FSTRINGVAR(tEPRMaxFeedrate)
     FSTRINGVAR(tEPRStartFeedrate)
     FSTRINGVAR(tEPRAcceleration)
-    FSTRINGVAR(tEPRHeatManager)
     FSTRINGVAR(tEPRDriveMax)
     FSTRINGVAR(tEPRDriveMin)
     FSTRINGVAR(tEPRPGain)
@@ -342,7 +339,6 @@ public:
     FSTRINGVAR(tOutputObjectPrint)
     FSTRINGVAR(tOutputObjectMill)
     FSTRINGVAR(tUnmountFilamentWithHeating)
-    FSTRINGVAR(tUnmountFilamentWithoutHeating)
     FSTRINGVAR(tMountFilamentWithHeating)
     FSTRINGVAR(tMountFilamentWithoutHeating)
 
@@ -371,6 +367,7 @@ public:
     static void printFLN(FSTRINGPARAM(text),float value,uint8_t digits=2,bool komma_as_dot=false);
     static void printArrayFLN(FSTRINGPARAM(text),float *arr,uint8_t n=4,uint8_t digits=2);
     static void printArrayFLN(FSTRINGPARAM(text),int32_t *arr,uint8_t n=4);
+    static void printSharpLine();
     static void print(long value);
     static inline void print(uint32_t value) {printNumber(value);}
     static inline void print(int value) {print((int32_t)value);}

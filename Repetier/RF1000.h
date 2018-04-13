@@ -23,33 +23,46 @@
 // this file contains all definitions which are specific to the RF1000 hardware
 #define UI_PRINTER_NAME                     "RF1000"
 
+/** \brief Number of extruders */
+#define NUM_EXTRUDER                        1                                                   // 1 = Single, 2 = Dual
+
 // ##########################################################################################
 // ##   main hardware configuration
 // ##########################################################################################
+
+#if NUM_EXTRUDER > 2 || NUM_EXTRUDER < 0
+ #error This Firmware supports up to 2 Extruders. You might have to reimplement the 3+ code or "request it" if you really got hands on a RFx000 board with 3+ Extruders.
+#endif // FEATURE_DITTO_PRINTING && NUM_EXTRUDER!=2
 
 /** \brief Allows to use the device for milling */
 #define FEATURE_MILLING_MODE                1                                                   // 1 = on, 0 = off
 
 #if FEATURE_MILLING_MODE
 
-/** \brief Enables automatic compensation in z direction for the operationg mode "mill" */
-#define FEATURE_WORK_PART_Z_COMPENSATION    1                                                   // 1 = on, 0 = off
+  /** \brief Enables automatic compensation in z direction for the operationg mode "mill" */
+  #define FEATURE_WORK_PART_Z_COMPENSATION    1                                                   // 1 = on, 0 = off
 
-/** \brief This feature allows to move the milling bed upwards automatically until the miller is hit. The found position is taken over as Z=0 automatically.
+  /** \brief This feature allows to move the milling bed upwards automatically until the miller is hit. The found position is taken over as Z=0 automatically.
      Be aware that mis-using of this functionality can ruin the tool (e.g. in case the tool is placed above the milling bed and not above the to-be-milled object). */
-#define FEATURE_FIND_Z_ORIGIN               1                                                   // 1 = on, 0 = off
+  #define FEATURE_FIND_Z_ORIGIN               1                                                   // 1 = on, 0 = off
 
-/** \brief Enables/disables the menu entry which allows to choose the currently installed miller type */
-#define FEATURE_CONFIGURABLE_MILLER_TYPE    1                                                   // 1 = on, 0 = off
+  /** \brief Enables/disables the menu entry which allows to choose the currently installed miller type */
+  #define FEATURE_CONFIGURABLE_MILLER_TYPE    1                                                   // 1 = on, 0 = off
 
-#if FEATURE_WORK_PART_Z_COMPENSATION && !FEATURE_FIND_Z_ORIGIN
+  #if FEATURE_WORK_PART_Z_COMPENSATION && !FEATURE_FIND_Z_ORIGIN
     #error It does not make sense to enable the work part z-compensation without enabling of the automatic detection of the z-origin
-#endif // FEATURE_WORK_PART_Z_COMPENSATION && !FEATURE_FIND_Z_ORIGIN
+  #endif // FEATURE_WORK_PART_Z_COMPENSATION && !FEATURE_FIND_Z_ORIGIN
+
+  /** \brief Define the type of the present miller hardware */
+  #define MILLER_TYPE                         MILLER_TYPE_TWO_TRACKS
+  /** \brief Define lower acceleration to reach very small speeds */
+  #define MILLER_ACCELERATION                 15
+
+  /** \brief Default operating mode */
+  #define DEFAULT_OPERATING_MODE              OPERATING_MODE_PRINT
 
 #endif // FEATURE_MILLING_MODE
 
-/** \brief Number of extruders */
-#define NUM_EXTRUDER                        1
 
 /** \brief Allows to use the 230V output */
 #define FEATURE_230V_OUTPUT                 0                                                   // the RF1000 does not support the 230 V output
@@ -81,29 +94,10 @@ WARNING: Do not enable the case fan feature in case you have a second extruder a
 
 #define FEATURE_CONFIGURABLE_Z_ENDSTOPS     1                                                   // 1 = the z-endstop type can be switched between z-min (= single) and z-min + z-max in one circuit (= circuit), 0 = only the z-min endstop is installed
 
-#if FEATURE_MILLING_MODE
-
-/** \brief Define the type of the present miller hardware */
-#define MILLER_TYPE                         MILLER_TYPE_TWO_TRACKS
-/** \brief Define lower acceleration to reach very small speeds */
-#define MILLER_ACCELERATION                 15
-
-/** \brief Default operating mode */
-#define DEFAULT_OPERATING_MODE              OPERATING_MODE_PRINT
-
-#endif // FEATURE_MILLING_MODE
-
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
-/** \brief Define Default z-endstop type */
-#define DEFAULT_Z_ENDSTOP_TYPE              ENDSTOP_TYPE_SINGLE
-
+  /** \brief Define Default z-endstop type */
+  #define DEFAULT_Z_ENDSTOP_TYPE              ENDSTOP_TYPE_SINGLE
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
-
-/** \brief Allows to choose whether the setpoint and the current value of the heat bed temperature shall be compensated so that the temperature offset which is caused by the printing plate is reduced */
-#define FEATURE_HEAT_BED_TEMP_COMPENSATION  0                                                   // 1 = on, 0 = off
-
 
 // ##########################################################################################
 // ##   Calibration
@@ -127,21 +121,20 @@ If EEPROM is enabled these values will be overidden with the values in the EEPRO
 of the bed. Maximum coordinate is given by adding the above MAX_LENGTH values. */
 #define X_MIN_POS                           0
 #define Y_MIN_POS                           0
-#define Z_MIN_POS                           0
 
 /** \brief Drive settings for printers with cartesian drive systems */
 /** \brief Number of steps for a 1mm move in x direction.
 For xy gantry use 2*belt moved!
 Overridden if EEPROM activated. */
-#define XAXIS_STEPS_PER_MM                  float(4.761875 * (float)RF_MICRO_STEPS)
+#define XAXIS_STEPS_PER_MM                  float(4.761875 * (float)RF_MICRO_STEPS_XY)
 
 /** \brief Number of steps for a 1mm move in y direction.
 For xy gantry use 2*belt moved!
 Overridden if EEPROM activated.*/
-#define YAXIS_STEPS_PER_MM                  float(4.761875 * (float)RF_MICRO_STEPS)
+#define YAXIS_STEPS_PER_MM                  float(4.761875 * (float)RF_MICRO_STEPS_XY)
 
 /** \brief Number of steps for a 1mm move in z direction  Overridden if EEPROM activated.*/
-#define ZAXIS_STEPS_PER_MM                  float(80 * (float)RF_MICRO_STEPS)
+#define ZAXIS_STEPS_PER_MM                  float(80 * (float)RF_MICRO_STEPS_Z)
 
 
 // ##########################################################################################
@@ -150,9 +143,6 @@ Overridden if EEPROM activated.*/
 
 /** \brief for each extruder, fan will stay on until extruder temperature is below this value */
 #define EXTRUDER_FAN_COOL_TEMP              50
-
-/** \brief Minimal temperature which can be set for the extruder */
-#define EXTRUDER_MIN_TEMP                   40
 
 /** \brief Maximal temperature which can be set for the extruder */
 #define EXTRUDER_MAX_TEMP                   275
@@ -191,6 +181,20 @@ Overridden if EEPROM activated.*/
 /** \brief Dgain. */
 #define HT3_PID_D                           18
 
+// ##########################################################################################
+// ##	Hotend V3 : Nibbels 23.12.2017: PID Werte sind noch die falschen alten Werte vom V2
+// ##########################################################################################
+
+/** \brief The maximum value, I-gain can contribute to the output. */
+#define HT4_PID_INTEGRAL_DRIVE_MAX			180
+/** \brief lower value for integral part. */
+#define HT4_PID_INTEGRAL_DRIVE_MIN			40
+/** \brief P-gain. */
+#define HT4_PID_P							95
+/** \brief I-gain. */
+#define HT4_PID_I							120
+/** \brief Dgain. */
+#define HT4_PID_D							130
 
 // ##########################################################################################
 // ##   Miller type 1 (= one track)
@@ -212,12 +216,12 @@ Overridden if EEPROM activated.*/
 // ##   Configuration of the 1. extruder
 // ##########################################################################################
 
-#define EXT0_X_OFFSET                       0
-#define EXT0_Y_OFFSET                       0
-#define EXT0_Z_OFFSET                       0 //to support Nozzle-Tip-Down-Hotends
+#define EXT0_X_OFFSET_MM                       0.0f
+#define EXT0_Y_OFFSET_MM                       0.0f
+#define EXT0_Z_OFFSET_MM                       0.0f //to support Nozzle-Tip-Down-Hotends
 
 /** \brief for skeinforge 40 and later, steps to pull the plasic 1 mm inside the extruder, not out.  Overridden if EEPROM activated. */
-#define EXT0_STEPS_PER_MM                   (8.75 * RF_MICRO_STEPS)
+#define EXT0_STEPS_PER_MM                   (8.75 * RF_MICRO_STEPS_E)
 
 /** \brief What type of sensor is used?
 NTC-Thermistors
@@ -233,16 +237,16 @@ NTC-Thermistors
 10: 100k 0603 SMD Vishay NTCS0603E3104FXT (4.7k pullup)
 11: 100k GE Sensing AL03006-58.2K-97-G1 (4.7k pullup)
 12: 100k RS Thermistor 198-961 (4.7k pullup)
-14: Thermistor NTC 3950 100k Ohm (Version 1)
-15: Thermistor NTC 3950 100k Ohm (Version 2)
+13: NTC 3950 100k thermistor - Conrad V3
+14: Thermistor NTC 3950 100k Ohm
 97: USE_GENERIC_THERMISTORTABLE_1 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 98: USE_GENERIC_THERMISTORTABLE_2 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 99: USE_GENERIC_THERMISTORTABLE_3 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 PTC-Thermistors
-13: E3D PT100 (externe Platine, 500°C)
 50: USER_THERMISTORTABLE0 als PTC
 51: USER_THERMISTORTABLE1 als PTC
 52: USER_THERMISTORTABLE2 als PTC
+53: E3D PT100 Board (direct AD voltage in)
 60: HEATER_USES_AD8495 (Delivers 5mV/degC)
 100: AD595 */
 #define EXT0_TEMPSENSOR_TYPE                3
@@ -270,18 +274,11 @@ Overridden if EEPROM activated. */
 
 /** \brief Feedrate from halted extruder in mm/s
 Overridden if EEPROM activated. */
-#define EXT0_MAX_START_FEEDRATE             18
+#define EXT0_MAX_START_FEEDRATE             12
 
 /** \brief Acceleration in mm/s^2
 Overridden if EEPROM activated. */
 #define EXT0_MAX_ACCELERATION               6000
-
-/** \brief Type of heat manager for this extruder.
-- 0 = Simply switch on/off if temperature is reached. Works always.
-- 1 = PID Temperature control. Is better but needs good PID values. Defaults are a good start for most extruder.
-- 3 = Dead-time control. PID_P becomes dead-time in seconds.
- Overridden if EEPROM activated. */
-#define EXT0_HEAT_MANAGER                   1
 
 /** \brief Wait x seconds, after reaching target temperature. Only used for M109.  Overridden if EEPROM activated. */
 #define EXT0_WATCHPERIOD                    20
@@ -355,6 +352,7 @@ The codes are only executed for multiple extruder when changing the extruder. */
 
 
 #if NUM_EXTRUDER>0 && EXT0_TEMPSENSOR_TYPE<101
+
 #define EXT0_ANALOG_INPUTS                  1
 #define EXT0_SENSOR_INDEX                   0
 #define EXT0_ANALOG_CHANNEL                 EXT0_TEMPSENSOR_PIN
@@ -371,16 +369,19 @@ The codes are only executed for multiple extruder when changing the extruder. */
 
 
 #if NUM_EXTRUDER == 2
+
+#define FEATURE_ALIGN_EXTRUDERS             1
+
 // ##########################################################################################
 // ##   Configuration of the 2. extruder
 // ##########################################################################################
 
-#define EXT1_X_OFFSET                       (int32_t)(33.9 * XAXIS_STEPS_PER_MM)        // [steps]
-#define EXT1_Y_OFFSET                       (int32_t)( 0.1 * YAXIS_STEPS_PER_MM)        // [steps]
-#define EXT1_Z_OFFSET                       (int32_t)( 0.0 * YAXIS_STEPS_PER_MM)        // [steps] //to support Nozzle-Tip-Down-Hotends
+#define EXT1_X_OFFSET_MM                        33.9f                           // [mm]
+#define EXT1_Y_OFFSET_MM                         0.1f                           // [mm]
+#define EXT1_Z_OFFSET_MM                         0.0f                           // [mm] //to support Nozzle-Tip-Down-Hotends
 
 /** \brief for skeinforge 40 and later, steps to pull the plasic 1 mm inside the extruder, not out.  Overridden if EEPROM activated. */
-#define EXT1_STEPS_PER_MM                   (8.75 * RF_MICRO_STEPS)
+#define EXT1_STEPS_PER_MM                   (8.75 * RF_MICRO_STEPS_E)
 
 /** \brief What type of sensor is used?
 NTC-Thermistors
@@ -396,16 +397,16 @@ NTC-Thermistors
 10: 100k 0603 SMD Vishay NTCS0603E3104FXT (4.7k pullup)
 11: 100k GE Sensing AL03006-58.2K-97-G1 (4.7k pullup)
 12: 100k RS Thermistor 198-961 (4.7k pullup)
-14: Thermistor NTC 3950 100k Ohm (Version 1)
-15: Thermistor NTC 3950 100k Ohm (Version 2)
+13: NTC 3950 100k thermistor - Conrad V3
+14: Thermistor NTC 3950 100k Ohm
 97: USE_GENERIC_THERMISTORTABLE_1 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 98: USE_GENERIC_THERMISTORTABLE_2 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 99: USE_GENERIC_THERMISTORTABLE_3 and GENERIC_THERM_NUM_ENTRIES Define Raw Thermistor and Resistor-Settings within configuration.h
 PTC-Thermistors
-13: E3D PT100 (externe Platine, 500°C)
 50: USER_THERMISTORTABLE0 als PTC
 51: USER_THERMISTORTABLE1 als PTC
 52: USER_THERMISTORTABLE2 als PTC
+53: E3D PT100 Board (direct AD voltage in)
 60: HEATER_USES_AD8495 (Delivers 5mV/degC)
 100: AD595 */
 #define EXT1_TEMPSENSOR_TYPE                3
@@ -433,17 +434,11 @@ Overridden if EEPROM activated. */
 
 /** \brief Feedrate from halted extruder in mm/s
 Overridden if EEPROM activated. */
-#define EXT1_MAX_START_FEEDRATE             18
+#define EXT1_MAX_START_FEEDRATE             12
 
 /** \brief Acceleration in mm/s^2
 Overridden if EEPROM activated. */
 #define EXT1_MAX_ACCELERATION               6000
-
-/** \brief Type of heat manager for this extruder.
-- 0 = Simply switch on/off if temperature is reached. Works always.
-- 1 = PID Temperature control. Is better but needs good PID values. Defaults are a good start for most extruder.
- Overridden if EEPROM activated. */
-#define EXT1_HEAT_MANAGER                   1
 
 /** \brief Wait x seconds, after reaching target temperature. Only used for M109.  Overridden if EEPROM activated. */
 #define EXT1_WATCHPERIOD                    20
@@ -541,9 +536,6 @@ The codes are only executed for multiple extruder when changing the extruder. */
 /** \brief Set true if you have a heated bed conected to your board, false if not */
 #define HAVE_HEATED_BED                     true
 
-/** \brief Minimal temperature which can be set for the heating bed */
-#define HEATED_BED_MIN_TEMP                 40
-
 /** \brief Maximal temperature which can be set for the heating bed */
 #define HEATED_BED_MAX_TEMP                 180
 
@@ -559,14 +551,6 @@ set to 0 if you don't have a heated bed */
 
 /** \brief How often the temperature of the heated bed is set (msec) */
 #define HEATED_BED_SET_INTERVAL             5000
-
-/** \brief 
-Heat manager for heated bed:
-0 = Bang Bang, fast update
-1 = PID controlled
-2 = Bang Bang, limited check every HEATED_BED_SET_INTERVAL. Use this with relay-driven beds to save life time
-3 = dead time control */
-#define HEATED_BED_HEAT_MANAGER             1
 
 /** \brief The maximum value, I-gain can contribute to the output.
 The precise values may differ for different nozzle/resistor combination.
@@ -611,17 +595,16 @@ A good start is 30 lower then the optimal value. You need to leave room for cool
 
 #endif // HAVE_HEATED_BED==true && HEATED_BED_SENSOR_TYPE<101   
 
+/** \brief Allows to choose whether the setpoint and the current value of the heat bed temperature shall be compensated so that the temperature offset which is caused by the printing plate is reduced */
+#define FEATURE_HEAT_BED_TEMP_COMPENSATION  0                                                   // 1 = on, 0 = off
+
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
-
-/** \brief The following vlaue must be NumberOfTemperatures -1 */
-#define BED_TEMP_COMPENSATION_INDEX_MAX     5
-
-/** \brief The following values represent the setpoint temperatures */
-#define BED_SETPOINT_TEMPERATURES           {60, 80, 100, 120, 140, 160}
-
-/** \brief The following values represent the real temperature which is measured at the surface of the printing bed in case the temperature sensor delivers the setpoint temperatures */
-#define BED_MEASURED_TEMPERATURES           {60, 80, 100, 120, 140, 160}
-
+  /** \brief The following vlaue must be NumberOfTemperatures -1 */
+  #define BED_TEMP_COMPENSATION_INDEX_MAX     5
+  /** \brief The following values represent the setpoint temperatures */
+  #define BED_SETPOINT_TEMPERATURES           {60, 80, 100, 120, 140, 160}
+  /** \brief The following values represent the real temperature which is measured at the surface of the printing bed in case the temperature sensor delivers the setpoint temperatures */
+  #define BED_MEASURED_TEMPERATURES           {60, 80, 100, 120, 140, 160}
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
 
 
@@ -639,9 +622,7 @@ Crash with backside metal RFx000: ~ >10.0..12.0f
 Overflow in Z-Matrix: >12.7f 
 */
 #define Z_ENDSTOP_DRIVE_OVER                 0.8f                              //mm
-
-/** \brief Specifies the maximal steps which can be moved into z-direction after the z-endstop has been reached */
-#define Z_OVERRIDE_MAX                      long(ZAXIS_STEPS_PER_MM * Z_ENDSTOP_DRIVE_OVER)
+#define Z_ENDSTOP_MAX_HYSTERESIS             0.3f                              //mm
 
 /** \brief By default all endstops are pulled up to HIGH. You need a pullup if you
 use a mechanical endstop connected with GND. Set value to false for no pullup
@@ -677,10 +658,9 @@ on this endstop. */
 /** \brief Sets direction of endstops when homing; 1=MAX, -1=MIN */
 #define X_HOME_DIR                          -1
 #define Y_HOME_DIR                          -1
-
-#if !FEATURE_MILLING_MODE
+//gets inverted when searching home dir in milling mode:
 #define Z_HOME_DIR                          -1
-#endif // !FEATURE_MILLING_MODE
+
 
 /** \brief If true, axis won't move to coordinates less than zero. */
 #define min_software_endstop_x              false
@@ -693,9 +673,9 @@ on this endstop. */
 #define max_software_endstop_z              true
 
 /** \brief If during homing the endstop is reached, how many mm should the printer move back for the second try */
-#define ENDSTOP_X_BACK_MOVE                 5
-#define ENDSTOP_Y_BACK_MOVE                 5
-#define ENDSTOP_Z_BACK_MOVE                 float(0.3f+Z_ENDSTOP_DRIVE_OVER) //0.3mm sind theoretische maximale hysterese beim Schalter loslassen. Original RF2000: 0.01
+#define ENDSTOP_X_BACK_MOVE                 5.0f
+#define ENDSTOP_Y_BACK_MOVE                 5.0f
+#define ENDSTOP_Z_BACK_MOVE                 float(Z_ENDSTOP_MAX_HYSTERESIS+Z_ENDSTOP_DRIVE_OVER) //0.3mm sind theoretische maximale hysterese beim Schalter loslassen. Original RF1000: 0.01
 
 /** \brief For higher precision you can reduce the speed for the second test on the endstop
 during homing operation. The homing speed is divided by the value. 1 = same speed, 2 = half speed */
@@ -705,15 +685,7 @@ during homing operation. The homing speed is divided by the value. 1 = same spee
 
 /** \brief When you have several endstops in one circuit you need to disable it after homing by moving a
 small amount back. This is also the case with H-belt systems. */
-#define ENDSTOP_X_BACK_ON_HOME              0
-#define ENDSTOP_Y_BACK_ON_HOME              0
-
-#if FEATURE_MILLING_MODE
-#define LEAVE_Z_MAX_ENDSTOP_AFTER_HOME      long(-ZAXIS_STEPS_PER_MM * 2)   // [steps]
-#else
-/** \brief Remark: in case this value is set to non-0, the z-compensation must be made fit for this first */
-#define ENDSTOP_Z_BACK_ON_HOME              0
-#endif // FEATURE_MILLING_MODE
+#define LEAVE_Z_MAX_ENDSTOP_AFTER_HOME      2.0f                                                  // [mm] positive value, because homedir is known.
 
 /** \brief You can disable endstop checking for print moves. This is needed, if you get sometimes
 false signals from your endstops. If your endstops don't give false signals, you
@@ -728,7 +700,7 @@ can set it on for safety. */
 /** \brief Motor Current MAX setting */
 #define MOTOR_CURRENT_MAX                       {150,150,126,126,126}                               // Values 0-255 (126 = ~2A), order: driver 1 (x), driver 2 (y), driver 3 (z), driver 4 (extruder 1), driver 5 (reserved)
 /** \brief Motor Current settings at start: Tweak with menu for better silence <-> stability */
-#define MOTOR_CURRENT_NORMAL                    {110,110,95,110,110}
+#define MOTOR_CURRENT_NORMAL                    {110,110,105,110,110}
 #define MOTOR_CURRENT_MIN                       EXTRUDER_CURRENT_PAUSED
 
 /** \brief number of analog input signals. Normally 1 for each temperature sensor */
@@ -745,9 +717,6 @@ can set it on for safety. */
 #define Z_ENABLE_ON                         1
 
 /** \brief Disables axis when it's not being used. */
-#define DISABLE_X                           false
-#define DISABLE_Y                           false
-#define DISABLE_Z                           false
 #define DISABLE_E                           false
 
 /** \brief Inverting axis direction */
@@ -755,45 +724,26 @@ can set it on for safety. */
 #define INVERT_Y_DIR                        false
 #define INVERT_Z_DIR                        false
 
-
-#if FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
-/** \brief We set the current "steps after endstop" to the following offset values in order to avoid to reach a "steps after endstop" value of 0 (e.g. because of the up and down moving z-compensation or because of manual z movements.
-           This initial value is set to a level which is above the steps which are possible in z-direction during the distance where the z-endstop is constantly pressed. */
-#define Z_ENDSTOP_MIN_TO_MAX_INITIAL_STEPS  long(ZAXIS_STEPS_PER_MM * 10)                       // [steps]
-#define Z_ENDSTOP_MAX_TO_MIN_INITIAL_STEPS  long(-ZAXIS_STEPS_PER_MM * 10)                      // [steps]
-
-/** \brief There can not be less than the following amount of steps between the hits of the z-min and z-max endstops.
-*/
-#define MINIMAL_Z_ENDSTOP_MIN_TO_MAX_STEPS  long(ZAXIS_STEPS_PER_MM * 100)                      // [steps]
-#define MINIMAL_Z_ENDSTOP_MAX_TO_MIN_STEPS  long(-ZAXIS_STEPS_PER_MM * 100)                     // [steps]
-
-#endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
-
-
-#define XYZ_DIRECTION_CHANGE_DELAY          250                                                 // [us]
-#define XYZ_STEPPER_HIGH_DELAY              250                                                 // [us]
-#define XYZ_STEPPER_LOW_DELAY               250                                                 // [us]
-#define LOOP_INTERVAL                       2000                                                // [ms]
+#define XYZ_STEPPER_HIGH_DELAY              100                                                 // [us] speed for moveZ
+#define XYZ_STEPPER_LOW_DELAY               100                                                 // [us] speed for moveZ
 
 /** \brief Automatic filament change, unmounting of the filament - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
-#define UNMOUNT_FILAMENT_SCRIPT_WITH_HEATING        "M109 S" xstr(UI_SET_EXTRUDER_TEMP_UNMOUNT) "\nG21\nG90\nG92 E0\nG1 E-90 F500\nM104 S0"
+#define UNMOUNT_FILAMENT_SCRIPT_WITH_HEATING        "M3914 P4500"
 
-/** \brief Automatic filament change, unmounting of the filament - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
-#define UNMOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING     "G21\nG90\nG92 E0\nG1 E-90 F500"
+/** \brief Automatic filament mount, mounting of the filament with heating. Stop @ 3500 digits */
+#define MOUNT_FILAMENT_SCRIPT_WITH_HEATING          "M3913 P3500 F3"
 
-/** \brief Automatic filament change, mounting of the filament with heating - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
-#define MOUNT_FILAMENT_SCRIPT_WITH_HEATING          "M109 S" xstr(UI_SET_PRESET_EXTRUDER_TEMP_ABS) "\nG21\nG90\nG92 E0\nG1 E90 F100\nM104 S0"
+/** \brief Automatic filament mount, mounting of the filament without heating. Stop @ 3500 digits */
+#define MOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING       "M3913 P3500 F3"
 
-/** \brief Automatic filament change, mounting of the filament without heating - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
-#define MOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING       "G21\nG90\nG92 E0\nG1 E90 F100"
-
-/** \brief speed of the PWM signal, 0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz, 3 = 122.06Hz */
+/** \brief speed of the PWM signal, 0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz, 3 = 122.06Hz, 4 = 244.12Hz */
 #define HEATER_PWM_SPEED                    1
 #define COOLER_PWM_SPEED                    0
+
 /** Some fans won't start for low values, but would run if started with higher power at the beginning.
 This defines the full power duration before returning to set value. Time is in milliseconds */
-#define FAN_KICKSTART_TIME  200                                                                 // [ms]
+#define FAN_KICKSTART_TIME  100                                                                 // [ms]
+
 /** Defines the max. fan speed for M106 controlled fans. Normally 255 to use full range, but for
  12V fans on 24V this might help preventing a defect. For all other fans there is a explicit maximum PWM value
  you can set, so this is not used for other fans! */
@@ -822,13 +772,13 @@ This defines the full power duration before returning to set value. Time is in m
 /** \brief Maximum feedrate, the system allows. Higher feedrates are reduced to these values.
     The axis order in all axis related arrays is X, Y, Z
      Overridden if EEPROM activated. */
-#define MAX_FEEDRATE_X                      500
-#define MAX_FEEDRATE_Y                      500
-#define MAX_FEEDRATE_Z                      50
+#define MAX_FEEDRATE_X                      200
+#define MAX_FEEDRATE_Y                      200
+#define MAX_FEEDRATE_Z                      12
 
-/** \brief Home position speed in mm/s. Overridden if EEPROM activated. */
-#define HOMING_FEEDRATE_X_PRINT             165
-#define HOMING_FEEDRATE_Y_PRINT             165
+/** \brief Home position speed in mm/s. Overridden if EEPROM activated. These values can be overridden by EEPROM but are considered as maximum allowed values */
+#define HOMING_FEEDRATE_X_PRINT             80
+#define HOMING_FEEDRATE_Y_PRINT             80
 #define HOMING_FEEDRATE_Z_PRINT             10
 
 #define HOMING_FEEDRATE_X_MILL              70
@@ -845,7 +795,7 @@ This defines the full power duration before returning to set value. Time is in m
     #define HOMING_ORDER_PRINT              HOME_ORDER_XYZ
     #define HOMING_ORDER_MILL               HOME_ORDER_ZXY
 #else
-    #define HOMING_ORDER                    HOME_ORDER_XYZ
+    #define HOMING_ORDER_PRINT              HOME_ORDER_XYZ
 #endif // FEATURE_MILLING_MODE
 
 /** \brief If you have a backlash in both z-directions, you can use this. For most printer, the bed will be pushed down by it's
@@ -854,9 +804,6 @@ own weight, so this is nearly never needed. */
 #define Z_BACKLASH                          0
 #define X_BACKLASH                          0
 #define Y_BACKLASH                          0
-
-/** \brief Comment this to disable ramp acceleration */
-#define RAMP_ACCELERATION                   1
 
 // ##########################################################################################
 // ##   configuration of the stepper drivers
@@ -875,18 +822,14 @@ included delay is already enough. */
 // ##   configuration of the speed vs. cpu usage
 // ##########################################################################################
 
-// MAIN SWITCH FOR SPEED AND PRECISION IS RF_MICRO_STEPS!! That is the source of frequency vs. speed overall!
-
 /** \brief The firmware can only handle 16000Hz interrupt frequency cleanly. If you need higher speeds
 a faster solution is needed, and this is to double/quadruple the steps in one interrupt call.
 This is like reducing your 1/16th microstepping to 1/8 or 1/4. It is much cheaper then 1 or 3
 additional stepper interrupts with all it's overhead. As a result you can go as high as
-40000Hz. STEP_DOUBLER_FREQUENCY should be in range 5000-12000 for RFx000 but 8000 is much for RF2000 (with ADVANCE?).*/
-#define STEP_DOUBLER_FREQUENCY              6500
+40000Hz. STEP_DOUBLER_FREQUENCY should be in range 5000-12000 for RFx000 but 8000 is much for RF2000 (with ADVANCE?).
 
-/** \brief If you need frequencies off more then 30000 you definitely need to enable this. If you have only 1/8 stepping
-enabling this may cause to stall your moves when 20000Hz is reached. */
-#define ALLOW_QUADSTEPPING                  true
+STEP_DOUBLER_FREQUENCY can be changed in Menu-> Configuration->Stepper->DblFq: */
+#define STEP_DOUBLER_FREQUENCY              7000
 
 /** \brief If you reach STEP_DOUBLER_FREQUENCY the firmware will do 2 or 4 steps with nearly no delay. That can be too fast
 for some printers causing an early stall. */
@@ -895,19 +838,23 @@ for some printers causing an early stall. */
 /** \brief Number of moves we can cache in advance.
 This number of moves can be cached in advance. If you wan't to cache more, increase this. Especially on
 many very short moves the cache may go empty. The minimum value is 5. */
-#define MOVE_CACHE_SIZE                     16
+#define MOVE_CACHE_SIZE                     17
 
 /** \brief Low filled cache size.
 If the cache contains less then MOVE_CACHE_LOW segments, the time per segment is limited to LOW_TICKS_PER_MOVE clock cycles.
 If a move would be shorter, the feedrate will be reduced. This should prevent buffer underflows. Set this to 0 if you
 don't care about empty buffers during print. */
-#define MOVE_CACHE_LOW                      10
+#define MOVE_CACHE_LOW                      14
 
 /** \brief Cycles per move, if move cache is low.
 This value must be high enough, that the buffer has time to fill up. The problem only occurs at the beginning of a print or
-if you are printing many very short segments at high speed. Higher delays here allow higher values in PATH_PLANNER_CHECK_SEGMENTS. */
-#define LOW_TICKS_PER_MOVE                  250000
+if you are printing many very short segments at high speed.*/
+#define LOW_TICKS_PER_MOVE                  500000
 
+/** \brief Adds a M3993 / or like "M3993 P300000" to set another or default LOW_TICKS_PER_MOVE and gather statistics about the fill level of the MOVE_CACHE while printing */
+#define FEATURE_DEBUG_MOVE_CACHE_TIMING              0
+
+//For configuration of speed vs. cpu RF_MICRO_STEPS_ @ CONFIGURATION.h as well!
 
 // ##########################################################################################
 // ##   Acceleration settings
@@ -917,13 +864,13 @@ if you are printing many very short segments at high speed. Higher delays here a
 
 /** \brief X, Y, Z max acceleration in mm/s^2 for printing moves or retracts. Make sure your printer can go that high!
  Overridden if EEPROM activated. */
-#define MAX_ACCELERATION_UNITS_PER_SQ_SECOND_X                  1000
-#define MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Y                  1000
+#define MAX_ACCELERATION_UNITS_PER_SQ_SECOND_X                  1500
+#define MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Y                  1500
 #define MAX_ACCELERATION_UNITS_PER_SQ_SECOND_Z                  100
 
 /** \brief X, Y, Z max acceleration in mm/s^2 for travel moves.  Overridden if EEPROM activated.*/
-#define MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_X           1000
-#define MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_Y           1000
+#define MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_X           1500
+#define MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_Y           1500
 #define MAX_TRAVEL_ACCELERATION_UNITS_PER_SQ_SECOND_Z           100
 
 /** \brief Maximum allowable jerk.
@@ -946,8 +893,8 @@ v_diff = sqrt((50-35.36)^2+(0-35.36)^2) = 38.27 < jerk
 Corner can be printed with full speed of 50 mm/s
 
 Overridden if EEPROM activated. */
-#define MAX_JERK                            10                 //std: 20, aber RFx000 sieht zwischen ca. 7 und 18 am besten aus: Renkforce sagt 10
-#define MAX_ZJERK                           0.28               //std: 0.3
+#define MAX_JERK                            13.5                 //std: 20, aber RFx000 sieht zwischen ca. 7 und 18 am besten aus: Renkforce sagt 10
+#define MAX_ZJERK                           0.3                  //std: 0.3
 
 //that will slowdown if you have sever direction changes in a short distance which is nearly the same as adding several jerks in a short sequence.
 #define REDUCE_ON_SMALL_SEGMENTS            1
@@ -965,15 +912,15 @@ extruder steps are executed. This is to prevent your extruder to move unless the
 is at least molten. After havong some complains that the extruder does not work, I leave
 it 0 as default. */
 #if EXTRUDER_ALLOW_COLD_MOVE
-#define MIN_EXTRUDER_TEMP                   0
+  #define MIN_EXTRUDER_TEMP                   0
 #else
-#define MIN_EXTRUDER_TEMP                   80
+  #define MIN_EXTRUDER_TEMP                   80
 #endif
 /** \brief Enable advance algorithm.
 Without a correct adjusted advance algorithm, you get blobs at points, where acceleration changes. The
 effect increases with speed and acceleration difference. Using the advance method decreases this effect.
 For more informations, read the wiki. */
-#define USE_ADVANCE 1
+#define USE_ADVANCE                         1
 
 /** \brief enables quadratic component.
 Uncomment to allow a quadratic advance dependency. Linear is the dominant value, so no real need
@@ -987,21 +934,18 @@ to activate the quadratic term. Only adds lots of computations and storage usage
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 
+/** \brief Specifies if you want to adjust minimal and maximum compensation steps to first layer */
+#define AUTOADJUST_MIN_MAX_ZCOMP                1
+#define AUTOADJUST_STARTMADEN_AUSSCHLUSS        0.35f
+
 /** \brief Specifies until which height the z compensation must complete
 This value should be roughly the double amount of mm which is detected as error of the heat bed. */
 #define HEAT_BED_Z_COMPENSATION_MAX_MM          3                                                                       // [mm]
-#define HEAT_BED_Z_COMPENSATION_MAX_STEPS       long(HEAT_BED_Z_COMPENSATION_MAX_MM * ZAXIS_STEPS_PER_MM)               // [steps]
 
 /** \brief Specifies from which height on the z compensation shall be performed
 Below this value the z compensation will only change the z axis so that a constant distance to the heat bed is hold (this is good for the first layer).
-Above this value the z compensation will distribute the roughness of the surface over the layers until HEAT_BED_Z_COMPENSATION_MAX_STEPS is reached. */
+Above this value the z compensation will distribute the roughness of the surface over the layers until HEAT_BED_Z_COMPENSATION_MAX_MM is reached. */
 #define HEAT_BED_Z_COMPENSATION_MIN_MM          float(0.33)                                                             // [mm]
-#define HEAT_BED_Z_COMPENSATION_MIN_STEPS       long(HEAT_BED_Z_COMPENSATION_MIN_MM * ZAXIS_STEPS_PER_MM)               // [steps]
-
-/* Maximum number of steps to scan after the Z-min switch has been reached. If within these steps the surface has not
-   been reached, the scan is retried HEAT_BED_SCAN_RETRIES times and then (if still not found) aborted.
-   Note that the head bed scan matrix consists of 16 bit signed values, thus more then 32767 steps will lead to an overflow! */
-#define HEAT_BED_SCAN_Z_SCAN_MAX_STEPS          long(Z_ENDSTOP_DRIVE_OVER * ZAXIS_STEPS_PER_MM)                         // [steps]
 
 /** \brief Configuration of the heat bed scan */
 #if NUM_EXTRUDER == 2
@@ -1010,14 +954,13 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_X_STEP_SIZE_MM            20                                                                      // [mm]
 #define HEAT_BED_SCAN_X_STEP_SIZE_MIN_MM        10                                                                      // [mm]
 #define HEAT_BED_SCAN_X_CALIBRATION_POINT_MM    100                                                                     // [mm] from the left border of the heat bed
-#define HEAT_BED_SCAN_X_CALIBRATION_POINT_STEPS long(XAXIS_STEPS_PER_MM * HEAT_BED_SCAN_X_CALIBRATION_POINT_MM)         // [steps]
 
 #define HEAT_BED_SCAN_Y_START_MM                30                                                                      // [mm] from the front border of the heat bed
 #define HEAT_BED_SCAN_Y_END_MM                  5                                                                       // [mm] from the back border of the heat bed
 #define HEAT_BED_SCAN_Y_STEP_SIZE_MM            20                                                                      // [mm]
 #define HEAT_BED_SCAN_Y_STEP_SIZE_MIN_MM        10                                                                      // [mm]
 #define HEAT_BED_SCAN_Y_CALIBRATION_POINT_MM    100                                                                     // [mm] from the front border of the heat bed
-#define HEAT_BED_SCAN_Y_CALIBRATION_POINT_STEPS long(YAXIS_STEPS_PER_MM * HEAT_BED_SCAN_Y_CALIBRATION_POINT_MM)         // [steps]
+
 #else /* NUM_EXTRUDER != 2 -> */
 
 #define HEAT_BED_SCAN_X_START_MM                15                                                                      // [mm] from the left border of the heat bed
@@ -1025,18 +968,16 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_X_STEP_SIZE_MM            20                                                                      // [mm]
 #define HEAT_BED_SCAN_X_STEP_SIZE_MIN_MM        10                                                                      // [mm]
 #define HEAT_BED_SCAN_X_CALIBRATION_POINT_MM    100                                                                     // [mm] from the left border of the heat bed
-#define HEAT_BED_SCAN_X_CALIBRATION_POINT_STEPS long(XAXIS_STEPS_PER_MM * HEAT_BED_SCAN_X_CALIBRATION_POINT_MM)         // [steps]
 
 #define HEAT_BED_SCAN_Y_START_MM                30                                                                      // [mm] from the front border of the heat bed
 #define HEAT_BED_SCAN_Y_END_MM                  5                                                                       // [mm] from the back border of the heat bed
 #define HEAT_BED_SCAN_Y_STEP_SIZE_MM            20                                                                      // [mm]
 #define HEAT_BED_SCAN_Y_STEP_SIZE_MIN_MM        10                                                                      // [mm]
 #define HEAT_BED_SCAN_Y_CALIBRATION_POINT_MM    100                                                                     // [mm] from the front border of the heat bed
-#define HEAT_BED_SCAN_Y_CALIBRATION_POINT_STEPS long(YAXIS_STEPS_PER_MM * HEAT_BED_SCAN_Y_CALIBRATION_POINT_MM)         // [steps]
 #endif // NUM_EXTRUDER == 2
 
 //Nibbels: increased from 500 to 1000 in order to avoid problems with Dip-Down-Hotends
-#define HEAT_BED_SCAN_Z_START_uM                1000                                                                    // [um]
+#define HEAT_BED_SCAN_Z_START_MM                1.0f                                                                    // [mm]
 
 #define HEAT_BED_SCAN_CONTACT_PRESSURE_DELTA    10                                                                      // [digits]
 #define HEAT_BED_SCAN_RETRY_PRESSURE_DELTA      5                                                                       // [digits]
@@ -1044,29 +985,16 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_IDLE_PRESSURE_MIN         -7500                                                                   // [digits]
 #define HEAT_BED_SCAN_IDLE_PRESSURE_MAX         7500                                                                    // [digits]
 
-#define HEAT_BED_SCAN_X_START_STEPS             long(XAXIS_STEPS_PER_MM * HEAT_BED_SCAN_X_START_MM)                         // [steps]
-#define HEAT_BED_SCAN_X_END_STEPS               long(XAXIS_STEPS_PER_MM * HEAT_BED_SCAN_X_END_MM)                           // [steps]
-#define HEAT_BED_SCAN_X_STEP_SIZE_STEPS         long(XAXIS_STEPS_PER_MM * HEAT_BED_SCAN_X_STEP_SIZE_MM)                     // [steps]
-#define HEAT_BED_SCAN_X_STEP_SIZE_MIN_STEPS     long(XAXIS_STEPS_PER_MM * HEAT_BED_SCAN_X_STEP_SIZE_MIN_MM)                 // [steps]
-#define HEAT_BED_SCAN_X_MAX_POSITION_STEPS      long(X_MAX_LENGTH_PRINT * XAXIS_STEPS_PER_MM - HEAT_BED_SCAN_X_END_STEPS)   // [steps]
+#define HEAT_BED_SCAN_UP_FAST_MM                -0.02f                                                                  // [mm]
+#define HEAT_BED_SCAN_DOWN_FAST_MM              0.1f                                                                    // [mm]
+#define HEAT_BED_SCAN_UP_SLOW_MM                -0.004f                                                                 // [mm]
+#define HEAT_BED_SCAN_DOWN_SLOW_MM              0.004f                                                                  // [mm]
 
-#define HEAT_BED_SCAN_Y_START_STEPS             long(YAXIS_STEPS_PER_MM * HEAT_BED_SCAN_Y_START_MM)                     // [steps]
-#define HEAT_BED_SCAN_Y_END_STEPS               long(YAXIS_STEPS_PER_MM * HEAT_BED_SCAN_Y_END_MM)                       // [steps]
-#define HEAT_BED_SCAN_Y_STEP_SIZE_STEPS         long(YAXIS_STEPS_PER_MM * HEAT_BED_SCAN_Y_STEP_SIZE_MM)                 // [steps]
-#define HEAT_BED_SCAN_Y_STEP_SIZE_MIN_STEPS     long(YAXIS_STEPS_PER_MM * HEAT_BED_SCAN_Y_STEP_SIZE_MIN_MM)             // [steps]
-#define HEAT_BED_SCAN_Y_MAX_POSITION_STEPS      long(Y_MAX_LENGTH * YAXIS_STEPS_PER_MM - HEAT_BED_SCAN_Y_END_STEPS)     // [steps]
-
-#define HEAT_BED_SCAN_Z_START_STEPS             long(ZAXIS_STEPS_PER_MM * HEAT_BED_SCAN_Z_START_uM / 1000)              // [steps]
-
-#define HEAT_BED_SCAN_UP_FAST_STEPS             long(-ZAXIS_STEPS_PER_MM / 40)                                          // [steps] das sind 64
-#define HEAT_BED_SCAN_UP_SLOW_STEPS             long(-RF_MICRO_STEPS*10)                                                // [steps] das sind ca. 4um aber eine gerade Zahl. statt 12,8 oder 10,24 steps
-#define HEAT_BED_SCAN_DOWN_SLOW_STEPS           long(ZAXIS_STEPS_PER_MM / 80)                                           // [steps] das sind 32
-#define HEAT_BED_SCAN_DOWN_FAST_STEPS           long(ZAXIS_STEPS_PER_MM / 2)                                            // [steps] das sind 1280
-#define HEAT_BED_SCAN_FAST_STEP_DELAY_MS        5                                                                       // [ms]
+#define HEAT_BED_SCAN_FAST_STEP_DELAY_MS        1                                                                       // [ms]
 #define HEAT_BED_SCAN_SLOW_STEP_DELAY_MS        100                                                                     // [ms]
 #define HEAT_BED_SCAN_IDLE_DELAY_MS             250                                                                     // [ms]
 
-#define HEAT_BED_SCAN_RETRIES                   3                                                                       // [-]
+#define HEAT_BED_SCAN_RETRIES                   5                                                                       // [-]
 #define HEAT_BED_SCAN_PRESSURE_READS            15                                                                      // [-]
 #define HEAT_BED_SCAN_PRESSURE_TOLERANCE        15                                                                      // [digits]
 #define HEAT_BED_SCAN_PRESSURE_READ_DELAY_MS    15                                                                      // [ms]
@@ -1074,13 +1002,13 @@ Above this value the z compensation will distribute the roughness of the surface
 
 #if FEATURE_PRECISE_HEAT_BED_SCAN
 
-#define PRECISE_HEAT_BED_SCAN_WARMUP_DELAY          (uint32_t)600                                                  // [s]
-#define PRECISE_HEAT_BED_SCAN_CALIBRATION_DELAY     (uint32_t)600                                                  // [s]
+#define PRECISE_HEAT_BED_SCAN_WARMUP_DELAY          (uint32_t)600                                                       // [s]
+#define PRECISE_HEAT_BED_SCAN_CALIBRATION_DELAY     (uint32_t)600                                                       // [s]
 #define PRECISE_HEAT_BED_SCAN_BED_TEMP_PLA          60                                                                  // [°C]
-#define PRECISE_HEAT_BED_SCAN_BED_TEMP_ABS          130                                                                 // [°C]
+#define PRECISE_HEAT_BED_SCAN_BED_TEMP_ABS          100                                                                 // [°C]
 #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_SCAN    100                                                                 // [°C]
-#define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA     230                                                                 // [°C]
-#define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS     260                                                                 // [°C]
+#define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA     210                                                                 // [°C]
+#define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS     240                                                                 // [°C]
 
 #endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
@@ -1091,8 +1019,9 @@ Above this value the z compensation will distribute the roughness of the surface
 // scan position defined by the index of the heat bed matrix, counting from 1
 #define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_INDEX_X    5
 #define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_INDEX_Y    5
-// number of scanning iterations
-#define SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS          5
+#define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_RAND_MM    3
+// number of scanning iterations 2+
+#define SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS          1
 
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
@@ -1106,47 +1035,37 @@ Above this value the z compensation will distribute the roughness of the surface
 /** \brief Specifies the maximal allowed z-error of the scanned work part.
 */
 #define WORK_PART_Z_COMPENSATION_MAX_MM         20                                                                      // [mm]
-#define WORK_PART_Z_COMPENSATION_MAX_STEPS      long(WORK_PART_Z_COMPENSATION_MAX_MM * ZAXIS_STEPS_PER_MM)              // [steps]
 
 /** \brief Specifies the maximal static z-offset which can be configured.
 */
 #define WORK_PART_MAX_STATIC_Z_OFFSET_MM        10                                                                      // [mm]
 
 /** \brief Configuration of the work part scan */
-#define WORK_PART_SCAN_X_START_MM               5                                                                           // [mm] from the left border of the work bed
-#define WORK_PART_SCAN_X_START_STEPS            long(XAXIS_STEPS_PER_MM * WORK_PART_SCAN_X_START_MM)                        // [steps]
-#define WORK_PART_SCAN_X_END_MM                 220                                                                         // [mm]
-#define WORK_PART_SCAN_X_END_STEPS              long(XAXIS_STEPS_PER_MM * WORK_PART_SCAN_X_END_MM)                          // [steps]
-#define WORK_PART_SCAN_X_STEP_SIZE_MM           20                                                                          // [mm]
-#define WORK_PART_SCAN_X_STEP_SIZE_STEPS        long(XAXIS_STEPS_PER_MM * WORK_PART_SCAN_X_STEP_SIZE_MM)                    // [steps]
-#define WORK_PART_SCAN_X_STEP_SIZE_MIN_MM       10                                                                          // [mm]
-#define WORK_PART_SCAN_X_STEP_SIZE_MIN_STEPS    long(XAXIS_STEPS_PER_MM * WORK_PART_SCAN_X_STEP_SIZE_MIN_MM)                // [steps]
-#define WORK_PART_SCAN_X_MAX_POSITION_STEPS     long(X_MAX_LENGTH_MILL * XAXIS_STEPS_PER_MM - WORK_PART_SCAN_X_END_STEPS)   // [steps]
+#define WORK_PART_SCAN_X_START_MM               5                                                                       // [mm] from the left border of the work bed
+#define WORK_PART_SCAN_X_END_MM                 220                                                                     // [mm]
+#define WORK_PART_SCAN_X_STEP_SIZE_MM           20                                                                      // [mm]
+#define WORK_PART_SCAN_X_STEP_SIZE_MIN_MM       5                                                                       // [mm]
 
 #define WORK_PART_SCAN_Y_START_MM               55                                                                      // [mm] from the front border of the work bed
-#define WORK_PART_SCAN_Y_START_STEPS            long(YAXIS_STEPS_PER_MM * WORK_PART_SCAN_Y_START_MM)                    // [steps]
 #define WORK_PART_SCAN_Y_END_MM                 170                                                                     // [mm]
-#define WORK_PART_SCAN_Y_END_STEPS              long(YAXIS_STEPS_PER_MM * WORK_PART_SCAN_Y_END_MM)                      // [steps]
 #define WORK_PART_SCAN_Y_STEP_SIZE_MM           20                                                                      // [mm]
-#define WORK_PART_SCAN_Y_STEP_SIZE_STEPS        long(YAXIS_STEPS_PER_MM * WORK_PART_SCAN_Y_STEP_SIZE_MM)                // [steps]
-#define WORK_PART_SCAN_Y_STEP_SIZE_MIN_MM       10                                                                      // [mm]
-#define WORK_PART_SCAN_Y_STEP_SIZE_MIN_STEPS    long(YAXIS_STEPS_PER_MM * WORK_PART_SCAN_Y_STEP_SIZE_MIN_MM)            // [steps]
-#define WORK_PART_SCAN_Y_MAX_POSITION_STEPS     long(Y_MAX_LENGTH * YAXIS_STEPS_PER_MM - WORK_PART_SCAN_Y_END_STEPS)    // [steps]
+#define WORK_PART_SCAN_Y_STEP_SIZE_MIN_MM       5                                                                       // [mm]
 
-#define WORK_PART_SCAN_UP_FAST_STEPS            long(-ZAXIS_STEPS_PER_MM / 40)                                          // [steps]
-#define WORK_PART_SCAN_UP_SLOW_STEPS            long(-ZAXIS_STEPS_PER_MM / 200)                                         // [steps]
-#define WORK_PART_SCAN_DOWN_SLOW_STEPS          long(ZAXIS_STEPS_PER_MM / 80)                                           // [steps]
-#define WORK_PART_SCAN_DOWN_FAST_STEPS          long(ZAXIS_STEPS_PER_MM / 2)                                            // [steps]
+#define WORK_PART_SCAN_UP_FAST_MM               -0.025f                                                                 // [mm]
+#define WORK_PART_SCAN_UP_SLOW_MM               -0.005f                                                                 // [mm]
+#define WORK_PART_SCAN_DOWN_SLOW_MM             0.0125f                                                                 // [mm]
+#define WORK_PART_SCAN_DOWN_FAST_MM             0.5f                                                                    // [mm]
+
 #define WORK_PART_SCAN_FAST_STEP_DELAY_MS       5                                                                       // [ms]
 #define WORK_PART_SCAN_SLOW_STEP_DELAY_MS       100                                                                     // [ms]
 #define WORK_PART_SCAN_IDLE_DELAY_MS            250                                                                     // [ms]
 
 #if MILLER_TYPE == MILLER_TYPE_ONE_TRACK
-#define WORK_PART_SCAN_CONTACT_PRESSURE_DELTA   MT1_WORK_PART_SCAN_CONTACT_PRESSURE_DELTA
-#define WORK_PART_SCAN_RETRY_PRESSURE_DELTA     MT1_WORK_PART_SCAN_RETRY_PRESSURE_DELTA
+ #define WORK_PART_SCAN_CONTACT_PRESSURE_DELTA   MT1_WORK_PART_SCAN_CONTACT_PRESSURE_DELTA
+ #define WORK_PART_SCAN_RETRY_PRESSURE_DELTA     MT1_WORK_PART_SCAN_RETRY_PRESSURE_DELTA
 #elif MILLER_TYPE == MILLER_TYPE_TWO_TRACKS
-#define WORK_PART_SCAN_CONTACT_PRESSURE_DELTA   MT2_WORK_PART_SCAN_CONTACT_PRESSURE_DELTA
-#define WORK_PART_SCAN_RETRY_PRESSURE_DELTA     MT2_WORK_PART_SCAN_RETRY_PRESSURE_DELTA
+ #define WORK_PART_SCAN_CONTACT_PRESSURE_DELTA   MT2_WORK_PART_SCAN_CONTACT_PRESSURE_DELTA
+ #define WORK_PART_SCAN_RETRY_PRESSURE_DELTA     MT2_WORK_PART_SCAN_RETRY_PRESSURE_DELTA
 #endif // MILLER_TYPE
 
 #define WORK_PART_SCAN_IDLE_PRESSURE_DELTA      0                                                                       // [digits]
@@ -1160,7 +1079,6 @@ Above this value the z compensation will distribute the roughness of the surface
 #define WORK_PART_SCAN_DELAY                    1000                                                                    // [ms]
 
 #define WORK_PART_SCAN_Z_START_MM               15                                                                      // [mm]
-#define WORK_PART_SCAN_Z_START_STEPS            long(ZAXIS_STEPS_PER_MM * WORK_PART_SCAN_Z_START_MM)                    // [steps]
 
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
 
@@ -1172,15 +1090,20 @@ Above this value the z compensation will distribute the roughness of the surface
 #if FEATURE_PAUSE_PRINTING 
 
 /** \brief Configuration of the pause steps */
-#define DEFAULT_PAUSE_STEPS_X               (XAXIS_STEPS_PER_MM * -200)
-#define DEFAULT_PAUSE_STEPS_Y               (YAXIS_STEPS_PER_MM * 200)
-#define DEFAULT_PAUSE_STEPS_Z               (ZAXIS_STEPS_PER_MM * 2)
-#define DEFAULT_PAUSE_STEPS_EXTRUDER        (EXT0_STEPS_PER_MM  * SCRIPT_RETRACT_MM)
+//Nibbels: 29122017 dont know what happens if pause hits max endstop etc. ... might get shifted coordinates!
+  //look here if you want to prevent clamp crashes while milling! choose your pause position right.
+#define DEFAULT_PAUSE_MM_X_MILL                0                                                                     // [mm]
+#define DEFAULT_PAUSE_MM_X_PRINT            -200                                                                     // [mm]
+#define DEFAULT_PAUSE_MM_Y_MILL              200                                                                     // [mm]
+#define DEFAULT_PAUSE_MM_Y_PRINT            -200                                                                     // [mm]
+#define DEFAULT_PAUSE_MM_Z_MILL               20                                                                     // [mm]
+#define DEFAULT_PAUSE_MM_Z_PRINT               2                                                                     // [mm]
+#define DEFAULT_PAUSE_MM_E                   SCRIPT_RETRACT_MM                                                       // [mm] Zahl immer positiv, sie wird abgezogen = Retract!
 
-#define PAUSE_X_SPACING                     (XAXIS_STEPS_PER_MM * 5)
-#define PAUSE_Y_SPACING                     (YAXIS_STEPS_PER_MM * 5)
-#define PAUSE_Z_MAX_SPACING                 (ZAXIS_STEPS_PER_MM * 15)
-#define PAUSE_COOLDOWN                      100                                                // [°C] 0=Off and 1..255=Temp down while paused
+#define PAUSE_X_SPACING_MM                     5                                                                     // [mm]
+#define PAUSE_Y_SPACING_MM                     5                                                                     // [mm]
+#define PAUSE_Z_MAX_SPACING_MM                15                                                                     // [mm]
+#define PAUSE_COOLDOWN                       100                                                // [°C] 0=Off and 1..255=Temp down while paused
 
 #endif // FEATURE_PAUSE_PRINTING
 
@@ -1193,8 +1116,8 @@ Above this value the z compensation will distribute the roughness of the surface
 
 #define SEARCH_Z_ORIGIN_CONTACT_PRESSURE_DELTA  500                                             // [digits]
 #define SEARCH_Z_ORIGIN_BREAKOUT_DELAY          100                                             // [ms]
-#define SEARCH_Z_ORIGIN_BED_UP_STEPS            long(-ZAXIS_STEPS_PER_MM / 20)                  // [steps]
-#define SEARCH_Z_ORIGIN_BED_DOWN_STEPS          long(ZAXIS_STEPS_PER_MM / 40)                   // [steps]
+#define SEARCH_Z_ORIGIN_BED_UP_MM                -0.05f                                         // [mm]
+#define SEARCH_Z_ORIGIN_BED_DOWN_MM               0.025f                                        // [mm]
 
 /** \brief The following commands are executed before the z-origin is set to 0. */
 #define FIND_Z_ORIGIN_SCRIPT                    "G91\nG1 Z15 F5000"
@@ -1208,9 +1131,6 @@ Above this value the z compensation will distribute the roughness of the surface
 
 #if FEATURE_MILLING_MODE
 
-/** \brief Enables debug outputs from the compensation in z direction */
-#define DEBUG_WORK_PART_Z_COMPENSATION      0                                                   // 1 = on, 0 = off
-
 /** \brief Enables debug outputs from the work part scan */
 #define DEBUG_WORK_PART_SCAN                0                                                   // 1 = on, 0 = off
 
@@ -1222,6 +1142,5 @@ Above this value the z compensation will distribute the roughness of the surface
 #endif // FEATURE_FIND_Z_ORIGIN
 
 #endif // FEATURE_MILLING_MODE
-
 
 #endif // RF1000_H

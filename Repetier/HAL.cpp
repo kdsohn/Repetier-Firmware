@@ -278,7 +278,7 @@ void HAL::setupTimer()
     OCR4C = 0;                                      // default B = 0 at startup
 #endif // FEATURE_RGB_LIGHT_EFFECTS
 
-#if FEATURE_SERVO && MOTHERBOARD == DEVICE_TYPE_RF2000
+#if FEATURE_SERVO && (MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2)
     //Configure Timer 5
     TCCR5A  = 0;                                    // clear Register
     TCCR5B  = 0;
@@ -297,7 +297,7 @@ void HAL::setupTimer()
     OCR5A = 1600;                                   // default ( 800 [uS] )
     OCR5B = 1600;                                   // default ( 800 [uS] )
     OCR5C = 1600;                                   // default ( 800 [uS] )
-#endif // FEATURE_SERVO && MOTHERBOARD == DEVICE_TYPE_RF2000
+#endif // FEATURE_SERVO && (MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2)
 
 #if FEATURE_SERVO && MOTHERBOARD == DEVICE_TYPE_RF1000
 #if SERVO0_PIN>-1
@@ -703,7 +703,7 @@ ISR(WDT_vect)
     #endif // FEATURE_WATCHDOG
 
     WDTCSR |= (1<<WDIE); //Nibbels: nächstes mal kein Reset durch internen Watchdog, sondern wieder dieser interrupt.
-    
+    DEBUG_MEMORY
     execute16msPeriodical = 1; //Tell commandloop that 16ms have passed 
 }
 
@@ -845,9 +845,9 @@ ISR(TIMER1_COMPA_vect)
         if(Printer::advanceStepsSet)
         {
             Printer::extruderStepsNeeded -= Printer::advanceStepsSet;
-#ifdef ENABLE_QUADRATIC_ADVANCE
+ #ifdef ENABLE_QUADRATIC_ADVANCE
             Printer::advanceExecuted = 0;
-#endif // ENABLE_QUADRATIC_ADVANCE
+ #endif // ENABLE_QUADRATIC_ADVANCE
             Printer::advanceStepsSet = 0;
         }
 
@@ -859,7 +859,7 @@ ISR(TIMER1_COMPA_vect)
     else waitRelax--;
 
     stepperWait = 0;        // Important because of optimization in asm at begin
-    OCR1A = 65500;        //1000 like repetier does  // Wait for next move
+    OCR1A = 3000;           // Nicht zu hohe Werte, weil sonst die DirectSteps limitiert werden. Ansonsten hoch.
 
     DEBUG_MEMORY;
     sbi(TIMSK1, OCIE1A);
@@ -932,7 +932,13 @@ ISR(PWM_TIMER_VECTOR)
     static uint8_t pwm_count_heater = 0;
     static uint8_t pwm_count_cooler = 0;
     static uint8_t pwm_pos_set[NUM_EXTRUDER+3];
-#if NUM_EXTRUDER > 0 && ((defined(EXT0_HEATER_PIN) && EXT0_HEATER_PIN > -1 && EXT0_EXTRUDER_COOLER_PIN > -1) || (NUM_EXTRUDER > 1 && EXT1_EXTRUDER_COOLER_PIN > -1 && EXT1_EXTRUDER_COOLER_PIN != EXT0_EXTRUDER_COOLER_PIN) || (NUM_EXTRUDER > 2 && EXT2_EXTRUDER_COOLER_PIN > -1 && EXT2_EXTRUDER_COOLER_PIN != EXT2_EXTRUDER_COOLER_PIN) || (NUM_EXTRUDER > 3 && EXT3_EXTRUDER_COOLER_PIN > -1 && EXT3_EXTRUDER_COOLER_PIN != EXT3_EXTRUDER_COOLER_PIN) || (NUM_EXTRUDER > 4 && EXT4_EXTRUDER_COOLER_PIN > -1 && EXT4_EXTRUDER_COOLER_PIN != EXT4_EXTRUDER_COOLER_PIN) || (NUM_EXTRUDER > 5 && EXT5_EXTRUDER_COOLER_PIN > -1 && EXT5_EXTRUDER_COOLER_PIN != EXT5_EXTRUDER_COOLER_PIN))
+#if NUM_EXTRUDER > 0 && (     (defined(EXT0_HEATER_PIN) && EXT0_HEATER_PIN > -1 && EXT0_EXTRUDER_COOLER_PIN > -1) || (NUM_EXTRUDER > 1 && EXT1_EXTRUDER_COOLER_PIN > -1 && EXT1_EXTRUDER_COOLER_PIN != EXT0_EXTRUDER_COOLER_PIN)      )
+    /*
+    || (NUM_EXTRUDER > 2 && EXT2_EXTRUDER_COOLER_PIN > -1 && EXT2_EXTRUDER_COOLER_PIN != EXT2_EXTRUDER_COOLER_PIN)
+    || (NUM_EXTRUDER > 3 && EXT3_EXTRUDER_COOLER_PIN > -1 && EXT3_EXTRUDER_COOLER_PIN != EXT3_EXTRUDER_COOLER_PIN)
+    || (NUM_EXTRUDER > 4 && EXT4_EXTRUDER_COOLER_PIN > -1 && EXT4_EXTRUDER_COOLER_PIN != EXT4_EXTRUDER_COOLER_PIN)
+    || (NUM_EXTRUDER > 5 && EXT5_EXTRUDER_COOLER_PIN > -1 && EXT5_EXTRUDER_COOLER_PIN != EXT5_EXTRUDER_COOLER_PIN)
+    */
     static uint8_t pwm_cooler_pos_set[NUM_EXTRUDER];
 #endif
     PWM_OCR += 64;
@@ -945,18 +951,7 @@ ISR(PWM_TIMER_VECTOR)
 #if defined(EXT1_HEATER_PIN) && EXT1_HEATER_PIN>-1 && NUM_EXTRUDER>1
         if((pwm_pos_set[1] = (pwm_pos[1] & HEATER_PWM_MASK)) > 0) WRITE(EXT1_HEATER_PIN,!HEATER_PINS_INVERTED);
 #endif // defined(EXT1_HEATER_PIN) && EXT1_HEATER_PIN>-1 && NUM_EXTRUDER>1
-#if defined(EXT2_HEATER_PIN) && EXT2_HEATER_PIN>-1 && NUM_EXTRUDER>2
-        if((pwm_pos_set[2] = (pwm_pos[2] & HEATER_PWM_MASK)) > 0) WRITE(EXT2_HEATER_PIN,!HEATER_PINS_INVERTED);
-#endif // defined(EXT2_HEATER_PIN) && EXT2_HEATER_PIN>-1 && NUM_EXTRUDER>2
-#if defined(EXT3_HEATER_PIN) && EXT3_HEATER_PIN>-1 && NUM_EXTRUDER>3
-        if((pwm_pos_set[3] = (pwm_pos[3] & HEATER_PWM_MASK)) > 0) WRITE(EXT3_HEATER_PIN,!HEATER_PINS_INVERTED);
-#endif // defined(EXT3_HEATER_PIN) && EXT3_HEATER_PIN>-1 && NUM_EXTRUDER>3
-#if defined(EXT4_HEATER_PIN) && EXT4_HEATER_PIN>-1 && NUM_EXTRUDER>4
-        if((pwm_pos_set[4] = (pwm_pos[4] & HEATER_PWM_MASK)) > 0) WRITE(EXT4_HEATER_PIN,!HEATER_PINS_INVERTED);
-#endif // defined(EXT4_HEATER_PIN) && EXT4_HEATER_PIN>-1 && NUM_EXTRUDER>4
-#if defined(EXT5_HEATER_PIN) && EXT5_HEATER_PIN>-1 && NUM_EXTRUDER>5
-        if((pwm_pos_set[5] = (pwm_pos[5] & HEATER_PWM_MASK)) > 0) WRITE(EXT5_HEATER_PIN,!HEATER_PINS_INVERTED);
-#endif // defined(EXT5_HEATER_PIN) && EXT5_HEATER_PIN>-1 && NUM_EXTRUDER>5
+
 #if HEATED_BED_HEATER_PIN>-1 && HAVE_HEATED_BED
         if((pwm_pos_set[NUM_EXTRUDER] = (pwm_pos[NUM_EXTRUDER] & HEATER_PWM_MASK)) > 0) WRITE(HEATED_BED_HEATER_PIN, !HEATER_PINS_INVERTED);
 #endif // HEATED_BED_HEATER_PIN>-1 && HAVE_HEATED_BED
@@ -967,34 +962,17 @@ ISR(PWM_TIMER_VECTOR)
 #if EXT0_HEATER_PIN>-1 && EXT0_EXTRUDER_COOLER_PIN>-1
         if((pwm_cooler_pos_set[0] = extruder[0].coolerPWM)>0) WRITE(EXT0_EXTRUDER_COOLER_PIN,1);
 #endif // EXT0_HEATER_PIN>-1 && EXT0_EXTRUDER_COOLER_PIN>-1
+
 #if defined(EXT1_HEATER_PIN) && EXT1_HEATER_PIN>-1 && NUM_EXTRUDER>1
-#if EXT1_EXTRUDER_COOLER_PIN>-1 && EXT1_EXTRUDER_COOLER_PIN != EXT0_EXTRUDER_COOLER_PIN
+ #if EXT1_EXTRUDER_COOLER_PIN>-1 && EXT1_EXTRUDER_COOLER_PIN != EXT0_EXTRUDER_COOLER_PIN
         if((pwm_cooler_pos_set[1] = extruder[1].coolerPWM)>0) WRITE(EXT1_EXTRUDER_COOLER_PIN,1);
-#endif // EXT1_EXTRUDER_COOLER_PIN>-1 && EXT1_EXTRUDER_COOLER_PIN!=EXT0_EXTRUDER_COOLER_PIN
+ #endif // EXT1_EXTRUDER_COOLER_PIN>-1 && EXT1_EXTRUDER_COOLER_PIN!=EXT0_EXTRUDER_COOLER_PIN
 #endif // defined(EXT1_HEATER_PIN) && EXT1_HEATER_PIN>-1 && NUM_EXTRUDER>1
-#if defined(EXT2_HEATER_PIN) && EXT2_HEATER_PIN>-1 && NUM_EXTRUDER>2
-#if EXT2_EXTRUDER_COOLER_PIN>-1
-        if((pwm_cooler_pos_set[2] = extruder[2].coolerPWM)>0) WRITE(EXT2_EXTRUDER_COOLER_PIN,1);
-#endif // EXT2_EXTRUDER_COOLER_PIN>-1
-#endif // defined(EXT2_HEATER_PIN) && EXT2_HEATER_PIN>-1 && NUM_EXTRUDER>2
-#if defined(EXT3_HEATER_PIN) && EXT3_HEATER_PIN>-1 && NUM_EXTRUDER>3
-#if EXT3_EXTRUDER_COOLER_PIN>-1
-        if((pwm_cooler_pos_set[3] = extruder[3].coolerPWM)>0) WRITE(EXT3_EXTRUDER_COOLER_PIN,1);
-#endif // EXT3_EXTRUDER_COOLER_PIN>-1
-#endif // defined(EXT3_HEATER_PIN) && EXT3_HEATER_PIN>-1 && NUM_EXTRUDER>3
-#if defined(EXT4_HEATER_PIN) && EXT4_HEATER_PIN>-1 && NUM_EXTRUDER>4
-#if EXT4_EXTRUDER_COOLER_PIN>-1
-        if((pwm_cooler_pos_set[4] = pwm_pos[4].coolerPWM)>0) WRITE(EXT4_EXTRUDER_COOLER_PIN,1);
-#endif // EXT4_EXTRUDER_COOLER_PIN>-1
-#endif // defined(EXT4_HEATER_PIN) && EXT4_HEATER_PIN>-1 && NUM_EXTRUDER>4
-#if defined(EXT5_HEATER_PIN) && EXT5_HEATER_PIN>-1 && NUM_EXTRUDER>5
-#if EXT5_EXTRUDER_COOLER_PIN>-1
-        if((pwm_cooler_pos_set[5] = extruder[5].coolerPWM)>0) WRITE(EXT5_EXTRUDER_COOLER_PIN,1);
-#endif // EXT5_EXTRUDER_COOLER_PIN>-1
-#endif // defined(EXT5_HEATER_PIN) && EXT5_HEATER_PIN>-1 && NUM_EXTRUDER>5
+
 #if FAN_BOARD_PIN>-1
         if((pwm_pos_set[NUM_EXTRUDER+1] = (pwm_pos[NUM_EXTRUDER+1] & cooler_pwm_mask)) > 0) WRITE(FAN_BOARD_PIN,1);
 #endif // FAN_BOARD_PIN>-1
+
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
         if(cooler_mode != COOLER_MODE_PDM){
             if((pwm_pos_set[NUM_EXTRUDER+2] = (pwm_pos[NUM_EXTRUDER+2] & cooler_pwm_mask)) > 0) WRITE(FAN_PIN,1);
@@ -1015,34 +993,6 @@ ISR(PWM_TIMER_VECTOR)
     if(pwm_cooler_pos_set[1] == pwm_count_cooler && pwm_cooler_pos_set[1]!=255) WRITE(EXT1_EXTRUDER_COOLER_PIN,0);
 #endif // EXT1_EXTRUDER_COOLER_PIN>-1 && EXT1_EXTRUDER_COOLER_PIN!=EXT0_EXTRUDER_COOLER_PIN
 #endif // defined(EXT1_HEATER_PIN) && EXT1_HEATER_PIN>-1 && NUM_EXTRUDER>1
-
-#if defined(EXT2_HEATER_PIN) && EXT2_HEATER_PIN>-1 && NUM_EXTRUDER>2
-    if(pwm_pos_set[2] == pwm_count_heater && pwm_pos_set[2]!=HEATER_PWM_MASK) WRITE(EXT2_HEATER_PIN,HEATER_PINS_INVERTED);
-#if EXT2_EXTRUDER_COOLER_PIN>-1
-    if(pwm_cooler_pos_set[2] == pwm_count_cooler && pwm_cooler_pos_set[2]!=255) WRITE(EXT2_EXTRUDER_COOLER_PIN,0);
-#endif // EXT2_EXTRUDER_COOLER_PIN>-1
-#endif // defined(EXT2_HEATER_PIN) && EXT2_HEATER_PIN>-1 && NUM_EXTRUDER>2
-
-#if defined(EXT3_HEATER_PIN) && EXT3_HEATER_PIN>-1 && NUM_EXTRUDER>3
-    if(pwm_pos_set[3] == pwm_count_heater && pwm_pos_set[3]!=HEATER_PWM_MASK) WRITE(EXT3_HEATER_PIN,HEATER_PINS_INVERTED);
-#if EXT3_EXTRUDER_COOLER_PIN>-1
-    if(pwm_cooler_pos_set[3] == pwm_count_cooler && pwm_cooler_pos_set[3]!=255) WRITE(EXT3_EXTRUDER_COOLER_PIN,0);
-#endif // EXT3_EXTRUDER_COOLER_PIN>-1
-#endif // defined(EXT3_HEATER_PIN) && EXT3_HEATER_PIN>-1 && NUM_EXTRUDER>3
-
-#if defined(EXT4_HEATER_PIN) && EXT4_HEATER_PIN>-1 && NUM_EXTRUDER>4
-    if(pwm_pos_set[4] == pwm_count_heater && pwm_pos_set[4]!=HEATER_PWM_MASK) WRITE(EXT4_HEATER_PIN,HEATER_PINS_INVERTED);
-#if EXT4_EXTRUDER_COOLER_PIN>-1
-    if(pwm_cooler_pos_set[4] == pwm_count_cooler && pwm_cooler_pos_set[4]!=255) WRITE(EXT4_EXTRUDER_COOLER_PIN,0);
-#endif // EXT4_EXTRUDER_COOLER_PIN>-1
-#endif // defined(EXT4_HEATER_PIN) && EXT4_HEATER_PIN>-1 && NUM_EXTRUDER>4
-
-#if defined(EXT5_HEATER_PIN) && EXT5_HEATER_PIN>-1 && NUM_EXTRUDER>5
-    if(pwm_pos_set[5] == pwm_count_heater && pwm_pos_set[5]!=HEATER_PWM_MASK) WRITE(EXT5_HEATER_PIN,HEATER_PINS_INVERTED);
-#if EXT5_EXTRUDER_COOLER_PIN>-1
-    if(pwm_cooler_pos_set[5] == pwm_count_cooler && pwm_cooler_pos_set[5]!=255) WRITE(EXT5_EXTRUDER_COOLER_PIN,0);
-#endif // EXT5_EXTRUDER_COOLER_PIN>-1
-#endif // defined(EXT5_HEATER_PIN) && EXT5_HEATER_PIN>-1 && NUM_EXTRUDER>5
 
 #if FAN_BOARD_PIN>-1
     if(pwm_pos_set[NUM_EXTRUDER+1] == pwm_count_cooler && pwm_pos_set[NUM_EXTRUDER+1] != cooler_pwm_mask) WRITE(FAN_BOARD_PIN,0);
@@ -1338,79 +1288,78 @@ inline void rf_store_char(unsigned char c, ring_buffer_rx *buffer)
 
 
 #if !defined(USART0_RX_vect) && defined(USART1_RX_vect)
-// do nothing - on the 32u4 the first USART is USART1
+ // do nothing - on the 32u4 the first USART is USART1
 #else
-void rfSerialEvent() __attribute__((weak));
-void rfSerialEvent() {}
-#define serialEvent_implemented
-#if defined(USART_RX_vect)
-SIGNAL(USART_RX_vect)
-#elif defined(USART0_RX_vect)
-SIGNAL(USART0_RX_vect)
-#else
-#if defined(SIG_USART0_RECV)
-SIGNAL(SIG_USART0_RECV)
-#elif defined(SIG_UART0_RECV)
-SIGNAL(SIG_UART0_RECV)
-#elif defined(SIG_UART_RECV)
-SIGNAL(SIG_UART_RECV)
-#else
-#error "Don't know what the Data Received vector is called for the first UART"
-#endif // defined(SIG_USART0_RECV)
-#endif // defined(USART_RX_vect)
-{
-#if defined(UDR0)
+ void rfSerialEvent() __attribute__((weak));
+ void rfSerialEvent() {}
+ #define serialEvent_implemented
+ #if defined(USART_RX_vect)
+  SIGNAL(USART_RX_vect)
+ #elif defined(USART0_RX_vect)
+  SIGNAL(USART0_RX_vect)
+ #else
+  #if defined(SIG_USART0_RECV)
+   SIGNAL(SIG_USART0_RECV)
+  #elif defined(SIG_UART0_RECV)
+   SIGNAL(SIG_UART0_RECV)
+  #elif defined(SIG_UART_RECV)
+   SIGNAL(SIG_UART_RECV)
+  #else
+   #error "Don't know what the Data Received vector is called for the first UART"
+  #endif // defined(SIG_USART0_RECV)
+ #endif // defined(USART_RX_vect)
+ {
+ #if defined(UDR0)
     unsigned char c  =  UDR0;
-#elif defined(UDR)
+ #elif defined(UDR)
     unsigned char c  =  UDR;
-#else
-#error UDR not defined
-#endif // defined(UDR0)
+ #else
+  #error UDR not defined
+ #endif // defined(UDR0)
     rf_store_char(c, &rx_buffer);
-}
+ }
 #endif // !defined(USART0_RX_vect) && defined(USART1_RX_vect)
 
 #if !defined(USART0_UDRE_vect) && defined(USART1_UDRE_vect)
-// do nothing - on the 32u4 the first USART is USART1
+ // do nothing - on the 32u4 the first USART is USART1
 #else
-#if !defined(UART0_UDRE_vect) && !defined(UART_UDRE_vect) && !defined(USART0_UDRE_vect) && !defined(USART_UDRE_vect)
-#error "Don't know what the Data Register Empty vector is called for the first UART"
-#else
-#if defined(UART0_UDRE_vect)
-ISR(UART0_UDRE_vect)
-#elif defined(UART_UDRE_vect)
-ISR(UART_UDRE_vect)
-#elif defined(USART0_UDRE_vect)
-ISR(USART0_UDRE_vect)
-#elif defined(USART_UDRE_vect)
-ISR(USART_UDRE_vect)
-#endif // defined(UART0_UDRE_vect)
-{
+ #if !defined(UART0_UDRE_vect) && !defined(UART_UDRE_vect) && !defined(USART0_UDRE_vect) && !defined(USART_UDRE_vect)
+  #error "Don't know what the Data Register Empty vector is called for the first UART"
+ #else
+  #if defined(UART0_UDRE_vect)
+   ISR(UART0_UDRE_vect)
+  #elif defined(UART_UDRE_vect)
+   ISR(UART_UDRE_vect)
+  #elif defined(USART0_UDRE_vect)
+   ISR(USART0_UDRE_vect)
+  #elif defined(USART_UDRE_vect)
+   ISR(USART_UDRE_vect)
+  #endif // defined(UART0_UDRE_vect)
+  {
     if (tx_buffer.head == tx_buffer.tail)
     {
         // Buffer empty, so disable interrupts
-#if defined(UCSR0B)
+   #if defined(UCSR0B)
         bit_clear(UCSR0B, UDRIE0);
-#else
+   #else
         bit_clear(UCSRB, UDRIE);
-#endif // defined(UCSR0B)
+   #endif // defined(UCSR0B)
     }
     else
     {
         // There is more data in the output buffer. Send the next byte
         uint8_t c = tx_buffer.buffer[tx_buffer.tail];
         tx_buffer.tail = (tx_buffer.tail + 1) & SERIAL_TX_BUFFER_MASK;
-
-#if defined(UDR0)
+   #if defined(UDR0)
         UDR0 = c;
-#elif defined(UDR)
+   #elif defined(UDR)
         UDR = c;
-#else
-#error UDR not defined
-#endif // defined(UDR0)
+   #else
+    #error UDR not defined
+   #endif // defined(UDR0)
     }
-}
-#endif // !defined(UART0_UDRE_vect) && !defined(UART_UDRE_vect) && !defined(USART0_UDRE_vect) && !defined(USART_UDRE_vect)
+  }
+ #endif // !defined(UART0_UDRE_vect) && !defined(UART_UDRE_vect) && !defined(USART0_UDRE_vect) && !defined(USART_UDRE_vect)
 #endif // !defined(USART0_UDRE_vect) && defined(USART1_UDRE_vect)
 
 
@@ -1512,7 +1461,7 @@ int RFHardwareSerial::available(void)
 
 int RFHardwareSerial::outputUnused(void)
 {
-    return SERIAL_TX_BUFFER_SIZE-(unsigned int)((SERIAL_TX_BUFFER_SIZE + _tx_buffer->head - _tx_buffer->tail) & SERIAL_TX_BUFFER_MASK);
+    return SERIAL_TX_BUFFER_SIZE - (unsigned int)((SERIAL_TX_BUFFER_SIZE + _tx_buffer->head - _tx_buffer->tail) & SERIAL_TX_BUFFER_MASK);
 
 } // outputUnused
 
@@ -1570,19 +1519,19 @@ size_t RFHardwareSerial::write(uint8_t c)
 
 
 #if defined(UBRRH) && defined(UBRRL)
-RFHardwareSerial RFSerial(&rx_buffer, &tx_buffer, &UBRRH, &UBRRL, &UCSRA, &UCSRB, &UDR, RXEN, TXEN, RXCIE, UDRIE, U2X);
+ RFHardwareSerial RFSerial(&rx_buffer, &tx_buffer, &UBRRH, &UBRRL, &UCSRA, &UCSRB, &UDR, RXEN, TXEN, RXCIE, UDRIE, U2X);
 #elif defined(UBRR0H) && defined(UBRR0L)
-RFHardwareSerial RFSerial(&rx_buffer, &tx_buffer, &UBRR0H, &UBRR0L, &UCSR0A, &UCSR0B, &UDR0, RXEN0, TXEN0, RXCIE0, UDRIE0, U2X0);
+ RFHardwareSerial RFSerial(&rx_buffer, &tx_buffer, &UBRR0H, &UBRR0L, &UCSR0A, &UCSR0B, &UDR0, RXEN0, TXEN0, RXCIE0, UDRIE0, U2X0);
 #elif defined(USBCON)
-// do nothing - Serial object and buffers are initialized in CDC code
+ // do nothing - Serial object and buffers are initialized in CDC code
 #else
-#error no serial port defined  (port 0)
+ #error no serial port defined  (port 0)
 #endif // defined(UBRRH) && defined(UBRRL)
 
 #if FEATURE_CASE_LIGHT
-#if !defined CASE_LIGHT_PIN || CASE_LIGHT_PIN < 0
+ #if !defined CASE_LIGHT_PIN || CASE_LIGHT_PIN < 0
     #error The case light pin must be defined in case the case light feature shall be used.
-#endif //!defined CASE_LIGHT_PIN || CASE_LIGHT_PIN < 0
+ #endif //!defined CASE_LIGHT_PIN || CASE_LIGHT_PIN < 0
 #endif // FEATURE_CASE_LIGHT
 
 #endif // EXTERNALSERIAL

@@ -18,7 +18,15 @@
 
 #include "Repetier.h"
 
-FSTRINGVALUE(Com::tFirmware,"FIRMWARE_NAME:Repetier_" REPETIER_VERSION " FIRMWARE_URL:https://github.com/RF1000community/Repetier-Firmware PROTOCOL_VERSION:1.0 MACHINE_TYPE:Mendel EXTRUDER_COUNT:" XSTR(NUM_EXTRUDER) " REPETIER_PROTOCOL:2")
+#ifndef FIRMWARE_URL
+    #define FIRMWARE_URL "https://github.com/RF1000community/Repetier-Firmware"
+#endif // FIRMWARE_URL
+
+#ifndef MACHINE_TYPE
+    #define MACHINE_TYPE "Mendel"
+#endif
+
+FSTRINGVALUE(Com::tFirmware, "FIRMWARE_NAME:Repetier_" REPETIER_VERSION " COMPILED:" __DATE__ " FIRMWARE_URL:" FIRMWARE_URL " PROTOCOL_VERSION:1.0 MACHINE_TYPE:" MACHINE_TYPE " EXTRUDER_COUNT:" XSTR(NUM_EXTRUDER) " REPETIER_PROTOCOL:3")
 
 FSTRINGVALUE(Com::tDebug,"Debug:")
 FSTRINGVALUE(Com::tOk,"ok")
@@ -33,18 +41,25 @@ FSTRINGVALUE(Com::tEcho,"Echo:")
 FSTRINGVALUE(Com::tOkSpace,"ok ")
 FSTRINGVALUE(Com::tWrongChecksum,"Wrong checksum")
 FSTRINGVALUE(Com::tMissingChecksum,"Missing checksum")
-FSTRINGVALUE(Com::tFormatError,"Format error")
 FSTRINGVALUE(Com::tDonePrinting,"Done printing file")
-FSTRINGVALUE(Com::tX," X")
-FSTRINGVALUE(Com::tY," Y")
-FSTRINGVALUE(Com::tZ," Z")
-FSTRINGVALUE(Com::tE," E")
-FSTRINGVALUE(Com::tF," F")
-FSTRINGVALUE(Com::tS," S")
-FSTRINGVALUE(Com::tP," P")
-FSTRINGVALUE(Com::tI," I")
-FSTRINGVALUE(Com::tJ," J")
-FSTRINGVALUE(Com::tR," R")
+FSTRINGVALUE(Com::tX, " X")
+FSTRINGVALUE(Com::tY, " Y")
+FSTRINGVALUE(Com::tZ, " Z")
+FSTRINGVALUE(Com::tE, " E")
+FSTRINGVALUE(Com::tF, " F")
+FSTRINGVALUE(Com::tS, " S")
+FSTRINGVALUE(Com::tP, " P")
+FSTRINGVALUE(Com::tI, " I")
+FSTRINGVALUE(Com::tJ, " J")
+FSTRINGVALUE(Com::tR, " R")
+FSTRINGVALUE(Com::tD, " D")
+FSTRINGVALUE(Com::tC, " C")
+FSTRINGVALUE(Com::tH, " H")
+FSTRINGVALUE(Com::tA, " A")
+FSTRINGVALUE(Com::tB, " B")
+FSTRINGVALUE(Com::tK, " K")
+FSTRINGVALUE(Com::tL, " L")
+FSTRINGVALUE(Com::tO, " O")
 FSTRINGVALUE(Com::tSDReadError,"SD read error")
 FSTRINGVALUE(Com::tExpectedLine,"Error:expected line ")
 FSTRINGVALUE(Com::tGot," got ")
@@ -128,9 +143,9 @@ FSTRINGVALUE(Com::tPrintingTimeService,"Printing time since last Service:")
 FSTRINGVALUE(Com::tMillingTimeService,"Milling time since last Service:")
 #endif // FEATURE_SERVICE_INTERVAL
 
-#ifdef DEBUG_GENERIC
+#ifdef PRINT_GENERIC_TEMP_TABLE
 FSTRINGVALUE(Com::tGenTemp,"GenTemp:")
-#endif // DEBUG_GENERIC
+#endif // PRINT_GENERIC_TEMP_TABLE
 
 FSTRINGVALUE(Com::tTargetExtr,"TargetExtr")
 FSTRINGVALUE(Com::tTargetBedColon,"TargetBed:")
@@ -159,17 +174,6 @@ FSTRINGVALUE(Com::tTempSensorDefect,": temp sensor defect")
 FSTRINGVALUE(Com::tTempSensorWorking,": working")
 FSTRINGVALUE(Com::tDryModeUntilRestart,"Printer set into dry run mode until restart!")
 
-#ifdef DEBUG_SPLIT
-FSTRINGVALUE(Com::tDBGDeltaSeconds,"Seconds:")
-FSTRINGVALUE(Com::tDBGDeltaZDelta,"Z delta:")
-FSTRINGVALUE(Com::tDBGDeltaSegments,"Segments:")
-FSTRINGVALUE(Com::tDBGDeltaNumLines,"Num lines:")
-FSTRINGVALUE(Com::tDBGDeltaSegmentsPerLine,"segments_per_line:")
-FSTRINGVALUE(Com::tDBGDeltaMaxDS,"Max DS:")
-FSTRINGVALUE(Com::tDBGDeltaStepsPerSegment,"Steps Per Segment:")
-FSTRINGVALUE(Com::tDBGDeltaVirtualAxisSteps,"Virtual axis steps:")
-#endif // DEBUG_SPLIT
-
 #ifdef WAITING_IDENTIFIER
 FSTRINGVALUE(Com::tWait,WAITING_IDENTIFIER)
 #endif // WAITING_IDENTIFIER
@@ -197,8 +201,8 @@ FSTRINGVALUE(Com::tEPRMaxInactiveTime,"Max. inactive time [ms,0=off]")
 FSTRINGVALUE(Com::tEPRStopAfterInactivty,"Stop stepper after inactivity [ms,0=off]")
 FSTRINGVALUE(Com::tEPRXHomePos,"X home pos [mm]")
 FSTRINGVALUE(Com::tEPRYHomePos,"Y home pos [mm]")
-FSTRINGVALUE(Com::tEPRZHomePos,"Z home pos [mm]")
-FSTRINGVALUE(Com::tEPRXMaxLength,"X max length [mm]")
+FSTRINGVALUE(Com::tEPRXMaxLength,"X max print length [mm]")
+FSTRINGVALUE(Com::tEPRXMaxLengthMilling,"X max milling length [mm]")
 FSTRINGVALUE(Com::tEPRYMaxLength,"Y max length [mm]")
 FSTRINGVALUE(Com::tEPRZMaxLength,"Z max length [mm]")
 FSTRINGVALUE(Com::tEPRXBacklash,"X backlash [mm]")
@@ -231,7 +235,6 @@ FSTRINGVALUE(Com::tEPROPSMoveAfter,"OPS move after x% retract [%]")
 FSTRINGVALUE(Com::tEPROPSMinDistance,"OPS min. distance for fil. retraction [mm]")
 FSTRINGVALUE(Com::tEPROPSRetractionLength,"OPS retraction length [mm]")
 FSTRINGVALUE(Com::tEPROPSRetractionBacklash,"OPS retraction backlash [mm]")
-FSTRINGVALUE(Com::tEPRBedHeatManager,"Bed Heat Manager [0-3]")
 FSTRINGVALUE(Com::tEPRBedPIDDriveMax,"Bed PID I-drive max")
 FSTRINGVALUE(Com::tEPRBedPIDDriveMin,"Bed PID I-drive min")
 FSTRINGVALUE(Com::tEPRBedPGain,"Bed PID P-gain")
@@ -242,15 +245,14 @@ FSTRINGVALUE(Com::tEPRStepsPerMM,"steps per mm")
 FSTRINGVALUE(Com::tEPRMaxFeedrate,"max. feedrate [mm/s]")
 FSTRINGVALUE(Com::tEPRStartFeedrate,"start feedrate [mm/s]")
 FSTRINGVALUE(Com::tEPRAcceleration,"acceleration [mm/s^2]")
-FSTRINGVALUE(Com::tEPRHeatManager,"heat manager [0-3]")
 FSTRINGVALUE(Com::tEPRDriveMax,"PID I-drive max")
 FSTRINGVALUE(Com::tEPRDriveMin,"PID I-drive min")
-FSTRINGVALUE(Com::tEPRPGain,"PID P-gain/dead-time")
+FSTRINGVALUE(Com::tEPRPGain,"PID P-gain")
 FSTRINGVALUE(Com::tEPRIGain,"PID I-gain")
 FSTRINGVALUE(Com::tEPRDGain,"PID D-gain")
 FSTRINGVALUE(Com::tEPRPIDMaxValue,"max power value [0-255]")
 FSTRINGVALUE(Com::tEPRBedsensorType,"Bed Temp. SensorType [0=Cfg,3=Conrad,..]")
-FSTRINGVALUE(Com::tEPRsensorType,"Temp. SensorType [0=Cfg,3=V2,8=E3D,..]")
+FSTRINGVALUE(Com::tEPRsensorType,"Temp. SensorType [0=Cfg,3=V2,8=E3D,13=V3]")
 FSTRINGVALUE(Com::tEPRXOffset,"X-offset [mm]")
 FSTRINGVALUE(Com::tEPRYOffset,"Y-offset [mm]")
 FSTRINGVALUE(Com::tEPRZOffsetmm,"Z-offset [mm]")
@@ -276,6 +278,9 @@ FSTRINGVALUE(Com::tEPRZERO_DIGIT_STATE,"Digit Homing [1=ON/2=OFF]")
 FSTRINGVALUE(Com::tEPRPrinterZ_STEP_SIZE,"Height of Z-Button SingleSteps [steps]")
 FSTRINGVALUE(Com::tEPRPrinterMOD_ZOS_SCAN_POINT_X,"Z-Offset-Scan Position X [HBS-col]")
 FSTRINGVALUE(Com::tEPRPrinterMOD_ZOS_SCAN_POINT_Y,"Z-Offset-Scan Position Y [HBS-row]")
+#if FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+FSTRINGVALUE(Com::tEPRZScanStartLift,"Z-Scan Start Lift [mm]")
+#endif // FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
 #if FEATURE_SENSIBLE_PRESSURE
 FSTRINGVALUE(Com::tEPRPrinterMOD_SENSEOFFSET_OFFSET_MAX,"SenseOffset max. Correction [um]")
 FSTRINGVALUE(Com::tEPRPrinterEPR_RF_MOD_SENSEOFFSET_DIGITS,"SenseOffset Digits Limit [1700/kg]")
@@ -332,13 +337,10 @@ FSTRINGVALUE(Com::tCreationFailed,"Creation failed")
 FSTRINGVALUE(Com::tSDErrorCode,"SD errorCode:")
 #endif // SDSUPPORT
 
-#if FEATURE_OUTPUT_FINISHED_OBJECT 
 FSTRINGVALUE(Com::tOutputObjectPrint,OUTPUT_OBJECT_SCRIPT_PRINT)
 FSTRINGVALUE(Com::tOutputObjectMill,OUTPUT_OBJECT_SCRIPT_MILL)
-#endif // FEATURE_OUTPUT_FINISHED_OBJECT 
 
 FSTRINGVALUE(Com::tUnmountFilamentWithHeating,UNMOUNT_FILAMENT_SCRIPT_WITH_HEATING)
-FSTRINGVALUE(Com::tUnmountFilamentWithoutHeating,UNMOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING)
 FSTRINGVALUE(Com::tMountFilamentWithHeating,MOUNT_FILAMENT_SCRIPT_WITH_HEATING)
 FSTRINGVALUE(Com::tMountFilamentWithoutHeating,MOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING)
 
@@ -476,6 +478,10 @@ void Com::printF(FSTRINGPARAM(text),float value,uint8_t digits,bool komma_as_dot
     printFloat(value,digits,komma_as_dot);
 } // printF
 
+void Com::printSharpLine(){
+    for(uint8_t nnn = 0; nnn < 70; nnn++) Com::printF( PSTR("#") );
+    Com::println();
+}
 
 void Com::print(const char *text)
 {
@@ -555,8 +561,9 @@ void Com::printFloat(float number, uint8_t digits, bool komma_as_dot)
 
     // Round correctly so that print(1.999, 2) prints as "2.00"
     float rounding = 0.5;
-    for (uint8_t i=0; i<digits; ++i)
-        rounding /= 10.0;
+    for (uint8_t i=0; i<digits; ++i) rounding *= 0.1;
+    /* *=0.1 evtl. besser als /= 10, aber "With g++, 200.f / 10 and 200.f * 0.1 emit exactly the same code. – Johan Kotlinski Nov 8 '10 at 15:31"
+            Source: https://stackoverflow.com/questions/4125033/floating-point-division-vs-floating-point-multiplication*/
 
     number += rounding;
 

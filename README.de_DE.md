@@ -38,13 +38,14 @@ Unter Linux kann man diese Firmwares mit
 in die Drucker einspielen.
 
 ## Wenn du von Version from 1.37r oder früher updatest, mache bitte einen neuen M303 PID-Autotune bei allen Heizelementen!  
-- RF2000/RF1000 Extruder 1: `M303 P0 X0 S230 R10 J1`  
-- RF2000 Extruder 2: `M303 P1 X0 S230 R10 J1`  
-- RF2000 Heizbett: `M303 P2 X0 S70 R15 J4`  
-- RF1000 Heizbett: `M303 P1 X0 S70 R15 J4`  
-Starte mit EEPROM-Werten `PID I drive min = 30` and `PID I drive max = 100`  
+- RF2000/RF1000 Extruder links: Menü -> Configuration -> Temperatures -> Extruder 0 -> PID Pessen-Rule  
+- RF2000 Extruder rechts:       Menü -> Configuration -> Temperatures -> Extruder 1 -> PID Pessen-Rule  
+- RF2000/RF1000 Heizbett:       Menü -> Configuration -> Temperatures -> Heated Bed -> PID Tyreus-Lyben  
+Starte mit I-Anteil limits (EEPROM-Werte) `PID I drive min = 30` and `PID I drive max = 120`  
+- Menü -> Configuration -> Temperatures -> (...) -> I-drive min = 20 .. 30  
+- Menü -> Configuration -> Temperatures -> (...) -> I-drive max = 100 .. 130  
 
-## Version RF 1.37mod - wichtige Threads im Forum
+## Version RF 1.39+.Mod - wichtige Threads im Forum
 
 http://www.rf1000.de/viewtopic.php?f=67&t=2043 (Thread to Stable 1.37v8 / 18.10.2017)
 http://www.rf1000.de/viewtopic.php?f=74&t=1674 (Nibbels/Wessix SenseOffset-Thread)  
@@ -214,7 +215,7 @@ Erweiterter GCode M303:
 [J0] Classic PID  
 [J1] Pessen Integral Rule (empfohlen für Hotend)  
 [J2] Some Overshoot  
-[J3] No Overshoot (empfohlen für Heizbett)  
+[J3] No Overshoot  
 [J4] Tyreus-Luyben (empfohlen für Heizbett)  
 [Rn] Configurable Autotune cycles  
 Autotune support über das Druckermenü am Display.  
@@ -226,6 +227,4 @@ Mit Motorstromabsenkung für beide Extruder-Motoren während der Pause, um eine 
 Manuelles extrudieren während der Pause deaktiviert den automatischen Retract des Extruders beim Fortsetzen.
 
 ## Wessix's Hilfe-Video:
-[![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)
-
-## !! 12.11.2017: An diesem Projekt wird kontinuierlich weitergearbeitet, spontane Änderungen sind jederzeit möglich.
+[![ScreenShot](https://downfight.de/picproxy.php?url=http://image.prntscr.com/image/d7b7fade0c7343eeb67b680339478894.png)](http://youtu.be/iu9Nft7SXD8)  

@@ -20,10 +20,14 @@
 #define CONSTANTS_H
 
 
-#define REPETIER_VERSION                    "RF.01.37x8.Mod"
+#define REPETIER_VERSION                    "RF.01.41.20"
 #define UI_PRINTER_COMPANY                  "Conrad Community"
 #define UI_VERSION_STRING                   "V " REPETIER_VERSION
 
+#define BIGC0 "\001\002\003    " UI_SPACER "Renkforce"
+#define BIGC1 "\004         " UI_SPACER UI_PRINTER_NAME 
+#define BIGC2 "\005\006\007ommunity Mod" 
+#define BIGC3 UI_SPACER REPETIER_VERSION
 
 // ##########################################################################################
 // ##    basic definitions
@@ -31,12 +35,14 @@
 
 #define DEVICE_TYPE_RF1000                  13
 #define DEVICE_TYPE_RF2000                  14
+#define DEVICE_TYPE_RF2000_V2               15
 
 #define OPERATING_MODE_PRINT                1   // the firmware works in mode "print"
 #define OPERATING_MODE_MILL                 2   // the firmware works in mode "mill"
 
 #define HOTEND_TYPE_V1                      2   // hotend V1
 #define HOTEND_TYPE_V2                      3   // hotend V2 for single extruder
+#define HOTEND_TYPE_V3                      5   // hotend V3
 
 #define MILLER_TYPE_ONE_TRACK               1   // one track in x- and y-direction
 #define MILLER_TYPE_TWO_TRACKS              2   // two tracks in x- and y-direction
@@ -78,6 +84,7 @@
 #define TASK_PAUSE_PRINT                    4
 #define TASK_PAUSE_PRINT_AND_MOVE           5
 #define TASK_MOVE_FROM_BUTTON               10
+#define TASK_ENABLE_SENSE_OFFSET            100
 
 #define PAUSE_STATUS_NONE                   0   // we are not paused at the moment
 #define PAUSE_STATUS_PAUSED                 1   // we have paused the print (= pause position reached)

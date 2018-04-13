@@ -36,6 +36,7 @@
 #define UI_ACTION_RF_SET_Z_MATRIX_WORK_PART  519
 #define UI_ACTION_RF_SET_SCAN_DELTA_X        520
 #define UI_ACTION_RF_SET_SCAN_DELTA_Y        521
+#define UI_ACTION_RF_SCAN_START_HEIGHT       530
 
 #define UI_ACTION_RF_MAX_REPEATABLE          600
 
@@ -55,6 +56,8 @@
 #define UI_ACTION_RF_SCAN_WORK_PART         1528
 #define UI_ACTION_RF_SET_SCAN_XY_START      1529
 #define UI_ACTION_RF_SET_SCAN_XY_END        1530
+//FEATURE_ALIGN_EXTRUDERS
+#define	UI_ACTION_RF_ALIGN_EXTRUDERS        1531
 
 #define UI_ACTION_RF_MAX_SINGLE             1600
 
@@ -74,14 +77,6 @@
 - M3001 - turn the z-compensation on
   - Examples:
   - M3001 ; turns the z-compensation on
-
-- M3002 [S] - configure the min z-compensation scope ( S - units are [steps] )
-  - Examples:
-  - M3002 S1280 ; sets the min z-compensation scope to 1280 [steps] (= 0.5 [mm] in case RF_MICRO_STEPS is 32)
-
-- M3003 [S] - configure the max z-compensation scope ( S - units are [steps] )
-  - Examples:
-  - M3003 S12800 ; sets the max z-compensation scope to 12800 [steps] (= 5.0 [mm] in case RF_MICRO_STEPS is 32)
 
 - M3006 [S] [Z] - configure the static z-offset ( S - units are [um], Z - units are [mm] )
   - Examples:
@@ -214,21 +209,25 @@
   - Examples:
   - M3060 ; outputs the device type and firmware version
 
-- M3070 [S] - pause the print as if the "Pause" button would have been pressed
+- M3070 [S] - pause the print as if the "Pause" button would have been pressed and wait until the print has been continued via the "Continue" button
   - Examples:
   - M3070 S1 ; pauses the printing
   - M3070 S2 ; pauses the printing and moves away
 
-- M3071 - wait until the print has been continued via the "Continue" button
-  - Examples:
-  - M3071 ; waits until the "Continue" button has been pressed (does nothing in case the print is not paused at the moment)
-
 - M3075 [S] [P] - configure the emergency pause digits
   - Examples:
-  - M3075 S-5000 ; sets the min emergency pause digits to -5000 [digits]
-  - M3075 P5000 ; sets the max emergency pause digits to 5000 [digits]
-  - M3075 S-5000 P5000 ; sets the min emergency pause digits to -5000 [digits] and the max emergency pause digits to 5000 [digits]
+  - M3075 S-15000 ; sets the min emergency pause digits to -15000 [digits]
+  - M3075 P15000 ; sets the max emergency pause digits to 15000 [digits]
+  - M3075 S-15000 P15000 ; sets the min emergency pause digits to -15000 [digits] and the max emergency pause digits to 15000 [digits]
+  - M3075 S0 P0 ; disables the emergency pause
 
+- M3076 [S] [P] - configure the emergency stop digits
+  - Examples:
+  - M3076 S-5000 ; sets the min emergency stop digits to -5000 [digits]
+  - M3076 P5000 ; sets the max emergency stop digits to 5000 [digits]
+  - M3076 S-5000 P5000 ; sets the min emergency stop digits to -5000 [digits] and the max emergency stop digits to 5000 [digits]
+  - M3076 S0 P0 ; disables the emergency stop
+ 
 - M3079 - output the printed object
   - Examples:
   - M3079 ; outputs the printed object
@@ -244,22 +243,6 @@
 - M3091 - erase the external EEPROM
   - Examples:
   - M3091 ; erases the external EEPROM
-
-- M3100 [S] - configure the number of manual z steps after the "Heat Bed up" or "Heat Bed down" button has been pressed
-  - Examples:
-  - M3100 S100 ; sets the number of manual z steps after the "Heat Bed up" or "Heat Bed down" button has been pressed to 100 [steps]
-
-- M3101 [S] - configure the number of manual extruder steps after the "Extruder output" or "Extruder retract" button has been pressed
-  - Examples:
-  - M3101 S100 ; sets the number of manual extruder steps after the "Extruder output" or "Extruder retract" button has been pressed to 100 [steps]
-
-- M3102 [X] [Y] [Z] [E] - configure the offset in x, y, z and e direction which shall be applied in case the "Pause Printing" button has been pressed ( units are [steps] )
-  - Examples:
-  - M3102 X100 ; sets the x-offset in case of "Pause Printing" has been pressed to 100 [steps]
-  - M3102 Y100 ; sets the y-offset in case of "Pause Printing" has been pressed to 100 [steps]
-  - M3102 Z100 ; sets the z-offset in case of "Pause Printing" has been pressed to 100 [steps]
-  - M3102 E500 ; sets the e-offset in case of "Pause Printing" has been pressed to 500 [steps]
-  - M3102 X100 Y100 Z100 E500 ; sets the x/y/z/e-offset in case of "Pause Printing" has been pressed to 100/100/100/500 [steps]
 
 - M3103 [X] [Y] [Z] - configure the x, y and z position which shall set when the printer is parked ( units are [mm] )
   - Examples:
@@ -377,7 +360,7 @@
 
 
 // ##########################################################################################
-// ##   the following M codes are supported only by the RF2000
+// ##   the following M codes are supported only by the RF2000 and RF2000 V2
 // ##########################################################################################
 
 - M3300 [P] [S] - configure the 24V FET outputs ( on/off )
@@ -510,6 +493,7 @@ The following variables are used for movements in x/y/z direction:
 
 */
 
+#define DRV8711_NUM_CHANNELS                5
 
 extern const char   ui_text_error[]                 PROGMEM;
 extern const char   ui_text_warning[]               PROGMEM;
@@ -530,6 +514,9 @@ extern const char   ui_text_change_miller_type[]    PROGMEM;
 extern const char   ui_text_x_axis[]                PROGMEM;
 extern const char   ui_text_y_axis[]                PROGMEM;
 extern const char   ui_text_z_axis[]                PROGMEM;
+#if FEATURE_ALIGN_EXTRUDERS
+extern const char   ui_text_align_extruders[]       PROGMEM;
+#endif // FEATURE_ALIGN_EXTRUDERS
 extern const char   ui_text_extruder[]              PROGMEM;
 extern const char   ui_text_autodetect_pid[]        PROGMEM;
 extern const char   ui_text_temperature_manager[]   PROGMEM;
@@ -569,14 +556,18 @@ extern  unsigned long   g_uStartOfIdle;
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 extern  long            g_offsetZCompensationSteps; // this is the minimal distance between the heat bed and the extruder at the moment when the z-min endstop is hit
+extern  short           g_ZCompensationMax;
 extern  long            g_minZCompensationSteps;
 extern  long            g_maxZCompensationSteps;
+#if AUTOADJUST_MIN_MAX_ZCOMP
+extern  bool            g_auto_minmaxZCompensationSteps;
+#endif //AUTOADJUST_MIN_MAX_ZCOMP
 extern  long            g_diffZCompensationSteps;
-extern  volatile unsigned char  g_nHeatBedScanStatus;
+extern  volatile unsigned char g_nHeatBedScanStatus;
 extern  char            g_nActiveHeatBed;
 //ZOS:
-extern  volatile unsigned char  g_ZOSScanStatus;
-extern  unsigned char            g_ZOSTestPoint[2];
+extern  volatile unsigned char g_nZOSScanStatus;
+extern  unsigned char          g_ZOSTestPoint[2];
 extern  float           g_ZOSlearningRate;
 extern  float           g_ZOSlearningGradient;
 extern  long            g_min_nZScanZPosition;
@@ -586,11 +577,14 @@ extern  volatile unsigned char  g_ZMatrixChangedInRam;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
-extern  char            g_nWorkPartScanStatus;
+extern volatile unsigned char g_nWorkPartScanStatus;
 extern  char            g_nWorkPartScanMode;        // 0 = do not home z-axis, 1 = home z-axis
 extern  char            g_nActiveWorkPart;
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
 
+#if FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
+extern  float           g_scanStartZLiftMM;
+#endif //FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 extern  char            g_abortZScan;
@@ -618,7 +612,7 @@ extern  char            g_debugLog;
 //extern    short           g_debugCounter[12];
 //extern    short           g_debugCounter[6];
 extern  unsigned long   g_uStopTime;
-extern  unsigned long   g_uBlockSDCommands;
+extern volatile unsigned long   g_uBlockCommands;
 //extern    short           g_debugInt16;
 //extern    unsigned short  g_debugUInt16;
 //extern    long            g_debugInt32;
@@ -630,7 +624,7 @@ extern  unsigned long   g_nManualSteps[4];
 
 
 #if FEATURE_PAUSE_PRINTING
-extern  volatile long    g_nPauseSteps[4];
+extern  volatile long   g_nPauseSteps[4];
 extern  volatile long   g_nContinueSteps[4];
 extern  volatile char   g_pauseStatus;
 extern  volatile char   g_pauseMode;
@@ -673,31 +667,15 @@ extern bool             g_nDigitZCompensationDigits_active;
 #endif // FEATURE_DIGIT_Z_COMPENSATION
 
 #if FEATURE_FIND_Z_ORIGIN
-extern  volatile char   g_nFindZOriginStatus;
-extern  long            g_nZOriginPosition[3];
-extern  int             g_nZOriginSet;
+extern volatile unsigned char g_nFindZOriginStatus;
+extern long            g_nZOriginPosition[3];
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if DEBUG_HEAT_BED_Z_COMPENSATION || DEBUG_WORK_PART_Z_COMPENSATION
-extern  volatile long   g_nLastZCompensationPositionSteps[3];
-extern  volatile long   g_nLastZCompensationTargetStepsZ;
-extern  volatile long   g_nZCompensationUpdates;
-extern  long            g_nDelta[2];
-extern  long            g_nStepSize[2];
-extern  long            g_nTempXFront;
-extern  long            g_nTempXBack;
-extern  long            g_nNeededZ;
-extern  unsigned char   g_uIndex[4];
-extern  short           g_nMatrix[4];
-extern  long            g_nZDeltaMin;
-extern  long            g_nZDeltaMax;
-extern  long            g_nZCompensationUpdateTime;
-extern volatile long    g_nZCompensationDelayMax;
-extern  long            g_nTooFast;
-#endif // DEBUG_HEAT_BED_Z_COMPENSATION || DEBUG_WORK_PART_Z_COMPENSATION
+#if FEATURE_ALIGN_EXTRUDERS
+extern volatile unsigned char g_nAlignExtrudersStatus;
+#endif // FEATURE_ALIGN_EXTRUDERS
 
 #if FEATURE_RGB_LIGHT_EFFECTS
-
 extern unsigned char    g_uRGBHeatingR;
 extern unsigned char    g_uRGBHeatingG;
 extern unsigned char    g_uRGBHeatingB;
@@ -720,7 +698,6 @@ extern unsigned char    g_uRGBTargetR;
 extern unsigned char    g_uRGBTargetG;
 extern unsigned char    g_uRGBTargetB;
 #endif // FEATURE_RGB_LIGHT_EFFECTS
-
 
 // initRF()
 extern void initRF( void );
@@ -747,7 +724,7 @@ extern float g_ZSchraubenSollDrehungenWarm_U;
 extern float g_ZSchraubenSollKorrekturWarm_mm;
 extern char g_ZSchraubeOk;
 
-extern bool calculateZScrewCorrection( void );
+extern void calculateZScrewCorrection( void );
 
 //Menüumschalter für Z-Step-Höhe
 extern void configureMANUAL_STEPS_Z( int8_t increment );
@@ -761,6 +738,12 @@ extern short testExtruderTemperature( void );
 // testHeatBedTemperature()
 extern short testHeatBedTemperature( void );
 
+// getZMatrixDepth()
+extern long getZMatrixDepth( long x, long y );
+
+// getZMatrixDepth_CurrentXY()
+extern long getZMatrixDepth_CurrentXY( void );
+
 // doHeatBedZCompensation()
 extern void doHeatBedZCompensation( void );
 
@@ -771,6 +754,13 @@ extern long getHeatBedOffset( void );
 extern void switchActiveHeatBed( char newActiveHeatBed );
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
+#if FEATURE_ALIGN_EXTRUDERS
+// startAlignExtruders()
+extern void startAlignExtruders( void );
+ 
+// alignExtruders()
+extern void alignExtruders( void );
+#endif // FEATURE_ALIGN_EXTRUDERS
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
 // startWorkPartScan()
@@ -784,9 +774,6 @@ extern void doWorkPartZCompensation( void );
 
 // getWorkPartOffset()
 extern long getWorkPartOffset( void );
-
-// determineStaticCompensationZ()
-extern void determineStaticCompensationZ( void );
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
 
 
@@ -801,19 +788,19 @@ extern short testIdlePressure( void );
 extern short readAveragePressure( short* pnAveragePressure );
 
 // moveZUpFast()
-extern short moveZUpFast( bool execRunStandardTasks=true );
+extern void moveZUpFast();
 
 // moveZDownSlow()
-extern short moveZDownSlow( bool execRunStandardTasks=true );
+extern void moveZDownSlow( uint8_t acuteness = 1 );
 
 // moveZUpSlow()
-extern short moveZUpSlow( short* pnContactPressure, bool execRunStandardTasks=true );
+extern void moveZUpSlow( short* pnContactPressure, uint8_t acuteness = 1 );
 
 // moveZDownFast()
-extern short moveZDownFast( bool execRunStandardTasks=true );
+extern void moveZDownFast();
 
 // moveZ()
-extern int moveZ( int nSteps );
+extern void moveZ( int nSteps );
 
 // restoreDefaultScanParameters()
 extern void restoreDefaultScanParameters( void );
@@ -831,13 +818,13 @@ extern void initCompensationMatrix( void );
 extern char prepareCompensationMatrix( void );
 
 // determineCompensationOffsetZ()
-extern char determineCompensationOffsetZ( void );
+extern void determineCompensationOffsetZ( void );
 
 // adjustCompensationMatrix()
-extern char adjustCompensationMatrix( short nZ );
+extern void adjustCompensationMatrix( short nZ );
 
 // saveCompensationMatrix()
-extern char saveCompensationMatrix( unsigned int uAddress );
+extern void saveCompensationMatrix( unsigned int uAddress );
 
 // loadCompensationMatrix()
 extern char loadCompensationMatrix( unsigned int uAddress );
@@ -845,13 +832,10 @@ extern char loadCompensationMatrix( unsigned int uAddress );
 // clearCompensationMatrix()
 extern void clearCompensationMatrix( unsigned int uAddress );
 
-// outputPressureMatrix()
-extern void outputPressureMatrix( void );
-
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
 // clearExternalEEPROM()
-extern char clearExternalEEPROM( void );
+extern void clearExternalEEPROM( void );
 
 // writeByte24C256()
 extern void writeByte24C256( int addressI2C, unsigned int addressEEPROM, unsigned char data );
@@ -871,10 +855,8 @@ extern void doZCompensation( void );
 // loopRF()
 extern void loopRF( void );
 
-#if FEATURE_OUTPUT_FINISHED_OBJECT
 // outputObject()
-extern void outputObject( void );
-#endif // FEATURE_OUTPUT_FINISHED_OBJECT
+extern void outputObject( bool showerrors = true );
 
 #if FEATURE_PARK
 // parkPrinter()
@@ -882,7 +864,6 @@ extern void parkPrinter( void );
 #endif // FEATURE_PARK
 
 #if FEATURE_PAUSE_PRINTING
-
 extern bool processingDirectMove();
 extern void checkPauseStatus_fromTask();
 extern void waitforPauseStatus_fromButton();
@@ -900,9 +881,6 @@ extern void determineZPausePositionForPrint( void );
 
 // determineZPausePositionForMill()
 extern void determineZPausePositionForMill( void );
-
-// waitUntilContinue
-extern void waitUntilContinue( void );
 #endif // FEATURE_PAUSE_PRINTING
 
 // setExtruderCurrent()
@@ -910,9 +888,6 @@ extern void setExtruderCurrent( uint8_t nr, uint8_t current );
 
 // processCommand()
 extern void processCommand( GCode* pCommand );
-
-// runStandardTasks()
-extern void runStandardTasks( void );
 
 // queueTask()
 extern void queueTask( char task );
@@ -934,8 +909,14 @@ extern void nextPreviousZAction( int8_t increment );
 // setMotorCurrent()
 extern void setMotorCurrent( unsigned char driver, uint8_t level );
 
+// adjust/set Microsteps()
+extern unsigned short drv8711Axis_2_InitMicrosteps(uint8_t axis);
+extern unsigned short drv8711ModeValue_2_MicroSteps(uint8_t modeValue);
+extern uint8_t        drv8711MicroSteps_2_ModeValue(unsigned short microsteps);
+extern void           drv8711adjustMicroSteps(unsigned char driver);
+
 // motorCurrentControlInit()
-extern void motorCurrentControlInit( void );
+extern void drv8711Init( void );
 #if FEATURE_READ_STEPPER_STATUS
 extern unsigned short readMotorStatus( unsigned char driver );
 #endif //FEATURE_READ_STEPPER_STATUS
@@ -966,10 +947,10 @@ extern void startFindZOrigin( void );
 extern void findZOrigin( void );
 #endif // FEATURE_FIND_Z_ORIGIN
 
-
-#if FEATURE_MILLING_MODE
 // switchOperatingMode()
 extern void switchOperatingMode( char newOperatingMode );
+
+#if FEATURE_MILLING_MODE
 
 // switchActiveWorkPart()
 extern void switchActiveWorkPart( char newActiveWorkPart );
@@ -1001,9 +982,6 @@ extern void setupForMilling( void );
 
 // prepareZCompensation()
 extern void prepareZCompensation( void );
-
-// resetZCompensation()
-extern void resetZCompensation( void );
 
 // isSupportedGCommand()
 extern unsigned char isSupportedGCommand( unsigned int currentGCode, char neededMode, char outputLog = 1 );
@@ -1059,5 +1037,7 @@ extern void showMyPage( const void* line1, const void* line2 = NULL, const void*
 // doEmergencyStop()
 void doEmergencyStop( char reason );
 
+// addLong() to string
+void addLong( char* string, long value, char digits );
 
 #endif // RF_H

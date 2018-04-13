@@ -40,7 +40,6 @@
 #define UI_ACTION_BACK                      1000
 #define UI_ACTION_OK                        1001
 #define UI_ACTION_MENU_UP                   1002
-#define UI_ACTION_TOP_MENU                  1003
 #define UI_ACTION_EMERGENCY_STOP            1004
 #define UI_ACTION_XPOSITION                 1005
 #define UI_ACTION_YPOSITION                 1006
@@ -90,9 +89,9 @@
 #define UI_ACTION_EXTR_ACCELERATION         1066
 #define UI_ACTION_EXTR_MAX_FEEDRATE         1067
 #define UI_ACTION_EXTR_START_FEEDRATE       1068
-#define UI_ACTION_EXTR_HEATMANAGER          1069
+//#define UI_ACTION_EXTR_HEATMANAGER          1069
 #define UI_ACTION_EXTR_WATCH_PERIOD         1070
-#define UI_ACTION_ADVANCE_K                 1072
+//#define UI_ACTION_ADVANCE_K                 1072
 #define UI_ACTION_DEBUG_ECHO                1074
 #define UI_ACTION_DEBUG_INFO                1075
 #define UI_ACTION_DEBUG_ERROR               1076
@@ -113,21 +112,18 @@
 #define UI_ACTION_SET_E_ORIGIN              1091
 #define UI_ACTION_EXTRUDER_RELATIVE         1092
 #define UI_ACTION_SELECT_EXTRUDER0          1093
-#define UI_ACTION_ADVANCE_L                 1094
+
 #define UI_ACTION_PREHEAT_ABS               1095
 #define UI_ACTION_FLOWRATE_MULTIPLY         1096
 #define UI_ACTION_EXTR_WAIT_RETRACT_TEMP    1100
 #define UI_ACTION_EXTR_WAIT_RETRACT_UNITS   1101
-#define UI_ACTION_EXTRUDER2_OFF             1102
-#define UI_ACTION_EXTRUDER2_TEMP            1103
-#define UI_ACTION_SELECT_EXTRUDER2          1104
-#define UI_ACTION_WRITE_DEBUG               1105
+
 #define UI_ACTION_FANSPEED                  1106
 #define UI_ACTION_LIGHTS_ONOFF              1107
-#define UI_ACTION_SD_STOP                   1108
-#define UI_ACTION_SD_STOP_ACK               1109
-#define UI_ACTION_ZPOSITION_NOTEST          1110
-#define UI_ACTION_ZPOSITION_FAST_NOTEST     1111
+
+#define UI_ACTION_STOP_ACK                  1109
+
+
 #define UI_ACTION_MAX_INACTIVE              1113
 #define UI_ACTION_BEEPER                    1114
 #define UI_ACTION_UNMOUNT_FILAMENT          1115
@@ -162,7 +158,6 @@
 
 #define UI_ACTION_CHOOSE_CLASSICPID         1674 //pid kram
 #define UI_ACTION_CHOOSE_LESSERINTEGRAL     1675 //pid kram
-#define UI_ACTION_CHOOSE_SOME               1676 //pid kram
 #define UI_ACTION_CHOOSE_NO                 1677 //pid kram
 #define UI_ACTION_CHOOSE_TYREUS_LYBEN       1701 //pid kram
 
@@ -198,6 +193,13 @@
 #define UI_ACTION_FLOW_MAX                  1703
 #define UI_ACTION_FLOW_DF                   1704
 #define UI_ACTION_FLOW_DV                   1705
+
+//FEATURE_ALIGN_EXTRUDERS
+#define UI_ACTION_ALIGN_EXTRUDERS           1706
+
+#define UI_ACTION_MICROSTEPS_XY             1707
+#define UI_ACTION_MICROSTEPS_Z              1708
+#define UI_ACTION_MICROSTEPS_E              1709
 
 #define UI_ACTION_FET1_OUTPUT               2001
 #define UI_ACTION_FET2_OUTPUT               2002
@@ -268,7 +270,6 @@ extern bool     g_nAutoReturnMessage;
 extern  char    g_nYesNo;
 extern volatile char    g_nContinueButtonPressed;
 extern  char    g_nServiceRequest;
-extern  char    g_nPrinterReady;
 
 // Key codes
 #define UI_KEYS_INIT_CLICKENCODER_LOW(pinA,pinB)        SET_INPUT(pinA);SET_INPUT(pinB); PULLUP(pinA,HIGH);PULLUP(pinB,HIGH);
@@ -434,7 +435,6 @@ public:
     UIDisplay();
     void createChar(uint8_t location,const uint8_t charmap[]);
     void initialize(); // Initialize display and keys
-    void waitForKey();
     void printRow(uint8_t r,char *txt,char *txt2,uint8_t changeAtCol); // Print row on display
     void printRowP(uint8_t r,PGM_P txt);
     void parse(char *txt,bool ram); /// Parse output and write to printCols;
@@ -443,7 +443,6 @@ public:
     void finishAction(int action);
     void slowAction();
     void fastAction();
-    void mediumAction();
     void showMessage(bool refresh);
     void pushMenu(void *men,bool refresh);
     void adjustMenuPos();
@@ -471,23 +470,26 @@ public:
 
     void lock();
     void unlock();
+    void exitmenu();
 
 };
 
 extern UIDisplay uid;
 
 // initializeLCD()
-void initializeLCD();
-
+void initializeLCD(bool normal = true);
+void initCspecchars();
+void initNSpecchars();
 
 #if MOTHERBOARD == DEVICE_TYPE_RF1000
-#define UI_HAS_KEYS                       1     // 1 = Some keys attached
+#define UI_HAS_KEYS                       1        // 1 = Some keys attached
 #define UI_HAS_BACK_KEY                   1
-#define UI_DISPLAY_TYPE                   1     // 1 = LCD Display with 4 bit data bus
+#define UI_DISPLAY_TYPE                   1        // 1 = LCD Display with 4 bit data bus
 //#define UI_DISPLAY_CHARSET                  1
 #define UI_COLS                          16        //check MAX_COLS when changed
-#define UI_ROWS                           4
+#define UI_ROWS                           4        //do not change for RF1000 or RF2000!
 #define UI_DELAYPERCHAR                 320
+#define UI_SPACER                        ""
 #define UI_INVERT_MENU_DIRECTION        false
 #define UI_INVERT_INCREMENT_DIRECTION   true
 
@@ -530,23 +532,19 @@ void ui_check_keys(int &action)
 #endif // FEATURE_EXTENDED_BUTTONS
 
 } // ui_check_keys
-
-inline void ui_check_slow_encoder() {}
-void ui_check_slow_keys(int &action) {
-    (void)action;
-}
 #endif // UI_MAIN
 #endif // MOTHERBOARD == DEVICE_TYPE_RF1000
 
 
-#if MOTHERBOARD == DEVICE_TYPE_RF2000
-#define UI_HAS_KEYS                       1     // 1 = Some keys attached
+#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+#define UI_HAS_KEYS                       1        // 1 = Some keys attached
 #define UI_HAS_BACK_KEY                   1
-#define UI_DISPLAY_TYPE                   1     // 1 = LCD Display with 4 bit data bus
+#define UI_DISPLAY_TYPE                   1        // 1 = LCD Display with 4 bit data bus
 //#define UI_DISPLAY_CHARSET                  1
 #define UI_COLS                          20        //check MAX_COLS when changed
-#define UI_ROWS                           4
+#define UI_ROWS                           4        //do not change for RF1000 or RF2000!
 #define UI_DELAYPERCHAR                 320
+#define UI_SPACER                        "    "
 #define UI_INVERT_MENU_DIRECTION        false
 #define UI_INVERT_INCREMENT_DIRECTION   true
 
@@ -589,13 +587,8 @@ void ui_check_keys(int &action)
 #endif // FEATURE_EXTENDED_BUTTONS
 
 } // ui_check_keys
-
-inline void ui_check_slow_encoder() {}
-void ui_check_slow_keys(int &action) {
-    (void)action;
-}
 #endif // UI_MAIN
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000
+#endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
 
 
 #if UI_ROWS==4
@@ -633,7 +626,6 @@ void ui_check_slow_keys(int &action) {
 
 #define UI_INITIALIZE uid.initialize();
 #define UI_FAST if(pwm_count_heater & 4) {uid.fastAction();}
-#define UI_MEDIUM uid.mediumAction();
 #define UI_SLOW uid.slowAction();
 #define UI_STATUS(status) uid.setStatusP(PSTR(status));
 #define UI_STATUS_UPD(status) {uid.setStatusP(PSTR(status));uid.refreshPage();}
@@ -647,7 +639,6 @@ void ui_check_slow_keys(int &action) {
 #else
 #define UI_INITIALIZE {}
 #define UI_FAST {}
-#define UI_MEDIUM {}
 #define UI_SLOW {}
 #define UI_STATUS(status) {}
 #define UI_STATUS_RAM(status) {}
@@ -665,7 +656,6 @@ void ui_check_slow_keys(int &action) {
 #define BEEP_SHORT {}
 #define BEEP_LONG {}
 #define BEEP_START_PRINTING {}
-#define BEEP_ABORT_PRINTING {}
 #define BEEP_STOP_PRINTING {}
 #define BEEP_PAUSE {}
 #define BEEP_CONTINUE {}
@@ -675,6 +665,10 @@ void ui_check_slow_keys(int &action) {
 #define BEEP_START_WORK_PART_SCAN {}
 #define BEEP_ABORT_WORK_PART_SCAN {}
 #define BEEP_STOP_WORK_PART_SCAN {}
+// FEATURE_ALIGN_EXTRUDERS
+ #define BEEP_START_ALIGN_EXTRUDERS {}
+ #define BEEP_ABORT_ALIGN_EXTRUDERS {}
+ #define BEEP_STOP_ALIGN_EXTRUDERS {}
 #define BEEP_ABORT_SET_POSITION {}
 #define BEEP_ACCEPT_SET_POSITION {}
 #define BEEP_SERVICE_INTERVALL {}
@@ -684,7 +678,6 @@ void ui_check_slow_keys(int &action) {
 #define BEEP_SHORT beep(BEEPER_SHORT_SEQUENCE);
 #define BEEP_LONG beep(BEEPER_LONG_SEQUENCE);
 #define BEEP_START_PRINTING beep(BEEPER_START_PRINTING_SEQUENCE);
-#define BEEP_ABORT_PRINTING beep(BEEPER_ABORT_PRINTING_SEQUENCE);
 #define BEEP_STOP_PRINTING beep(BEEPER_STOP_PRINTING_SEQUENCE);
 #define BEEP_PAUSE beep(BEEPER_PAUSE_SEQUENCE);
 #define BEEP_CONTINUE beep(BEEPER_CONTINUE_SEQUENCE);
@@ -694,6 +687,10 @@ void ui_check_slow_keys(int &action) {
 #define BEEP_START_WORK_PART_SCAN beep(BEEPER_START_WORK_PART_SCAN_SEQUENCE);
 #define BEEP_ABORT_WORK_PART_SCAN beep(BEEPER_ABORT_WORK_PART_SCAN_SEQUENCE);
 #define BEEP_STOP_WORK_PART_SCAN beep(BEEPER_STOP_WORK_PART_SCAN_SEQUENCE);
+// FEATURE_ALIGN_EXTRUDERS
+ #define BEEP_START_ALIGN_EXTRUDERS beep(BEEPER_START_ALIGN_EXTRUDERS_SEQUENCE);
+ #define BEEP_ABORT_ALIGN_EXTRUDERS beep(BEEPER_ABORT_ALIGN_EXTRUDERS_SEQUENCE);
+ #define BEEP_STOP_ALIGN_EXTRUDERS beep(BEEPER_STOP_ALIGN_EXTRUDERS_SEQUENCE);
 #define BEEP_ABORT_SET_POSITION beep(BEEPER_ABORT_SET_POSITION_SEQUENCE);
 #define BEEP_ACCEPT_SET_POSITION beep(BEEPER_ACCEPT_SET_POSITION_SEQUENCE);
 #define BEEP_SERVICE_INTERVALL beep(BEEPER_SERVICE_INTERVALL_SEQUNCE);
