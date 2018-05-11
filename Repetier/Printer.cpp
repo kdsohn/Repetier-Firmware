@@ -1117,7 +1117,7 @@ void Printer::setup()
     Extruder::selectExtruderById(0);
 
 #if SDSUPPORT
-    sd.initsd();
+    sd.mount();
 #endif // SDSUPPORT
 
     g_nActiveHeatBed = (char)readWord24C256( I2C_ADDRESS_EXTERNAL_EEPROM, EEPROM_OFFSET_ACTIVE_HEAT_BED_Z_MATRIX );
@@ -2164,7 +2164,7 @@ void Printer::stopPrint() //function for aborting USB and SD-Prints
     {
          //block sdcard from reading more.
         Com::printFLN( PSTR("SD print stopped.") );
-        sd.sdmode = false;
+        sd.sdmode = 0;
     }
     else
 #endif //SDSUPPORT

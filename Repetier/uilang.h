@@ -20,12 +20,23 @@
 #define UI_LANG_H
 
 #if !defined(UI_DISPLAY_CHARSET) || UI_DISPLAY_CHARSET>3
-#if MOTHERBOARD == DEVICE_TYPE_RF1000
-#define UI_DISPLAY_CHARSET 1
-#else
-#define UI_DISPLAY_CHARSET 2
-#endif // MOTHERBOARD   == DEVICE_TYPE_RF1000
+ #if MOTHERBOARD == DEVICE_TYPE_RF1000
+  #define UI_DISPLAY_CHARSET 1
+ #else
+  #define UI_DISPLAY_CHARSET 2
+ #endif // MOTHERBOARD   == DEVICE_TYPE_RF1000
 #endif // !defined(UI_DISPLAY_CHARSET) || UI_DISPLAY_CHARSET>3
+
+//Symbolic character values for specific symbols.
+//May be overridden for different controllers, character sets, etc.
+#define cUP "\001"
+#define cDEG "\002"
+#define cSEL "\003"
+#define cUNSEL "\004"
+#define cTEMP "\005"
+#define cFOLD "\006"
+#define bFOLD 6
+#define cARROW "\176"
 
 #if UI_DISPLAY_CHARSET==0 // ASCII fallback
 #define CHAR_RIGHT      '-'
@@ -172,7 +183,7 @@
 #define UI_TEXT_DBG_INFO                "Info   : %di"
 #define UI_TEXT_DBG_ERROR               "Errors : %de"
 #define UI_TEXT_DBG_DRYRUN              "Dry Run: %dd"
-#define UI_TEXT_PRINT_FILE              "Print File"
+#define UI_TEXT_PRINT_FILE              "Print SD-File"
 #define UI_TEXT_PAUSE_PRINT             "Pause Print"
 #define UI_TEXT_CONTINUE_PRINT          "Continue Print"
 #define UI_TEXT_MILL_FILE               "Mill File"
@@ -253,6 +264,7 @@
 #define UI_TEXT_EXTR_WAIT_RETRACT_TEMP  "Wait Temp.: %XT\002C"
 #define UI_TEXT_EXTR_WAIT_RETRACT_UNITS "Wait Units: %XU mm"
 #define UI_TEXT_SD_REMOVED              "SD Card removed"
+#define UI_TEXT_SD_ERROR                "SD Error"
 #define UI_TEXT_SD_INSERTED             "SD Card inserted"
 #define UI_TEXT_PRINTER_READY           "Printer ready."
 #define UI_TEXT_MILLER_READY            "Miller ready."
@@ -570,7 +582,7 @@
 #define UI_TEXT_DBG_INFO                "Info       :%di"
 #define UI_TEXT_DBG_ERROR               "Fehler     :%de"
 #define UI_TEXT_DBG_DRYRUN              "Trockenlauf:%dd"
-#define UI_TEXT_PRINT_FILE              "Drucke Datei"
+#define UI_TEXT_PRINT_FILE              "Drucke SD-Datei"
 #define UI_TEXT_PAUSE_PRINT             "Druck pausieren"
 #define UI_TEXT_MILL_FILE               "Fr" STR_auml "se Datei"
 #define UI_TEXT_UNMOUNT_CARD            "Unmount Karte"
@@ -844,6 +856,7 @@
     #define UI_TEXT_SPEED_MULTIPLY          "Geschw. Mul.:%om%%%"
     #define UI_TEXT_FLOW_MULTIPLY           "Fluss Mul.  :%of%%%"
     #define UI_TEXT_SD_REMOVED              "SD Karte entfernt"
+    #define UI_TEXT_SD_ERROR                "SD Fehler"
     #define UI_TEXT_SD_INSERTED             "SD Karte erkannt"
     #define UI_TEXT_ALIGN_EXTRUDERS         "Extruder ausrichten"
     #define UI_TEXT_MILLER_ONE_TRACK        "eine Spur"
@@ -925,6 +938,7 @@
     #define UI_TEXT_SPEED_MULTIPLY          "Geschw.Mul:%om%%%"
     #define UI_TEXT_FLOW_MULTIPLY           "Fluss Mul.:%of%%%"
     #define UI_TEXT_SD_REMOVED              "SD Karte entf."
+    #define UI_TEXT_SD_ERROR                "SD Fehler"
     #define UI_TEXT_SD_INSERTED             "SD Karte eing."
     #define UI_TEXT_ALIGN_EXTRUDERS         "Extruder ausr."
     #define UI_TEXT_MILLER_ONE_TRACK        "eine S."

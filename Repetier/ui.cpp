@@ -594,7 +594,6 @@ void UIDisplay::printRow(uint8_t r,char *txt,char *txt2,uint8_t changeAtCol)
 } // printRow
 #endif // UI_DISPLAY_TYPE<4
 
-char printCols[MAX_COLS+1];
 UIDisplay::UIDisplay()
 {
     locked = 0;
@@ -602,7 +601,6 @@ UIDisplay::UIDisplay()
 
 void UIDisplay::initialize()
 {
-    oldMenuLevel = -2;
     flags = 0;
     exitmenu();
     shift = -2;    
@@ -619,9 +617,9 @@ void UIDisplay::initialize()
     ui_init_keys();
 
 #if SDSUPPORT
-    cwd[0]='/';
-    cwd[1]=0;
-    folderLevel=0;
+    cwd[0] = '/';
+    cwd[1] = 0;
+    folderLevel = 0;
 #endif // SDSUPPORT
 
 #if UI_DISPLAY_TYPE>0
@@ -2302,47 +2300,57 @@ void UIDisplay::setStatus(char *txt,bool error,bool force)
 const UIMenu * const ui_pages[UI_NUM_PAGES] PROGMEM = UI_PAGES;
 
 #if SDSUPPORT
-uint8_t nFilesOnCard;
+uint16_t nFilesOnCard;
 void UIDisplay::updateSDFileCount()
 {
-    dir_t* p = NULL;
-    //byte offset = menuTop[menuLevel];
-    SdBaseFile *root = sd.fat.vwd();
-
+    FatFile *root = sd.fat.vwd();
+    FatFile file;
     root->rewind();
     nFilesOnCard = 0;
-    while ((p = root->getLongFilename(p, NULL, 0, NULL)))
+    while (file.openNext(root, O_READ))
     {
-    if (! (DIR_IS_FILE(p) || DIR_IS_SUBDIR(p)))
+        file.getName(tempLongFilename, LONG_FILENAME_LENGTH);
+        if (folderLevel >= SD_MAX_FOLDER_DEPTH && strcmp(tempLongFilename, "..") == 0) {
+            file.close();
             continue;
-        if (folderLevel>=SD_MAX_FOLDER_DEPTH && DIR_IS_SUBDIR(p) && !(p->name[0]=='.' && p->name[1]=='.'))
+        }
+        if (tempLongFilename[0] == '.' && tempLongFilename[1] != '.') {
+            file.close();
             continue;
+        }
         nFilesOnCard++;
-        if (nFilesOnCard==254)
-            return;
+        file.close();
+        if (nFilesOnCard > 5000) // Arbitrary maximum, limited only by how long someone would scroll
+             return;
     }
-
 } // updateSDFileCount
 
 
-void getSDFilenameAt(byte filePos,char *filename)
+void getSDFilenameAt(uint16_t filePos,char *filename)
 {
-    dir_t* p = NULL;
-    //byte c=0;
-    SdBaseFile *root = sd.fat.vwd();
-
+    FatFile *root = sd.fat.vwd();
+    FatFile file;
     root->rewind();
-    while ((p = root->getLongFilename(p, tempLongFilename, 0, NULL)))
+    while (file.openNext(root, O_READ))
     {
-        if (!DIR_IS_FILE(p) && !DIR_IS_SUBDIR(p)) continue;
-        if(uid.folderLevel>=SD_MAX_FOLDER_DEPTH && DIR_IS_SUBDIR(p) && !(p->name[0]=='.' && p->name[1]=='.')) continue;
-        if (filePos--)
+        file.getName(tempLongFilename, LONG_FILENAME_LENGTH);
+        if (uid.folderLevel >= SD_MAX_FOLDER_DEPTH && strcmp(tempLongFilename, "..") == 0) {
+            file.close();
             continue;
+        }
+        if (tempLongFilename[0] == '.' && tempLongFilename[1] != '.') {
+            file.close();
+            continue; // MAC CRAP
+        }
+        if (filePos--) {
+            file.close();
+            continue;
+        }
         strcpy(filename, tempLongFilename);
-        if(DIR_IS_SUBDIR(p)) strcat(filename, "/"); // Set marker for directory
+        if(file.isDir()) strcat(filename, "/"); // Set marker for directory
+        file.close();
         break;
     }
-
 } // getSDFilenameAt
 
 
@@ -2359,98 +2367,75 @@ void UIDisplay::goDir(char *name)
 {
     char *p = cwd;
     while(*p)p++;
-    if(name[0]=='.' && name[1]=='.')
-    {
-        if(folderLevel==0) return;
+    if(name[0] == '.' && name[1] == '.') {
+        if(folderLevel == 0) return;
         p--;
         p--;
         while(*p!='/') p--;
         p++;
         *p = 0;
         folderLevel--;
-    }
-    else
-    {
-        if(folderLevel>=SD_MAX_FOLDER_DEPTH) return;
+    } else {
+        if(folderLevel >= SD_MAX_FOLDER_DEPTH) return;
         while(*name) *p++ = *name++;
         *p = 0;
         folderLevel++;
     }
     sd.fat.chdir(cwd);
     updateSDFileCount();
-
 } // goDir
 
 
-void sdrefresh(uint8_t &r,char cache[UI_ROWS][MAX_COLS+1])
+void sdrefresh(uint16_t &r, char cache[UI_ROWS][MAX_COLS + 1])
 {
-    dir_t* p = NULL;
-    byte offset = uid.menuTop[uid.menuLevel];
-    SdBaseFile *root;
-    byte length, skip;
+    uint16_t offset = uid.menuTop[uid.menuLevel];
+    FatFile *root;
+    FatFile file;
+    uint16_t length, skip;
 
     sd.fat.chdir(uid.cwd);
     root = sd.fat.vwd();
     root->rewind();
 
-    skip = (offset>0?offset-1:0);
+    skip = (offset > 0 ? offset - 1 : 0);
 
-    while (r+offset<nFilesOnCard+1 && r<UI_ROWS && (p = root->getLongFilename(p, tempLongFilename, 0, NULL)))
-    {
-    // done if past last used entry
+    while (r + offset < nFilesOnCard + 1 && r < UI_ROWS && file.openNext(root, O_READ)) {
+        HAL::pingWatchdog();
+        file.getName(tempLongFilename, LONG_FILENAME_LENGTH);
+
+        if (uid.folderLevel >= SD_MAX_FOLDER_DEPTH && strcmp(tempLongFilename, "..") == 0) {
+            file.close();
+            continue;
+        }
+        if (tempLongFilename[0] == '.' && tempLongFilename[1] != '.') {
+            file.close();
+            continue; // MAC CRAP
+        }
+        // done if past last used entry
         // skip deleted entry and entries for . and  ..
         // only list subdirectories and files
-        if ((DIR_IS_FILE(p) || DIR_IS_SUBDIR(p)))
-        {
-            if(uid.folderLevel >= SD_MAX_FOLDER_DEPTH && DIR_IS_SUBDIR(p) && !(p->name[0]=='.' && p->name[1]=='.'))
-                continue;
-            if(skip>0)
-            {
-                skip--;
-                continue;
-            }
-
-            printCols[0] = ' ';
-            uid.col = 1;
-
-            if(DIR_IS_SUBDIR(p))
-                printCols[uid.col++] = 6; // Prepend folder symbol
-            length = RMath::min( (int)strlen(tempLongFilename), (int)(MAX_COLS-uid.col) );
-            memcpy(printCols+uid.col, tempLongFilename, length);
-            uid.col += length;
-            printCols[uid.col] = 0;
-
-            uint8_t curShift = (uid.shift<=0 ? 0 : uid.shift);
-            uint8_t curLen = strlen(printCols);
-
-            if(curLen>UI_COLS)
-            {
-                // this file name is longer than the available width of the display
-                curShift = RMath::min(curLen-UI_COLS,curShift);
-            }
-            else
-            {
-                curShift = 0;
-            }
-
-            if(r+offset == uid.menuPos[uid.menuLevel])
-            {
-                // the menu cursor is placed at this file name at the moment
-                printCols[curShift] = (char)CHAR_SELECTOR;
-            }
-            else
-            {
-                // this file name is above/below the current menu cursor item
-                printCols[curShift] = ' ';
-            }
-
-            if(DIR_IS_SUBDIR(p))
-                printCols[curShift+1] = 6; // Prepend folder symbol
-
-            strcpy(cache[r++],printCols);
+        if(skip > 0) {
+            skip--;
+            file.close();
+            continue;
         }
+        //write listing:
+        uid.col = 0;
+        if(r + offset == uid.menuPos[uid.menuLevel])
+            uid.printCols[uid.col++] = CHAR_SELECTOR;
+        else
+            uid.printCols[uid.col++] = ' ';
+        // print file name with possible blank fill
+        if(file.isDir()) 
+            uid.printCols[uid.col++] = bFOLD; // Prepend folder symbol
+        
+        length = RMath::min((int)strlen(tempLongFilename), MAX_COLS - uid.col);
+        memcpy(uid.printCols + uid.col, tempLongFilename, length);
+        uid.col += length;
+        uid.printCols[uid.col] = 0;
+        strcpy(cache[r++], uid.printCols);
+        file.close();
     }
-
 } // sdrefresh
 #endif // SDSUPPORT
 
@@ -2458,9 +2443,9 @@ void sdrefresh(uint8_t &r,char cache[UI_ROWS][MAX_COLS+1])
 // Refresh current menu page
 void UIDisplay::refreshPage()
 {
-    uint8_t r;
+    uint16_t r;
 #if SDSUPPORT
-    uint8_t mtype = 0;
+    uint8_t mtype = UI_MENU_TYPE_INFO;
 #endif //SDSUPPORT
     char cache[UI_ROWS][MAX_COLS+1];
     adjustMenuPos();
@@ -2494,7 +2479,7 @@ void UIDisplay::refreshPage()
         UIMenu *men = (UIMenu*)pgm_read_word(&(ui_pages[menuPos[0]]));
         uint16_t nr = pgm_read_word_near(&(men->numEntries));
         UIMenuEntry **entries = (UIMenuEntry**)pgm_read_word(&(men->entries));
-        for(r=0; r<nr && r<UI_ROWS; r++)
+        for(r=0; r < nr && r < UI_ROWS; r++)
         {
             UIMenuEntry *ent =(UIMenuEntry *)pgm_read_word(&(entries[r]));
             col=0;
@@ -2512,7 +2497,7 @@ void UIDisplay::refreshPage()
         uint8_t offset = menuTop[menuLevel];
         UIMenuEntry **entries = (UIMenuEntry**)pgm_read_word(&(men->entries));
 
-        for(r=0; r+offset<nr && r<UI_ROWS; )
+        for(r = 0; r + offset < nr && r < UI_ROWS; )
         {
             UIMenuEntry *ent =(UIMenuEntry *)pgm_read_word(&(entries[r+offset]));
             if(!ent->showEntry())
@@ -2581,9 +2566,9 @@ void UIDisplay::refreshPage()
     }
 
 #if SDSUPPORT
-    if(mtype==1)
+    if(mtype == UI_MENU_TYPE_FILE_SELECTOR)
     {
-        sdrefresh(r,cache);
+        sdrefresh(r, cache);
     }
 #endif // SDSUPPORT
 
@@ -2694,14 +2679,14 @@ void UIDisplay::okAction()
     unsigned char entType = pgm_read_byte(&(ent->menuType));// 0 = Info, 1 = Headline, 2 = submenu ref, 3 = direct action command, 4 = modify action
     int action = pgm_read_word(&(ent->action));
 
-    if(mtype==3)   // action menu
+    if(mtype == UI_MENU_TYPE_MODIFICATION_MENU)   // action menu
     {
         action = pgm_read_word(&(men->id));
         finishAction(action);
         executeAction(UI_ACTION_BACK);
         return;
     }
-    if(mtype==2 && entType==4)   // Modify action
+    if(mtype == UI_MENU_TYPE_SUBMENU && entType==4)   // Modify action
     {
         if(activeAction)   // finish action
         {
@@ -2714,15 +2699,21 @@ void UIDisplay::okAction()
     }
 
 #if SDSUPPORT
-    if(mtype==1)
+    if(mtype == UI_MENU_TYPE_FILE_SELECTOR)
     {
-        if(menuPos[menuLevel]==0)   // Selected back instead of file
+        if((menuPos[menuLevel] == 0 && folderLevel == 0) /* Selected back instead of file */
+            || !sd.sdactive )                            /* No SD -> drop menuposition */ 
         {
             executeAction(UI_ACTION_BACK);
             return;
         }
-        if(!sd.sdactive)
+        if(menuPos[menuLevel] == 0 && folderLevel > 0){
+            goDir((char *)"..");
+            menuTop[menuLevel]=0;
+            menuPos[menuLevel]=1;
+            refreshPage();
             return;
+        }
 
         uint8_t filePos = menuPos[menuLevel]-1;
         char filename[LONG_FILENAME_LENGTH+1];
@@ -2734,71 +2725,64 @@ void UIDisplay::okAction()
             menuTop[menuLevel]=0;
             menuPos[menuLevel]=1;
             refreshPage();
-            oldMenuLevel = -1;
             return;
         }
 
-        int16_t action;
-        if (Printer::isAutomount())
-            action = UI_ACTION_SD_PRINT;
+    /*     int16_t shortAction;
+       if (Printer::isAutomount())
+            shortAction = UI_ACTION_SD_PRINT;
         else
         {
             men = (UIMenu*)menu[menuLevel-1];
             entries = (UIMenuEntry**)pgm_read_word(&(men->entries));
             ent =(UIMenuEntry *)pgm_read_word(&(entries[menuPos[menuLevel-1]]));
-            action = pgm_read_word(&(ent->action));
-        }
+            shortAction = pgm_read_word(&(ent->action));
+        }*/
         sd.file.close();
         sd.fat.chdir(cwd);
-        switch(action)
-        {
-            case UI_ACTION_SD_PRINT:
-            {
-                if (sd.selectFile(filename, false))
+    //    switch(shortAction)
+      //  {
+         //   case UI_ACTION_SD_PRINT:
+           // {
+                if (sd.selectFileByPos(filePos, false))
                 {
                     sd.startPrint();
                     BEEP_START_PRINTING
                     exitmenu();
                 }
-                break;
-            }
-            case UI_ACTION_SD_DELETE:
+              //  break;
+            //}
+/*            case UI_ACTION_SD_DELETE:
             {
                 if(sd.sdactive)
                 {
                     if(Printer::isMenuMode(MENU_MODE_SD_PRINTING))
                     {
                         // we do not allow to delete a file while we are printing/milling from the SD card
-                        if( Printer::debugErrors() )
-                        {
-                            Com::printFLN(PSTR("delete error: processing"));
-                        }
+                        Com::printFLN(PSTR("delete error: processing"));
 
                         showError( (void*)ui_text_delete_file, (void*)ui_text_operation_denied );
                         break;
                     }
-
-                    sd.sdmode = false;
-                    sd.file.close();
-                    if(sd.fat.remove(filename))
-                    {
-                        if( Printer::debugInfo() )
-                        {
+                    sd.sdmode = 0;
+              ###      if (sd.selectFileByPos(filePos, false))###
+              ###      {###
+             ###           if(sd.file.remove()) {###
+            ##            //if(sd.fat.remove(filename)) {###
                             Com::printFLN(Com::tFileDeleted);
-                        }
-                        BEEP_LONG
-                    }
-                    else
-                    {
-                        if( Printer::debugErrors() )
-                        {
-                            Com::printFLN(Com::tDeletionFailed);
+                            BEEP_LONG
+                            if(menuPos[menuLevel] > 0)
+                                menuPos[menuLevel]--;
+                            updateSDFileCount();
+                            break; //ok
                         }
                     }
+                    Com::printFLN(Com::tDeletionFailed);
+                    showError( (void*)ui_text_delete_file, (void*)ui_text_operation_denied );
                 }
                 break;
-            }
-        }
+            }*/
+        //}
         return;
     }
 #endif // SDSUPPORT
@@ -2914,7 +2898,7 @@ void UIDisplay::adjustMenuPos()
     UIMenu *men = (UIMenu*)menu[menuLevel];
     UIMenuEntry **entries = (UIMenuEntry**)pgm_read_word(&(men->entries));
     uint8_t mtype = HAL::readFlashByte((const prog_char*)&(men->menuType));
-    if(mtype != 2) return;
+    if(mtype != UI_MENU_TYPE_SUBMENU) return;
 
     while(menuPos[menuLevel]>0)
     {
@@ -2939,7 +2923,7 @@ void UIDisplay::adjustMenuPos()
     {
         skipped = 0;
         modified = false;
-        for(uint8_t r=menuTop[menuLevel]; r<menuPos[menuLevel]; r++)
+        for(uint8_t r = menuTop[menuLevel]; r < menuPos[menuLevel]; r++)
         {
             UIMenuEntry *ent =(UIMenuEntry *)pgm_read_word(&(entries[r]));
             if(!ent->showEntry())
@@ -3037,7 +3021,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
     (void)entType; //ignore unused error Nibbels
     int action = pgm_read_word(&(ent->action));
     
-    if(mtype==2 && activeAction==0)   // browse through menu items
+    if(mtype == UI_MENU_TYPE_SUBMENU && activeAction == 0)   // browse through menu items
     {
         if((UI_INVERT_MENU_DIRECTION && next < 0) || (!UI_INVERT_MENU_DIRECTION && next > 0))
         {
@@ -3087,36 +3071,36 @@ void UIDisplay::nextPreviousAction(int8_t next)
                 }
                 //down-to-top-Patch ende
         }
+        shift = -2; // reset shift position
         adjustMenuPos();
         return;
     }
 
 #if SDSUPPORT
-    if(mtype==1)   // SD listing
+    if(mtype == UI_MENU_TYPE_FILE_SELECTOR)   // SD listing
     {
-        if((UI_INVERT_MENU_DIRECTION && next<0) || (!UI_INVERT_MENU_DIRECTION && next>0))
-        {
-            if(menuPos[menuLevel]<nFilesOnCard) menuPos[menuLevel]++;
+        //Com::printF( PSTR( "SD listing: " ), menuPos[menuLevel] ); Com::printFLN( PSTR( " / " ), menuLevel );
+        if((UI_INVERT_MENU_DIRECTION && next < 0) || (!UI_INVERT_MENU_DIRECTION && next > 0)) {
+            menuPos[menuLevel] += 1;
+            if(menuPos[menuLevel] > nFilesOnCard) menuPos[menuLevel] = 0;
+        } else {
+            if(menuPos[menuLevel] > 0)
+                menuPos[menuLevel] -= 1;
+            else
+                menuPos[menuLevel] = nFilesOnCard;
         }
-        else if(menuPos[menuLevel]>0)
-        {
-            menuPos[menuLevel]--;
-
-            if( Printer::debugInfo() )
-            {
-                Com::printF( PSTR( "SD listing: " ), menuPos[menuLevel] );
-                Com::printFLN( PSTR( " / " ), menuLevel );
-            }
+        if(menuTop[menuLevel] > menuPos[menuLevel]) {
+            menuTop[menuLevel] = menuPos[menuLevel];
+        } else if(menuTop[menuLevel] + UI_ROWS <= menuPos[menuLevel]) {
+            menuTop[menuLevel] = (menuPos[menuLevel] + 1);
+            menuTop[menuLevel] -= static_cast<uint16_t>(UI_ROWS); // DO NOT COMBINE IN ONE LINE - WILL NOT COMPILE CORRECTLY THEN!
         }
-        if(menuTop[menuLevel]>menuPos[menuLevel])
-            menuTop[menuLevel]=menuPos[menuLevel];
-        else if(menuTop[menuLevel]+UI_ROWS-1<menuPos[menuLevel])
-            menuTop[menuLevel]=menuPos[menuLevel]+1-UI_ROWS;
-        return;
+        shift = -2; // reset shift position
+        return true;
     }
 #endif // SDSUPPORT
 
-    if(mtype==3) action = pgm_read_word(&(men->id));
+    if(mtype == UI_MENU_TYPE_MODIFICATION_MENU) action = pgm_read_word(&(men->id));
     else action=activeAction;
 
 #if UI_INVERT_INCREMENT_DIRECTION
@@ -4919,6 +4903,7 @@ void UIDisplay::executeAction(int action)
 #endif // NUM_EXTRUDER == 2
 
 #if SDSUPPORT
+/*
             case UI_ACTION_SD_DELETE:
             {
                 if(sd.sdactive)
@@ -4931,7 +4916,7 @@ void UIDisplay::executeAction(int action)
                 }
                 break;
             }
-
+*/
             case UI_ACTION_SD_PRINT:
             {
                 if(sd.sdactive)
@@ -4975,11 +4960,6 @@ void UIDisplay::executeAction(int action)
             case UI_ACTION_SD_MOUNT:
             {
                 sd.mount();
-                break;
-            }
-            case UI_ACTION_MENU_SDCARD:
-            {
-                pushMenu((void*)&ui_menu_sd,false);
                 break;
             }
 #endif // SDSUPPORT
@@ -5373,13 +5353,11 @@ void UIDisplay::slowAction()
 
     if(refresh)
     {
-        if (menuLevel > 1 || Printer::isAutomount())
-        {
+        if (menuLevel > 1 || Printer::isAutomount()) {
             shift++;
-            if(shift+UI_COLS>MAX_COLS+1)
+            if(shift + UI_COLS > MAX_COLS + 1)
                 shift = -2;
-        }
-        else
+        } else
             shift = -2;
 
         refreshPage();

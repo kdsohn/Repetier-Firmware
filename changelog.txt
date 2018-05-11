@@ -1,5 +1,14 @@
 TODO: Testing, testing ..
 
+V RF.01.41.21.Mod (2018-05-10) 
+- We now use the sdfat library with SD_FAT_VERSION "1.0.5" instead of the old "20130629". This new library has long filename support. https://github.com/greiman/SdFat/tree/master/src
+- The navigation down at the most bottom of a folder now leads to the top of the folder and otherwise around.
+- This special bug with the automount loop on failed mount attempts is now gone.
+- We now have plausible error messages when SD-Cards do not work.
+- Now all my SD-Cards work if they are formatted with FAT16 or FAT32. If you need FAT12_SUPPORT activate it in SdFatConfig.h (and pay some rom and ram). (Because Fat12/16/32 is examined by cluster count small cards <=16MB are identified as FAT12 -> They are not working.)
+# Deleting SD-files within menu is disabled for now. There was too much code confusion to make it right (using long filename support). [-> Who does really need this?]
+- Rightnow the RF2000 hides the static menu folder called "SD CARD" because we already have the automounted "Print File". And "Delete File" is not visible anymore.
+
 V RF.01.41.20.Mod (2018-04-14) 
 - fix that the printer forgot to load eeprom saved stepper currents since ~1.41.13
 

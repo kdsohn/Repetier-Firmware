@@ -44,7 +44,7 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
 
 /** \brief Define the type of your device */
 //#define MOTHERBOARD                         DEVICE_TYPE_RF1000
-//#define MOTHERBOARD                         DEVICE_TYPE_RF2000
+#define MOTHERBOARD                         DEVICE_TYPE_RF2000
 //#define MOTHERBOARD                         DEVICE_TYPE_RF2000v2
 
 #ifndef MOTHERBOARD
@@ -841,7 +841,7 @@ and it is elsewise difficult to know, what your reprap is currently doing. */
 #define DEFAULT_MOVE_MODE_Z                 MOVE_MODE_SINGLE_STEPS
 
 /** \brief For Nibbels external interrupt 3 plus an extra pin is used for reading digital calipers. You will have to solder some logic-converter from 1.8v to 5v see http://www.instructables.com/id/Reading-Digital-Callipers-with-an-Arduino-USB/ */
-#define FEATURE_READ_CALIPER               0                                                   // 0 = OFF, 1 = ON
+#define FEATURE_READ_CALIPER               1                                                   // 0 = OFF, 1 = ON
 #define FEATURE_READ_CALIPER_INT_PIN       RESERVE_DIGITAL_PIN_PD3                             // RF2000/RF1000: RESERVE_DIGITAL_PIN_PD3 is INT3 for having clocks falling edges collected
 #define FEATURE_READ_CALIPER_DATA_PIN      RESERVE_DIGITAL_PIN_PE4                             // RF2000: RESERVE_DIGITAL_PIN_PE4 is some reserve pin for reading off data while clocks falling edge.
 #if FEATURE_READ_CALIPER && MOTHERBOARD == DEVICE_TYPE_RF1000 && FEATURE_READ_CALIPER_DATA_PIN == RESERVE_DIGITAL_PIN_PE4
@@ -857,7 +857,7 @@ You can activate this to 1 and connect some Button. If you connect ground to pul
 #endif
 
 /** beta!!! Nibbels/PeterKA only!!! -> Testfeature: It can check if you lost steps and test your buttons hysteresis */
-#define FEATURE_CHECK_HOME                  0
+#define FEATURE_CHECK_HOME                  1
 
 /** \brief This adds some GCode M3029 to simulate Key-Press by GCode and to read whats inside the printers Display rightnow. */
 #define FEATURE_SEE_DISPLAY                 1
@@ -866,7 +866,7 @@ You can activate this to 1 and connect some Button. If you connect ground to pul
 #define FEATURE_VISCOSITY_TEST              0
 
 /** \brief This is some testing function for reading the stepper drivers status bits while operation */
-#define FEATURE_READ_STEPPER_STATUS         0
+#define FEATURE_READ_STEPPER_STATUS         1
 
 /** \brief Automatic Startline */
 #define FEATURE_STARTLINE                   1
