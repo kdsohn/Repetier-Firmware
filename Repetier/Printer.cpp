@@ -215,6 +215,10 @@ unsigned char   Printer::wrongType;
 unsigned char   Printer::g_unlock_movement = 0;
 #endif //FEATURE_UNLOCK_MOVEMENT
 
+#if FEATURE_SENSIBLE_PRESSURE
+bool            Printer::g_senseoffset_autostart = false;
+#endif //FEATURE_SENSIBLE_PRESSURE
+
 uint8_t         Printer::motorCurrent[DRV8711_NUM_CHANNELS] = {0};
 
 #if FEATURE_ZERO_DIGITS
@@ -1236,11 +1240,15 @@ void Printer::GoToMemoryPosition(bool x,bool y,bool z,bool e,float feed)
 
 #if FEATURE_SENSIBLE_PRESSURE
 void Printer::enableSenseOffsetnow( void ){
-        short oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_DIGITS);
-        if ( oldval > 0 && oldval < EMERGENCY_PAUSE_DIGITS_MAX ){
-            g_nSensiblePressureDigits = oldval;
-        }
+    short oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_DIGITS);
+    if ( oldval > 0 && oldval < EMERGENCY_PAUSE_DIGITS_MAX ){
+        g_nSensiblePressureDigits = oldval;
     }
+    oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_OFFSET_MAX);
+    if( oldval > 0 && oldval < 300 ){
+       g_nSensiblePressureOffsetMax = oldval;
+    }
+}
 #endif // FEATURE_SENSIBLE_PRESSURE
 
 void Printer::enableCMPnow( void ){

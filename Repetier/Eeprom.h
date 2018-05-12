@@ -154,6 +154,8 @@ have problems with other modules using the eeprom */
 
 #define EPR_ZSCAN_START_MM                1949 //[+1950+1951+1952 4byte float]
 
+#define EPR_RF_MOD_SENSEOFFSET_AUTOSTART  1953 //[1byte]
+
 //Nibbels: Computechecksum geht bis 2047
 
 #define EEPROM_EXTRUDER_OFFSET          200

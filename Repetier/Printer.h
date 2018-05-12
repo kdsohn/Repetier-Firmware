@@ -227,6 +227,10 @@ public:
     static unsigned char    g_unlock_movement;
 #endif //FEATURE_UNLOCK_MOVEMENT
 
+#if FEATURE_SENSIBLE_PRESSURE
+    static bool             g_senseoffset_autostart;
+#endif //FEATURE_SENSIBLE_PRESSURE
+
     static uint8_t          motorCurrent[DRV8711_NUM_CHANNELS];
 
 #if FEATURE_ZERO_DIGITS

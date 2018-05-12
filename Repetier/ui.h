@@ -201,6 +201,10 @@
 #define UI_ACTION_MICROSTEPS_Z              1708
 #define UI_ACTION_MICROSTEPS_E              1709
 
+#define UI_ACTION_SENSEOFFSET_DIGITS        1710
+#define UI_ACTION_SENSEOFFSET_MAX           1711
+#define UI_ACTION_SENSEOFFSET_AUTOSTART     1712
+
 #define UI_ACTION_FET1_OUTPUT               2001
 #define UI_ACTION_FET2_OUTPUT               2002
 

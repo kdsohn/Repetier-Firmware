@@ -24,7 +24,7 @@
 #define UI_PRINTER_NAME                     "RF2000"
 
 /** \brief Number of extruders */
-#define NUM_EXTRUDER                        1                                                   // 1 = Single, 2 = Dual
+#define NUM_EXTRUDER                        2                                                   // 1 = Single, 2 = Dual
 
 // ##########################################################################################
 // ##   main hardware configuration
@@ -35,7 +35,7 @@
 #endif // FEATURE_DITTO_PRINTING && NUM_EXTRUDER!=2
 
 /** \brief Allows to use the device for milling */
-#define FEATURE_MILLING_MODE                0                                                   // 1 = on, 0 = off
+#define FEATURE_MILLING_MODE                1                                                   // 1 = on, 0 = off
 
 #if FEATURE_MILLING_MODE
 
@@ -607,9 +607,9 @@ A good start is 30 lower then the optimal value. You need to leave room for cool
 // ##   Configuration of the 4. temperature sensor
 // ##########################################################################################
 
-/** \brief Analog pin of analog sensor to read temperature of heated bed.  */
+/** \brief Analog pin of analog sensor to read temperature of the RF2000's optional sensor port.  */
 #define RESERVE_ANALOG_TEMP_PIN             TEMP_3_PIN
-//Thermistor NTC 3950 100k Ohm
+//14 passt für Thermistor NTC 3950 100k Ohm
 #define RESERVE_ANALOG_SENSOR_TYPE          14 
 
 #define RESERVE_ANALOG_INPUTS               1
@@ -847,15 +847,13 @@ for some printers causing an early stall. */
 /** \brief Number of moves we can cache in advance.
 This number of moves can be cached in advance. If you wan't to cache more, increase this. Especially on
 many very short moves the cache may go empty. The minimum value is 5. */
-#define MOVE_CACHE_SIZE                     19
-//#define MOVE_CACHE_SIZE                     25
+#define MOVE_CACHE_SIZE                     17
 
 /** \brief Low filled cache size.
 If the cache contains less then MOVE_CACHE_LOW segments, the time per segment is limited to LOW_TICKS_PER_MOVE clock cycles.
 If a move would be shorter, the feedrate will be reduced. This should prevent buffer underflows. Set this to 0 if you
 don't care about empty buffers during print. */
-#define MOVE_CACHE_LOW                      16
-//#define MOVE_CACHE_LOW                      20
+#define MOVE_CACHE_LOW                      14
 
 /** \brief Cycles per move, if move cache is low.
 This value must be high enough, that the buffer has time to fill up. The problem only occurs at the beginning of a print or

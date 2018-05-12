@@ -1,5 +1,9 @@
 TODO: Testing, testing ..
 
+V RF.01.41.22.Mod (2018-05-12)
+- SenseOffset EEPROM-Values can now be adjusted in Menu -> Configuration -> DMS-Features.
+- SenseOffset now has an "Auto-Start" within Menu->Configuration->DMS-Features->SenseOffset. This means that if you home and activate M3001 Z-Compensation then SenseOffset will automatically start. It then uses the last chosen values within EEPROM. (As Example: 3300 digits and 150um max. drivedown). Using that "Auto-Start" in your startcode M3909 is not necessary anymore. 
+
 V RF.01.41.21.Mod (2018-05-10) 
 - We now use the sdfat library with SD_FAT_VERSION "1.0.5" instead of the old "20130629". This new library has long filename support. https://github.com/greiman/SdFat/tree/master/src
 - The navigation down at the most bottom of a folder now leads to the top of the folder and otherwise around.

@@ -1827,6 +1827,24 @@ void UIDisplay::parse(char *txt,bool ram)
                     }
 #endif // FEATURE_SENSIBLE_PRESSURE
                 }
+                if(c2=='m')                                                                             // %sm : State of the sensible pressure in eeprom
+                {
+#if FEATURE_SENSIBLE_PRESSURE
+                    addInt(HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_DIGITS),5);
+#endif // FEATURE_SENSIBLE_PRESSURE
+                }
+                if(c2=='o')                                                                             // %so : State of the sensible pressure maxoffset in eeprom
+                {
+#if FEATURE_SENSIBLE_PRESSURE
+                    addInt(HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_OFFSET_MAX),5);
+#endif // FEATURE_SENSIBLE_PRESSURE
+                }
+                if(c2=='a')                                                                             // %sa : State of the sensible pressure autostarter
+                {
+#if FEATURE_SENSIBLE_PRESSURE
+                    addStringP(Printer::g_senseoffset_autostart ? ui_text_on : ui_text_off);
+#endif // FEATURE_SENSIBLE_PRESSURE
+                }
                 
                 if(c2=='1')                                                                             // %s1 : current value of the strain gauge
                 {
@@ -3898,6 +3916,30 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
 #endif //FEATURE_EMERGENCY_STOP_ALL
 
+#if FEATURE_SENSIBLE_PRESSURE
+        case UI_ACTION_SENSEOFFSET_DIGITS:
+        {
+            short oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_DIGITS);
+            INCREMENT_MIN_MAX(oldval,100,500,EMERGENCY_PAUSE_DIGITS_MAX);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetInt16( EPR_RF_MOD_SENSEOFFSET_DIGITS, oldval );
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+        case UI_ACTION_SENSEOFFSET_MAX:
+        {
+            short oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_OFFSET_MAX);
+            INCREMENT_MIN_MAX(oldval,10,10,300);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetInt16( EPR_RF_MOD_SENSEOFFSET_OFFSET_MAX, oldval );
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+#endif //FEATURE_SENSIBLE_PRESSURE
+
+
         case UI_ACTION_CHOOSE_DMIN:
         {
             if(menuLevel == 4){ //identifikation des temperaturzyklus anhand der position im menü. Das ist nicht 100% sauber, aber funktioniert.
@@ -5181,11 +5223,21 @@ void UIDisplay::executeAction(int action)
                 break;
             }
     #endif // FEATURE_DIGIT_Z_COMPENSATION
-
+    #if FEATURE_SENSIBLE_PRESSURE
+            case UI_ACTION_SENSEOFFSET_AUTOSTART:
+            {
+                Printer::g_senseoffset_autostart = (Printer::g_senseoffset_autostart ? false : true);
+    #if FEATURE_AUTOMATIC_EEPROM_UPDATE
+                HAL::eprSetByte(EPR_RF_MOD_SENSEOFFSET_AUTOSTART, (int8_t)Printer::g_senseoffset_autostart);
+                EEPROM::updateChecksum();
+    #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+                break;
+            }
+    #endif //FEATURE_SENSIBLE_PRESSURE
 #if FEATURE_HEAT_BED_Z_COMPENSATION
             case UI_ACTION_RF_DO_MHIER_BED_SCAN:
-            {           
-                //macht an, wenn an, macht aus:         
+            {
+                //macht an, wenn an, macht aus:
                 startZOScan();
                 //gehe zurück und zeige dem User was passiert.
                 exitmenu();
@@ -5194,8 +5246,8 @@ void UIDisplay::executeAction(int action)
                 break;
             }
             case UI_ACTION_RF_DO_MHIER_AUTO_MATRIX_LEVELING:
-            {           
-                //macht an, wenn an, macht aus:         
+            {
+                //macht an, wenn an, macht aus:
                 startZOScan(true); //Scan aber an vielen Punkten und Gewichtet.
                 //gehe zurück und zeige dem User was passiert.
                 exitmenu();
