@@ -2111,6 +2111,59 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
                 break;
             }
+#if FEATURE_Kurt67_WOBBLE_FIX
+            case 'w': //wobblefix
+            {
+                if(c2=='x')                                                                             // %wx : current wobblefix offset in x [um] (Bauchtanz)
+                {
+                    addInt(Printer::wobblefixOffset[X_AXIS],4);
+                    break;
+                }
+                else if(c2=='y')                                                                        // %wy : current wobblefix offset in y [um] (Bauchtanz)
+                {
+                    addInt(Printer::wobblefixOffset[Y_AXIS],4);
+                    break;
+                }
+                /*
+                else if(c2=='z')                                                                        // %wz : current wobblefix offset in z [um] (Hub)
+                {
+                    addInt(Printer::wobblefixOffset[Z_AXIS],4);
+                    break;
+                }*/
+                else if(c2=='a')                                                                        // %wa : current wobblefix amplitude for X
+                {
+                    addInt(Printer::wobbleAmplitudes[0],4);
+                    break;
+                }
+                else if(c2=='b')                                                                        // %wb : current wobblefix amplitude for Y(x_0)
+                {
+                    addInt(Printer::wobbleAmplitudes[1],4);
+                    break;
+                }
+                else if(c2=='c')                                                                        // %wc : current wobblefix amplitude for Y(x_245)
+                {
+                    addInt(Printer::wobbleAmplitudes[2],4);
+                    break;
+                }/*
+                else if(c2=='d')                                                                        // %wd : current wobblefix amplitude for Z-lift
+                {
+                    addInt(Printer::wobbleAmplitudes[3],4);
+                    break;
+                }
+                else if(c2=='p')                                                                        // %wp : current wobblefix phase for Z-lift (Hub)
+                {
+                    addInt(Printer::wobblePhaseZ,4);
+                    break;
+                }*/
+                else if(c2=='P')                                                                        // %wP : current wobblefix phase for YX-wobble (Bauchtanz)
+                {
+                    addInt(Printer::wobblePhaseXY,4);
+                    break;
+                }
+                
+                break;
+            }
+#endif //FEATURE_Kurt67_WOBBLE_FIX
             case 'Z':                                                                                   // %Z1-Z4: Page5 service intervall, %Z5-Z8: Page4 printing/milling time
             {
                 if(c2=='1')                                                                             // Shows text printing/milling time since last service
@@ -3939,6 +3992,57 @@ void UIDisplay::nextPreviousAction(int8_t next)
         }
 #endif //FEATURE_SENSIBLE_PRESSURE
 
+#if FEATURE_Kurt67_WOBBLE_FIX
+        //Antibauchtanz:
+        case UI_ACTION_WOBBLE_FIX_PHASEXY:
+        {
+            INCREMENT_MIN_MAX(Printer::wobblePhaseXY,1,-100,100);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetByte( EPR_RF_MOD_WOBBLE_FIX_PHASEXY, Printer::wobblePhaseXY );
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+        case UI_ACTION_WOBBLE_FIX_AMPX:
+        {
+            INCREMENT_MIN_MAX(Printer::wobbleAmplitudes[0],5,-995,995);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetInt16( EPR_RF_MOD_WOBBLE_FIX_AMPX, Printer::wobbleAmplitudes[0] );
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+        case UI_ACTION_WOBBLE_FIX_AMPY1:
+        {
+            INCREMENT_MIN_MAX(Printer::wobbleAmplitudes[1],5,-995,995);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetInt16( EPR_RF_MOD_WOBBLE_FIX_AMPY1, Printer::wobbleAmplitudes[1] );
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+        case UI_ACTION_WOBBLE_FIX_AMPY2:
+        {
+            INCREMENT_MIN_MAX(Printer::wobbleAmplitudes[2],5,-995,995);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetInt16( EPR_RF_MOD_WOBBLE_FIX_AMPY2, Printer::wobbleAmplitudes[2] );
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+        //Antikippeln:
+        /*
+        case UI_ACTION_WOBBLE_FIX_PHASEZ:
+        {
+            INCREMENT_MIN_MAX(Printer::wobblePhaseZ,1,-100,100);
+            break;
+        }
+        case UI_ACTION_WOBBLE_FIX_AMPZ:
+        {
+            INCREMENT_MIN_MAX(Printer::wobbleAmplitudes[3],5,-995,995);
+            break;
+        }*/
+#endif //FEATURE_Kurt67_WOBBLE_FIX
 
         case UI_ACTION_CHOOSE_DMIN:
         {

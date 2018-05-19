@@ -242,6 +242,13 @@ public:
     static uint8_t          motorMicroStepsModeValue[DRV8711_NUM_CHANNELS]; //1=2MS, 2=4MS, 3=8MS, 4=16MS, 5=32MS, 6=64MS, 7=128MS, 8=256MS
 #endif // FEATURE_ADJUSTABLE_MICROSTEPS
 
+#if FEATURE_Kurt67_WOBBLE_FIX
+    static int8_t           wobblePhaseXY;
+    //static int8_t           wobblePhaseZ;
+    static int16_t          wobbleAmplitudes[3/*4*/]; //X, Y(X_0), Y(X_max), /*Z*/
+    static float            wobblefixOffset[2/*3*/];  //< last calculated target wobbleFixOffsets for display output.
+#endif // FEATURE_Kurt67_WOBBLE_FIX
+
     static INLINE void setMenuMode(uint8_t mode,bool on)
     {
         if(on)
@@ -929,7 +936,7 @@ public:
     {
         markAllSteppersDisabled();
 #if FEATURE_UNLOCK_MOVEMENT
-        //Printer::g_unlock_movement = 0; //again lock movement until homing or keypress or another print happens. --> toooooo much?
+        Printer::g_unlock_movement = 0; //again lock movement until homing or keypress or another print happens. --> toooooo much? Ich aktiviers: http://www.rf1000.de/viewtopic.php?f=70&t=2282
 #endif //FEATURE_UNLOCK_MOVEMENT
         disableXStepper();
         disableYStepper();

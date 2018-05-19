@@ -871,4 +871,7 @@ You can activate this to 1 and connect some Button. If you connect ground to pul
 /** \brief Automatic Startline */
 #define FEATURE_STARTLINE                   1
 
+/** \brief Automatic Startline */
+#define FEATURE_Kurt67_WOBBLE_FIX           0
+
 #endif // CONFIGURATION_H

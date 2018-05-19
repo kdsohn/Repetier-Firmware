@@ -231,6 +231,16 @@ short           Printer::g_pressure_offset = 0;
 uint8_t         Printer::motorMicroStepsModeValue[DRV8711_NUM_CHANNELS] = {0}; //init later because of recalculation of value
 #endif // FEATURE_ADJUSTABLE_MICROSTEPS
 
+#if FEATURE_Kurt67_WOBBLE_FIX
+
+int8_t Printer::wobblePhaseXY = 0; //+100 = +PI | -100 = -PI
+//int8_t Printer::wobblePhaseZ  = 0; //+100 = +PI | -100 = -PI
+int16_t Printer::wobbleAmplitudes[3/*4*/] = {0}; //X, Y(X_0), Y(X_max), /*Z*/
+float   Printer::wobblefixOffset[2/*3*/] = {0};                       ///< last calculated target wobbleFixOffsets for display output.
+
+#endif // FEATURE_Kurt67_WOBBLE_FIX
+
+
 void Printer::constrainQueueDestinationCoords()
 {
     if(isNoDestinationCheck()) return;
@@ -549,6 +559,51 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
     x = queuePositionCommandMM[X_AXIS] + Printer::extruderOffset[X_AXIS];
     y = queuePositionCommandMM[Y_AXIS] + Printer::extruderOffset[Y_AXIS];
     z = queuePositionCommandMM[Z_AXIS] + Printer::extruderOffset[Z_AXIS];
+
+#if FEATURE_Kurt67_WOBBLE_FIX
+
+    /*
+    Zielkoordinate in Z ist: "z"
+    Wir fügen beim Umrechnen in Steps vorher noch ein Offset in XYZ ein.
+    offsetZ = amplitude des hubs                     * drehposition spindel
+    offsetY = amplitude in Richtung Y linke Spindel  * drehposition spindel
+    offsetY = amplitude in Richtung Y rechte Spindel * drehposition spindel
+    offsetX = amplitude in Richtung X                * drehposition spindel
+
+    "sinOffset = amplitude * sin( 2*Pi*(Z/5mm + zStartOffset) );"
+    */
+    
+    //vorausgerechnete konstanten.
+    float zweiPi              = 6.2832f;   //2*Pi
+    float hundertstelPi       = 0.031428f; //Pi/100
+    float spindelSteigung     = 5.0f;      //[mm]
+    
+    //wobble durch Bauchtanz der Druckplatte
+    //wobbleX oder wobbleY(x0) oder wobbleX(x245)
+    if(Printer::wobbleAmplitudes[0] || Printer::wobbleAmplitudes[1] || Printer::wobbleAmplitudes[2]){
+        float anglePositionWobble = sin(zweiPi*(z/spindelSteigung + (float)Printer::wobblePhaseXY * hundertstelPi ));
+        //für das wobble in Richtung X-Achse gilt immer dieselbe Amplitude, weil im extremfall beide gegeneinander arbeiten und sich aufheben könnten, oder die Spindeln arbeiten zusammen.
+        Printer::wobblefixOffset[X_AXIS] = Printer::wobbleAmplitudes[0] * anglePositionWobble;
+        x += Printer::wobblefixOffset[X_AXIS]/1000;  //offset in [um] -> kosys in [mm]
+        
+        //gilt eher die Y-Achsen-Richtung-Amplitude links (x=0) oder rechts (x=achsenlänge)? (abhängig von der ziel-x-position wird anteilig verrechnet.)
+        float xPosPercent = x/Printer::lengthMM[X_AXIS];
+        Printer::wobblefixOffset[Y_AXIS] = ((1-xPosPercent) * Printer::wobbleAmplitudes[1] + (xPosPercent) * Printer::wobbleAmplitudes[2]) * anglePositionWobble;
+        y += Printer::wobblefixOffset[Y_AXIS]/1000;  //offset in [um] -> kosys in [mm]
+    }
+/*
+    //wobble durch Kippeln mit Hebel -> Z-Hub
+    //wobbleZ
+    if(Printer::wobbleAmplitudes[3]){
+        float anglePositionLift   = sin(zweiPi*(z/spindelSteigung + (float)Printer::wobblePhaseZ  * hundertstelPi )); //phase von +-100% -> +-Pi
+        Printer::wobblefixOffset[Z_AXIS] = Printer::wobbleAmplitudes[3] * anglePositionLift;
+        //z kippel-wobble nur mit etwas Abstand überhalb senseoffset ausgleichen. Drunter könnte das stören.
+        if(z > fabs(Printer::wobblefixOffset[Z_AXIS])+AUTOADJUST_STARTMADEN_AUSSCHLUSS){
+            z += Printer::wobblefixOffset[Z_AXIS]/1000;  //offset in [um] -> kosys in [mm]
+        }
+    }
+*/
+#endif // FEATURE_Kurt67_WOBBLE_FIX
 
     long xSteps = static_cast<long>(floor(x * axisStepsPerMM[X_AXIS] + 0.5f));
     long ySteps = static_cast<long>(floor(y * axisStepsPerMM[Y_AXIS] + 0.5f));

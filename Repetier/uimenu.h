@@ -175,6 +175,16 @@ List of placeholder:
 %Z1-Z4: Page5 service intervall
 %Z5-Z8: Page4 printing/milling time
 
+%wx : current wobblefix offset in x [um] (Bauchtanz)
+%wy : current wobblefix offset in y [um] (Bauchtanz)
+%wz : current wobblefix offset in z [um] (Hub)
+%wa : current wobblefix amplitude for X
+%wb : current wobblefix amplitude for Y(x_0)
+%wc : current wobblefix amplitude for Y(x_245)
+%wd : current wobblefix amplitude for Z-lift
+%wp : current wobblefix phase for Z-lift (Hub)
+%wP : current wobblefix phase for YX-wobble (Bauchtanz)
+
 %MX : Motorcurrent X
 %MY : Motorcurrent Y
 %MZ : Motorcurrent Z
@@ -293,15 +303,37 @@ for 2 row displays. You can add additional pages or change the default pages lik
                                 "eCMP: %LP%%%@Z:%LC" /*6+LP%5+"@Z:"3+6:*/
                                 )
     #endif
+    
     #define UI_MOD2_PAGES , &ui_page_mod2
     #define UI_MOD2_COUNT 1
     
+    #if FEATURE_Kurt67_WOBBLE_FIX
+        #if UI_COLS<=16
+            UI_PAGE4(ui_page_mod_wobble,  "Off:X%wxY%wy", /*%wz*/
+                                          "X:A%waum ",
+                                          "Y:A%wb..%wcum",
+                                          "Phase:%wP%%%Pi"/* "Z:A%wdumP%wp%%%"*/
+                                    )
+        #else
+            UI_PAGE4(ui_page_mod_wobble,  "OffsetX:%wxY:%wyum", /* %wz*/
+                                          "X:A%waum",
+                                          "Y:A%wb..%wcum",
+                                          "PhaseXY:%wP%%%Pi"/* "Z:A%wdum Pz:%wp%%%" */
+                                    )
+        #endif
+        #define UI_MODWobble_PAGE , &ui_page_mod_wobble
+        #define UI_MODWobble_COUNT 1
+    #else
+        #define UI_MODWobble_PAGE 
+        #define UI_MODWobble_COUNT 0
+    #endif
+    
     /* Merge pages together. Use the following pattern:
     #define UI_PAGES {&name1,&name2,&name3} */
-    #define UI_PAGES {&ui_page1 UI_MOD_PAGES, &ui_page2, &ui_page3 UI_PRINTTIME_PAGES UI_SERVICE_PAGES UI_MOD2_PAGES}
+    #define UI_PAGES {&ui_page1 UI_MOD_PAGES, &ui_page2, &ui_page3 UI_PRINTTIME_PAGES UI_SERVICE_PAGES UI_MOD2_PAGES UI_MODWobble_PAGE}
 
     // How many pages do you want to have. Minimum is 1.
-    #define UI_NUM_PAGES 3+UI_PRINTTIME_COUNT+UI_SERVICE_COUNT+UI_MOD_COUNT+UI_MOD2_COUNT
+    #define UI_NUM_PAGES 3+UI_PRINTTIME_COUNT+UI_SERVICE_COUNT+UI_MOD_COUNT+UI_MOD2_COUNT+UI_MODWobble_COUNT
 #endif // UI_ROWS>=4
 
 /* ============ MENU definition ================
@@ -831,6 +863,28 @@ UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_extruder_offset_y,UI_TEXT_EXTRUDER_OFFSET_
 #define EXTRUDER_OFFSET_TYPE_COUNT_XY 0
 #endif // NUM_EXTRUDER>1
 
+/** \brief Configuration->WobbleFix-> */
+#if FEATURE_Kurt67_WOBBLE_FIX
+
+ UI_MENU_CHANGEACTION( ui_menu_wobble_fix_pxy , UI_TEXT_WOBBLE_FIX_PHASEXY, UI_ACTION_WOBBLE_FIX_PHASEXY )
+ UI_MENU_CHANGEACTION( ui_menu_wobble_fix_ax  , UI_TEXT_WOBBLE_FIX_AMPX,    UI_ACTION_WOBBLE_FIX_AMPX )
+ UI_MENU_CHANGEACTION( ui_menu_wobble_fix_ay1 , UI_TEXT_WOBBLE_FIX_AMPY1,   UI_ACTION_WOBBLE_FIX_AMPY1 )
+ UI_MENU_CHANGEACTION( ui_menu_wobble_fix_ay2 , UI_TEXT_WOBBLE_FIX_AMPY2,   UI_ACTION_WOBBLE_FIX_AMPY2 )
+ /*
+ UI_MENU_CHANGEACTION( ui_menu_wobble_fix_pz  , UI_TEXT_WOBBLE_FIX_PHASEZ,  UI_ACTION_WOBBLE_FIX_PHASEZ )
+ UI_MENU_CHANGEACTION( ui_menu_wobble_fix_az  , UI_TEXT_WOBBLE_FIX_AMPZ,    UI_ACTION_WOBBLE_FIX_AMPZ )
+*/
+ #define UI_MENU_WOBBLE {UI_MENU_ADDCONDBACK &ui_menu_wobble_fix_pxy, &ui_menu_wobble_fix_ax, &ui_menu_wobble_fix_ay1, &ui_menu_wobble_fix_ay2 /*, &ui_menu_wobble_fix_pz, &ui_menu_wobble_fix_az*/  }
+ UI_MENU(ui_menu_wobble_fix,UI_MENU_WOBBLE,UI_MENU_BACKCNT+4 /*+2*/)
+
+ /** \brief Configuration->WobbleFix menu */
+ UI_MENU_SUBMENU(ui_menu_conf_wobble, UI_TEXT_WOBBLE, ui_menu_wobble_fix)
+ #define UI_MENU_CONFIGURATION_WOBBLE_COND &ui_menu_conf_wobble,
+ #define UI_MENU_CONFIGURATION_WOBBLE_COUNT 1
+#else //not FEATURE_Kurt67_WOBBLE_FIX
+ #define UI_MENU_CONFIGURATION_WOBBLE_COND 
+ #define UI_MENU_CONFIGURATION_WOBBLE_COUNT 0
+#endif //FEATURE_Kurt67_WOBBLE_FIX
 
 /** \brief Configuration->DMS-Features->SenseOffset */
 #if FEATURE_SENSIBLE_PRESSURE
@@ -866,7 +920,6 @@ UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_extruder_offset_y,UI_TEXT_EXTRUDER_OFFSET_
  #define UI_MENU_CONFIGURATION_EMERGENCY_PAUSE_COND 
  #define UI_MENU_CONFIGURATION_EMERGENCY_PAUSE_COUNT 0
 #endif //FEATURE_EMERGENCY_PAUSE
-
 
 /** \brief Configuration->DMS-Features->Emergency Z-Stop */
 #if FEATURE_EMERGENCY_STOP_ALL
@@ -1053,8 +1106,8 @@ UI_MENU_SUBMENU(ui_menu_z_calibration, UI_TEXT_ZCALIB,         ui_menu_z)
 UI_MENU_ACTION4C(ui_menu_restore_defaults_ack,UI_ACTION_RESTORE_DEFAULTS,UI_TEXT_RESTORE_DEFAULTS4)
 UI_MENU_ACTIONSELECTOR_FILTER(ui_menu_restore_defaults,UI_TEXT_RESTORE_DEFAULTS,ui_menu_restore_defaults_ack, 0, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED)
 
-#define UI_MENU_CONFIGURATION {UI_MENU_ADDCONDBACK &ui_menu_conf_general, &ui_menu_z_calibration, UI_MENU_CONFIGURATION_DMS_COND UI_MENU_CONFIGURATION_FAN_COND &ui_menu_conf_pid, &ui_menu_conf_motor, &ui_menu_conf_accel, UI_MENU_ACCEL_MILL_COND &ui_menu_conf_feed,  &ui_menu_restore_defaults }
-UI_MENU(ui_menu_configuration,UI_MENU_CONFIGURATION,UI_MENU_BACKCNT+1+1+UI_MENU_CONFIGURATION_DMS_COUNT+UI_MENU_CONFIGURATION_FAN_COUNT+5+UI_MENU_ACCEL_MILL_COUNT)
+#define UI_MENU_CONFIGURATION {UI_MENU_ADDCONDBACK &ui_menu_conf_general, &ui_menu_z_calibration, UI_MENU_CONFIGURATION_DMS_COND UI_MENU_CONFIGURATION_WOBBLE_COND UI_MENU_CONFIGURATION_FAN_COND &ui_menu_conf_pid, &ui_menu_conf_motor, &ui_menu_conf_accel, UI_MENU_ACCEL_MILL_COND &ui_menu_conf_feed,  &ui_menu_restore_defaults }
+UI_MENU(ui_menu_configuration,UI_MENU_CONFIGURATION,UI_MENU_BACKCNT+1+1+UI_MENU_CONFIGURATION_DMS_COUNT+UI_MENU_CONFIGURATION_FAN_COUNT+5+UI_MENU_ACCEL_MILL_COUNT+UI_MENU_CONFIGURATION_WOBBLE_COUNT)
 
 /** \brief Main menu */
 UI_MENU_SUBMENU(ui_menu_main1, UI_TEXT_QUICK_SETTINGS,  ui_menu_quick)
