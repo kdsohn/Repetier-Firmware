@@ -3167,7 +3167,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
             menuTop[menuLevel] -= static_cast<uint16_t>(UI_ROWS); // DO NOT COMBINE IN ONE LINE - WILL NOT COMPILE CORRECTLY THEN!
         }
         shift = -2; // reset shift position
-        return true;
+        return;
     }
 #endif // SDSUPPORT
 
