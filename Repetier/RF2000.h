@@ -607,9 +607,9 @@ A good start is 30 lower then the optimal value. You need to leave room for cool
 // ##   Configuration of the 4. temperature sensor
 // ##########################################################################################
 
-/** \brief Analog pin of analog sensor to read temperature of heated bed.  */
+/** \brief Analog pin of analog sensor to read temperature of the RF2000's optional sensor port.  */
 #define RESERVE_ANALOG_TEMP_PIN             TEMP_3_PIN
-//Thermistor NTC 3950 100k Ohm
+//14 passt für Thermistor NTC 3950 100k Ohm
 #define RESERVE_ANALOG_SENSOR_TYPE          14 
 
 #define RESERVE_ANALOG_INPUTS               1

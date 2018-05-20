@@ -47,7 +47,7 @@
 #define UI_ACTION_EPOSITION                 1008
 #define UI_ACTION_BED_TEMP                  1009
 #define UI_ACTION_EXTRUDER_TEMP             1010
-#define UI_ACTION_SD_DELETE                 1012
+//#define UI_ACTION_SD_DELETE                 1012
 #define UI_ACTION_SD_PRINT                  1013
 #define UI_ACTION_SD_PAUSE                  1014
 #define UI_ACTION_SD_CONTINUE               1015
@@ -201,6 +201,18 @@
 #define UI_ACTION_MICROSTEPS_Z              1708
 #define UI_ACTION_MICROSTEPS_E              1709
 
+#define UI_ACTION_SENSEOFFSET_DIGITS        1710
+#define UI_ACTION_SENSEOFFSET_MAX           1711
+#define UI_ACTION_SENSEOFFSET_AUTOSTART     1712
+
+#define UI_ACTION_WOBBLE_FIX_PHASEXY        1713
+#define UI_ACTION_WOBBLE_FIX_PHASEZ         1714
+#define UI_ACTION_WOBBLE_FIX_AMPX           1715
+#define UI_ACTION_WOBBLE_FIX_AMPY1          1716
+#define UI_ACTION_WOBBLE_FIX_AMPY2          1717
+#define UI_ACTION_WOBBLE_FIX_AMPZ           1718
+
+
 #define UI_ACTION_FET1_OUTPUT               2001
 #define UI_ACTION_FET2_OUTPUT               2002
 
@@ -211,7 +223,6 @@
 #define UI_ACTION_MENU_XPOSFAST             4003
 #define UI_ACTION_MENU_YPOSFAST             4004
 #define UI_ACTION_MENU_ZPOSFAST             4005
-#define UI_ACTION_MENU_SDCARD               4006
 #define UI_ACTION_MENU_QUICKSETTINGS        4007
 #define UI_ACTION_MENU_EXTRUDER             4008
 #define UI_ACTION_MENU_POSITIONS            4009
@@ -231,6 +242,12 @@
 // Load basic language definition to make sure all values are defined
 #include "uilang.h"
 
+//mtype usw.
+#define UI_MENU_TYPE_INFO 0
+#define UI_MENU_TYPE_FILE_SELECTOR 1
+#define UI_MENU_TYPE_SUBMENU 2
+#define UI_MENU_TYPE_MODIFICATION_MENU 3
+#define UI_MENU_TYPE_WIZARD 5
 
 typedef struct
 {
@@ -417,9 +434,9 @@ public:
     float               lastNextAccumul;            // Accumulated value
     unsigned int        outputMask;                 // Output mask for backlight, leds etc.
     int                 repeatDuration;             // Time beween to actions if autorepeat is enabled
-    int8_t              oldMenuLevel;
     uint8_t             encoderStartScreen;
     char                statusMsg[MAX_COLS + 1];
+    char                printCols[MAX_COLS + 1];
     int8_t              encoderPos;
     int8_t              encoderLast;
     PGM_P               statusText;

@@ -20,12 +20,23 @@
 #define UI_LANG_H
 
 #if !defined(UI_DISPLAY_CHARSET) || UI_DISPLAY_CHARSET>3
-#if MOTHERBOARD == DEVICE_TYPE_RF1000
-#define UI_DISPLAY_CHARSET 1
-#else
-#define UI_DISPLAY_CHARSET 2
-#endif // MOTHERBOARD   == DEVICE_TYPE_RF1000
+ #if MOTHERBOARD == DEVICE_TYPE_RF1000
+  #define UI_DISPLAY_CHARSET 1
+ #else
+  #define UI_DISPLAY_CHARSET 2
+ #endif // MOTHERBOARD   == DEVICE_TYPE_RF1000
 #endif // !defined(UI_DISPLAY_CHARSET) || UI_DISPLAY_CHARSET>3
+
+//Symbolic character values for specific symbols.
+//May be overridden for different controllers, character sets, etc.
+#define cUP "\001"
+#define cDEG "\002"
+#define cSEL "\003"
+#define cUNSEL "\004"
+#define cTEMP "\005"
+#define cFOLD "\006"
+#define bFOLD 6
+#define cARROW "\176"
 
 #if UI_DISPLAY_CHARSET==0 // ASCII fallback
 #define CHAR_RIGHT      '-'
@@ -172,7 +183,7 @@
 #define UI_TEXT_DBG_INFO                "Info   : %di"
 #define UI_TEXT_DBG_ERROR               "Errors : %de"
 #define UI_TEXT_DBG_DRYRUN              "Dry Run: %dd"
-#define UI_TEXT_PRINT_FILE              "Print File"
+#define UI_TEXT_PRINT_FILE              "Print SD-File"
 #define UI_TEXT_PAUSE_PRINT             "Pause Print"
 #define UI_TEXT_CONTINUE_PRINT          "Continue Print"
 #define UI_TEXT_MILL_FILE               "Mill File"
@@ -211,6 +222,7 @@
 #define UI_TEXT_MILLER_TYPE             "Miller: %mt"
 #define UI_TEXT_GENERAL                 "General"
 #define UI_TEXT_DMS                     "DMS Features"
+#define UI_TEXT_WOBBLE                  "Kurts Wobblefix"
 #define UI_TEXT_EXTR_STEPS              "Steps/mm:%Se"
 #define UI_TEXT_EXTR_STEPS0             "E0-Steps/mm:%S0"
 #define UI_TEXT_EXTR_STEPS1             "E1-Steps/mm:%S1"
@@ -253,6 +265,7 @@
 #define UI_TEXT_EXTR_WAIT_RETRACT_TEMP  "Wait Temp.: %XT\002C"
 #define UI_TEXT_EXTR_WAIT_RETRACT_UNITS "Wait Units: %XU mm"
 #define UI_TEXT_SD_REMOVED              "SD Card removed"
+#define UI_TEXT_SD_ERROR                "SD Error"
 #define UI_TEXT_SD_INSERTED             "SD Card inserted"
 #define UI_TEXT_PRINTER_READY           "Printer ready."
 #define UI_TEXT_MILLER_READY            "Miller ready."
@@ -398,10 +411,19 @@
 #define UI_ACTION_TEXT_TYREUS_LYBEN_TIPP    "(choose for highpower bed)"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+    #define UI_TEXT_WOBBLE_FIX_PHASEXY      "Phase XY: %wP%%%Pi"
+    #define UI_TEXT_WOBBLE_FIX_AMPX         "Amplit.X: %wa[um]"
+    #define UI_TEXT_WOBBLE_FIX_AMPY1        "Amp. Y-l: %wb[um]"
+    #define UI_TEXT_WOBBLE_FIX_AMPY2        "Amp. Y-r: %wc[um]"
+    #define UI_TEXT_WOBBLE_FIX_PHASEZ       "Phase Z:  %wp%%%Pi"
+    #define UI_TEXT_WOBBLE_FIX_AMPZ         "Amplit.Z: %wd[um]"    
     #define UI_TEXT_EMERGENCY_PAUSE_MIN     "Min:%pl digits"
     #define UI_TEXT_EMERGENCY_PAUSE_MAX     "Max:%ph digits"
     #define UI_TEXT_EMERGENCY_ZSTOP_MIN     "Min:%pL digits"
     #define UI_TEXT_EMERGENCY_ZSTOP_MAX     "Max:%pH digits"
+    #define UI_TEXT_SENSEOFFSET_DIGITS      "Level: %sm digits"
+    #define UI_TEXT_SENSEOFFSET_MAX         "Max: %so um"
+    #define UI_TEXT_SENSEOFFSET_AUTOSTART   "AutoStart: %sa"
     #define UI_TEXT_SCAN_START_HEIGHT       "Scan Z-Lift: %Ss mm"
     #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"
     #define UI_TEXT_FREQ_DBL                "DblFq:%Xgmm/s"
@@ -409,6 +431,7 @@
     #define UI_TEXT_EXTR_ADVANCE_L_E1       "E1-Advance L:%Xc"
     #define UI_TEXT_EMERGENCY_PAUSE_MENU    "Emergency Pause"
     #define UI_TEXT_EMERGENCY_ZSTOP_MENU    "Z-Emergency Stop"
+    #define UI_TEXT_SENSE_OFFSET_MENU       "SenseOffset"
     #define UI_TEXT_STRAIN_GAUGE            "F: %s1 L: %Fs%%%%11F: %s1 V: %om%%%"
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min reached unhomed"
@@ -449,10 +472,19 @@
     #define UI_TEXT_OPERATION_DENIED        "Operation denied"
     #define UI_TEXT_TEMPERATURE_WRONG       "Temperature wrong"
 #else
+    #define UI_TEXT_WOBBLE_FIX_PHASEXY      "PhaseXY:%wP%%%Pi"
+    #define UI_TEXT_WOBBLE_FIX_AMPX         "Ampli.X:%waum"
+    #define UI_TEXT_WOBBLE_FIX_AMPY1        "Amp.Y-l:%wbum"
+    #define UI_TEXT_WOBBLE_FIX_AMPY2        "Amp.Y-r:%wcum"
+    #define UI_TEXT_WOBBLE_FIX_PHASEZ       "Phase Z:%wp%%%"
+    #define UI_TEXT_WOBBLE_FIX_AMPZ         "Ampli.Z:%wdum"
     #define UI_TEXT_EMERGENCY_PAUSE_MIN     "Min:%pl digi"
     #define UI_TEXT_EMERGENCY_PAUSE_MAX     "Max:%ph digi"
     #define UI_TEXT_EMERGENCY_ZSTOP_MIN     "Min:%pL digi"
     #define UI_TEXT_EMERGENCY_ZSTOP_MAX     "Max:%pH digi"
+    #define UI_TEXT_SENSEOFFSET_DIGITS      "Level:%smdigi"
+    #define UI_TEXT_SENSEOFFSET_MAX         "Max: %so um"
+    #define UI_TEXT_SENSEOFFSET_AUTOSTART   "AutoStart: %sa"
     #define UI_TEXT_SCAN_START_HEIGHT       "ScanZLift:%Ssmm"
     #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"
     #define UI_TEXT_FREQ_DBL                "DblF:%Xgmm/s"
@@ -460,6 +492,7 @@
     #define UI_TEXT_EXTR_ADVANCE_L_E1       "E1-AdvanceL:%Xc"
     #define UI_TEXT_EMERGENCY_PAUSE_MENU    "EmergencyPause"
     #define UI_TEXT_EMERGENCY_ZSTOP_MENU    "ZEmergencyStop"
+    #define UI_TEXT_SENSE_OFFSET_MENU       "SenseOffset"
     #define UI_TEXT_STRAIN_GAUGE            "F:%s1 L:%Fs%%%%11F: %s1 V: %om%%%"
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F:%s1 V:%om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min reached uho."
@@ -570,7 +603,7 @@
 #define UI_TEXT_DBG_INFO                "Info       :%di"
 #define UI_TEXT_DBG_ERROR               "Fehler     :%de"
 #define UI_TEXT_DBG_DRYRUN              "Trockenlauf:%dd"
-#define UI_TEXT_PRINT_FILE              "Drucke Datei"
+#define UI_TEXT_PRINT_FILE              "Drucke SD-Datei"
 #define UI_TEXT_PAUSE_PRINT             "Druck pausieren"
 #define UI_TEXT_MILL_FILE               "Fr" STR_auml "se Datei"
 #define UI_TEXT_UNMOUNT_CARD            "Unmount Karte"
@@ -602,6 +635,7 @@
 #define UI_TEXT_MILLER_TYPE             "Fr" STR_auml "ser: %mt"
 #define UI_TEXT_GENERAL                 "Allgemein"
 #define UI_TEXT_DMS                     "DMS Features"
+#define UI_TEXT_WOBBLE                  "Kurts Wobblefix"
 #define UI_TEXT_EXTR_MAX_FEED           "Max FR:%XF"
 #define UI_TEXT_EXTR_ADVANCE_L          "Advance lin:%Xl"
 #define UI_TEXT_EXTR_ADVANCE_K          "Advance quad:%Xa"
@@ -782,10 +816,19 @@
 #define UI_ACTION_TEXT_TYREUS_LYBEN_TIPP    "(empf. f" STR_uuml "r highpower Bett)"
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+    #define UI_TEXT_WOBBLE_FIX_PHASEXY      "Phase XY: %wP%%%Pi"
+    #define UI_TEXT_WOBBLE_FIX_AMPX         "Amplit.X: %wa[um]"
+    #define UI_TEXT_WOBBLE_FIX_AMPY1        "Amp. Y-li:%wb[um]"
+    #define UI_TEXT_WOBBLE_FIX_AMPY2        "Amp. Y-re:%wc[um]"
+    #define UI_TEXT_WOBBLE_FIX_PHASEZ       "Phase Z:  %wp%%%"
+    #define UI_TEXT_WOBBLE_FIX_AMPZ         "Amplit. Z:%wd[um]"    
     #define UI_TEXT_EMERGENCY_PAUSE_MIN     "Min:%pl digits"
     #define UI_TEXT_EMERGENCY_PAUSE_MAX     "Max:%ph digits"
     #define UI_TEXT_EMERGENCY_ZSTOP_MIN     "Min:%pL digits"
     #define UI_TEXT_EMERGENCY_ZSTOP_MAX     "Max:%pH digits"
+    #define UI_TEXT_SENSEOFFSET_DIGITS      "Level: %sm digits"
+    #define UI_TEXT_SENSEOFFSET_MAX         "Max: %so um"
+    #define UI_TEXT_SENSEOFFSET_AUTOSTART   "AutoStart: %sa"
     #define UI_TEXT_SCAN_START_HEIGHT       "Scan Z-Hub: %Ss mm"
     #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"
     #define UI_TEXT_FREQ_DBL                "DblFq:%Xgmm/s"
@@ -793,6 +836,7 @@
     #define UI_TEXT_EXTR_ADVANCE_L_E1       "E1-Advance L:%Xc"
     #define UI_TEXT_EMERGENCY_PAUSE_MENU    "Notfall Pause"
     #define UI_TEXT_EMERGENCY_ZSTOP_MENU    "Z-Notfall Stop"
+    #define UI_TEXT_SENSE_OFFSET_MENU       "SenseOffset"
     #define UI_TEXT_STRAIN_GAUGE            "F: %s1 L: %Fs%%%%11F: %s1 V: %om%%%"
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F: %s1 V: %om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min Kontakt unhomed"
@@ -844,6 +888,7 @@
     #define UI_TEXT_SPEED_MULTIPLY          "Geschw. Mul.:%om%%%"
     #define UI_TEXT_FLOW_MULTIPLY           "Fluss Mul.  :%of%%%"
     #define UI_TEXT_SD_REMOVED              "SD Karte entfernt"
+    #define UI_TEXT_SD_ERROR                "SD Fehler"
     #define UI_TEXT_SD_INSERTED             "SD Karte erkannt"
     #define UI_TEXT_ALIGN_EXTRUDERS         "Extruder ausrichten"
     #define UI_TEXT_MILLER_ONE_TRACK        "eine Spur"
@@ -866,10 +911,19 @@
     #define UI_TEXT_INVALID_MATRIX          "Ung" STR_uuml" ltige Matrix"
     #define UI_TEXT_TEMPERATURE_WRONG       "Temperatur falsch"    
 #else
+    #define UI_TEXT_WOBBLE_FIX_PHASEXY      "PhaseXY:%wP%%%Pi"
+    #define UI_TEXT_WOBBLE_FIX_AMPX         "Ampli.X:%waum"
+    #define UI_TEXT_WOBBLE_FIX_AMPY1        "Amp.Y-l:%wbum"
+    #define UI_TEXT_WOBBLE_FIX_AMPY2        "Amp.Y-r:%wcum"
+    #define UI_TEXT_WOBBLE_FIX_PHASEZ       "Phase Z:%wp%%%"
+    #define UI_TEXT_WOBBLE_FIX_AMPZ         "Ampli.Z:%wdum"
     #define UI_TEXT_EMERGENCY_PAUSE_MIN     "Min:%pl digi"
     #define UI_TEXT_EMERGENCY_PAUSE_MAX     "Max:%ph digi"
     #define UI_TEXT_EMERGENCY_ZSTOP_MIN     "Min:%pL digi"
     #define UI_TEXT_EMERGENCY_ZSTOP_MAX     "Max:%pH digi"
+    #define UI_TEXT_SENSEOFFSET_DIGITS      "Level:%smdigi"
+    #define UI_TEXT_SENSEOFFSET_MAX         "Max: %so um"
+    #define UI_TEXT_SENSEOFFSET_AUTOSTART   "AutoStart: %sa"
     #define UI_TEXT_SCAN_START_HEIGHT       "Scan-ZHub:%Ssmm"
     #define UI_TEXT_DO_MHIER_AUTO_MATRIX_LEVELING "Auto-Matr.-Leveling"
     #define UI_TEXT_FREQ_DBL                "DblF:%Xgmm/s"
@@ -877,6 +931,7 @@
     #define UI_TEXT_EXTR_ADVANCE_L_E1       "E1-AdvanceL:%Xc"
     #define UI_TEXT_EMERGENCY_PAUSE_MENU    "Notfall Pause"
     #define UI_TEXT_EMERGENCY_ZSTOP_MENU    "Z-Notfall Stop"
+    #define UI_TEXT_SENSE_OFFSET_MENU       "SenseOffset"
     #define UI_TEXT_STRAIN_GAUGE            "F:%s1 L:%Fs%%%%11F: %s1 V: %om%%%"
     #define UI_TEXT_STRAIN_GAUGE_SPEED      "F:%s1 V:%om%%%%op"
     #define UI_TEXT_MIN_REACHED_UNHOMED     "Min Kontakt uho."
@@ -925,6 +980,7 @@
     #define UI_TEXT_SPEED_MULTIPLY          "Geschw.Mul:%om%%%"
     #define UI_TEXT_FLOW_MULTIPLY           "Fluss Mul.:%of%%%"
     #define UI_TEXT_SD_REMOVED              "SD Karte entf."
+    #define UI_TEXT_SD_ERROR                "SD Fehler"
     #define UI_TEXT_SD_INSERTED             "SD Karte eing."
     #define UI_TEXT_ALIGN_EXTRUDERS         "Extruder ausr."
     #define UI_TEXT_MILLER_ONE_TRACK        "eine S."

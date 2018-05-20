@@ -1,5 +1,23 @@
 TODO: Testing, testing ..
 
+V RF.01.41.23.Mod (2018-05-12)
+- First version of kurt67 wobblefix. This feature allows you to simulate wobble and therefore experts in measurement might be able to compensate z-wobble on RFx000 printers.
+  Z-wobble is here defined as a shaking in the x-y-plane. this shaking is caused by the faulty rotation of the z-spindles.
+- disabling steppers now reactivates the movement-lock (if FEATURE_UNLOCK_MOVEMENT == 1). See http://www.rf1000.de/viewtopic.php?f=70&t=2282#p23501 .
+
+V RF.01.41.22.Mod (2018-05-12)
+- SenseOffset EEPROM-Values can now be adjusted in Menu -> Configuration -> DMS-Features.
+- SenseOffset now has an "Auto-Start" within Menu->Configuration->DMS-Features->SenseOffset. This means that if you home and activate M3001 Z-Compensation then SenseOffset will automatically start. It then uses the last chosen values within EEPROM. (As Example: 3300 digits and 150um max. drivedown). Using that "Auto-Start" in your startcode M3909 is not necessary anymore. 
+
+V RF.01.41.21.Mod (2018-05-10) 
+- We now use the sdfat library with SD_FAT_VERSION "1.0.5" instead of the old "20130629". This new library has long filename support. https://github.com/greiman/SdFat/tree/master/src
+- The navigation down at the most bottom of a folder now leads to the top of the folder and otherwise around.
+- This special bug with the automount loop on failed mount attempts is now gone.
+- We now have plausible error messages when SD-Cards do not work.
+- Now all my SD-Cards work if they are formatted with FAT16 or FAT32. If you need FAT12_SUPPORT activate it in SdFatConfig.h (and pay some rom and ram). (Because Fat12/16/32 is examined by cluster count small cards <=16MB are identified as FAT12 -> They are not working.)
+# Deleting SD-files within menu is disabled for now. There was too much code confusion to make it right (using long filename support). [-> Who does really need this?]
+- Rightnow the RF2000 hides the static menu folder called "SD CARD" because we already have the automounted "Print File". And "Delete File" is not visible anymore.
+
 V RF.01.41.20.Mod (2018-04-14) 
 - fix that the printer forgot to load eeprom saved stepper currents since ~1.41.13
 

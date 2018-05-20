@@ -7240,6 +7240,10 @@ void processCommand( GCode* pCommand )
                     }
 
                     queueTask( TASK_ENABLE_Z_COMPENSATION );
+                    
+                    //wenn der nutzer im menü "autostart" gewählt hat, dann senseoffset sofort mit M3001 mitstarten.
+                    //Die Einstellwerte kommen dann aus dem EEPROM
+                    if(Printer::g_senseoffset_autostart) queueTask( TASK_ENABLE_SENSE_OFFSET );
                 }
                 break;
             }
