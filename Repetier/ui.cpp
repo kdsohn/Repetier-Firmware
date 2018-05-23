@@ -4991,26 +4991,40 @@ void UIDisplay::executeAction(int action)
                 Printer::kill( true );
                 break;
             }
-            case UI_ACTION_MOUNT_FILAMENT:
-            case UI_ACTION_UNMOUNT_FILAMENT:
+            case UI_ACTION_MOUNT_FILAMENT_SOFT:
+            case UI_ACTION_MOUNT_FILAMENT_HARD:
+            case UI_ACTION_UNMOUNT_FILAMENT_SOFT:
+            case UI_ACTION_UNMOUNT_FILAMENT_HARD:
             {
                 g_uStartOfIdle = 0;
                 while( Printer::checkAbortKeys() ) Commands::checkForPeriodicalActions(); //dont quit script by holding the ok longer than 1ms if no temp is involved. -> min einmal OK loslassen.
-                bool unmount = (action==UI_ACTION_UNMOUNT_FILAMENT);
+                bool unmount = (action == UI_ACTION_UNMOUNT_FILAMENT_SOFT || action == UI_ACTION_UNMOUNT_FILAMENT_HARD);
                 exitmenu();
                 if(unmount){ UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT ); }
                 else       { UI_STATUS_UPD( UI_TEXT_MOUNT_FILAMENT ); }
                 if( unmount ){
-                    GCode::executeFString(Com::tUnmountFilamentWithHeating);
+                    if(action == UI_ACTION_UNMOUNT_FILAMENT_SOFT){
+                        GCode::executeFString(Com::tUnmountFilamentSoft);
+                    }else{
+                        GCode::executeFString(Com::tUnmountFilamentHard);
+                    }
                 }else{
                     if( Extruder::current->tempControl.targetTemperatureC < UI_SET_MIN_EXTRUDER_TEMP )
                     {
                         Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_ABS,Extruder::current->id,true);
                         Extruder::current->tempControl.waitForTargetTemperature();
-                        GCode::executeFString(Com::tMountFilamentWithHeating);
+                        if(action == UI_ACTION_MOUNT_FILAMENT_SOFT){
+                            GCode::executeFString(Com::tMountFilamentSoft);
+                        }else{
+                            GCode::executeFString(Com::tMountFilamentHard);
+                        }
                         Extruder::setTemperatureForExtruder(0,Extruder::current->id,false);
                     }else{
-                        GCode::executeFString(Com::tMountFilamentWithoutHeating);
+                        if(action == UI_ACTION_MOUNT_FILAMENT_SOFT){
+                            GCode::executeFString(Com::tMountFilamentSoft);
+                        }else{
+                            GCode::executeFString(Com::tMountFilamentHard);
+                        }
                     }
                 }
                 g_uStartOfIdle = HAL::timeInMilliseconds(); // UI_ACTION_UNMOUNT_FILAMENT UI_ACTION_MOUNT_FILAMENT

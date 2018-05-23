@@ -123,11 +123,14 @@
 
 #define UI_ACTION_STOP_ACK                  1109
 
+#define UI_ACTION_UNMOUNT_FILAMENT_SOFT     1110
+#define UI_ACTION_UNMOUNT_FILAMENT_HARD     1111
+#define UI_ACTION_MOUNT_FILAMENT_SOFT       1112
+#define UI_ACTION_MOUNT_FILAMENT_HARD       1113
 
-#define UI_ACTION_MAX_INACTIVE              1113
-#define UI_ACTION_BEEPER                    1114
-#define UI_ACTION_UNMOUNT_FILAMENT          1115
-#define UI_ACTION_MOUNT_FILAMENT            1116
+#define UI_ACTION_MAX_INACTIVE              1114
+#define UI_ACTION_BEEPER                    1115
+
 #define UI_ACTION_OPERATING_MODE            1117
 #define UI_ACTION_SET_XY_ORIGIN             1118
 #define UI_ACTION_Z_ENDSTOP_TYPE            1119
