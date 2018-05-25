@@ -1,4 +1,12 @@
 TODO: Testing, testing ..
+TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
+
+V RF.01.41.25.Mod (2018-05-23)
+- FEATURE_Kurt67_WOBBLE_FIX: switched direction of phase from - to +. That means that a +Phase will move some synthetic wobble downwards in +Z
+- FEATURE_Kurt67_WOBBLE_FIX: x direction now has a cosinus and y direction has a sinus.
+- Extruder->"Load Filament" and "Unload Filament" now have two presents and a submenu (thx. @Zaldo)
+- unload filament can now rise up to 240°C to try to pull ABS loosened (thx. @Zaldo)
+- load filament now has a second present that ignores digits. you can abort this via key press (thx. @Zaldo)
 
 V RF.01.41.24.Mod (2018-05-20)
 - fixes for two things that jenkins complained

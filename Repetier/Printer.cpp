@@ -580,12 +580,14 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
     
     //wobble durch Bauchtanz der Druckplatte
     //wobbleX oder wobbleY(x0) oder wobbleX(x245)
-    if(Printer::wobbleAmplitudes[0] || Printer::wobbleAmplitudes[1] || Printer::wobbleAmplitudes[2]){
-        float anglePositionWobble = sin(zweiPi*(z/spindelSteigung + (float)Printer::wobblePhaseXY * hundertstelPi ));
+    if(Printer::wobbleAmplitudes[0]){
+        float anglePositionWobble = cos(zweiPi*(z/spindelSteigung - (float)Printer::wobblePhaseXY * hundertstelPi ));
         //für das wobble in Richtung X-Achse gilt immer dieselbe Amplitude, weil im extremfall beide gegeneinander arbeiten und sich aufheben könnten, oder die Spindeln arbeiten zusammen.
         Printer::wobblefixOffset[X_AXIS] = Printer::wobbleAmplitudes[0] * anglePositionWobble;
         x += Printer::wobblefixOffset[X_AXIS]/1000;  //offset in [um] -> kosys in [mm]
-        
+    }
+    if(Printer::wobbleAmplitudes[1] || Printer::wobbleAmplitudes[2]){
+        float anglePositionWobble = sin(zweiPi*(z/spindelSteigung - (float)Printer::wobblePhaseXY * hundertstelPi ));
         //gilt eher die Y-Achsen-Richtung-Amplitude links (x=0) oder rechts (x=achsenlänge)? (abhängig von der ziel-x-position wird anteilig verrechnet.)
         float xPosPercent = x/Printer::lengthMM[X_AXIS];
         Printer::wobblefixOffset[Y_AXIS] = ((1-xPosPercent) * Printer::wobbleAmplitudes[1] + (xPosPercent) * Printer::wobbleAmplitudes[2]) * anglePositionWobble;

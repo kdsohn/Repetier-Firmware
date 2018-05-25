@@ -562,8 +562,25 @@ UI_MENU_ACTIONCOMMAND(ui_menu_bed_off, UI_TEXT_BED_OFF  ,UI_ACTION_HEATED_BED_OF
 
 UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_ext_origin,UI_TEXT_SET_E_ORIGIN,UI_ACTION_SET_E_ORIGIN,MENU_MODE_PRINTER, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED )
 
-UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_extruder_unmount_filament,UI_TEXT_UNMOUNT_FILAMENT,UI_ACTION_UNMOUNT_FILAMENT,MENU_MODE_PRINTER, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED)
-UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_extruder_mount_filament,UI_TEXT_MOUNT_FILAMENT,UI_ACTION_MOUNT_FILAMENT,MENU_MODE_PRINTER, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED)
+/** \brief Extruder->Load Filament-> */
+/** \brief Extruder->Unload Filament-> */
+
+UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_extruder_mount_filament1,UI_TEXT_MOUNT_FILAMENT_SOFT,UI_ACTION_MOUNT_FILAMENT_SOFT,MENU_MODE_PRINTER, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED)
+UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_extruder_mount_filament2,UI_TEXT_MOUNT_FILAMENT_HARD,UI_ACTION_MOUNT_FILAMENT_HARD,MENU_MODE_PRINTER, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED)
+#define UI_MENU_LOAD {UI_MENU_ADDCONDBACK &ui_menu_extruder_mount_filament1, &ui_menu_extruder_mount_filament2 }
+UI_MENU(ui_menu_extruder_mount,UI_MENU_LOAD,UI_MENU_BACKCNT+2)
+UI_MENU_SUBMENU(ui_submenu_extruder_mount, UI_TEXT_MOUNT_FILAMENT, ui_menu_extruder_mount)
+
+UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_extruder_unmount_filament1,UI_TEXT_UNMOUNT_FILAMENT_SOFT,UI_ACTION_UNMOUNT_FILAMENT_SOFT,MENU_MODE_PRINTER, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED)
+UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_extruder_unmount_filament2,UI_TEXT_UNMOUNT_FILAMENT_HARD,UI_ACTION_UNMOUNT_FILAMENT_HARD,MENU_MODE_PRINTER, MENU_MODE_PRINTING | MENU_MODE_SD_PRINTING | MENU_MODE_PAUSED)
+#define UI_MENU_UNLOAD {UI_MENU_ADDCONDBACK &ui_menu_extruder_unmount_filament1, &ui_menu_extruder_unmount_filament2 }
+UI_MENU(ui_menu_extruder_unmount,UI_MENU_UNLOAD,UI_MENU_BACKCNT+2)
+UI_MENU_SUBMENU(ui_submenu_extruder_unmount, UI_TEXT_UNMOUNT_FILAMENT, ui_menu_extruder_unmount)
+
+#define UI_MENU_EXTRUDER_MOUNT_COND &ui_submenu_extruder_mount, &ui_submenu_extruder_unmount,
+#define UI_MENU_EXTRUDER_MOUNT_COUNT 2
+
+/** End load unload */
 
 #if NUM_EXTRUDER>1
 #define UI_MENU_EXTCOND &ui_menu_ext_temp0,&ui_menu_ext_temp1,&ui_menu_ext_off0,&ui_menu_ext_off1,&ui_menu_bed_off,&ui_menu_active_extruder,
@@ -581,8 +598,8 @@ UI_MENU_ACTIONCOMMAND_FILTER(ui_menu_extruder_mount_filament,UI_TEXT_MOUNT_FILAM
 #define UI_MENU_BEDCNT 0
 #endif // HAVE_HEATED_BED==true
 
-#define UI_MENU_EXTRUDER {UI_MENU_ADDCONDBACK UI_MENU_BEDCOND UI_MENU_EXTCOND &ui_menu_go_epos, &ui_menu_quick_preheat_pla, &ui_menu_quick_preheat_abs, &ui_menu_quick_cooldown, &ui_menu_extruder_mount_filament, &ui_menu_extruder_unmount_filament, &ui_menu_quick_flowmultiply, &ui_menu_ext_origin}
-UI_MENU(ui_menu_extruder,UI_MENU_EXTRUDER,UI_MENU_BACKCNT+UI_MENU_BEDCNT+UI_MENU_EXTCNT+4+3+1)
+#define UI_MENU_EXTRUDER {UI_MENU_ADDCONDBACK UI_MENU_BEDCOND UI_MENU_EXTCOND &ui_menu_go_epos, &ui_menu_quick_preheat_pla, &ui_menu_quick_preheat_abs, &ui_menu_quick_cooldown, UI_MENU_EXTRUDER_MOUNT_COND &ui_menu_quick_flowmultiply, &ui_menu_ext_origin}
+UI_MENU(ui_menu_extruder,UI_MENU_EXTRUDER,UI_MENU_BACKCNT+UI_MENU_BEDCNT+UI_MENU_EXTCNT+4+1+UI_MENU_EXTRUDER_MOUNT_COUNT+1)
 
 /** \brief Caliper Filament Reader menu */
 #if FEATURE_READ_CALIPER
