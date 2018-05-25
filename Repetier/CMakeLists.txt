@@ -41,7 +41,7 @@ endif()
 # Define the source code
 setup_arduino_sketch(${PROJECT_NAME} ${CMAKE_SOURCE_DIR}/Repetier.ino SKETCHSRC)
 aux_source_directory(${CMAKE_SOURCE_DIR} repetier_sources)
-include_directories(${CMAKE_SOURCE_DIR})
+include_directories(${CMAKE_SOURCE_DIR} /src/SdFat /src/SdFat/FatLib /src/SdFat/SdCard /src/SdFat/SpiDriver /src/SdFat/SpiDriver/boards)
 set(${PROJECT_NAME}_SRCS ${SKETCHSRC} ${repetier_sources})
 
 # Command to generate code arduino firmware (.hex file)
