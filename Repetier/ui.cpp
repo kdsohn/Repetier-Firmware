@@ -958,13 +958,6 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
 #endif // FEATURE_MILLING_MODE
 
-                if( !(Printer::flag2 & PRINTER_FLAG2_GOT_TEMPS) )
-                {
-                    // avoid to show the current temperatures before we have measured them
-                    addStringP( PSTR( "   " ));
-                    break;
-                }
-
                 if( c2 == 'w' ){                                                                        //%ew : tell me which sensor(s) are defect.
                     bool addone = false;
                     for(uint8_t controller = 0; controller < NUM_TEMPERATURE_LOOPS; controller++)
@@ -985,22 +978,33 @@ void UIDisplay::parse(char *txt,bool ram)
                     }
                     break;
                 }
-
-                ivalue = UI_TEMP_PRECISION;
-                if(Printer::flag0 & PRINTER_FLAG0_TEMPSENSOR_DEFECT)
+                
+                if(Printer::isAnyTempsensorDefect())
                 {
                     addStringP(PSTR("def"));
                     break;
                 }
-                if(c2=='c') fvalue=Extruder::current->tempControl.currentTemperatureC;                  // %ec : Current extruder temperature
-                else if(c2>='0' && c2<='9') fvalue=extruder[c2-'0'].tempControl.currentTemperatureC;    // %e0..9 : Temp. of extruder 0..9
-                else if(c2=='b') fvalue=Extruder::getHeatedBedTemperature();                            // %eb : Current heated bed temperature
-                else if(c2=='B')                                                                        
+
+                if( !(Printer::flag2 & PRINTER_FLAG2_GOT_TEMPS) )
                 {
-                    ivalue=0;
-                    fvalue=Extruder::getHeatedBedTemperature();
+                    // avoid to show the current temperatures before we have measured them
+                    addStringP( PSTR( " ? " ));
+                    break;
                 }
-                addFloat(fvalue,3,0 /*ivalue*/);
+
+                if(c2=='c'){
+                    fvalue = Extruder::current->tempControl.currentTemperatureC;                  // %ec : Current extruder temperature
+                }
+                else if(c2>='0' && c2<='9'){
+                    uint8_t nr = c2-'0';
+                    fvalue = extruder[nr].tempControl.currentTemperatureC;                    // %e0..9 : Temp. of extruder 0..9
+                }
+#if HAVE_HEATED_BED
+                else if(c2=='b'){ 
+                    fvalue = Extruder::getHeatedBedTemperature();                            // %eb : Current heated bed temperature
+                }
+#endif // HAVE_HEATED_BED
+                addFloat(fvalue,3,0);
                 break;
             }
             case 'E': // Target extruder temperature
@@ -1014,14 +1018,18 @@ void UIDisplay::parse(char *txt,bool ram)
                 }
 #endif // FEATURE_MILLING_MODE
 
-                if(c2=='c') fvalue=Extruder::current->tempControl.targetTemperatureC;                   // %Ec : Target temperature of current extruder
-                else if(c2>='0' && c2<='9') fvalue=extruder[c2-'0'].tempControl.targetTemperatureC;     // %E0-9 : Target temperature of extruder 0..9
-
+                if(c2 == 'c'){ 
+                    fvalue = Extruder::current->tempControl.targetTemperatureC;                           // %Ec : Target temperature of current extruder
+                }
+                else if(c2 >= '0' && c2 <= '9'){
+                    fvalue = extruder[c2-'0'].tempControl.targetTemperatureC;                             // %E0-9 : Target temperature of extruder 0..9 
+                }
 #if HAVE_HEATED_BED
-                else if(c2=='b') fvalue=heatedBedController.targetTemperatureC;                         // %Eb : Target temperature of heated bed
+                else if(c2 == 'b'){
+                    fvalue = heatedBedController.targetTemperatureC;                                      // %Eb : Target temperature of heated bed
+                }
 #endif // HAVE_HEATED_BED
-
-                addFloat(fvalue,3,0 /*UI_TEMP_PRECISION*/);
+                addFloat(fvalue,3,0);
                 break;
             }
 

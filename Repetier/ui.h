@@ -636,14 +636,6 @@ void ui_check_keys(int &action)
 #define COMPILE_I2C_DRIVER
 #endif // UI_DISPLAY_TYPE==3
 
-#ifndef UI_TEMP_PRECISION
-#if UI_COLS>16
-#define UI_TEMP_PRECISION 1
-#else
-#define UI_TEMP_PRECISION 0
-#endif // UI_COLS>16
-#endif // UI_TEMP_PRECISION
-
 #define UI_INITIALIZE uid.initialize();
 #define UI_FAST if(pwm_count_heater & 4) {uid.fastAction();}
 #define UI_SLOW uid.slowAction();

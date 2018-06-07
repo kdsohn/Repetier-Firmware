@@ -9172,7 +9172,7 @@ void processCommand( GCode* pCommand )
                         {
                             // simulate a temp sensor error
                             Com::printFLN( PSTR( "M3200: simulating a defect temperature sensor" ) );
-                            Printer::flag0 |= PRINTER_FLAG0_TEMPSENSOR_DEFECT;
+                            Printer::setSomeTempsensorDefect(true);
                             reportTempsensorError();
                             break;
                         }
@@ -12815,7 +12815,7 @@ void updateRGBLightStatus( void )
 
 void setupForPrinting( void )
 {
-    Printer::flag0 &= ~PRINTER_FLAG0_TEMPSENSOR_DEFECT;
+    Printer::setSomeTempsensorDefect(false);
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
     

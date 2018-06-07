@@ -1,6 +1,10 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 
+V RF.01.41.26.Mod (2018-06-07)
+- not yet available temp measurements have been blocking the printer to show which sensor is defect after a restart.
+- some refactoring and cleanup of code
+
 V RF.01.41.25.Mod (2018-05-23)
 - FEATURE_Kurt67_WOBBLE_FIX: switched direction of phase from - to +. That means that a +Phase will move some synthetic wobble downwards in +Z
 - FEATURE_Kurt67_WOBBLE_FIX: x direction now has a cosinus and y direction has a sinus.

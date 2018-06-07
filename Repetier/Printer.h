@@ -944,6 +944,11 @@ public:
         Extruder::disableAllExtruders();
     } // disableAllSteppersNow
 
+    static INLINE void setSomeTempsensorDefect(bool defect)
+    {
+        Printer::flag0 = (defect ? flag0 | PRINTER_FLAG0_TEMPSENSOR_DEFECT : flag0 & ~PRINTER_FLAG0_TEMPSENSOR_DEFECT);
+    } // setSomeTempsensorDefect
+    
     static INLINE bool isAnyTempsensorDefect()
     {
 #if FEATURE_MILLING_MODE
