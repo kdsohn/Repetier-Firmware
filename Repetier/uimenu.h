@@ -211,21 +211,10 @@ List of placeholder:
 %LP : ECMP %
 %Lm : g_minZCompensationSteps
 %LM : g_maxZCompensationSteps
-
 */
-
-// Define precision for temperatures. With small displays only integer values fit.
-#ifndef UI_TEMP_PRECISION
-#if UI_COLS>16
-#define UI_TEMP_PRECISION 1
-#else
-#define UI_TEMP_PRECISION 0
-#endif // UI_COLS>16
-#endif // UI_TEMP_PRECISION
 
 
 /* ============= PAGES DEFINITION =============
-
 If you are not iside a menu, the firmware displays pages with information.
 Especially if you have only a small display it is convenient to have
 more then one information page.
@@ -241,9 +230,9 @@ for 2 row displays. You can add additional pages or change the default pages lik
 #if UI_ROWS>=4
     #if HAVE_HEATED_BED==true
         #if UI_COLS<=16
-            UI_PAGE4(ui_page1,"%U1%ec/%EcB%eB/%Eb%U2","Z:%x2 mm %sC%hz",UI_TEXT_STRAIN_GAUGE,"%os")
+            UI_PAGE4(ui_page1,"%U1%ec/%EcB%eb/%Eb%U2","Z:%x2 mm %sC%hz",UI_TEXT_STRAIN_GAUGE,"%os")
         #else
-            UI_PAGE4(ui_page1,"%U1%ec/%Ec\002 B%eB/%Eb\002%U2","Z:%x2 mm %sC%hz",UI_TEXT_STRAIN_GAUGE,"%os")
+            UI_PAGE4(ui_page1,"%U1%ec/%Ec\002 B%eb/%Eb\002%U2","Z:%x2 mm %sC%hz",UI_TEXT_STRAIN_GAUGE,"%os")
         #endif // UI_COLS<=16
     #else
         UI_PAGE4(ui_page1,UI_TEXT_PAGE_EXTRUDER,"Z:%x2 mm %sC%hz",UI_TEXT_STRAIN_GAUGE,"%os")
