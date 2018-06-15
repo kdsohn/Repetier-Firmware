@@ -4058,7 +4058,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
                 uint8_t heater = menuPos[menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
                 if(heater < NUM_TEMPERATURE_LOOPS) {
                     int drive = tempController[heater]->pidDriveMin;
-                    INCREMENT_MIN_MAX(drive,1,0,255);
+                    INCREMENT_MIN_MAX(drive,1,1,255);
                     tempController[heater]->pidDriveMin = drive;
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
                     if(UI_MENU_PID_BED_COUNT > 0 && UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT - 1 == heater){ 
@@ -4083,7 +4083,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
                 uint8_t heater = menuPos[menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
                 if(heater < NUM_TEMPERATURE_LOOPS) {
                     int drive = tempController[heater]->pidDriveMax;
-                    INCREMENT_MIN_MAX(drive,1,0,255);
+                    INCREMENT_MIN_MAX(drive,1,1,255);
                     tempController[heater]->pidDriveMax = drive;
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
                     if(UI_MENU_PID_BED_COUNT > 0 && UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT - 1 == heater){ 
@@ -4108,7 +4108,7 @@ void UIDisplay::nextPreviousAction(int8_t next)
                 uint8_t heater = menuPos[menuLevel-1]; //0..1..2 mit zwei extrudern und bett. passt zum autotunesystem, weil UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT
                 if(heater < NUM_TEMPERATURE_LOOPS) {
                     int drive = tempController[heater]->pidMax;
-                    INCREMENT_MIN_MAX(drive,1,0,255);
+                    INCREMENT_MIN_MAX(drive,1,1,255);
                     tempController[heater]->pidMax = drive;
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
                     if(UI_MENU_PID_BED_COUNT > 0 && UI_MENU_PID_EXT0_COUNT + UI_MENU_PID_EXT1_COUNT + UI_MENU_PID_BED_COUNT - 1 == heater){ 
