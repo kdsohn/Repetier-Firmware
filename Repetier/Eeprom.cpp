@@ -663,8 +663,10 @@ void EEPROM::readDataFromEEPROM()
     for(uint8_t axis = X_AXIS; axis <= Z_AXIS; axis++){
         float tmp = HAL::eprGetFloat(EPR_X_MAX_FEEDRATE+axis*4); //X dann EPR_Y_MAX_FEEDRATE dann EPR_Z_MAX_FEEDRATE
         if(tmp > Printer::maxFeedrate[axis]){
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EPR_X_MAX_FEEDRATE+axis*4,Printer::maxFeedrate[axis]);
             change = true; //update checksum later in this function
+#endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
         }else{
             Printer::maxFeedrate[axis] = tmp;
         }
@@ -713,16 +715,20 @@ void EEPROM::readDataFromEEPROM()
         Printer::lengthMM[X_AXIS] = HAL::eprGetFloat(EPR_X_LENGTH);
         if(Printer::lengthMM[X_AXIS] <= 0 || Printer::lengthMM[X_AXIS] > 245.0f){
             Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_PRINT;
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EPR_X_LENGTH,Printer::lengthMM[X_AXIS]);
             change = true; //update checksum later in this function
+#endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
         }
 #if FEATURE_MILLING_MODE
     }else{
         Printer::lengthMM[X_AXIS] = HAL::eprGetFloat(EPR_X_LENGTH_MILLING);
         if(Printer::lengthMM[X_AXIS] <= 0 || Printer::lengthMM[X_AXIS] > 245.0f){
             Printer::lengthMM[X_AXIS] = X_MAX_LENGTH_MILL;
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(EPR_X_LENGTH_MILLING,Printer::lengthMM[X_AXIS]);
             change = true; //update checksum later in this function
+#endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
         }
     }
 #endif  // FEATURE_MILLING_MODE
@@ -740,21 +746,53 @@ void EEPROM::readDataFromEEPROM()
     {
         int o=EEPROM::getExtruderOffset(i);
         Extruder *e = &extruder[i];
-        float tmpstepsPerMM = HAL::eprGetFloat(o+EPR_EXTRUDER_STEPS_PER_MM);
-        if(tmpstepsPerMM < 5540.0f){ //da hat einer ein komma vergessen ^^ so hohe Werte können kaum sinn machen, ausser wir ändern die CPU. Das wären auch zu viele interrupts pro sekunde.
-            e->stepsPerMM = tmpstepsPerMM;
+        float tmp = HAL::eprGetFloat(o+EPR_EXTRUDER_STEPS_PER_MM);
+        if(tmp < 5540.0f){ //da hat einer ein komma vergessen ^^ so hohe Werte können kaum sinn machen, ausser wir ändern die CPU. Das wären auch zu viele interrupts pro sekunde.
+            e->stepsPerMM = tmp;
         }else{
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(o+EPR_EXTRUDER_STEPS_PER_MM,e->stepsPerMM);
             change = true; //update checksum later in this function
+#endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
         }
-        e->maxFeedrate = HAL::eprGetFloat(o+EPR_EXTRUDER_MAX_FEEDRATE);
-        e->maxStartFeedrate = HAL::eprGetFloat(o+EPR_EXTRUDER_MAX_START_FEEDRATE);
-        e->maxAcceleration = HAL::eprGetFloat(o+EPR_EXTRUDER_MAX_ACCELERATION);
+        
+        tmp = HAL::eprGetFloat(o+EPR_EXTRUDER_MAX_FEEDRATE);
+        if(0 < tmp && tmp < 100){
+            e->maxFeedrate = tmp;
+        }else{
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetFloat(o+EPR_EXTRUDER_MAX_FEEDRATE, e->maxFeedrate);
+            change = true; //update checksum later in this function
+#endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
+        }
+        
+        tmp = HAL::eprGetFloat(o+EPR_EXTRUDER_MAX_START_FEEDRATE);
+        if(0 < tmp && tmp <= e->maxFeedrate){
+            e->maxStartFeedrate = tmp;
+        }else{
+            e->maxStartFeedrate = RMath::min(e->maxFeedrate, e->maxStartFeedrate);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetFloat(o+EPR_EXTRUDER_MAX_START_FEEDRATE, e->maxStartFeedrate);
+            change = true; //update checksum later in this function
+#endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
+        }
+        
+        tmp = HAL::eprGetFloat(o+EPR_EXTRUDER_MAX_ACCELERATION);
+        if(0 < tmp && tmp < 10000){
+            e->maxAcceleration = tmp;
+        }else{
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetFloat(o+EPR_EXTRUDER_MAX_ACCELERATION, e->maxAcceleration);
+            change = true; //update checksum later in this function
+#endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
+        }
 
         e->tempControl.pidDriveMax = HAL::eprGetByte(o+EPR_EXTRUDER_DRIVE_MAX);
         e->tempControl.pidDriveMin = HAL::eprGetByte(o+EPR_EXTRUDER_DRIVE_MIN);
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
-        if(e->tempControl.pidDriveMin == 40 && e->tempControl.pidDriveMax == 40){
+        if (   (e->tempControl.pidDriveMin == 40 && e->tempControl.pidDriveMax == 40)
+            || (e->tempControl.pidDriveMin == 0  && e->tempControl.pidDriveMax == 0 ) ) {
+              
             e->tempControl.pidDriveMin = 
 #if NUM_EXTRUDER >= 2
                     (i==0 ? EXT0_PID_INTEGRAL_DRIVE_MIN : (i==1 ? EXT1_PID_INTEGRAL_DRIVE_MIN : HT3_PID_INTEGRAL_DRIVE_MIN));
@@ -767,15 +805,23 @@ void EEPROM::readDataFromEEPROM()
 #else
                     EXT0_PID_INTEGRAL_DRIVE_MAX;
 #endif
-            HAL::eprSetByte(o+EPR_EXTRUDER_DRIVE_MIN,e->tempControl.pidDriveMin);
-            HAL::eprSetByte(o+EPR_EXTRUDER_DRIVE_MAX,e->tempControl.pidDriveMax);
+            HAL::eprSetByte(o+EPR_EXTRUDER_DRIVE_MIN, e->tempControl.pidDriveMin);
+            HAL::eprSetByte(o+EPR_EXTRUDER_DRIVE_MAX, e->tempControl.pidDriveMax);
             change = true; //update checksum later in this function
         }
 #endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
         e->tempControl.pidPGain    = HAL::eprGetFloat(o+EPR_EXTRUDER_PID_PGAIN);
         e->tempControl.pidIGain    = HAL::eprGetFloat(o+EPR_EXTRUDER_PID_IGAIN);
         e->tempControl.pidDGain    = HAL::eprGetFloat(o+EPR_EXTRUDER_PID_DGAIN);
-        e->tempControl.pidMax      = HAL::eprGetByte(o+EPR_EXTRUDER_PID_MAX);
+        if(HAL::eprGetByte(o+EPR_EXTRUDER_PID_MAX) > 0){
+            e->tempControl.pidMax      = HAL::eprGetByte(o+EPR_EXTRUDER_PID_MAX);
+        }else{
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetByte(o+EPR_EXTRUDER_PID_MAX, e->tempControl.pidMax);
+            change = true; //update checksum later in this function
+#endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
+        }
+        
         uint8_t sensortype_temp = HAL::eprGetByte(o+EPR_EXTRUDER_SENSOR_TYPE);
         if(sensortype_temp > 0 && sensortype_temp <= 100){
             e->tempControl.sensorType = sensortype_temp;
@@ -873,8 +919,10 @@ void EEPROM::readDataFromEEPROM()
         float tmp = HAL::eprGetFloat(eeprom_homing_feedrate_position+axis*4); // EPR_X_HOMING_FEEDRATE_PRINT EPR_Y_HOMING_FEEDRATE_PRINT EPR_Z_HOMING_FEEDRATE_PRINT 
                                                                               // EPR_X_HOMING_FEEDRATE_MILL EPR_Y_HOMING_FEEDRATE_MILL EPR_Z_HOMING_FEEDRATE_MILL
         if(tmp > Printer::homingFeedrate[axis]){
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetFloat(eeprom_homing_feedrate_position+axis*4,Printer::homingFeedrate[axis]);
             change = true; //update checksum later in this function
+#endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
         }else{
             Printer::homingFeedrate[axis] = tmp;
         }
@@ -935,8 +983,10 @@ void EEPROM::readDataFromEEPROM()
     Printer::max_milling_all_axis_acceleration = HAL::eprGetInt16(EPR_RF_MILL_ACCELERATION);
     if(Printer::max_milling_all_axis_acceleration <= 0){
         Printer::max_milling_all_axis_acceleration = MILLER_ACCELERATION;
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
         HAL::eprSetInt16(EPR_RF_MILL_ACCELERATION,MILLER_ACCELERATION);
         change = true;
+#endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
     }
 #endif // FEATURE_MILLING_MODE
 
@@ -978,8 +1028,10 @@ void EEPROM::readDataFromEEPROM()
     if(tmpss >= 0.3f && tmpss <= 6.0f){
         g_scanStartZLiftMM = tmpss; 
     }else{
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
         HAL::eprSetFloat(EPR_ZSCAN_START_MM,HEAT_BED_SCAN_Z_START_MM);
         change = true;
+#endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
     }
 #endif // FEATURE_WORK_PART_Z_COMPENSATION || FEATURE_HEAT_BED_Z_COMPENSATION
 
@@ -1017,10 +1069,10 @@ void EEPROM::readDataFromEEPROM()
 #endif // FEATURE_ADJUSTABLE_MICROSTEPS
 
     if(!HAL::eprGetInt16( EPR_RF_FREQ_DBL )){
+         Printer::stepsDoublerFrequency = STEP_DOUBLER_FREQUENCY;
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
          HAL::eprSetInt16( EPR_RF_FREQ_DBL, STEP_DOUBLER_FREQUENCY );
          change = true;
-         Printer::stepsDoublerFrequency = STEP_DOUBLER_FREQUENCY;
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
     }else{
          Printer::stepsDoublerFrequency = constrain(HAL::eprGetInt16( EPR_RF_FREQ_DBL ),5000,12000);

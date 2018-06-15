@@ -1,6 +1,12 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 
+V RF.01.41.27.Mod (2018-06-15)
+- additional automatic checks for zeroes within extruder eeprom
+- autocheck that eeprom value extruder start speed is not bigger than extruder max speed
+- prevent the menu to switch some settings to 0
+- added "if FEATURE_AUTOMATIC_EEPROM_UPDATE" on some more locations
+
 V RF.01.41.26.Mod (2018-06-07)
 - not yet available temp measurements have been blocking the printer to show which sensor is defect after a restart.
 - some refactoring and cleanup of code
