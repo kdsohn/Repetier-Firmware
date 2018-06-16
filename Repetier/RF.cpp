@@ -10481,7 +10481,7 @@ void processCommand( GCode* pCommand )
 #endif // FEATURE_DIGIT_FLOW_COMPENSATION
 
 #if FEATURE_STARTLINE
-            case 3912:
+            case 3912: //M3912 lay down automatic startmade which you can abort (when the hotend is moving) by pressing play
             {
                 Commands::waitUntilEndOfAllMoves(); //feature startline
                 if( Printer::areAxisHomed() && Printer::doHeatBedZCompensation ){
@@ -10547,6 +10547,13 @@ void processCommand( GCode* pCommand )
                     
                     float x = spacerX;
                     float y = 23.0f; /*+Printer::minMM[Y_AXIS]*/
+#if NUM_EXTRUDER > 0
+                    if ( Extruder::current->id != 0 ){
+                        //if you use T1 then dont make the start line ontop of the startline of T0
+                        //shift the y-position according to the extruders number.
+                        y += (float)Extruder::current->id; /* times 1mm */;
+                    }
+#endif //NUM_EXTRUDER > 0
                     if ( pCommand->hasY() ){ //override y with user value
                         y = (float)pCommand->Y;
                         if(y > Printer::lengthMM[Y_AXIS]*0.5) y = Printer::lengthMM[Y_AXIS]*0.5;
@@ -10588,6 +10595,10 @@ void processCommand( GCode* pCommand )
                         }
                         if(g_uBlockCommands) break; //mache die funktion abbrechbar.
                         y += 1.5f;
+#if NUM_EXTRUDER > 0
+                        //if you use T1 then dont make the start line ontop of the startline of T0
+                        y += float(NUM_EXTRUDER-1); /* +1mm spacing for each extruder involved */;
+#endif //NUM_EXTRUDER > 0
                         Printer::moveToReal(IGNORE_COORDINATE, y, IGNORE_COORDINATE, IGNORE_COORDINATE, Printer::homingFeedrate[Y_AXIS] );
                         if(skip_by_keys) break; //mache die Startmade überspringbar -> weiter zum Druck.
                     }
