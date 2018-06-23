@@ -636,7 +636,9 @@ void EEPROM::initializeAllOperatingModes()
         HAL::eprSetFloat(EPR_Y_HOMING_FEEDRATE_PRINT,HOMING_FEEDRATE_Y_PRINT);
         HAL::eprSetFloat(EPR_Z_HOMING_FEEDRATE_PRINT,HOMING_FEEDRATE_Z_PRINT);
     }
+
     EEPROM::updateChecksum();
+    
 #endif // FEATURE_MILLING_MODE
 } // initializeAllOperatingModes
 

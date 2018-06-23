@@ -1034,30 +1034,42 @@ void TemperatureController::autotunePID(float temp, uint8_t controllerId, int ma
     float Ku, Tu;
     float Kp = 0, Ki = 0, Kd = 0;
     float maxTemp=20, minTemp=20; 
-    if(maxCycles < 5)
+    if(maxCycles < 5){
         maxCycles = 5;
-    if(maxCycles > 20)
+    }
+    if(maxCycles > 20){
         maxCycles = 20;
+    }
     Com::printInfoFLN(Com::tPIDAutotuneStart);
     Com::printF( PSTR("Ruleset: "), (int)method );
     switch(method){
         case 4: //Tyreus-Lyben
+        {
             Com::printFLN(Com::tAPIDTyreusLyben);
-        break;
+            break;
+        }
         case 3: //PID no overshoot
+        {
             Com::printFLN(Com::tAPIDNone);
-        break;
+            break;
+        }
         case 2: //PID some overshoot
+        {
             Com::printFLN(Com::tAPIDSome);
-        break;
+            break;
+        }
         case 1: //PID Pessen Integral Rule
+        {
             Com::printFLN(Com::tAPIDPessen);
-        break;
+            break;
+        }
         default: //PID classic Ziegler-Nichols
+        {
             Com::printFLN(Com::tAPIDClassic);
             method = 0; //filter not available methods.
+        }
     }
-    //Extruder::disableAllHeater(); // switch off all heaters. https://github.com/repetier/Repetier-Firmware/commit/241c550ac004023842d6886c6e0db15a1f6b56d7
+    
     autotuneIndex = controllerId;
     pwm_pos[pwmIndex] = pidMax;
     if(controllerId<NUM_EXTRUDER)

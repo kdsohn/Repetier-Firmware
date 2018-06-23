@@ -136,66 +136,6 @@ Overridden if EEPROM activated.*/
 /** \brief Number of steps for a 1mm move in z direction  Overridden if EEPROM activated.*/
 #define ZAXIS_STEPS_PER_MM                  float(80 * (float)RF_MICRO_STEPS_Z)
 
-
-// ##########################################################################################
-// ##   Common extruder configuration
-// ##########################################################################################
-
-/** \brief for each extruder, fan will stay on until extruder temperature is below this value */
-#define EXTRUDER_FAN_COOL_TEMP              50
-
-/** \brief Maximal temperature which can be set for the extruder */
-#define EXTRUDER_MAX_TEMP                   275
-
-/** \brief Extruder allow cold movement which can be set for the extruder */
-#define EXTRUDER_ALLOW_COLD_MOVE            0
-
-
-// ##########################################################################################
-// ##   Hotend V1
-// ##########################################################################################
-
-/** \brief The maximum value, I-gain can contribute to the output. */
-#define HT2_PID_INTEGRAL_DRIVE_MAX          130
-/** \brief lower value for integral part. */
-#define HT2_PID_INTEGRAL_DRIVE_MIN          30
-/** \brief P-gain. */
-#define HT2_PID_P                           37.52
-/** \brief I-gain. */
-#define HT2_PID_I                           10
-/** \brief Dgain. */
-#define HT2_PID_D                           35.18
-
-// ##########################################################################################
-// ##   Hotend V2
-// ##########################################################################################
-
-/** \brief The maximum value, I-gain can contribute to the output. */
-#define HT3_PID_INTEGRAL_DRIVE_MAX          120
-/** \brief lower value for integral part. */
-#define HT3_PID_INTEGRAL_DRIVE_MIN          30
-/** \brief P-gain. */
-#define HT3_PID_P                           12.5
-/** \brief I-gain. */
-#define HT3_PID_I                           3.2
-/** \brief Dgain. */
-#define HT3_PID_D                           18
-
-// ##########################################################################################
-// ##	Hotend V3 : Nibbels 23.12.2017: PID Werte sind noch die falschen alten Werte vom V2
-// ##########################################################################################
-
-/** \brief The maximum value, I-gain can contribute to the output. */
-#define HT4_PID_INTEGRAL_DRIVE_MAX			180
-/** \brief lower value for integral part. */
-#define HT4_PID_INTEGRAL_DRIVE_MIN			40
-/** \brief P-gain. */
-#define HT4_PID_P							95
-/** \brief I-gain. */
-#define HT4_PID_I							120
-/** \brief Dgain. */
-#define HT4_PID_D							130
-
 // ##########################################################################################
 // ##   Miller type 1 (= one track)
 // ##########################################################################################
@@ -294,7 +234,7 @@ Overridden if EEPROM activated. */
 #define EXT0_PID_P                          HT2_PID_P
 /** \brief I-gain. Overridden if EEPROM activated. */
 #define EXT0_PID_I                          HT2_PID_I
-/** \brief Dgain. Overridden if EEPROM activated.*/
+/** \brief D-gain. Overridden if EEPROM activated.*/
 #define EXT0_PID_D                          HT2_PID_D
 
 #endif // EXT0_HOTEND_TYPE == HOTEND_TYPE_V1
@@ -310,10 +250,26 @@ Overridden if EEPROM activated. */
 #define EXT0_PID_P                          HT3_PID_P
 /** \brief I-gain. Overridden if EEPROM activated. */
 #define EXT0_PID_I                          HT3_PID_I
-/** \brief Dgain. Overridden if EEPROM activated.*/
+/** \brief D-gain. Overridden if EEPROM activated.*/
 #define EXT0_PID_D                          HT3_PID_D
 
 #endif // EXT0_HOTEND_TYPE == HOTEND_TYPE_V2
+
+
+#if EXT0_HOTEND_TYPE == HOTEND_TYPE_V3
+
+/** \brief The maximum value, I-gain can contribute to the output. Overridden if EEPROM activated. */
+#define EXT0_PID_INTEGRAL_DRIVE_MAX         HT4_PID_INTEGRAL_DRIVE_MAX
+/** \brief lower value for integral part. Overridden if EEPROM activated. */
+#define EXT0_PID_INTEGRAL_DRIVE_MIN         HT4_PID_INTEGRAL_DRIVE_MIN
+/** \brief P-gain. Overridden if EEPROM activated. */
+#define EXT0_PID_P                          HT4_PID_P
+/** \brief I-gain. Overridden if EEPROM activated. */
+#define EXT0_PID_I                          HT4_PID_I
+/** \brief D-gain. Overridden if EEPROM activated.*/
+#define EXT0_PID_D                          HT4_PID_D
+
+#endif // EXT0_HOTEND_TYPE == HOTEND_TYPE_V3
 
 
 /** \brief maximum time the heater is can be switched on. Max = 255.  Overridden if EEPROM activated. */
@@ -450,11 +406,11 @@ Overridden if EEPROM activated. */
 #define EXT1_PID_INTEGRAL_DRIVE_MAX         HT2_PID_INTEGRAL_DRIVE_MAX
 /** \brief lower value for integral part. Overridden if EEPROM activated. */
 #define EXT1_PID_INTEGRAL_DRIVE_MIN         HT2_PID_INTEGRAL_DRIVE_MIN
-/** \brief P-gain.  Overridden if EEPROM activated. */
+/** \brief P-gain. Overridden if EEPROM activated. */
 #define EXT1_PID_P                          HT2_PID_P
 /** \brief I-gain. Overridden if EEPROM activated. */
 #define EXT1_PID_I                          HT2_PID_I
-/** \brief Dgain.  Overridden if EEPROM activated.*/
+/** \brief D-gain. Overridden if EEPROM activated.*/
 #define EXT1_PID_D                          HT2_PID_D
 
 #endif // EXT1_HOTEND_TYPE == HOTEND_TYPE_V1
@@ -466,14 +422,30 @@ Overridden if EEPROM activated. */
 #define EXT1_PID_INTEGRAL_DRIVE_MAX         HT3_PID_INTEGRAL_DRIVE_MAX
 /** \brief lower value for integral part. Overridden if EEPROM activated. */
 #define EXT1_PID_INTEGRAL_DRIVE_MIN         HT3_PID_INTEGRAL_DRIVE_MIN
-/** \brief P-gain.  Overridden if EEPROM activated. */
+/** \brief P-gain. Overridden if EEPROM activated. */
 #define EXT1_PID_P                          HT3_PID_P
 /** \brief I-gain. Overridden if EEPROM activated. */
 #define EXT1_PID_I                          HT3_PID_I
-/** \brief Dgain.  Overridden if EEPROM activated.*/
+/** \brief D-gain. Overridden if EEPROM activated.*/
 #define EXT1_PID_D                          HT3_PID_D
 
 #endif // EXT1_HOTEND_TYPE == HOTEND_TYPE_V2
+
+
+#if EXT1_HOTEND_TYPE == HOTEND_TYPE_V3
+
+/** \brief The maximum value, I-gain can contribute to the output. Overridden if EEPROM activated. */
+#define EXT1_PID_INTEGRAL_DRIVE_MAX         HT4_PID_INTEGRAL_DRIVE_MAX
+/** \brief lower value for integral part. Overridden if EEPROM activated. */
+#define EXT1_PID_INTEGRAL_DRIVE_MIN         HT4_PID_INTEGRAL_DRIVE_MIN
+/** \brief P-gain. Overridden if EEPROM activated. */
+#define EXT1_PID_P                          HT4_PID_P
+/** \brief I-gain. Overridden if EEPROM activated. */
+#define EXT1_PID_I                          HT4_PID_I
+/** \brief D-gain. Overridden if EEPROM activated.*/
+#define EXT1_PID_D                          HT4_PID_D
+
+#endif // EXT1_HOTEND_TYPE == HOTEND_TYPE_V3
 
 
 /** \brief maximum time the heater is can be switched on. Max = 255.  Overridden if EEPROM activated. */

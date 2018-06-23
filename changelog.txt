@@ -1,6 +1,13 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 
+V RF.01.41.51.Mod (2018-06-23)
+- Merged changes from RF1.42 except this new fanspeed 3Hz feature
+- experimental support for RF2000v2
+
+V RF.01.41.28.Mod (2018-06-16)
+- We dont draw a T1 startline over a T0 startline anymore. M3912 T1 startlines are now shifted in y a bit.
+
 V RF.01.41.27.Mod (2018-06-15)
 - additional automatic checks for zeroes within extruder eeprom
 - autocheck that eeprom value extruder start speed is not bigger than extruder max speed

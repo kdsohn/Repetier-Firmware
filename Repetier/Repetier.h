@@ -36,9 +36,9 @@
     #include "RF2000.h"
 #endif // MOTHERBOARD == DEVICE_TYPE_RF2000
 
-#if MOTHERBOARD == DEVICE_TYPE_RF2000_V2
-    #include "RF2000V2.h"
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+#if MOTHERBOARD == DEVICE_TYPE_RF2000v2
+    #include "RF2000v2.h"
+#endif // MOTHERBOARD == DEVICE_TYPE_RF2000v2
  
 #include "pins.h"
 #include "HAL.h"
