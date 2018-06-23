@@ -360,7 +360,7 @@
 
 
 // ##########################################################################################
-// ##   the following M codes are supported only by the RF2000 and RF2000 V2
+// ##   the following M codes are supported only by the RF2000 and RF2000v2
 // ##########################################################################################
 
 - M3300 [P] [S] - configure the 24V FET outputs ( on/off )
@@ -413,6 +413,11 @@
   - M3308 P1 ; sets the RGB light mode to "White"
   - M3308 P2 ; sets the RGB light mode to "Auto"
   - M3308 P3 ; sets the RGB light mode to "Manual"
+  
+- M3309 - start/abort to align the two extruders
+  - Examples:
+  - M3309 ; moves the heat bed up until it touches the first extruder and beeps afterwards in order to indicate that the extruders can be aligned manually
+
 */
 
 

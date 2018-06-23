@@ -51,7 +51,7 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
     #error Device type (RF1000 / RF2000 / RF2000v2) is not defined. Edit Configuration.h or pass the corresponding option to the compiler.
 #endif
 #if MOTHERBOARD == DEVICE_TYPE_RF2000v2
-    #error This Mod-Firmware has not been tested on a RF2000v2 yet. Please remove this Message if you acknowledged this.
+    #error This Mod-Firmware has not been tested on a RF2000v2 yet. But created with care. Please remove this Message if you acknowledged this.
 #endif // MOTHERBOARD == DEVICE_TYPE_RF2000v2
 
 

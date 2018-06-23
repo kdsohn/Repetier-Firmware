@@ -11222,14 +11222,14 @@ void nextPreviousXAction( int8_t increment )
     if(increment<0 && Printer::isXMinEndstopHit())
     {
         // we shall move to the left but the x-min-endstop is hit already, so we do nothing
-        showError( (void*)ui_text_x_axis, (void*)ui_text_min_reached );
+        showInformation( (void*)ui_text_x_axis, (void*)ui_text_min_reached );
         return;
     }
 
     if(increment>0 && (Printer::lengthMM[X_AXIS] - Printer::targetXPosition()) < 0.1)
     {
         // we shall move to the right but the end of the x-axis has been reached already, so we do nothing
-        showError( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
+        showInformation( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
         return;
     }
 
@@ -11301,7 +11301,7 @@ void nextPreviousXAction( int8_t increment )
             Temp += Printer::queuePositionCurrentSteps[X_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
             Temp += (long)(increment * 1 * Printer::axisStepsPerMM[X_AXIS]);
             if(Temp <= long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS])) Printer::setDestinationStepsFromMenu( 1 * increment, 0, 0 );
-            else showError( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
+            else showInformation( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
             break;
         }
         case MOVE_MODE_10_MM:
@@ -11310,7 +11310,7 @@ void nextPreviousXAction( int8_t increment )
             Temp += Printer::queuePositionCurrentSteps[X_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
             Temp += (long)(increment * 10 * Printer::axisStepsPerMM[X_AXIS]);
             if(Temp <= long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS])) Printer::setDestinationStepsFromMenu( 10 * increment, 0, 0 );
-            else showError( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
+            else showInformation( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
             break;
         }
         case MOVE_MODE_50_MM:
@@ -11319,7 +11319,7 @@ void nextPreviousXAction( int8_t increment )
             Temp += Printer::queuePositionCurrentSteps[X_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
             Temp += (long)(increment * 50 * Printer::axisStepsPerMM[X_AXIS]);
             if(Temp <= long(Printer::lengthMM[X_AXIS] * Printer::axisStepsPerMM[X_AXIS])) Printer::setDestinationStepsFromMenu( 50 * increment, 0, 0 );
-            else showError( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
+            else showInformation( (void*)ui_text_x_axis, (void*)ui_text_max_reached );
             break;
         }
     }
@@ -11368,14 +11368,14 @@ void nextPreviousYAction( int8_t increment )
     if(increment<0 && Printer::isYMinEndstopHit())
     {
         // we shall move to the back but the y-min-endstop is hit already, so we do nothing
-        showError( (void*)ui_text_y_axis, (void*)ui_text_min_reached );
+        showInformation( (void*)ui_text_y_axis, (void*)ui_text_min_reached );
         return;
     }
 
     if(increment>0 && (Printer::lengthMM[Y_AXIS] - Printer::targetYPosition()) < 0.1)
     {
         // we shall move to the front but the end of the y-axis has been reached already, so we do nothing
-        showError( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
+        showInformation( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
         return;
     }
 
@@ -11401,7 +11401,7 @@ void nextPreviousYAction( int8_t increment )
                     Com::printFLN( PSTR( "nextPreviousYAction(): moving y aborted (safety stop)") );
                 }
 
-                showError( (void*)ui_text_y_axis, (void*)ui_text_operation_denied );
+                showInformation( (void*)ui_text_y_axis, (void*)ui_text_min_reached );
                 break;
             }
             else
@@ -11447,7 +11447,7 @@ void nextPreviousYAction( int8_t increment )
             Temp += Printer::queuePositionCurrentSteps[Y_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
             Temp += (long)(increment * 1 * Printer::axisStepsPerMM[Y_AXIS]);
             if(Temp <= long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS])) Printer::setDestinationStepsFromMenu( 0, 1 * increment, 0 );
-            else showError( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
+            else showInformation( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
             break;
         }
         case MOVE_MODE_10_MM:
@@ -11456,7 +11456,7 @@ void nextPreviousYAction( int8_t increment )
             Temp += Printer::queuePositionCurrentSteps[Y_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
             Temp += (long)(increment * 10 * Printer::axisStepsPerMM[Y_AXIS]);
             if(Temp <= long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS])) Printer::setDestinationStepsFromMenu( 0, 10 * increment, 0 );
-            else showError( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
+            else showInformation( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
             break;
         }
         case MOVE_MODE_50_MM:
@@ -11465,7 +11465,7 @@ void nextPreviousYAction( int8_t increment )
             Temp += Printer::queuePositionCurrentSteps[Y_AXIS]; //homed oder nicht homed, das ist hier egal, nicht gehomed kann ich das sowieso nicht prüfen.
             Temp += (long)(increment * 50 * Printer::axisStepsPerMM[Y_AXIS]);
             if(Temp <= long(Printer::lengthMM[Y_AXIS] * Printer::axisStepsPerMM[Y_AXIS])) Printer::setDestinationStepsFromMenu( 0, 50 * increment, 0 );
-            else showError( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
+            else showInformation( (void*)ui_text_y_axis, (void*)ui_text_max_reached );
             break;
         }
     }
@@ -11521,7 +11521,7 @@ void nextPreviousZAction( int8_t increment )
             Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (max reached)" ) );
         }
 
-        showError( (void*)ui_text_z_axis, (void*)ui_text_max_reached );
+        showInformation( (void*)ui_text_z_axis, (void*)ui_text_max_reached );
         return;
     }
 
@@ -11533,7 +11533,7 @@ void nextPreviousZAction( int8_t increment )
             Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (z-max reached)" ) );
         }
 
-        showError( (void*)ui_text_z_axis, (void*)ui_text_max_reached );
+        showInformation( (void*)ui_text_z_axis, (void*)ui_text_max_reached );
         return;
     }
 
@@ -11592,7 +11592,7 @@ void nextPreviousZAction( int8_t increment )
             if( increment < 0 && Temp < -1*long(Printer::ZOverrideMax) && Printer::isZMinEndstopHit() )
             {
                 // do not allow to drive the bed into the extruder
-                showError( (void*)ui_text_z_axis, (Printer::isAxisHomed(Z_AXIS) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed) );
+                showInformation( (void*)ui_text_z_axis, (Printer::isAxisHomed(Z_AXIS) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed) );
                 break;
             }
             else
@@ -11628,7 +11628,7 @@ void nextPreviousZAction( int8_t increment )
                     Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (min reached)" ) );
                 }
 
-                showError( (void*)ui_text_z_axis, (Printer::isAxisHomed(Z_AXIS) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed) );
+                showInformation( (void*)ui_text_z_axis, (Printer::isAxisHomed(Z_AXIS) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed) );
                 return;
             }
 
@@ -11655,7 +11655,7 @@ void nextPreviousZAction( int8_t increment )
                     Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (min reached)" ) );
                 }
 
-                showError( (void*)ui_text_z_axis, (Printer::isAxisHomed(Z_AXIS) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed) );
+                showInformation( (void*)ui_text_z_axis, (Printer::isAxisHomed(Z_AXIS) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed) );
                 return;
             }        
             float currentZmm = (float)Printer::currentZPositionSteps() * Printer::invAxisStepsPerMM[Z_AXIS] ; //z achse bezogen auf Z-Schalter. Scale Z-Min
@@ -11694,7 +11694,7 @@ void nextPreviousZAction( int8_t increment )
                     Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (min reached)" ) );
                 }
 
-                showError( (void*)ui_text_z_axis, (Printer::isAxisHomed(Z_AXIS) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed) );
+                showInformation( (void*)ui_text_z_axis, (Printer::isAxisHomed(Z_AXIS) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed) );
                 return;
             }
             float currentZmm = (float)Printer::currentZPositionSteps() * Printer::invAxisStepsPerMM[Z_AXIS] ; //z achse bezogen auf Z-Schalter. Scale Z-Min
@@ -11729,7 +11729,7 @@ void nextPreviousZAction( int8_t increment )
                     Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (min reached)" ) );
                 }
 
-                showError( (void*)ui_text_z_axis, (Printer::isAxisHomed(Z_AXIS) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed) );
+                showInformation( (void*)ui_text_z_axis, (Printer::isAxisHomed(Z_AXIS) ? (void*)ui_text_min_reached : (void*)ui_text_min_reached_unhomed) );
                 return;
             }
             float currentZmm = (float)Printer::currentZPositionSteps() * Printer::invAxisStepsPerMM[Z_AXIS] ; //z achse bezogen auf Z-Schalter. Scale Z-Min
@@ -13485,7 +13485,7 @@ void notifyAboutWrongHardwareType( unsigned char guessedHardwareType )
         }
         case DEVICE_TYPE_RF2000:
         {
-            // we try to beep via the beeper pin of the RF2000 / RF2000 V2 hardware
+            // we try to beep via the beeper pin of the RF2000 / RF2000v2 hardware
             SET_OUTPUT( BEEPER_PIN_RF2000 );
 
             for( uint8_t i=0; i<count; i++ )
