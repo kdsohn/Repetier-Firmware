@@ -50,9 +50,9 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
 #ifndef MOTHERBOARD
     #error Device type (RF1000 / RF2000 / RF2000v2) is not defined. Edit Configuration.h or pass the corresponding option to the compiler.
 #endif
-#if MOTHERBOARD == DEVICE_TYPE_RF2000_V2
-    #error This Firmware does not support RF2000v2 yet. Renkforce did not release any validated RF2000V2.h yet.
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+#if MOTHERBOARD == DEVICE_TYPE_RF2000v2
+    #error This Mod-Firmware has not been tested on a RF2000v2 yet. Please remove this Message if you acknowledged this.
+#endif // MOTHERBOARD == DEVICE_TYPE_RF2000v2
 
 
 
@@ -171,6 +171,64 @@ is always running and is not hung up for some unknown reason. */
 Servos are controlled by a pulse width normally between 500 and 2500 with 1500ms in center position. 0 turns servo off.
 WARNING: Servos can draw a considerable amount of current. Make sure your system can handle this or you may risk your hardware! */
 #define FEATURE_SERVO                       1                                                   // 1 = on, 0 = off
+
+// ##########################################################################################
+// ##   Common extruder configuration
+// ##########################################################################################
+
+/** \brief for each extruder, fan will stay on until extruder temperature is below this value */
+#define EXTRUDER_FAN_COOL_TEMP              50
+
+/** \brief Maximal temperature which can be set for the extruder */
+#define EXTRUDER_MAX_TEMP                   275
+
+/** \brief Extruder allow cold movement which can be set for the extruder */
+#define EXTRUDER_ALLOW_COLD_MOVE            0
+
+// ##########################################################################################
+// ##   Hotend V1
+// ##########################################################################################
+
+/** \brief The maximum value, I-gain can contribute to the output. */
+#define HT2_PID_INTEGRAL_DRIVE_MAX          130
+/** \brief lower value for integral part. */
+#define HT2_PID_INTEGRAL_DRIVE_MIN          30
+/** \brief P-gain. */
+#define HT2_PID_P                           37.52
+/** \brief I-gain. */
+#define HT2_PID_I                           10
+/** \brief Dgain. */
+#define HT2_PID_D                           35.18
+
+// ##########################################################################################
+// ##   Hotend V2
+// ##########################################################################################
+
+/** \brief The maximum value, I-gain can contribute to the output. */
+#define HT3_PID_INTEGRAL_DRIVE_MAX          120
+/** \brief lower value for integral part. */
+#define HT3_PID_INTEGRAL_DRIVE_MIN          30
+/** \brief P-gain. */
+#define HT3_PID_P                           12.5
+/** \brief I-gain. */
+#define HT3_PID_I                           3.2
+/** \brief Dgain. */
+#define HT3_PID_D                           18
+
+// ##########################################################################################
+// ##	Hotend V3
+// ##########################################################################################
+
+/** \brief The maximum value, I-gain can contribute to the output. */
+#define HT4_PID_INTEGRAL_DRIVE_MAX          120
+/** \brief lower value for integral part. */
+#define HT4_PID_INTEGRAL_DRIVE_MIN          30
+/** \brief P-gain. */
+#define HT4_PID_P                           98.0
+/** \brief I-gain. */
+#define HT4_PID_I                           0.63
+/** \brief Dgain. */
+#define HT4_PID_D                           132.0
 
 // ##########################################################################################
 // ##   common configuration

@@ -412,7 +412,7 @@
 #define UI_ACTION_TEXT_NO_TIPP              "(alternat. for beds)"
 #define UI_ACTION_TEXT_TYREUS_LYBEN_TIPP    "(choose for highpower bed)"
 
-#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000v2
     #define UI_TEXT_UNMOUNT_FILAMENT_SOFT   "Max. 210\002C/Soft"
     #define UI_TEXT_UNMOUNT_FILAMENT_HARD   "Max. 210\002C"
     #define UI_TEXT_WOBBLE_FIX_PHASEXY      "Phase XY: %wP%%%Pi"
@@ -472,7 +472,7 @@
     #define UI_TEXT_Z_MODE_SURFACE          "Surface"
     #define UI_TEXT_Z_MODE_GCODE            "GCode"
     #define UI_TEXT_Z_MODE_Z_ORIGIN         "Z Origin"
-    #define UI_TEXT_TEMPERATURE_MANAGER     "Temperatur Manager"
+    #define UI_TEXT_TEMPERATURE_MANAGER     "Temperature Manager"
     #define UI_TEXT_OPERATION_DENIED        "Operation denied"
     #define UI_TEXT_TEMPERATURE_WRONG       "Temperature wrong"
 #else
@@ -535,7 +535,7 @@
     #define UI_TEXT_TEMPERATURE_MANAGER     "Temp. Manager"
     #define UI_TEXT_OPERATION_DENIED        "Operat. denied"
     #define UI_TEXT_TEMPERATURE_WRONG       "Temp. wrong"
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+#endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000v2
 
 //#endif
 #else
@@ -823,7 +823,7 @@
 #define UI_ACTION_TEXT_NO_TIPP              "(alternat. f" STR_uuml "r Bett)"
 #define UI_ACTION_TEXT_TYREUS_LYBEN_TIPP    "(empf. f" STR_uuml "r highpower Bett)"
 
-#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000v2
     #define UI_TEXT_WOBBLE_FIX_PHASEXY      "Phase XY: %wP%%%Pi"
     #define UI_TEXT_WOBBLE_FIX_AMPX         "Amplit.X: %wa[um]"
     #define UI_TEXT_WOBBLE_FIX_AMPY1        "Amp. Y-li:%wb[um]"
@@ -1015,7 +1015,7 @@
     #define UI_TEXT_INVALID_MATRIX          "Ung. Matrix"   
     #define UI_TEXT_TEMPERATURE_WRONG       "Temp. falsch"  
 
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+#endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000v2
 
 
 #endif // UI_LANGUAGE==1

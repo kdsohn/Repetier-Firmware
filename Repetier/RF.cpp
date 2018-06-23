@@ -2885,7 +2885,7 @@ void calculateZScrewCorrection( void )
     
     Com::printFLN( PSTR( "Je kaelter der Gesamtdrucker aktuell ist (nach langer Pause frisch angeschaltet), desto besser der Korrekturwert." ) );
     g_ZSchraubeOk = -1; //neg -> Matrix negativ -> ok. ausser, wenn:      
-#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2 //TODO: Prüfen ob das beim RF2000v2 stimmen wird.
+#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000v2 //TODO: Prüfen ob das beim RF2000v2 stimmen wird.
     if( -0.5f <= ZSchraubenDrehungenWarm && SollkorrekturWarm < 40.0f /* [um] */){ // < 0.25mm = 0.5Umdrehungen ist mit dem RF2000 nicht machbar.
         Com::printFLN( PSTR( " (Die Z-Schraube ist ok!)" ) ); //das ist die Änderung in M3-Regelgewinde-Z-Schrauben-Umdrehungen
         //meldung:
