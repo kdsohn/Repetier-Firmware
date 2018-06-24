@@ -1152,12 +1152,12 @@ public:
     static void homeAxis(bool xaxis,bool yaxis,bool zaxis); /// Home axis
     static void setOrigin(float xOff,float yOff,float zOff);
 
-    static INLINE int getFanSpeed(bool percent = false)
+    static INLINE uint8_t getFanSpeed(bool percent = false)
     {
-        if(!percent) return (int)pwm_pos[NUM_EXTRUDER+2]; //int
-        if(!pwm_pos[NUM_EXTRUDER+2]) return 0; //%
-        if(pwm_pos[NUM_EXTRUDER+2] <= 3) return 1; //%
-        return (int)(pwm_pos[NUM_EXTRUDER+2]*100/255); //%
+        if(!percent) return fanSpeed; //int
+        if(!fanSpeed) return 0; //0%
+        if(fanSpeed <= 3) return 1; //1%
+        return (uint8_t)(((uint16_t)fanSpeed * 100) / 255); //%
     } // getFanSpeed
 
 #if FEATURE_MEMORY_POSITION

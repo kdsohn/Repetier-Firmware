@@ -1040,11 +1040,17 @@ void UIDisplay::parse(char *txt,bool ram)
                     addFloat(Printer::getFanSpeed(false)/2.55f,3,1); 
                 }
                 else if(c2=='h') {                                                                      // %Fh : Fan frequency in Hz --> Wert passt grob, ist aber nicht exakt! F_CPU/3906/255*mode...
-                    addInt((1 << cooler_pwm_speed)*15, 3); 
+                    addFloat((1 << cooler_pwm_speed)*3.81f,2,1); 
                 }
                 else if(c2=='m'){                                                                       // %Fm : Fan modulation type PWM or PDM
                     if(cooler_mode == COOLER_MODE_PDM) addStringP( PSTR("PDM") );
                     else                               addStringP( PSTR("PWM") );
+                }
+                else if(c2=='U'){                                                                       // %FU : Fan modulation minimum = 1% FanSpeed
+                    addInt(cooler_pwm_min, 3); 
+                }
+                else if(c2=='O'){                                                                       // %FO : Fan modulation maximum = 100% FanSpeed
+                    addInt(cooler_pwm_max, 3); 
                 }
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 #if FEATURE_ZERO_DIGITS
@@ -3193,10 +3199,12 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
         case UI_ACTION_FANSPEED:
         {
-            Commands::setFanSpeed(Printer::getFanSpeed()+increment);
+            int speed = (int)Printer::getFanSpeed() + (int)increment;
+            if(speed > 255) speed = 0;
+            if(speed < 0)   speed = 255;
+            Commands::setFanSpeed((uint8_t)speed);
             break;
         }
-#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
         case UI_ACTION_FAN_HZ:
         {
             if(increment > 0){
@@ -3210,6 +3218,39 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
             break;
         }
+        case UI_ACTION_FAN_COOLER_PWM_MIN:
+        {
+            int temp = cooler_pwm_min;
+            INCREMENT_MIN_MAX(temp, 1, 1, 239);
+            if(temp <= (int)cooler_pwm_max-16){
+                cooler_pwm_min = temp;
+            }
+            //recalculate active pwm value out of fanSpeed for easy tune-in.
+            //(Tune-In: set fan to 1% and rise minimum until it starts.)
+            Commands::setFanSpeed(fanSpeed, true);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetByte( EPR_RF_COOLER_PWM_MIN, cooler_pwm_min );
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+        case UI_ACTION_FAN_COOLER_PWM_MAX:
+        {
+            int temp = cooler_pwm_max;
+            INCREMENT_MIN_MAX(temp, 1, 16, 255);
+            if(temp >= cooler_pwm_min+16){
+                cooler_pwm_max = temp;
+            }
+            //recalculate active pwm value out of fanSpeed for easy tune-in.
+            //(Tune-In: set fan to 100% and decrease maximum until fan slows down slightly.)
+            Commands::setFanSpeed(fanSpeed, true);
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+            HAL::eprSetByte( EPR_RF_COOLER_PWM_MAX, cooler_pwm_max );
+            EEPROM::updateChecksum();
+#endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
+            break;
+        }
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
         case UI_ACTION_XPOSITION:
         {
             /*
@@ -5158,27 +5199,27 @@ void UIDisplay::executeAction(int action)
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
             case UI_ACTION_FAN_OFF:
             {
-                Commands::setFanSpeed(0);
+                Commands::setFanSpeed((uint8_t)0);
                 break;
             }
             case UI_ACTION_FAN_25:
             {
-                Commands::setFanSpeed(64);
+                Commands::setFanSpeed((uint8_t)64);
                 break;
             }
             case UI_ACTION_FAN_50:
             {
-                Commands::setFanSpeed(128);
+                Commands::setFanSpeed((uint8_t)128);
                 break;
             }
             case UI_ACTION_FAN_75:
             {
-                Commands::setFanSpeed(192);
+                Commands::setFanSpeed((uint8_t)192);
                 break;
             }
             case UI_ACTION_FAN_FULL:
             {
-                Commands::setFanSpeed(255);
+                Commands::setFanSpeed((uint8_t)255);
                 break;
             }
             case UI_ACTION_FAN_MODE:

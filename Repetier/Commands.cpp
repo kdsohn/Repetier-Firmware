@@ -256,24 +256,58 @@ void Commands::changeFlowrateMultiply(float factorpercent)
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
 uint8_t fanKickstart = 0;
-void Commands::setFanSpeed(int speed)
-{
-    uint8_t trimmedSpeed = TRIM_FAN_PWM(speed);
-    if(pwm_pos[NUM_EXTRUDER+2] == trimmedSpeed)
-        return;
+void Commands::setFanSpeed(uint8_t speed, bool recalc)
+{       
+    speed = constrain(speed,0,255);
     
-    Printer::setMenuMode(MENU_MODE_FAN_RUNNING,trimmedSpeed!=0);
-    Com::printFLN(Com::tFanspeed,(trimmedSpeed == 1) ? 2 : trimmedSpeed ); //bei 1 zeigt repetierserver / repetierhost 0% an, was nicht stimmt. Das ist etwas Pfusch, aber nun funktionierts.
-    if(fanKickstart == 0 && trimmedSpeed > pwm_pos[NUM_EXTRUDER+2] && trimmedSpeed < 85) {
-        if(pwm_pos[NUM_EXTRUDER+2]) fanKickstart = FAN_KICKSTART_TIME / 100;
-        else                        fanKickstart = FAN_KICKSTART_TIME / 25;
+    //do nothing if the fan speed does not change at all
+    if(fanSpeed == speed && !recalc) return;
+    
+    //the new fan speed value is being remembered unchanged
+    //the output of the speed within display etc. stays unscaled
+    fanSpeed = speed;
+    
+    //output the new setting unscaled to repetier-host/server UI
+    Printer::setMenuMode(MENU_MODE_FAN_RUNNING, (fanSpeed > 0) );
+    Com::printFLN(Com::tFanspeed, (fanSpeed == 1) ? 2 : fanSpeed ); //bei 1 zeigt repetierserver / repetierhost 0% an, was nicht stimmt. Das ist etwas Pfusch, aber nun funktionierts.
+    
+    //wenn speed > 0 und < 255, dann wird der wertebereich eingegrenzt, sonst === 0 oder full power
+    if( speed > 0 && speed < 255 )
+    {
+        //scale the input speed value within MIN and MAX
+        long temp = speed;
+        temp *= (cooler_pwm_max - cooler_pwm_min);
+        temp /= 255;
+        temp += cooler_pwm_min;
+        speed = constrain(temp,0,255);
+        /*
+        from here "speed" is scaled to a set boundary. It will be the same scale like pwm_pos[NUM_EXTRUDER+2] has.
+        Commanded (and user ui) speed is "fanSpeed", which stays unscaled.
+        if the frequency is higher than 3.81Hz the precision of our PWM result might suffer: 255->128->64->32->16 steps = 0..100%
+        -> narrow scaling should only be used <<= 15hz
+        
+        Alternative: Otherwise we have to move to a 16bit timing resolution like conrad did. But I did not want to break with the old system too fast. I guess we will all tend to drive the fans at 3.81Hz anyways.
+        Using 3.81Hz we should have enough resolution to scale 0..100% into 0..255 pwm without having ripple.
+        
+        And well: Everything is better than the old way of steering the fans with no real control or "on-off" behaviour.
+        */            
     }
-    pwm_pos[NUM_EXTRUDER+2] = trimmedSpeed;
+
+#if FAN_KICKSTART_TIME
+    //if specified calculate a kickstart time when the fan speed is commanded to rise
+    //use fanSpeed (not "speed") to compare with COOLER_KICKSTART_THRESHOLD so we dont have to recalculate the threshold according min-max.
+    if (fanKickstart == 0 && speed > pwm_pos[NUM_EXTRUDER+2] && fanSpeed < COOLER_KICKSTART_THRESHOLD) {
+        if(speed) fanKickstart = COOLER_KICKSTART_TIME_BOOST / 10;
+        else      fanKickstart = COOLER_KICKSTART_TIME_OFF_ON / 10;
+    }
+#endif // FAN_KICKSTART_TIME
+
+    pwm_pos[NUM_EXTRUDER+2] = speed;
 } // setFanSpeed
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
-void Commands::adjustFanFrequency(uint8_t speed_mode = COOLER_PWM_SPEED){ //0 = ~15hz, ~1=30hz, ... 4=240hz.
+void Commands::adjustFanFrequency(uint8_t speed_mode = COOLER_PWM_SPEED){ //0 = ~3.81hz, ~1=7.62hz, ... 4=61hz.
     InterruptProtectedBlock noInts;
     cooler_pwm_speed = (speed_mode <= COOLER_MODE_MAX ? speed_mode : COOLER_PWM_SPEED); // > 4 should not happen, only if you change code and want that. 
     cooler_pwm_step = (1 << cooler_pwm_speed);
@@ -1110,7 +1144,7 @@ void Commands::executeGCode(GCode *com)
             {
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
-                    setFanSpeed(com->hasS()?com->S:255);
+                    setFanSpeed(com->hasS() ? (uint8_t)constrain(com->S,0,255) : (uint8_t)255);
                 }
                 break;
             }

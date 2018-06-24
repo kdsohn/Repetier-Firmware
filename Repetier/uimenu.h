@@ -100,6 +100,8 @@ List of placeholder:
 %Fs : Fan speed
 %Fh : Fan frequency in Hz
 %Fm : Fan modulation type PWM or PDM
+%FU : Fan modulation minimum = 1% FanSpeed
+%FO : Fan modulation maximum = 100% FanSpeed
 %PN : Printer name
 %Se : Steps per mm current extruder
 %S0 : Steps per mm extruder0
@@ -698,9 +700,11 @@ UI_MENU_ACTIONCOMMAND(ui_menu_fan_50,UI_TEXT_FAN_50,UI_ACTION_FAN_50)
 UI_MENU_ACTIONCOMMAND(ui_menu_fan_75,UI_TEXT_FAN_75,UI_ACTION_FAN_75)
 UI_MENU_ACTIONCOMMAND(ui_menu_fan_full,UI_TEXT_FAN_FULL,UI_ACTION_FAN_FULL)
 
-
-UI_MENU_CHANGEACTION_FILTER(ui_menu_fan_hz, UI_TEXT_FAN_HZ, UI_ACTION_FAN_HZ, 0, MENU_MODE_FAN_MODE_PDM)
-UI_MENU_ACTIONCOMMAND(      ui_menu_fan_mode,UI_TEXT_FAN_MODE,UI_ACTION_FAN_MODE)
+//fan settings for part fan and frequency setting for secondary coolers, but they are factor 4 faster in PWM.
+UI_MENU_CHANGEACTION_FILTER(ui_menu_fan_hz,      UI_TEXT_FAN_HZ,             UI_ACTION_FAN_HZ,    0, MENU_MODE_FAN_MODE_PDM)
+UI_MENU_ACTIONCOMMAND(      ui_menu_fan_mode,    UI_TEXT_FAN_MODE,           UI_ACTION_FAN_MODE)
+UI_MENU_CHANGEACTION(       ui_menu_fan_pwm_min, UI_TEXT_FAN_COOLER_PWM_MIN, UI_ACTION_FAN_COOLER_PWM_MIN)
+UI_MENU_CHANGEACTION(       ui_menu_fan_pwm_max, UI_TEXT_FAN_COOLER_PWM_MAX, UI_ACTION_FAN_COOLER_PWM_MAX)
 #define UI_MENU_FANHZMODE_CNT 2
 
 #define UI_MENU_FAN {UI_MENU_ADDCONDBACK &ui_menu_fan_fanspeed,&ui_menu_fan_off,&ui_menu_fan_25,&ui_menu_fan_50,&ui_menu_fan_75,&ui_menu_fan_full}
@@ -713,8 +717,8 @@ UI_MENU_SUBMENU_FILTER(ui_menu_fan_sub,UI_TEXT_FANSPEED,ui_menu_fan,MENU_MODE_PR
 #define UI_MENU_FAN_CNT 0
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
-#define UI_MENU_CONF_FAN {UI_MENU_ADDCONDBACK &ui_menu_fan_mode,&ui_menu_fan_hz}
-UI_MENU(ui_menu_settings_fan,UI_MENU_CONF_FAN,UI_MENU_BACKCNT+1+1)
+#define UI_MENU_CONF_FAN {UI_MENU_ADDCONDBACK &ui_menu_fan_mode, &ui_menu_fan_hz, &ui_menu_fan_pwm_min, &ui_menu_fan_pwm_max}
+UI_MENU(ui_menu_settings_fan,UI_MENU_CONF_FAN,UI_MENU_BACKCNT+1+1+1+1)
 
 /** \brief Configuration->Fan menu */
 UI_MENU_SUBMENU_FILTER(ui_menu_conf_fan, UI_TEXT_FAN_CONF_MENU, ui_menu_settings_fan, MENU_MODE_PRINTER,0)

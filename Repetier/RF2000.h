@@ -707,18 +707,21 @@ can set it on for safety. */
 #define MOUNT_FILAMENT_SCRIPT_SOFT          "M3913 P3500 F3"
 #define MOUNT_FILAMENT_SCRIPT_HARD          "M3913 P20000 F6"
 
-/** \brief speed of the PWM signal, 0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz, 3 = 122.06Hz, 4 = 244.12Hz */
+/** \brief speed of the PWM signal, 0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz */
 #define HEATER_PWM_SPEED                    1
-#define COOLER_PWM_SPEED                    2 //Nibbels 28.09.17: original ist 3, aber 3 ist wegen nem Bug wie 2, nun stimmt der Code, daher hier 2: bleibt also gleich.
+/** \brief speed of the PWM signal, 0 = 3.81Hz,  1 = 7.62Hz,  2 = 15.25Hz,  3 = 30.51Hz,  4 = 61.03Hz */
+#define COOLER_PWM_SPEED                    2
+
+/** \brief the following values can be used in order to fine-tune the operating range of the cooler */
+#define COOLER_PWM_MIN                      1                                                   // 1 ... 254 equals 1 ... 99 %
+#define COOLER_PWM_MAX                      254                                                 // 1 ... 254 equals 1 ... 99 %
 
 /** Some fans won't start for low values, but would run if started with higher power at the beginning.
-This defines the full power duration before returning to set value. Time is in milliseconds */
-#define FAN_KICKSTART_TIME  100                                                                 // [ms]
-
-/** Defines the max. fan speed for M106 controlled fans. Normally 255 to use full range, but for
- 12V fans on 24V this might help preventing a defect. For all other fans there is a explicit maximum PWM value
- you can set, so this is not used for other fans! */
-#define MAX_FAN_PWM 255
+This defines the full power duration before returning to set value. Time is in milliseconds
+Only values which are a factor of 10ms or 0==OFF will work precisely */
+#define COOLER_KICKSTART_THRESHOLD          128                                                 // 0 ... 255 equals 0 ... 100 % (unscaled!)
+#define COOLER_KICKSTART_TIME_OFF_ON        400                                                 // [ms]
+#define COOLER_KICKSTART_TIME_BOOST         100                                                 // [ms]
 
 /** \brief use PDM instead of PWM for part fan */
 // --> set EEPROM value or change mode in printers menu
