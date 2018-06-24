@@ -6638,7 +6638,7 @@ void outputObject( bool showerrors )
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     // disable the fan
-    Commands::setFanSpeed(0);
+    Commands::setFanSpeed((uint8_t)0);
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #if FEATURE_MILLING_MODE

@@ -215,6 +215,8 @@
 #define UI_ACTION_WOBBLE_FIX_AMPY2          1717
 #define UI_ACTION_WOBBLE_FIX_AMPZ           1718
 
+#define UI_ACTION_FAN_COOLER_PWM_MIN        1719
+#define UI_ACTION_FAN_COOLER_PWM_MAX        1720
 
 #define UI_ACTION_FET1_OUTPUT               2001
 #define UI_ACTION_FET2_OUTPUT               2002

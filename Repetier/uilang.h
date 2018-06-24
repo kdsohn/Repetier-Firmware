@@ -388,7 +388,9 @@
 
 #define UI_TEXT_FAN_CONF_MENU          "Part Fan"
 #define UI_TEXT_FAN_MODE               "Modulation: %Fm"
-#define UI_TEXT_FAN_HZ                 "PWM Frq: %Fh Hz"
+#define UI_TEXT_FAN_HZ                 "PWM Frq: %FhHz"
+#define UI_TEXT_FAN_COOLER_PWM_MIN     "%Fm 1%%%:  %FU"
+#define UI_TEXT_FAN_COOLER_PWM_MAX     "%Fm Max: %FO"
     
 #define UI_TEXT_CAL_DIRECT_READ        "Reading:%Ca mm"
 #define UI_TEXT_CAL_SHOW               "Avg:%Cm mm %Cn%%%"
@@ -793,7 +795,9 @@
 
 #define UI_TEXT_FAN_CONF_MENU          "Bauteil L" STR_uuml  "fter"
 #define UI_TEXT_FAN_MODE               "Modulation: %Fm"
-#define UI_TEXT_FAN_HZ                 "PWM Frq: %Fh Hz"
+#define UI_TEXT_FAN_HZ                 "PWM Frq: %FhHz"
+#define UI_TEXT_FAN_COOLER_PWM_MIN     "%Fm 1%%%:  %FU"
+#define UI_TEXT_FAN_COOLER_PWM_MAX     "%Fm Max: %FO"
 
 #define UI_TEXT_CAL_DIRECT_READ        "Wert:%Ca mm"
 #define UI_TEXT_CAL_SHOW               "Mittel:%Cm mm %Cn%%%"

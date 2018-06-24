@@ -881,15 +881,9 @@ ISR(TIMER1_COMPA_vect)
 #elif HEATER_PWM_SPEED == 1
 #define HEATER_PWM_STEP 2        // 2^1 == 0000 0010 == 1 << 1
 #define HEATER_PWM_MASK 254      //1111 1110 = (255 << 1) & 0xff
-#elif HEATER_PWM_SPEED == 2
+#else
 #define HEATER_PWM_STEP 4        // 2^2 == 0000 0100 == 1 << 2
 #define HEATER_PWM_MASK 252      //1111 1100 = (255 << 2) & 0xff
-#elif HEATER_PWM_SPEED == 3
-#define HEATER_PWM_STEP 8        // 2^3 == 0000 1000 == 1 << 3
-#define HEATER_PWM_MASK 248      //1111 1000 = (255 << 3) & 0xff
-#elif HEATER_PWM_SPEED == 4
-#define HEATER_PWM_STEP 16       // 2^4 == 0001 0000 == 1 << 4
-#define HEATER_PWM_MASK 240      //1111 0000 = (255 << 4) & 0xff
 #endif // HEATER_PWM_SPEED
 
 #if !defined(COOLER_PWM_SPEED)
@@ -901,6 +895,9 @@ ISR(TIMER1_COMPA_vect)
 #if COOLER_PWM_SPEED > 4
 #define COOLER_PWM_SPEED 4
 #endif
+
+//by this logic/code the higher frequency is used the less steps are commandable.
+//we have to use small frequencys and "it is only a partfan" thatwhy that matter is acceptable.
 
 #if COOLER_PWM_SPEED == 0
 #define COOLER_PWM_STEP 1        // 2^0 == 0000 0001 == 1 << 0
@@ -923,6 +920,9 @@ uint8_t cooler_pwm_step = COOLER_PWM_STEP; //1 << cooler_pwm_speed
 uint8_t cooler_pwm_mask = COOLER_PWM_MASK; //(255 << cooler_pwm_speed) & 0xff
 uint8_t cooler_mode = COOLER_MODE_PWM;
 
+uint8_t cooler_pwm_max = COOLER_PWM_MAX; //this is calculated as 100%
+uint8_t cooler_pwm_min = COOLER_PWM_MIN; //this is calculated as 1%
+
 #define pulseDensityModulate(pin, density, error, invert) {uint8_t carry;carry = error + (invert ? 255 - density : density); WRITE(pin, (carry < error)); error = carry;}
 /**
 This timer is called 3906 times per second. It is used to update pwm values for heater and some other frequent jobs.
@@ -931,6 +931,8 @@ ISR(PWM_TIMER_VECTOR)
 {
     static uint8_t pwm_count_heater = 0;
     static uint8_t pwm_count_cooler = 0;
+    static uint8_t pwm_count_cooler_part_fan = 0;
+        
     static uint8_t pwm_pos_set[NUM_EXTRUDER+3];
 #if NUM_EXTRUDER > 0 && (     (defined(EXT0_HEATER_PIN) && EXT0_HEATER_PIN > -1 && EXT0_EXTRUDER_COOLER_PIN > -1) || (NUM_EXTRUDER > 1 && EXT1_EXTRUDER_COOLER_PIN > -1 && EXT1_EXTRUDER_COOLER_PIN != EXT0_EXTRUDER_COOLER_PIN)      )
     /*
@@ -948,6 +950,7 @@ ISR(PWM_TIMER_VECTOR)
 #if EXT0_HEATER_PIN>-1
         if((pwm_pos_set[0] = (pwm_pos[0] & HEATER_PWM_MASK)) > 0) WRITE(EXT0_HEATER_PIN,!HEATER_PINS_INVERTED);
 #endif // EXT0_HEATER_PIN>-1
+
 #if defined(EXT1_HEATER_PIN) && EXT1_HEATER_PIN>-1 && NUM_EXTRUDER>1
         if((pwm_pos_set[1] = (pwm_pos[1] & HEATER_PWM_MASK)) > 0) WRITE(EXT1_HEATER_PIN,!HEATER_PINS_INVERTED);
 #endif // defined(EXT1_HEATER_PIN) && EXT1_HEATER_PIN>-1 && NUM_EXTRUDER>1
@@ -960,24 +963,18 @@ ISR(PWM_TIMER_VECTOR)
     if(pwm_count_cooler == 0)
     {
 #if EXT0_HEATER_PIN>-1 && EXT0_EXTRUDER_COOLER_PIN>-1
-        if((pwm_cooler_pos_set[0] = extruder[0].coolerPWM)>0) WRITE(EXT0_EXTRUDER_COOLER_PIN,1);
+        if((pwm_cooler_pos_set[0] = extruder[0].coolerPWM) > 0) WRITE(EXT0_EXTRUDER_COOLER_PIN,1);
 #endif // EXT0_HEATER_PIN>-1 && EXT0_EXTRUDER_COOLER_PIN>-1
 
 #if defined(EXT1_HEATER_PIN) && EXT1_HEATER_PIN>-1 && NUM_EXTRUDER>1
  #if EXT1_EXTRUDER_COOLER_PIN>-1 && EXT1_EXTRUDER_COOLER_PIN != EXT0_EXTRUDER_COOLER_PIN
-        if((pwm_cooler_pos_set[1] = extruder[1].coolerPWM)>0) WRITE(EXT1_EXTRUDER_COOLER_PIN,1);
+        if((pwm_cooler_pos_set[1] = extruder[1].coolerPWM) > 0) WRITE(EXT1_EXTRUDER_COOLER_PIN,1);
  #endif // EXT1_EXTRUDER_COOLER_PIN>-1 && EXT1_EXTRUDER_COOLER_PIN!=EXT0_EXTRUDER_COOLER_PIN
 #endif // defined(EXT1_HEATER_PIN) && EXT1_HEATER_PIN>-1 && NUM_EXTRUDER>1
 
 #if FAN_BOARD_PIN>-1
-        if((pwm_pos_set[NUM_EXTRUDER+1] = (pwm_pos[NUM_EXTRUDER+1] & cooler_pwm_mask)) > 0) WRITE(FAN_BOARD_PIN,1);
+        if((pwm_pos_set[NUM_EXTRUDER+1] = (pwm_pos[NUM_EXTRUDER+1] & COOLER_PWM_MASK)) > 0) WRITE(FAN_BOARD_PIN,1);
 #endif // FAN_BOARD_PIN>-1
-
-#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
-        if(cooler_mode != COOLER_MODE_PDM){
-            if((pwm_pos_set[NUM_EXTRUDER+2] = (pwm_pos[NUM_EXTRUDER+2] & cooler_pwm_mask)) > 0) WRITE(FAN_PIN,1);
-        }
-#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
     }
 
 #if EXT0_HEATER_PIN>-1
@@ -994,47 +991,65 @@ ISR(PWM_TIMER_VECTOR)
 #endif // EXT1_EXTRUDER_COOLER_PIN>-1 && EXT1_EXTRUDER_COOLER_PIN!=EXT0_EXTRUDER_COOLER_PIN
 #endif // defined(EXT1_HEATER_PIN) && EXT1_HEATER_PIN>-1 && NUM_EXTRUDER>1
 
-#if FAN_BOARD_PIN>-1
-    if(pwm_pos_set[NUM_EXTRUDER+1] == pwm_count_cooler && pwm_pos_set[NUM_EXTRUDER+1] != cooler_pwm_mask) WRITE(FAN_BOARD_PIN,0);
-#endif // #if FAN_BOARD_PIN>-1
-
-#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
-    if(fanKickstart == 0) {
-        if(cooler_mode == COOLER_MODE_PDM){
-            pulseDensityModulate(FAN_PIN, pwm_pos[NUM_EXTRUDER+2], pwm_pos_set[NUM_EXTRUDER+2], false);
-        }else{
-            if(pwm_pos_set[NUM_EXTRUDER+2] == pwm_count_cooler && pwm_pos_set[NUM_EXTRUDER+2] != cooler_pwm_mask) WRITE(FAN_PIN,0);
-        }
-    }else{
-        if(cooler_mode == COOLER_MODE_PDM){
-            pulseDensityModulate(FAN_PIN, MAX_FAN_PWM, pwm_pos_set[NUM_EXTRUDER+2], false);
-        }else{
-            if((MAX_FAN_PWM & cooler_pwm_mask) == pwm_count_cooler && (MAX_FAN_PWM & cooler_pwm_mask) != cooler_pwm_mask) WRITE(FAN_PIN,0);
-        }
-    }
-#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
-
 #if HEATED_BED_HEATER_PIN>-1 && HAVE_HEATED_BED
     if(pwm_pos_set[NUM_EXTRUDER] == pwm_count_heater && pwm_pos_set[NUM_EXTRUDER] != HEATER_PWM_MASK) WRITE(HEATED_BED_HEATER_PIN,HEATER_PINS_INVERTED);
 #endif // HEATED_BED_HEATER_PIN>-1 && HAVE_HEATED_BED
+
+#if FAN_BOARD_PIN>-1
+    if(pwm_pos_set[NUM_EXTRUDER+1] == pwm_count_cooler && pwm_pos_set[NUM_EXTRUDER+1] != COOLER_PWM_MASK) WRITE(FAN_BOARD_PIN,0);
+#endif // #if FAN_BOARD_PIN>-1
+
+    // run the heater PWM speed like we were used to:
+    pwm_count_heater += HEATER_PWM_STEP;
+    // run alle the secondary cooler PWM speed like we were used to:
+    pwm_count_cooler += COOLER_PWM_STEP;
+
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+    /**
+    PART FAN SPEED CONTROL
+    */
+    if(cooler_mode == COOLER_MODE_PDM){
+        pulseDensityModulate(FAN_PIN, (fanKickstart ? 255 : pwm_pos[NUM_EXTRUDER+2]), pwm_pos_set[NUM_EXTRUDER+2], false);
+    }else{
+        // divide part fan PWM Hz by 4:
+        static int counterDiv4 = 0;
+        if(++counterDiv4 >= 4){
+            counterDiv4 = 0;
+
+            if (pwm_count_cooler_part_fan == 0)
+            {
+                //count = 0 -> AN, wenn Powerlevel über Minimum
+                    //je nach PWM-Mask zählen nur obere bits!
+                    //je nach PWM-Mask (z.b. 1111 11xx b) gibts spezielle PWM-Steps (z.b. 4 = 100 b) welche den counter nur innerhalb PWM-Mask hochzählen.
+                pwm_pos_set[NUM_EXTRUDER+2] = (pwm_pos[NUM_EXTRUDER+2] & cooler_pwm_mask);
+                if(pwm_pos_set[NUM_EXTRUDER+2] > 0) WRITE(FAN_PIN,1); //AN
+            }
+            //count = powerlevel, aber nicht powerlevel == max. -> AUS
+            uint8_t powerlevel = fanKickstart ? 255 : pwm_pos_set[NUM_EXTRUDER+2];
+            if( powerlevel == pwm_count_cooler_part_fan && powerlevel != cooler_pwm_mask ) WRITE(FAN_PIN,0); //AUS
+
+            pwm_count_cooler_part_fan += cooler_pwm_step;
+        }
+    }
+    /**
+    END PART FAN SPEED CONTROL
+    */
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
     static int counter100Periodical = 0; // Approximate a 100ms timer :: blocks pingwatchdog s commandloop if not working
     if(++counter100Periodical >= 391) //(int)(F_CPU/40960))
     {
         counter100Periodical = 0;
         execute100msPeriodical = 1;
-        
-#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
-        //fan anfangs auf high zum anlaufen, aber das muss beendet werden:
-        if (fanKickstart) fanKickstart--;
-#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
         //um bei Frequenzumschaltung (Fan) wieder von 0 zählen. Hier drin, weils zu selten wechselt.
         static uint8_t has_cooler_speed_changed = 255;
         if(has_cooler_speed_changed != cooler_pwm_speed){
             has_cooler_speed_changed = cooler_pwm_speed;
-            pwm_count_cooler = 0;
+            pwm_count_cooler_part_fan = 0;
         }
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
     }
 
 #if FEATURE_RGB_LIGHT_EFFECTS
@@ -1043,12 +1058,18 @@ ISR(PWM_TIMER_VECTOR)
 
     static char counter10Periodical = 0; // Approximate a 10ms timer :: blocks pingwatchdog s commandloop if not working
     if(++counter10Periodical >= 39) //(int)(F_CPU/4096))
-    {
+    {        
         counter10Periodical = 0;
         execute10msPeriodical = 1;
 #if FEATURE_RGB_LIGHT_EFFECTS
         rgb_10ms_change_should_be_now = true;
 #endif // FEATURE_RGB_LIGHT_EFFECTS
+
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+        //hier her versetzt, um 10ms einstell-auflösung zu erhalten. Darum /10 statt bisher /100 beim Init in setFanSpeed().
+        //fan anfangs auf high zum anlaufen, aber das muss beendet werden:
+        if (fanKickstart) fanKickstart--;
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
     }
 
     // read analog values
@@ -1096,10 +1117,7 @@ ISR(PWM_TIMER_VECTOR)
 #endif // ANALOG_INPUTS>0
 
     UI_FAST; // Short timed user interface action
-
-    pwm_count_cooler += cooler_pwm_step;
-    pwm_count_heater += HEATER_PWM_STEP;
-
+    
 #if FEATURE_RGB_LIGHT_EFFECTS
     if( rgb_10ms_change_should_be_now )
     {

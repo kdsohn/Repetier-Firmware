@@ -76,6 +76,8 @@ float               maxadvspeed         = 0;
 uint8_t             pwm_pos[NUM_EXTRUDER+3];                // 0-NUM_EXTRUDER = Heater 0-NUM_EXTRUDER of extruder, NUM_EXTRUDER = Heated bed, NUM_EXTRUDER+1 Board fan, NUM_EXTRUDER+2 = Fan
 volatile int        waitRelax           = 0;                // Delay filament relax at the end of print, could be a simple timeout
 
+uint8_t				fanSpeed			= 0;
+
 #if FEATURE_DEBUG_MOVE_CACHE_TIMING
 float               low_ticks_per_move  = LOW_TICKS_PER_MOVE; //float weil vergleichsparameter timeForMove auch float ist und ich da nichts ändern will. 4 byte ram bleiben gleich.
 uint32_t            move_cache_stats[MOVE_CACHE_SIZE] = {0};  //0 als ungefüllt kommt dazu.

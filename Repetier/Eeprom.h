@@ -161,6 +161,8 @@ have problems with other modules using the eeprom */
 #define EPR_RF_MOD_WOBBLE_FIX_AMPY1       1957 //[+1958 2byte short]
 #define EPR_RF_MOD_WOBBLE_FIX_AMPY2       1959 //[+1960 2byte short]
 
+#define EPR_RF_COOLER_PWM_MIN             1961 //[1byte]
+#define EPR_RF_COOLER_PWM_MAX             1962 //[1byte]
 
 
 //Nibbels: Computechecksum geht bis 2047
