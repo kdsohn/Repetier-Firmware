@@ -12,8 +12,8 @@ V RF.01.42.Mod (2018-06-24)
 - shifted fanKickstart time to a resolution of 10ms (instead of 100ms). (But the config values and default behaviour did not change.)
 
 - set default fan config to:
-    RF1000: 15Hz 0..255 (should be the config we already knew for the RF1000)
-    RF2000: 15Hz 0..255 (the formerly better config for my printer, instead of former 62Hz)
+    RF1000: 15Hz 1..254 (should be the config we already knew for the RF1000)
+    RF2000: 15Hz 1..254 (the formerly better config for my printer, instead of former 62Hz)
     RF2000v2: 3.8Hz 90..193 (Conrad: 3.0Hz 90..193 which might be better but I cannot test it!)
    -> These values will change after the first tests are done.
 
