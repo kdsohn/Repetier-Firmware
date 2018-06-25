@@ -493,11 +493,11 @@ void EEPROM::storeDataIntoEEPROM(uint8_t corrupted)
     HAL::eprSetInt16( EPR_RF_FREQ_DBL, Printer::stepsDoublerFrequency );
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
-    HAL::eprSetByte( EPR_RF_FAN_SPEED, cooler_pwm_speed );
-    HAL::eprSetByte( EPR_RF_FAN_MODE, cooler_mode );
+    HAL::eprSetByte( EPR_RF_FAN_MODE, part_fan_frequency_modulation );
     
-    HAL::eprSetByte( EPR_RF_COOLER_PWM_MIN, cooler_pwm_min );
-    HAL::eprSetByte( EPR_RF_COOLER_PWM_MAX, cooler_pwm_max );
+    HAL::eprSetByte( EPR_RF_PART_FAN_SPEED,   part_fan_pwm_speed );    
+    HAL::eprSetByte( EPR_RF_PART_FAN_PWM_MIN, part_fan_pwm_min );
+    HAL::eprSetByte( EPR_RF_PART_FAN_PWM_MAX, part_fan_pwm_max );
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
     if(corrupted)
@@ -1084,20 +1084,22 @@ void EEPROM::readDataFromEEPROM()
     }
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
-    uint8_t temp_min = HAL::eprGetByte( EPR_RF_COOLER_PWM_MIN );
-    uint8_t temp_max = HAL::eprGetByte( EPR_RF_COOLER_PWM_MAX );
-    if((int)temp_max - (int)temp_min >= 16){
-        cooler_pwm_min = temp_min;
-        cooler_pwm_max = temp_max;
+    uint8_t temp_min = HAL::eprGetByte( EPR_RF_PART_FAN_PWM_MIN );
+    uint8_t temp_max = HAL::eprGetByte( EPR_RF_PART_FAN_PWM_MAX );
+    if((int)temp_max - (int)temp_min >= 16 && temp_min > 0 && temp_max < 255){
+        part_fan_pwm_min = temp_min;
+        part_fan_pwm_max = temp_max;
     }else{
-        HAL::eprSetByte( EPR_RF_COOLER_PWM_MIN, COOLER_PWM_MIN );
-        HAL::eprSetByte( EPR_RF_COOLER_PWM_MAX, COOLER_PWM_MAX );
+        HAL::eprSetByte( EPR_RF_PART_FAN_PWM_MIN, PART_FAN_PWM_MIN );
+        HAL::eprSetByte( EPR_RF_PART_FAN_PWM_MAX, PART_FAN_PWM_MAX );
         change = true;
     }
     
-    uint8_t tempfs = HAL::eprGetByte( EPR_RF_FAN_SPEED );
-    Commands::adjustFanFrequency( (tempfs <= COOLER_MODE_MAX ? tempfs : cooler_pwm_speed) );
-    Commands::adjustFanMode( (HAL::eprGetByte( EPR_RF_FAN_MODE ) == COOLER_MODE_PDM ? COOLER_MODE_PDM : COOLER_MODE_PWM) );
+    uint8_t tempfs = HAL::eprGetByte( EPR_RF_PART_FAN_SPEED );
+    if(tempfs > 0 && tempfs <= PART_FAN_MODE_MAX){
+        Commands::adjustFanFrequency( tempfs );
+    }
+    Commands::adjustFanMode( (HAL::eprGetByte( EPR_RF_FAN_MODE ) == PART_FAN_MODE_PDM ? PART_FAN_MODE_PDM : PART_FAN_MODE_PWM) );
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
@@ -1443,9 +1445,9 @@ void EEPROM::writeSettings()
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     writeByte(EPR_RF_FAN_MODE,Com::tEPRPrinter_FAN_MODE);
-    writeByte(EPR_RF_FAN_SPEED,Com::tEPRPrinter_FAN_SPEED);
-    writeByte(EPR_RF_COOLER_PWM_MIN,Com::tEPRPrinter_FAN_COOLER_PWM_MIN);
-    writeByte(EPR_RF_COOLER_PWM_MAX,Com::tEPRPrinter_FAN_COOLER_PWM_MAX);
+    writeByte(EPR_RF_PART_FAN_SPEED,Com::tEPRPrinter_FAN_SPEED);
+    writeByte(EPR_RF_PART_FAN_PWM_MIN,Com::tEPRPrinter_FAN_PART_FAN_PWM_MIN);
+    writeByte(EPR_RF_PART_FAN_PWM_MAX,Com::tEPRPrinter_FAN_PART_FAN_PWM_MAX);
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #else

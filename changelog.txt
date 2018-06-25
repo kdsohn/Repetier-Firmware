@@ -1,6 +1,15 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 
+V RF.01.42.00.Mod (2018-06-25)
+- full rework on configurable pwm fan frequencies to 15.3hz or lower.
+  we now have the full fan resolution on all configurable frequencies.
+  0% => OFF, 1%..99% => Scaled PWM, 100% => 24V always on.
+- the code/variables for fans are now divided into "coolers" for hotend etc. and "part fan"
+- some work on configuration options
+- some code got cleaned up
+- the eeprom value for fan-frequency moved to a fresh location for reinitialisation with the new system.
+
 V RF.01.42.Mod (2018-06-24)
 - scaled down fan-pwm-frequencys by factor 4 -> 3.8Hz .. 62Hz.
   (secondary fans and heater pwm stay like they were)

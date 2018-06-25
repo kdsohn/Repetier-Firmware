@@ -703,8 +703,8 @@ UI_MENU_ACTIONCOMMAND(ui_menu_fan_full,UI_TEXT_FAN_FULL,UI_ACTION_FAN_FULL)
 //fan settings for part fan and frequency setting for secondary coolers, but they are factor 4 faster in PWM.
 UI_MENU_CHANGEACTION_FILTER(ui_menu_fan_hz,      UI_TEXT_FAN_HZ,             UI_ACTION_FAN_HZ,    0, MENU_MODE_FAN_MODE_PDM)
 UI_MENU_ACTIONCOMMAND(      ui_menu_fan_mode,    UI_TEXT_FAN_MODE,           UI_ACTION_FAN_MODE)
-UI_MENU_CHANGEACTION(       ui_menu_fan_pwm_min, UI_TEXT_FAN_COOLER_PWM_MIN, UI_ACTION_FAN_COOLER_PWM_MIN)
-UI_MENU_CHANGEACTION(       ui_menu_fan_pwm_max, UI_TEXT_FAN_COOLER_PWM_MAX, UI_ACTION_FAN_COOLER_PWM_MAX)
+UI_MENU_CHANGEACTION(       ui_menu_fan_pwm_min, UI_TEXT_FAN_PART_FAN_PWM_MIN, UI_ACTION_FAN_PART_FAN_PWM_MIN)
+UI_MENU_CHANGEACTION(       ui_menu_fan_pwm_max, UI_TEXT_FAN_PART_FAN_PWM_MAX, UI_ACTION_FAN_PART_FAN_PWM_MAX)
 #define UI_MENU_FANHZMODE_CNT 2
 
 #define UI_MENU_FAN {UI_MENU_ADDCONDBACK &ui_menu_fan_fanspeed,&ui_menu_fan_off,&ui_menu_fan_25,&ui_menu_fan_50,&ui_menu_fan_75,&ui_menu_fan_full}

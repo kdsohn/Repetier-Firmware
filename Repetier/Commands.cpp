@@ -276,29 +276,22 @@ void Commands::setFanSpeed(uint8_t speed, bool recalc)
     {
         //scale the input speed value within MIN and MAX
         long temp = speed;
-        temp *= (cooler_pwm_max - cooler_pwm_min);
+        temp *= (part_fan_pwm_max - part_fan_pwm_min);
         temp /= 255;
-        temp += cooler_pwm_min;
+        temp += part_fan_pwm_min;
         speed = constrain(temp,0,255);
         /*
         from here "speed" is scaled to a set boundary. It will be the same scale like pwm_pos[NUM_EXTRUDER+2] has.
         Commanded (and user ui) speed is "fanSpeed", which stays unscaled.
-        if the frequency is higher than 3.81Hz the precision of our PWM result might suffer: 255->128->64->32->16 steps = 0..100%
-        -> narrow scaling should only be used <<= 15hz
-        
-        Alternative: Otherwise we have to move to a 16bit timing resolution like conrad did. But I did not want to break with the old system too fast. I guess we will all tend to drive the fans at 3.81Hz anyways.
-        Using 3.81Hz we should have enough resolution to scale 0..100% into 0..255 pwm without having ripple.
-        
-        And well: Everything is better than the old way of steering the fans with no real control or "on-off" behaviour.
         */            
     }
 
 #if FAN_KICKSTART_TIME
     //if specified calculate a kickstart time when the fan speed is commanded to rise
-    //use fanSpeed (not "speed") to compare with COOLER_KICKSTART_THRESHOLD so we dont have to recalculate the threshold according min-max.
-    if (fanKickstart == 0 && speed > pwm_pos[NUM_EXTRUDER+2] && fanSpeed < COOLER_KICKSTART_THRESHOLD) {
-        if(speed) fanKickstart = COOLER_KICKSTART_TIME_BOOST / 10;
-        else      fanKickstart = COOLER_KICKSTART_TIME_OFF_ON / 10;
+    //use fanSpeed (not "speed") to compare with PART_FAN_KICKSTART_THRESHOLD so we dont have to recalculate the threshold according min-max.
+    if (fanKickstart == 0 && speed > pwm_pos[NUM_EXTRUDER+2] && fanSpeed < PART_FAN_KICKSTART_THRESHOLD) {
+        if(speed) fanKickstart = PART_FAN_KICKSTART_TIME_BOOST / 10;
+        else      fanKickstart = PART_FAN_KICKSTART_TIME_OFF_ON / 10;
     }
 #endif // FAN_KICKSTART_TIME
 
@@ -307,15 +300,14 @@ void Commands::setFanSpeed(uint8_t speed, bool recalc)
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
-void Commands::adjustFanFrequency(uint8_t speed_mode = COOLER_PWM_SPEED){ //0 = ~3.81hz, ~1=7.62hz, ... 4=61hz.
+void Commands::adjustFanFrequency(uint8_t speed_divisor = PART_FAN_DEFAULT_PWM_SPEED_DIVISOR){ //1 = ~15.3hz, ~2=7.62hz, ... 
     InterruptProtectedBlock noInts;
-    cooler_pwm_speed = (speed_mode <= COOLER_MODE_MAX ? speed_mode : COOLER_PWM_SPEED); // > 4 should not happen, only if you change code and want that. 
-    cooler_pwm_step = (1 << cooler_pwm_speed);
-    cooler_pwm_mask = (255 << cooler_pwm_speed) & 0xff;
+    if(!speed_divisor) speed_divisor = 1;
+    part_fan_pwm_speed = (speed_divisor <= PART_FAN_MODE_MAX ? speed_divisor : PART_FAN_DEFAULT_PWM_SPEED_DIVISOR);
 }
 void Commands::adjustFanMode(uint8_t output_mode){ //0 = pwm, 1 = pdm
-    cooler_mode = (output_mode ? COOLER_MODE_PDM : COOLER_MODE_PWM);
-    Printer::setMenuMode(MENU_MODE_FAN_MODE_PDM, (bool)cooler_mode);
+    part_fan_frequency_modulation = (output_mode ? PART_FAN_MODE_PDM : PART_FAN_MODE_PWM);
+    Printer::setMenuMode(MENU_MODE_FAN_MODE_PDM, (bool)part_fan_frequency_modulation);
 }
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
