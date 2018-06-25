@@ -390,7 +390,7 @@
 #define UI_TEXT_FAN_MODE               "Modulation: %Fm"
 #define UI_TEXT_FAN_HZ                 "PWM Frq: %FhHz"
 #define UI_TEXT_FAN_PART_FAN_PWM_MIN   "%Fm 1%%%:   %FU"
-#define UI_TEXT_FAN_PART_FAN_PWM_MAX   "%Fm Max:  %FO"
+#define UI_TEXT_FAN_PART_FAN_PWM_MAX   "%Fm 99%%%:  %FO"
     
 #define UI_TEXT_CAL_DIRECT_READ        "Reading:%Ca mm"
 #define UI_TEXT_CAL_SHOW               "Avg:%Cm mm %Cn%%%"
@@ -797,7 +797,7 @@
 #define UI_TEXT_FAN_MODE               "Modulation: %Fm"
 #define UI_TEXT_FAN_HZ                 "PWM Frq: %FhHz"
 #define UI_TEXT_FAN_PART_FAN_PWM_MIN   "%Fm 1%%%:   %FU"
-#define UI_TEXT_FAN_PART_FAN_PWM_MAX   "%Fm Max:  %FO"
+#define UI_TEXT_FAN_PART_FAN_PWM_MAX   "%Fm 99%%%:  %FO"
 
 #define UI_TEXT_CAL_DIRECT_READ        "Wert:%Ca mm"
 #define UI_TEXT_CAL_SHOW               "Mittel:%Cm mm %Cn%%%"
