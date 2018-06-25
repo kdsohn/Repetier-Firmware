@@ -64,20 +64,15 @@ extern  unsigned char g_bPingWatchdog;
 extern  unsigned long g_uLastCommandLoop;
 #endif // FEATURE_WATCHDOG
 
-// > 4 should not happen, only if you change code or really want that. 
-// Never set this > 7!
-// Note that > 4 is highly experimental
-#define COOLER_MODE_MAX 4
+//7 means down till 2.1hz is possible:
+#define PART_FAN_MODE_MAX 7
 
-#define COOLER_MODE_PWM 0
-#define COOLER_MODE_PDM 1
-extern  uint8_t cooler_pwm_speed;
-extern  uint8_t cooler_pwm_step;
-extern  uint8_t cooler_pwm_mask;
-extern  uint8_t cooler_mode;
-
-extern  uint8_t cooler_pwm_max; //this is calculated as 100%
-extern  uint8_t cooler_pwm_min; //this is calculated as 1%
+#define PART_FAN_MODE_PWM 0
+#define PART_FAN_MODE_PDM 1
+extern  uint8_t part_fan_frequency_modulation;
+extern  uint8_t part_fan_pwm_speed; 
+extern  uint8_t part_fan_pwm_max; //this is calculated as 99%
+extern  uint8_t part_fan_pwm_min; //this is calculated as 1%
 
 class InterruptProtectedBlock
 {

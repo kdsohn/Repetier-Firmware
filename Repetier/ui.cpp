@@ -1039,18 +1039,18 @@ void UIDisplay::parse(char *txt,bool ram)
                 if(c2=='s') {                                                                           // %Fs : Fan speed in Percent
                     addFloat(Printer::getFanSpeed(false)/2.55f,3,1); 
                 }
-                else if(c2=='h') {                                                                      // %Fh : Fan frequency in Hz --> Wert passt grob, ist aber nicht exakt! F_CPU/3906/255*mode...
-                    addFloat((1 << cooler_pwm_speed)*3.81f,2,1); 
+                else if(c2=='h') {                                                                      // %Fh : Fan frequency in Hz/Teiler
+                    addFloat( 15.3f / part_fan_pwm_speed, 2, 1 ); 
                 }
                 else if(c2=='m'){                                                                       // %Fm : Fan modulation type PWM or PDM
-                    if(cooler_mode == COOLER_MODE_PDM) addStringP( PSTR("PDM") );
-                    else                               addStringP( PSTR("PWM") );
+                    if(part_fan_frequency_modulation == PART_FAN_MODE_PDM) addStringP( PSTR("PDM") );
+                    else                                                   addStringP( PSTR("PWM") );
                 }
                 else if(c2=='U'){                                                                       // %FU : Fan modulation minimum = 1% FanSpeed
-                    addInt(cooler_pwm_min, 3); 
+                    addInt(part_fan_pwm_min, 3); 
                 }
                 else if(c2=='O'){                                                                       // %FO : Fan modulation maximum = 100% FanSpeed
-                    addInt(cooler_pwm_max, 3); 
+                    addInt(part_fan_pwm_max, 3); 
                 }
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 #if FEATURE_ZERO_DIGITS
@@ -3208,44 +3208,44 @@ void UIDisplay::nextPreviousAction(int8_t next)
         case UI_ACTION_FAN_HZ:
         {
             if(increment > 0){
-                Commands::adjustFanFrequency( (cooler_pwm_speed == COOLER_MODE_MAX ? 0 : cooler_pwm_speed + 1 ) ); //0 = ~15hz, ~1=30hz, ... 4=240hz.
+                Commands::adjustFanFrequency( (part_fan_pwm_speed == PART_FAN_MODE_MAX ? 1 : part_fan_pwm_speed + 1 ) );
             }else{
-                Commands::adjustFanFrequency( (cooler_pwm_speed == 0 ? COOLER_MODE_MAX : cooler_pwm_speed - 1 ) ); //0 = ~15hz, ~1=30hz, ... 4=240hz.
+                Commands::adjustFanFrequency( (part_fan_pwm_speed == 1 ? PART_FAN_MODE_MAX : part_fan_pwm_speed - 1 ) );
             }
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
-            HAL::eprSetByte( EPR_RF_FAN_SPEED, cooler_pwm_speed );
+            HAL::eprSetByte( EPR_RF_PART_FAN_SPEED, part_fan_pwm_speed );
             EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
             break;
         }
-        case UI_ACTION_FAN_COOLER_PWM_MIN:
+        case UI_ACTION_FAN_PART_FAN_PWM_MIN:
         {
-            int temp = cooler_pwm_min;
+            int temp = part_fan_pwm_min;
             INCREMENT_MIN_MAX(temp, 1, 1, 239);
-            if(temp <= (int)cooler_pwm_max-16){
-                cooler_pwm_min = temp;
+            if(temp <= (int)part_fan_pwm_max - 16){
+                part_fan_pwm_min = temp;
             }
             //recalculate active pwm value out of fanSpeed for easy tune-in.
             //(Tune-In: set fan to 1% and rise minimum until it starts.)
             Commands::setFanSpeed(fanSpeed, true);
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
-            HAL::eprSetByte( EPR_RF_COOLER_PWM_MIN, cooler_pwm_min );
+            HAL::eprSetByte( EPR_RF_PART_FAN_PWM_MIN, part_fan_pwm_min );
             EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
             break;
         }
-        case UI_ACTION_FAN_COOLER_PWM_MAX:
+        case UI_ACTION_FAN_PART_FAN_PWM_MAX:
         {
-            int temp = cooler_pwm_max;
+            int temp = part_fan_pwm_max;
             INCREMENT_MIN_MAX(temp, 1, 16, 255);
-            if(temp >= cooler_pwm_min+16){
-                cooler_pwm_max = temp;
+            if(temp >= part_fan_pwm_min + 16){
+                part_fan_pwm_max = temp;
             }
             //recalculate active pwm value out of fanSpeed for easy tune-in.
             //(Tune-In: set fan to 100% and decrease maximum until fan slows down slightly.)
             Commands::setFanSpeed(fanSpeed, true);
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
-            HAL::eprSetByte( EPR_RF_COOLER_PWM_MAX, cooler_pwm_max );
+            HAL::eprSetByte( EPR_RF_PART_FAN_PWM_MAX, part_fan_pwm_max );
             EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
             break;
@@ -5224,9 +5224,9 @@ void UIDisplay::executeAction(int action)
             }
             case UI_ACTION_FAN_MODE:
             {
-                Commands::adjustFanMode( (cooler_mode ? COOLER_MODE_PWM : COOLER_MODE_PDM) ); //0 = pwm, 1 = pdm
+                Commands::adjustFanMode( (part_fan_frequency_modulation ? PART_FAN_MODE_PWM : PART_FAN_MODE_PDM) ); //0 = pwm, 1 = pdm
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
-                HAL::eprSetByte( EPR_RF_FAN_MODE, cooler_mode );
+                HAL::eprSetByte( EPR_RF_FAN_MODE, part_fan_frequency_modulation );
                 EEPROM::updateChecksum();
 #endif // FEATURE_AUTOMATIC_EEPROM_UPDATE
                 break;

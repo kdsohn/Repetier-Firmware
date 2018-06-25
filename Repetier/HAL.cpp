@@ -865,6 +865,10 @@ ISR(TIMER1_COMPA_vect)
     sbi(TIMSK1, OCIE1A);
 } // ISR(TIMER1_COMPA_vect)
 
+/**
+* HEATER CONFIGURATION
+*/
+
 #if !defined(HEATER_PWM_SPEED)
 #define HEATER_PWM_SPEED 0
 #endif
@@ -886,18 +890,14 @@ ISR(TIMER1_COMPA_vect)
 #define HEATER_PWM_MASK 252      //1111 1100 = (255 << 2) & 0xff
 #endif // HEATER_PWM_SPEED
 
+/**
+* SECONDARY FAN / EXTRUDER FAN CONFIGURATION
+*/
+//by this logic/code the higher frequency is used the less steps are commandable.
+//we have to use small frequencys and "it is only a partfan" thatwhy that matter is acceptable.
 #if !defined(COOLER_PWM_SPEED)
 #define COOLER_PWM_SPEED 0
 #endif
-#if COOLER_PWM_SPEED < 0
-#define COOLER_PWM_SPEED 0
-#endif
-#if COOLER_PWM_SPEED > 4
-#define COOLER_PWM_SPEED 4
-#endif
-
-//by this logic/code the higher frequency is used the less steps are commandable.
-//we have to use small frequencys and "it is only a partfan" thatwhy that matter is acceptable.
 
 #if COOLER_PWM_SPEED == 0
 #define COOLER_PWM_STEP 1        // 2^0 == 0000 0001 == 1 << 0
@@ -905,23 +905,25 @@ ISR(TIMER1_COMPA_vect)
 #elif COOLER_PWM_SPEED == 1
 #define COOLER_PWM_STEP 2        // 2^1 == 0000 0010 == 1 << 1
 #define COOLER_PWM_MASK 254      //1111 1110 = (255 << 1) & 0xff
-#elif COOLER_PWM_SPEED == 2
+#else
 #define COOLER_PWM_STEP 4        // 2^2 == 0000 0100 == 1 << 2
 #define COOLER_PWM_MASK 252      //1111 1100 = (255 << 2) & 0xff
-#elif COOLER_PWM_SPEED == 3
-#define COOLER_PWM_STEP 8        // 2^3 == 0000 1000 == 1 << 3
-#define COOLER_PWM_MASK 248      //1111 1000 = (255 << 3) & 0xff
-#elif COOLER_PWM_SPEED == 4
-#define COOLER_PWM_STEP 16       // 2^4 == 0001 0000 == 1 << 4
-#define COOLER_PWM_MASK 240      //1111 0000 = (255 << 4) & 0xff
 #endif // COOLER_PWM_SPEED
-uint8_t cooler_pwm_speed = COOLER_PWM_SPEED;
-uint8_t cooler_pwm_step = COOLER_PWM_STEP; //1 << cooler_pwm_speed
-uint8_t cooler_pwm_mask = COOLER_PWM_MASK; //(255 << cooler_pwm_speed) & 0xff
-uint8_t cooler_mode = COOLER_MODE_PWM;
 
-uint8_t cooler_pwm_max = COOLER_PWM_MAX; //this is calculated as 100%
-uint8_t cooler_pwm_min = COOLER_PWM_MIN; //this is calculated as 1%
+/**
+* PART FAN CONFIGURATION
+*/
+uint8_t part_fan_frequency_modulation = PART_FAN_MODE_PWM;
+
+//default 15.3 hz and downscaleable by factor via "part_fan_pwm_speed"
+#define PART_FAN_PWM_STEP 1
+#define PART_FAN_PWM_MASK 255
+#if PART_FAN_DEFAULT_PWM_SPEED_DIVISOR <= 0
+    #error PART_FAN_DEFAULT_PWM_SPEED_DIVISOR has to be 1 or higher.
+#endif
+uint8_t part_fan_pwm_speed = PART_FAN_DEFAULT_PWM_SPEED_DIVISOR;
+uint8_t part_fan_pwm_max   = PART_FAN_PWM_MAX; //this is calculated as 99%
+uint8_t part_fan_pwm_min   = PART_FAN_PWM_MIN; //this is calculated as 1%
 
 #define pulseDensityModulate(pin, density, error, invert) {uint8_t carry;carry = error + (invert ? 255 - density : density); WRITE(pin, (carry < error)); error = carry;}
 /**
@@ -931,7 +933,7 @@ ISR(PWM_TIMER_VECTOR)
 {
     static uint8_t pwm_count_heater = 0;
     static uint8_t pwm_count_cooler = 0;
-    static uint8_t pwm_count_cooler_part_fan = 0;
+    static uint8_t pwm_count_part_fan = 0;
         
     static uint8_t pwm_pos_set[NUM_EXTRUDER+3];
 #if NUM_EXTRUDER > 0 && (     (defined(EXT0_HEATER_PIN) && EXT0_HEATER_PIN > -1 && EXT0_EXTRUDER_COOLER_PIN > -1) || (NUM_EXTRUDER > 1 && EXT1_EXTRUDER_COOLER_PIN > -1 && EXT1_EXTRUDER_COOLER_PIN != EXT0_EXTRUDER_COOLER_PIN)      )
@@ -1008,27 +1010,27 @@ ISR(PWM_TIMER_VECTOR)
     /**
     PART FAN SPEED CONTROL
     */
-    if(cooler_mode == COOLER_MODE_PDM){
+    if(part_fan_frequency_modulation == PART_FAN_MODE_PDM){
         pulseDensityModulate(FAN_PIN, (fanKickstart ? 255 : pwm_pos[NUM_EXTRUDER+2]), pwm_pos_set[NUM_EXTRUDER+2], false);
     }else{
-        // divide part fan PWM Hz by 4:
-        static int counterDiv4 = 0;
-        if(++counterDiv4 >= 4){
-            counterDiv4 = 0;
+        // divide part fan 15.3Hz PWM by factor:
+        static int counterSpeed15_3Div = 0;
+        if(++counterSpeed15_3Div >= part_fan_pwm_speed){
+            counterSpeed15_3Div = 0;
 
-            if (pwm_count_cooler_part_fan == 0)
+            if (pwm_count_part_fan == 0)
             {
                 //count = 0 -> AN, wenn Powerlevel über Minimum
                     //je nach PWM-Mask zählen nur obere bits!
                     //je nach PWM-Mask (z.b. 1111 11xx b) gibts spezielle PWM-Steps (z.b. 4 = 100 b) welche den counter nur innerhalb PWM-Mask hochzählen.
-                pwm_pos_set[NUM_EXTRUDER+2] = (pwm_pos[NUM_EXTRUDER+2] & cooler_pwm_mask);
+                pwm_pos_set[NUM_EXTRUDER+2] = (pwm_pos[NUM_EXTRUDER+2] & PART_FAN_PWM_MASK);
                 if(pwm_pos_set[NUM_EXTRUDER+2] > 0) WRITE(FAN_PIN,1); //AN
             }
             //count = powerlevel, aber nicht powerlevel == max. -> AUS
             uint8_t powerlevel = fanKickstart ? 255 : pwm_pos_set[NUM_EXTRUDER+2];
-            if( powerlevel == pwm_count_cooler_part_fan && powerlevel != cooler_pwm_mask ) WRITE(FAN_PIN,0); //AUS
+            if( powerlevel == pwm_count_part_fan && powerlevel != PART_FAN_PWM_MASK ) WRITE(FAN_PIN,0); //AUS
 
-            pwm_count_cooler_part_fan += cooler_pwm_step;
+            pwm_count_part_fan += PART_FAN_PWM_STEP;
         }
     }
     /**
@@ -1041,15 +1043,6 @@ ISR(PWM_TIMER_VECTOR)
     {
         counter100Periodical = 0;
         execute100msPeriodical = 1;
-
-#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
-        //um bei Frequenzumschaltung (Fan) wieder von 0 zählen. Hier drin, weils zu selten wechselt.
-        static uint8_t has_cooler_speed_changed = 255;
-        if(has_cooler_speed_changed != cooler_pwm_speed){
-            has_cooler_speed_changed = cooler_pwm_speed;
-            pwm_count_cooler_part_fan = 0;
-        }
-#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
     }
 
 #if FEATURE_RGB_LIGHT_EFFECTS

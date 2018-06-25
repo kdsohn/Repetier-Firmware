@@ -1,6 +1,15 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 
+V RF.01.42.00.Mod (2018-06-25)
+- full rework on configurable pwm fan frequencies to 15.3hz or lower.
+  we now have the full fan resolution on all configurable frequencies.
+  0% => OFF, 1%..99% => Scaled PWM, 100% => 24V always on.
+- the code/variables for fans are now divided into "coolers" for hotend etc. and "part fan"
+- some work on configuration options
+- some code got cleaned up
+- the eeprom value for fan-frequency moved to a fresh location for reinitialisation with the new system.
+
 V RF.01.42.Mod (2018-06-24)
 - scaled down fan-pwm-frequencys by factor 4 -> 3.8Hz .. 62Hz.
   (secondary fans and heater pwm stay like they were)
@@ -12,8 +21,8 @@ V RF.01.42.Mod (2018-06-24)
 - shifted fanKickstart time to a resolution of 10ms (instead of 100ms). (But the config values and default behaviour did not change.)
 
 - set default fan config to:
-    RF1000: 15Hz 0..255 (should be the config we already knew for the RF1000)
-    RF2000: 15Hz 0..255 (the formerly better config for my printer, instead of former 62Hz)
+    RF1000: 15Hz 1..254 (should be the config we already knew for the RF1000)
+    RF2000: 15Hz 1..254 (the formerly better config for my printer, instead of former 62Hz)
     RF2000v2: 3.8Hz 90..193 (Conrad: 3.0Hz 90..193 which might be better but I cannot test it!)
    -> These values will change after the first tests are done.
 

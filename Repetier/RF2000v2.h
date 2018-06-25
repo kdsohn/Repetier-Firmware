@@ -35,7 +35,7 @@
 #endif // FEATURE_DITTO_PRINTING && NUM_EXTRUDER!=2
 
 /** \brief Allows to use the device for milling */
-#define FEATURE_MILLING_MODE                0                                                   // 1 = on, 0 = off -> RF2000v2 : OFF
+#define FEATURE_MILLING_MODE                  0                                                   // 1 = on, 0 = off -> RF2000v2 : OFF
 
 #if FEATURE_MILLING_MODE
 
@@ -662,7 +662,7 @@ can set it on for safety. */
 
 
 // ##########################################################################################
-// ##   miscellaneous configurations
+// ##   Motor Current & Stepper configurations
 // ##########################################################################################
 
 /** \brief Motor Current MAX setting */
@@ -674,6 +674,19 @@ can set it on for safety. */
 */
 #define MOTOR_CURRENT_NORMAL                    {110,110,105,90,90}
 #define MOTOR_CURRENT_MIN                       EXTRUDER_CURRENT_PAUSED
+
+/** \brief Specifies whether the firmware shall wait a short time after turning on of the stepper motors - this shall avoid that the first steps are sent to the stepper before it is ready */
+#define STEPPER_ON_DELAY                    25                                                  // [ms]
+
+/** \brief If your stepper needs a longer high signal then given, you can add a delay here.
+The delay is realized as a simple loop wasting time, which is not available for other
+computations. So make it as low as possible. For the most common drivers no delay is needed, as the
+included delay is already enough. */
+#define STEPPER_HIGH_DELAY                  0
+
+// ##########################################################################################
+// ##   miscellaneous configurations
+// ##########################################################################################
 
 /** \brief number of analog input signals. Normally 1 for each temperature sensor */
 #define ANALOG_INPUTS (EXT0_ANALOG_INPUTS+EXT1_ANALOG_INPUTS+BED_ANALOG_INPUTS+RESERVE_ANALOG_INPUTS)
@@ -699,6 +712,10 @@ can set it on for safety. */
 #define XYZ_STEPPER_HIGH_DELAY              100                                                 // [us] speed for moveZ
 #define XYZ_STEPPER_LOW_DELAY               100                                                 // [us] speed for moveZ
 
+// ##########################################################################################
+// ##   Script configuration
+// ##########################################################################################
+
 /** \brief Automatic filament change, unmounting of the filament - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
 #define UNMOUNT_FILAMENT_SCRIPT_SOFT        "M3914 P4500"
 #define UNMOUNT_FILAMENT_SCRIPT_HARD        "M3914 P7000"
@@ -707,21 +724,32 @@ can set it on for safety. */
 #define MOUNT_FILAMENT_SCRIPT_SOFT          "M3913 P3500 F3"
 #define MOUNT_FILAMENT_SCRIPT_HARD          "M3913 P20000 F6"
 
-/** \brief speed of the PWM signal, 0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz */
+// ##########################################################################################
+// ##   PWM configuration
+// ##########################################################################################
+
+/** \brief Heaters: speed of the PWM signal,          0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz */
 #define HEATER_PWM_SPEED                    1
-/** \brief speed of the PWM signal, 0 = 3.81Hz,  1 = 7.62Hz,  2 = 15.25Hz,  3 = 30.51Hz,  4 = 61.03Hz */
+
+/** \brief Extruder Coolers: speed of the PWM signal, 0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz */
 #define COOLER_PWM_SPEED                    0
 
-/** \brief the following values can be used in order to fine-tune the operating range of the cooler */
-#define COOLER_PWM_MIN                      90                                                  // 0 ... 255 equals 0 ... 100 %
-#define COOLER_PWM_MAX                      193                                                 // 0 ... 255 equals 0 ... 100 %
+// ##########################################################################################
+// ##   Part Fan configuration
+// ##########################################################################################
+
+/** \brief Part Fan:                                  1 = 15.3Hz,  2 = 7.62Hz, 3 = 5.1Hz, 4 = 3.82Hz,  5 = 3.06Hz,  6 = 2.55Hz, 7 = 2.1Hz */
+#define PART_FAN_DEFAULT_PWM_SPEED_DIVISOR  5
+/** \brief the following values can be used in order to fine-tune the operating range of the cooler: */
+#define PART_FAN_PWM_MIN                    90                                                    // 1 ... 254 equals 1 ... 99 %
+#define PART_FAN_PWM_MAX                    193                                                   // 1 ... 254 equals 1 ... 99 %
 
 /** Some fans won't start for low values, but would run if started with higher power at the beginning.
 This defines the full power duration before returning to set value. Time is in milliseconds
 Only values which are a factor of 10ms or 0==OFF will work precisely */
-#define COOLER_KICKSTART_THRESHOLD          128                                                 // 0 ... 255 equals 0 ... 100 % (unscaled!)
-#define COOLER_KICKSTART_TIME_OFF_ON        400                                                 // [ms]
-#define COOLER_KICKSTART_TIME_BOOST         100                                                 // [ms]
+#define PART_FAN_KICKSTART_THRESHOLD          128                                                 // 0 ... 255 equals 0 ... 100 % (unscaled!)
+#define PART_FAN_KICKSTART_TIME_OFF_ON        400                                                 // [ms]
+#define PART_FAN_KICKSTART_TIME_BOOST         100                                                 // [ms]
 
 /** \brief use PDM instead of PWM for part fan */
 // --> set EEPROM value or change mode in printers menu
@@ -778,19 +806,6 @@ own weight, so this is nearly never needed. */
 #define Z_BACKLASH                          0
 #define X_BACKLASH                          0
 #define Y_BACKLASH                          0
-
-// ##########################################################################################
-// ##   configuration of the stepper drivers
-// ##########################################################################################
-
-/** \brief Specifies whether the firmware shall wait a short time after turning on of the stepper motors - this shall avoid that the first steps are sent to the stepper before it is ready */
-#define STEPPER_ON_DELAY                    25                                                  // [ms]
-
-/** \brief If your stepper needs a longer high signal then given, you can add a delay here.
-The delay is realized as a simple loop wasting time, which is not available for other
-computations. So make it as low as possible. For the most common drivers no delay is needed, as the
-included delay is already enough. */
-#define STEPPER_HIGH_DELAY                  0
 
 // ##########################################################################################
 // ##   configuration of the speed vs. cpu usage

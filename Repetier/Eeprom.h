@@ -135,7 +135,6 @@ have problems with other modules using the eeprom */
 
 #define EPR_RF_FREQ_DBL                   1928 //1929 2byte für uint16 -> frequenz double grenze
 #define EPR_RF_FAN_MODE                   1930 //[1byte]
-#define EPR_RF_FAN_SPEED                  1931 //[1byte]
 
 #define EPR_RF_MILL_ACCELERATION          1932 //+1933 u short
 #define EPR_RF_CAL_STANDARD               1934 //+1935 u short
@@ -161,8 +160,9 @@ have problems with other modules using the eeprom */
 #define EPR_RF_MOD_WOBBLE_FIX_AMPY1       1957 //[+1958 2byte short]
 #define EPR_RF_MOD_WOBBLE_FIX_AMPY2       1959 //[+1960 2byte short]
 
-#define EPR_RF_COOLER_PWM_MIN             1961 //[1byte]
-#define EPR_RF_COOLER_PWM_MAX             1962 //[1byte]
+#define EPR_RF_PART_FAN_PWM_MIN           1961 //[1byte]
+#define EPR_RF_PART_FAN_PWM_MAX           1962 //[1byte]
+#define EPR_RF_PART_FAN_SPEED             1963 //[1byte]
 
 
 //Nibbels: Computechecksum geht bis 2047
