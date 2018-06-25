@@ -311,7 +311,7 @@ FSTRINGVALUE(Com::tEPRPrinter_FREQ_DBL,"Step Double Frequency [1/s]")
 FSTRINGVALUE(Com::tEPRPrinter_FAN_MODE,"Fan Modulation [0=PWM/1=PDM]")
 FSTRINGVALUE(Com::tEPRPrinter_FAN_SPEED,"Fan PWM Divisor [15.3Hz/x]")
 FSTRINGVALUE(Com::tEPRPrinter_FAN_PART_FAN_PWM_MIN,"Partfan 1% Level [1..239]")
-FSTRINGVALUE(Com::tEPRPrinter_FAN_PART_FAN_PWM_MAX,"Partfan 99% Level [16..255]")
+FSTRINGVALUE(Com::tEPRPrinter_FAN_PART_FAN_PWM_MAX,"Partfan 99% Level [16..254]")
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #endif // EEPROM_MODE
