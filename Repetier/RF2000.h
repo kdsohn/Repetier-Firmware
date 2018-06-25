@@ -35,7 +35,7 @@
 #endif // FEATURE_DITTO_PRINTING && NUM_EXTRUDER!=2
 
 /** \brief Allows to use the device for milling */
-#define FEATURE_MILLING_MODE                1                                                   // 1 = on, 0 = off
+#define FEATURE_MILLING_MODE                  1                                                   // 1 = on, 0 = off
 
 #if FEATURE_MILLING_MODE
 
@@ -739,7 +739,7 @@ included delay is already enough. */
 // ##########################################################################################
 
 /** \brief Part Fan:                                  1 = 15.3Hz,  2 = 7.62Hz, 3 = 5.1Hz, 4 = 3.82Hz,  5 = 3.06Hz,  6 = 2.55Hz, 7 = 2.1Hz */
-#define PART_FAN_DEFAULT_PWM_SPEED_DIVISOR  5
+#define PART_FAN_DEFAULT_PWM_SPEED_DIVISOR  3
 /** \brief the following values can be used in order to fine-tune the operating range of the cooler: */
 #define PART_FAN_PWM_MIN                    1                                                     // 1 ... 254 equals 1 ... 99 %
 #define PART_FAN_PWM_MAX                    160                                                   // 1 ... 254 equals 1 ... 99 %
