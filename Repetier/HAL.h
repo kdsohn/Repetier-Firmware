@@ -71,7 +71,7 @@ extern  unsigned long g_uLastCommandLoop;
 #define PART_FAN_MODE_PDM 1
 extern  uint8_t part_fan_frequency_modulation;
 extern  uint8_t part_fan_pwm_speed; 
-extern  uint8_t part_fan_pwm_max; //this is calculated as 100%
+extern  uint8_t part_fan_pwm_max; //this is calculated as 99%
 extern  uint8_t part_fan_pwm_min; //this is calculated as 1%
 
 class InterruptProtectedBlock
