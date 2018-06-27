@@ -250,7 +250,7 @@ void Commands::changeFlowrateMultiply(float factorpercent)
     //else
     //    Printer::extrusionFactor = 0.01f * static_cast<float>(factor) * 4.0f / (Extruder::current->diameter * Extruder::current->diameter * 3.141592654f);
 
-    Com::printFLN(Com::tFlowMultiply,factorpercent);
+    Com::printFLN(Com::tFlowMultiply,(int)factorpercent);
 } // changeFlowrateMultiply
 
 
