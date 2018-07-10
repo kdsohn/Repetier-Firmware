@@ -613,20 +613,11 @@ extern  unsigned short  g_nScanRetryPressureDelta;
 extern  long            g_staticZSteps;
 extern  char            g_debugLevel;
 extern  char            g_debugLog;
-//extern    long            g_debugCounter[20];
-//extern    short           g_debugCounter[12];
-//extern    short           g_debugCounter[6];
 extern  unsigned long   g_uStopTime;
 extern volatile unsigned long   g_uBlockCommands;
-//extern    short           g_debugInt16;
-//extern    unsigned short  g_debugUInt16;
-//extern    long            g_debugInt32;
 
 // other configurable parameters
-#if FEATURE_EXTENDED_BUTTONS
 extern  unsigned long   g_nManualSteps[4];
-#endif // FEATURE_EXTENDED_BUTTONS
-
 
 #if FEATURE_PAUSE_PRINTING
 extern  volatile long   g_nPauseSteps[4];

@@ -72,9 +72,6 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 // ##    supported features
 // ##########################################################################################
 
-/** \brief Allows to use 6 additional hardware buttons */
-#define FEATURE_EXTENDED_BUTTONS            1                                                   // 1 = on, 0 = off
-
 /** \brief Allows to pause the processing of G-Codes */
 #define FEATURE_PAUSE_PRINTING              1                                                   // 1 = on, 0 = off
 /** \brief Enables/diables the emergency pause in case of too high pressure ... the emergency pause can be turned on only in case the general pause functionality is available */
@@ -271,13 +268,9 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 // ##   configuration of the extended buttons
 // ##########################################################################################
 
-#if FEATURE_EXTENDED_BUTTONS
-
 #define EXTENDED_BUTTONS_COUNTER_NORMAL     4                                                   // 39 ~ run 100 times per second, 4 ~ run 1000 times per second
 #define EXTENDED_BUTTONS_COUNTER_FAST       4                                                   // 39 ~ run 100 times per second, 4 ~ run 1000 times per second
 #define EXTENDED_BUTTONS_STEPPER_DELAY      1                                                   // [us]
-
-#endif // FEATURE_EXTENDED_BUTTONS
 
 
 // ##########################################################################################
@@ -548,8 +541,6 @@ instead of driving both with a single stepper. The same works for the other axis
 // ##   configuration of the manual steps
 // ##########################################################################################
 
-#if FEATURE_EXTENDED_BUTTONS
-
 /** \brief Configuration of the manual steps */
 #define DEFAULT_MANUAL_MM_X                    0.1f                            // [mm]
 #define DEFAULT_MANUAL_MM_Y                    0.1f                            // [mm]
@@ -561,8 +552,6 @@ instead of driving both with a single stepper. The same works for the other axis
 //Dieser statische Ansatz wird evtl. mal umgebaut. Man könnte auch eine Funktion schreiben, die sinnvolle Einstellwerte automatisch anhand Microsteps und Mikrometertabelle sucht.
 #define NUM_ACCEPTABLE_STEP_SIZE_TABLE    7
 #define ACCEPTABLE_STEP_SIZE_TABLE { 5,13,26,51,64,128,256 }
-#endif // FEATURE_EXTENDED_BUTTONS
-
 
 // ###############################################################################
 // ##   Values for menu settings

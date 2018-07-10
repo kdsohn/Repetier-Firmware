@@ -164,13 +164,11 @@ char            g_debugLog                  = 0;
 unsigned long   g_uStopTime                 = 0;
 volatile unsigned long g_uBlockCommands          = 0;
 
-#if FEATURE_EXTENDED_BUTTONS
 // other configurable parameters
 unsigned long   g_nManualSteps[4]           = { uint32_t(XAXIS_STEPS_PER_MM * DEFAULT_MANUAL_MM_X),
                                                 uint32_t(YAXIS_STEPS_PER_MM * DEFAULT_MANUAL_MM_Y),
                                                 uint32_t(ZAXIS_STEPS_PER_MM * DEFAULT_MANUAL_MM_Z),
                                                 uint32_t( EXT0_STEPS_PER_MM * DEFAULT_MANUAL_MM_E) }; //pre init
-#endif // FEATURE_EXTENDED_BUTTONS
 
 #if FEATURE_PAUSE_PRINTING
 volatile long   g_nPauseSteps[4]            = { long(XAXIS_STEPS_PER_MM * DEFAULT_PAUSE_MM_X_PRINT),
@@ -3434,10 +3432,8 @@ long getZMatrixDepth_CurrentXY(void){
     nCurrentPositionSteps[X_AXIS] = Printer::queuePositionCurrentSteps[X_AXIS];
     nCurrentPositionSteps[Y_AXIS] = Printer::queuePositionCurrentSteps[Y_AXIS];
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     nCurrentPositionSteps[X_AXIS] += Printer::directPositionCurrentSteps[X_AXIS];
     nCurrentPositionSteps[Y_AXIS] += Printer::directPositionCurrentSteps[Y_AXIS];
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     noInts.unprotect(); //HAL::allowInterrupts();
 
     return getZMatrixDepth(nCurrentPositionSteps[X_AXIS], nCurrentPositionSteps[Y_AXIS]);
@@ -3461,9 +3457,7 @@ void doHeatBedZCompensation( void )
     {
         InterruptProtectedBlock noInts;
         long nCurrentPositionStepsZ = Printer::queuePositionCurrentSteps[Z_AXIS] + Extruder::current->zOffset;
-    #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         nCurrentPositionStepsZ += Printer::directPositionCurrentSteps[Z_AXIS];
-    #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         noInts.unprotect(); //HAL::allowInterrupts();
 
         // Der Z-Kompensation wird das extruderspezifische Z-Offset des jeweiligen Extruders verschwiegen, sodass dieses die Höhen / Limits nicht beeinflusst. Die X- und Y-Offsets werden behalten, denn das korrigiert Düsen- zu Welligkeitsposition nach Extruderwechsel. Das extruderspezifische Z-Offset Extruder::current->zOffset wird beim Toolchange in nCurrentPositionStepsZ eingerechnet und verfahren.
@@ -7881,14 +7875,13 @@ void processCommand( GCode* pCommand )
                         case UI_ACTION_PREVIOUS: // 2
                         case UI_ACTION_BACK: // 1000
                         case UI_ACTION_RIGHT: // 1129
-#if FEATURE_EXTENDED_BUTTONS
+
                         case UI_ACTION_RF_HEAT_BED_UP: // 514
                         case UI_ACTION_RF_HEAT_BED_DOWN: // 515
                         case UI_ACTION_RF_EXTRUDER_RETRACT: // 517
                         case UI_ACTION_RF_EXTRUDER_OUTPUT: // 516
                         case UI_ACTION_RF_CONTINUE: // 1519
                         case UI_ACTION_RF_PAUSE: // 1518
-#endif //FEATURE_EXTENDED_BUTTONS
                         {
                             Com::printFLN( PSTR( "RequestMenu:Press:" ), pCommand->P );
                             uid.executeAction(pCommand->P);
@@ -9223,10 +9216,8 @@ void processCommand( GCode* pCommand )
                             Com::printFLN( PSTR( "; zCZ;" ), Printer::compensatedPositionCurrentStepsZ );
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                             Com::printF( PSTR( "; direct TZ;" ), Printer::directPositionTargetSteps[Z_AXIS] );
                             Com::printFLN( PSTR( "; CZ;" ), Printer::directPositionCurrentSteps[Z_AXIS] );
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 //                          Com::printFLN( PSTR( "; Int32;" ), g_debugInt32 );
 
@@ -9318,7 +9309,6 @@ void processCommand( GCode* pCommand )
                             initializeLCD();
                         }
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                         case 14:
                         {
                             Com::printF( PSTR( "target = " ), Printer::directPositionTargetSteps[X_AXIS] );
@@ -9332,7 +9322,6 @@ void processCommand( GCode* pCommand )
                             Com::printFLN( PSTR( "; remaining = " ), PrintLine::direct.stepsRemaining );
                             break;
                         }
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
                         case 16:
                         {
@@ -9359,9 +9348,7 @@ void processCommand( GCode* pCommand )
                                     Com::printF( PSTR( "; oZ;" ), g_nZOriginPosition[Z_AXIS] );
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                                     Com::printF( PSTR( "; cPSZ;" ), Printer::directPositionCurrentSteps[Z_AXIS] );
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
                                     Com::printF( PSTR( "; hbO;" ), getHeatBedOffset() );
@@ -9385,9 +9372,7 @@ void processCommand( GCode* pCommand )
                                     Com::printF( PSTR( "; oZ;" ), g_nZOriginPosition[Z_AXIS] / Printer::axisStepsPerMM[Z_AXIS] );
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                                     Com::printF( PSTR( "; cPSZ;" ), Printer::directPositionCurrentSteps[Z_AXIS] / Printer::axisStepsPerMM[Z_AXIS] );
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
                                     Com::printF( PSTR( "; hbO;" ), getHeatBedOffset() / Printer::axisStepsPerMM[Z_AXIS] );
@@ -10965,7 +10950,6 @@ extern void processButton( int nAction )
 {
     switch( nAction )
     {
-#if FEATURE_EXTENDED_BUTTONS
         case UI_ACTION_RF_HEAT_BED_UP:
         {
             //DO NOT MOVE Z: ALTER Z-OFFSET
@@ -11136,8 +11120,6 @@ extern void processButton( int nAction )
             break;
         }
 #endif // FEATURE_PAUSE_PRINTING
-
-#endif // FEATURE_EXTENDED_BUTTONS
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
         case UI_ACTION_RF_SCAN_HEAT_BED:
@@ -12234,11 +12216,8 @@ void cleanupXPositions( void )
     Printer::queuePositionTargetSteps[X_AXIS]  = 0;
     Printer::queuePositionLastMM[X_AXIS]       =
     Printer::queuePositionCommandMM[X_AXIS]    = 0.0f;
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     Printer::directPositionTargetSteps[X_AXIS]  =
     Printer::directPositionCurrentSteps[X_AXIS] = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_PAUSE_PRINTING
     g_nContinueSteps[X_AXIS] = 0;
@@ -12262,11 +12241,8 @@ void cleanupYPositions( void )
     Printer::queuePositionTargetSteps[Y_AXIS]  = 0;
     Printer::queuePositionLastMM[Y_AXIS]       =
     Printer::queuePositionCommandMM[Y_AXIS]    = 0.0f;
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     Printer::directPositionTargetSteps[Y_AXIS]  =
     Printer::directPositionCurrentSteps[Y_AXIS] = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_PAUSE_PRINTING
     g_nContinueSteps[Y_AXIS] = 0;
@@ -12312,10 +12288,8 @@ void cleanupZPositions( void ) //kill all! -> für stepper disabled
     Printer::setZOriginSet(false); //flag wegen statusnachricht
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     Printer::directPositionTargetSteps[Z_AXIS]  =
     Printer::directPositionCurrentSteps[Z_AXIS] = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_PAUSE_PRINTING
     g_nContinueSteps[Z_AXIS] = 0;
@@ -12332,12 +12306,10 @@ void cleanupZPositions( void ) //kill all! -> für stepper disabled
 
 void cleanupEPositions( void )
 {
-    InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
+    InterruptProtectedBlock noInts;
 
-#if FEATURE_EXTENDED_BUTTONS
     Printer::directPositionTargetSteps[E_AXIS]  =
     Printer::directPositionCurrentSteps[E_AXIS] = 0;
-#endif // FEATURE_EXTENDED_BUTTONS
 
 #if FEATURE_PAUSE_PRINTING
     g_nContinueSteps[E_AXIS] = 0;
@@ -12347,8 +12319,7 @@ void cleanupEPositions( void )
     g_pauseBeepDone          = 0;
 #endif // FEATURE_PAUSE_PRINTING
 
-    noInts.unprotect(); //HAL::allowInterrupts();
-
+    noInts.unprotect();
 } // cleanupEPositions
 
 
@@ -12356,12 +12327,10 @@ void setZOrigin( void )
 {
 #if FEATURE_FIND_Z_ORIGIN
     g_nZOriginPosition[X_AXIS] = Printer::queuePositionLastSteps[X_AXIS];
-    g_nZOriginPosition[Y_AXIS] = Printer::queuePositionLastSteps[Y_AXIS];
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     g_nZOriginPosition[X_AXIS] += Printer::directPositionLastSteps[X_AXIS];
+    
+    g_nZOriginPosition[Y_AXIS] = Printer::queuePositionLastSteps[Y_AXIS];
     g_nZOriginPosition[Y_AXIS] += Printer::directPositionLastSteps[Y_AXIS];
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
     g_nZOriginPosition[Z_AXIS] = 0;
     Printer::setZOriginSet(true); //flag wegen statusnachricht

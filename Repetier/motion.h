@@ -93,10 +93,7 @@ public:
     int32_t             stepsRemaining;            ///< Remaining steps, until move is finished
     static PrintLine*   cur;
     char                task;
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     static PrintLine    direct;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
     static volatile uint8_t linesCount; // Number of lines cached 0 = nothing to do
 
@@ -442,12 +439,8 @@ public:
 
     void updateStepsParameter();
     inline float safeSpeed(fast8_t drivingAxis);
-    void calculateQueueMove(float axis_diff[],uint8_t pathOptimize, fast8_t drivingAxis, float feedrate
-    );
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
+    void calculateQueueMove(float axis_diff[],uint8_t pathOptimize, fast8_t drivingAxis, float feedrate);
     void calculateDirectMove(float axis_diff[],uint8_t pathOptimize, fast8_t drivingAxis);
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
     INLINE long getWaitTicks()
     {
@@ -494,12 +487,8 @@ public:
     static inline void computeMaxJunctionSpeed(PrintLine *previous,PrintLine *current);
     static long performPauseCheck();
     static long performQueueMove();
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     static long performDirectMove( void );
     static void performDirectSteps( void );
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-
     static long performMove(PrintLine* move, char forQueue);
     static void waitForXFreeLines(uint8_t b=1);
     static bool checkForXFreeLines(uint8_t freeLines=1);
@@ -508,12 +497,8 @@ public:
     static void updateTrapezoids();
     static uint8_t insertWaitMovesIfNeeded(uint8_t pathOptimize, uint8_t waitExtraLines);
     static void prepareQueueMove(uint8_t check_endstops, uint8_t pathOptimize, float feedrate);
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     static void prepareDirectMove( void );
     static void stopDirectMove( void );
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-
     static void moveRelativeDistanceInSteps(long x,long y,long z,long e,float feedrate,bool waitEnd,bool check_endstop);
     static void moveRelativeDistanceInStepsReal(long x,long y,long z,long e,float feedrate,bool waitEnd);
 

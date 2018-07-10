@@ -145,12 +145,10 @@ volatile long   Printer::queuePositionZLayerLast = 0;
 volatile char   Printer::endZCompensationStep = 0;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 volatile long   Printer::directPositionTargetSteps[4]  = {0, 0, 0, 0};
 volatile long   Printer::directPositionCurrentSteps[4] = {0, 0, 0, 0};
 long            Printer::directPositionLastSteps[4]    = {0, 0, 0, 0};
 char            Printer::waitMove;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_MILLING_MODE
 char            Printer::operatingMode;
@@ -245,7 +243,6 @@ void Printer::constrainQueueDestinationCoords()
 {
     if(isNoDestinationCheck()) return;
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 #if max_software_endstop_x == true
     if (queuePositionTargetSteps[X_AXIS] + directPositionTargetSteps[X_AXIS] > Printer::maxSteps[X_AXIS]) Printer::queuePositionTargetSteps[X_AXIS] = Printer::maxSteps[X_AXIS] - directPositionTargetSteps[X_AXIS];
 #endif // max_software_endstop_x == true
@@ -269,8 +266,6 @@ void Printer::constrainQueueDestinationCoords()
 #if max_software_endstop_z == true
     if (queuePositionTargetSteps[Z_AXIS] > Printer::maxSteps[Z_AXIS]) Printer::queuePositionTargetSteps[Z_AXIS] = Printer::maxSteps[Z_AXIS];
 #endif // max_software_endstop_z == true
-#endif //FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-
 } // constrainQueueDestinationCoords
 
 
@@ -283,7 +278,6 @@ void Printer::constrainDirectDestinationCoords()
         return;
         // the pause-and-continue functionality must calculate the constrains by itself
     }
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 #if max_software_endstop_x == true
     if (queuePositionTargetSteps[X_AXIS] + directPositionTargetSteps[X_AXIS] > Printer::maxSteps[X_AXIS]) Printer::directPositionTargetSteps[X_AXIS] = Printer::maxSteps[X_AXIS] - queuePositionTargetSteps[X_AXIS];
 #endif // max_software_endstop_x == true
@@ -295,7 +289,6 @@ void Printer::constrainDirectDestinationCoords()
 #if max_software_endstop_z == true
     if (queuePositionTargetSteps[Z_AXIS] + directPositionTargetSteps[Z_AXIS] > Printer::maxSteps[Z_AXIS]) Printer::directPositionTargetSteps[Z_AXIS] = Printer::maxSteps[Z_AXIS] - queuePositionTargetSteps[Z_AXIS];
 #endif // max_software_endstop_z == true
-#endif //FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 } // constrainDirectDestinationCoords
 
 void Printer::updateDerivedParameter()
@@ -987,13 +980,10 @@ void Printer::setup()
 #endif // USE_ADVANCE
 
     queuePositionLastSteps[X_AXIS] = queuePositionLastSteps[Y_AXIS] = queuePositionLastSteps[Z_AXIS] = queuePositionLastSteps[E_AXIS] = 0;
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     directPositionTargetSteps[X_AXIS]  = directPositionTargetSteps[Y_AXIS]  = directPositionTargetSteps[Z_AXIS]  = directPositionTargetSteps[E_AXIS]  = 0;
     directPositionCurrentSteps[X_AXIS] = directPositionCurrentSteps[Y_AXIS] = directPositionCurrentSteps[Z_AXIS] = directPositionCurrentSteps[E_AXIS] = 0;
     directPositionLastSteps[X_AXIS]    = directPositionLastSteps[Y_AXIS]    = directPositionLastSteps[Z_AXIS]    = directPositionLastSteps[E_AXIS]    = 0;
     waitMove                           = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
     maxJerk = MAX_JERK;
     maxZJerk = MAX_ZJERK;
@@ -1034,7 +1024,6 @@ void Printer::setup()
 
     currentZSteps                     = 0;
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     directPositionCurrentSteps[X_AXIS] =
     directPositionCurrentSteps[Y_AXIS] =
     directPositionCurrentSteps[Z_AXIS] =
@@ -1043,7 +1032,6 @@ void Printer::setup()
     directPositionTargetSteps[Y_AXIS]  =
     directPositionTargetSteps[Z_AXIS]  =
     directPositionTargetSteps[E_AXIS]  = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_MILLING_MODE
     operatingMode = DEFAULT_OPERATING_MODE;
@@ -1703,14 +1691,11 @@ void Printer::homeXAxis()
     if (nHomeDir)
     {
         UI_STATUS_UPD(UI_TEXT_HOME_X);
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         InterruptProtectedBlock noInts;
         directPositionTargetSteps[X_AXIS]  = 0;
         directPositionCurrentSteps[X_AXIS] = 0;
         directPositionLastSteps[X_AXIS]    = 0;
         noInts.unprotect();
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
         int32_t offX = 0;
 #if NUM_EXTRUDER>1
@@ -1753,14 +1738,11 @@ void Printer::homeYAxis()
     if (nHomeDir)
     {
         UI_STATUS_UPD(UI_TEXT_HOME_Y);
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         InterruptProtectedBlock noInts;
         directPositionTargetSteps[Y_AXIS]  = 0;
         directPositionCurrentSteps[Y_AXIS] = 0;
         directPositionLastSteps[Y_AXIS]    = 0;
         noInts.unprotect();
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
         int32_t offY = 0;
 #if NUM_EXTRUDER>1
@@ -1823,12 +1805,10 @@ void Printer::homeZAxis()
         Printer::setZOriginSet(false); //removes flag wegen statusnachricht
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         //nullen und in jedem fall sofort aufhören per directSteps zu fahren!
         directPositionTargetSteps[Z_AXIS]  = 0;
         directPositionCurrentSteps[Z_AXIS] = 0;
         directPositionLastSteps[Z_AXIS]    = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         //das ist diese Scan-Positions-Z-Zusatzachse für MoveZ-Bewegungen.
@@ -2082,7 +2062,6 @@ bool Printer::allowQueueMove( void )
 } // allowQueueMove
 
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 bool Printer::allowDirectMove( void )
 {
     if( PrintLine::direct.stepsRemaining )
@@ -2129,8 +2108,6 @@ bool Printer::processAsDirectSteps( void )
     return false;
 
 } // processAsDirectSteps
-
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION

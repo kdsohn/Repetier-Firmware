@@ -158,12 +158,10 @@ public:
     static volatile char    endZCompensationStep;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     static volatile long    directPositionTargetSteps[4];
     static volatile long    directPositionCurrentSteps[4];
     static long             directPositionLastSteps[4];
     static char             waitMove;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_MILLING_MODE
     static char             operatingMode;
@@ -983,23 +981,13 @@ public:
     static INLINE float targetXPosition()
     {
         // return all values in [mm]
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         return ((float)queuePositionTargetSteps[X_AXIS] + (float)directPositionTargetSteps[X_AXIS]) * invAxisStepsPerMM[X_AXIS];
-#else
-        return (float)queuePositionTargetSteps[X_AXIS] * invAxisStepsPerMM[X_AXIS];
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-
     } // targetXPosition
 
     static INLINE float targetYPosition()
     {
         // return all values in [mm]
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         return ((float)queuePositionTargetSteps[Y_AXIS] + (float)directPositionTargetSteps[Y_AXIS]) * invAxisStepsPerMM[Y_AXIS];
-#else
-        return (float)queuePositionTargetSteps[Y_AXIS] * invAxisStepsPerMM[Y_AXIS];
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-
     } // targetYPosition
 
     static inline float targetZPosition()
@@ -1018,10 +1006,8 @@ public:
         fvalue += (float)g_nZOriginPosition[Z_AXIS];
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         // add the current manual z-steps
         fvalue += (float)Printer::directPositionTargetSteps[Z_AXIS];
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
         fvalue *= Printer::invAxisStepsPerMM[Z_AXIS];
         return fvalue;
@@ -1040,23 +1026,13 @@ public:
     static inline float currentXPosition()
     {
         // return all values in [mm]
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         return ((float)queuePositionCurrentSteps[X_AXIS] + (float)directPositionCurrentSteps[X_AXIS]) * invAxisStepsPerMM[X_AXIS];
-#else
-        return (float)queuePositionCurrentSteps[X_AXIS] * invAxisStepsPerMM[X_AXIS];
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-
     } // currentXPosition
 
     static INLINE float currentYPosition()
     {
         // return all values in [mm]
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         return ((float)queuePositionCurrentSteps[Y_AXIS] + (float)directPositionCurrentSteps[Y_AXIS]) * invAxisStepsPerMM[Y_AXIS];
-#else
-        return (float)queuePositionCurrentSteps[Y_AXIS] * invAxisStepsPerMM[Y_AXIS];
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-
     } // currentYPosition
 
     static inline long currentZPositionSteps()
@@ -1075,10 +1051,8 @@ public:
         value += g_nZOriginPosition[Z_AXIS];
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         // add the current manual z-steps
         value += Printer::directPositionCurrentSteps[Z_AXIS];
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
         return value;
 
@@ -1166,12 +1140,9 @@ public:
 #endif // FEATURE_MEMORY_POSITION
 
     static bool allowQueueMove( void );
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     static bool allowDirectMove( void );
     static bool allowDirectSteps( void );
     static bool processAsDirectSteps( void );
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
     static void performZCompensation( void );
