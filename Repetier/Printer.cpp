@@ -254,18 +254,6 @@ void Printer::constrainQueueDestinationCoords()
 #if max_software_endstop_z == true
     if (queuePositionTargetSteps[Z_AXIS] + directPositionTargetSteps[Z_AXIS] > Printer::maxSteps[Z_AXIS]) Printer::queuePositionTargetSteps[Z_AXIS] = Printer::maxSteps[Z_AXIS] - directPositionTargetSteps[Z_AXIS];
 #endif // max_software_endstop_z == true
-#else
-#if max_software_endstop_x == true
-    if (queuePositionTargetSteps[X_AXIS] > Printer::maxSteps[X_AXIS]) Printer::queuePositionTargetSteps[X_AXIS] = Printer::maxSteps[X_AXIS];
-#endif // max_software_endstop_x == true
-
-#if max_software_endstop_y == true
-    if (queuePositionTargetSteps[Y_AXIS] > Printer::maxSteps[Y_AXIS]) Printer::queuePositionTargetSteps[Y_AXIS] = Printer::maxSteps[Y_AXIS];
-#endif // max_software_endstop_y == true
-
-#if max_software_endstop_z == true
-    if (queuePositionTargetSteps[Z_AXIS] > Printer::maxSteps[Z_AXIS]) Printer::queuePositionTargetSteps[Z_AXIS] = Printer::maxSteps[Z_AXIS];
-#endif // max_software_endstop_z == true
 } // constrainQueueDestinationCoords
 
 
