@@ -1302,9 +1302,7 @@ Extruder extruder[NUM_EXTRUDER] =
 #if STEPPER_ON_DELAY
         , '\x0'
 #endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
-#if FEATURE_PAUSE_PRINTING
         ,0 //uint8_t paused
-#endif // FEATURE_PAUSE_PRINTING
     }
 #endif // NUM_EXTRUDER>0
 
@@ -1335,9 +1333,7 @@ Extruder extruder[NUM_EXTRUDER] =
 #if STEPPER_ON_DELAY
         , '\x0'
 #endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
-#if FEATURE_PAUSE_PRINTING
         ,0 //uint8_t paused
-#endif // FEATURE_PAUSE_PRINTING
     }
 #endif // NUM_EXTRUDER>1
 };

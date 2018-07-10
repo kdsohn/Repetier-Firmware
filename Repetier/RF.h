@@ -616,15 +616,12 @@ extern volatile unsigned long   g_uBlockCommands;
 
 // other configurable parameters
 extern  unsigned long   g_nManualSteps[4];
-
-#if FEATURE_PAUSE_PRINTING
 extern  volatile long   g_nPauseSteps[4];
 extern  volatile long   g_nContinueSteps[4];
 extern  volatile char   g_pauseStatus;
 extern  volatile char   g_pauseMode;
 extern  volatile unsigned long  g_uPauseTime;
 extern  volatile char   g_pauseBeepDone;
-#endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_EMERGENCY_PAUSE
 extern long             g_nEmergencyPauseDigitsMin;  //short reicht eigentlich
@@ -857,7 +854,6 @@ extern void outputObject( bool showerrors = true );
 extern void parkPrinter( void );
 #endif // FEATURE_PARK
 
-#if FEATURE_PAUSE_PRINTING
 extern bool processingDirectMove();
 extern void checkPauseStatus_fromTask();
 extern void waitforPauseStatus_fromButton();
@@ -875,7 +871,6 @@ extern void determineZPausePositionForPrint( void );
 
 // determineZPausePositionForMill()
 extern void determineZPausePositionForMill( void );
-#endif // FEATURE_PAUSE_PRINTING
 
 // setExtruderCurrent()
 extern void setExtruderCurrent( uint8_t nr, uint8_t current );

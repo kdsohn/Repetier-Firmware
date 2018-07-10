@@ -1278,7 +1278,6 @@ void PrintLine::arc(float *position, float *target, float *offset, float radius,
 long PrintLine::performPauseCheck(){
     if(cur == NULL)
     {
-#if FEATURE_PAUSE_PRINTING
         if( g_pauseStatus > PAUSE_STATUS_PAUSED && g_pauseStatus <= PAUSE_STATUS_HEATING ) //siehe gate in Printer::allowQueueMove
         {
             // pause the print now
@@ -1356,7 +1355,6 @@ long PrintLine::performPauseCheck(){
             HAL::forbidInterrupts();
             return true;
         }
-#endif //FEATURE_PAUSE_PRINTING
 
         // Pause a bit, if z-compensation is way out of line: this is usefull when starting prints using very deep bed-leveling and custom z-endstop switches which can override a lot.
         uint16_t ZcmpNachlauf = abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ );
@@ -1397,7 +1395,6 @@ long PrintLine::performQueueMove()
         {
             switch( cur->task )
             {
-#if FEATURE_PAUSE_PRINTING
                 case TASK_PAUSE_PRINT:
                 {
                     if( g_pauseMode >= PAUSE_MODE_PAUSED )
@@ -1477,7 +1474,6 @@ long PrintLine::performQueueMove()
                     removeCurrentLineForbidInterrupt();
                     return 1000;
                 }
-#endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
                 case TASK_ENABLE_Z_COMPENSATION: //M3001 M3141

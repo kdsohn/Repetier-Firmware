@@ -812,13 +812,11 @@ void Commands::executeGCode(GCode *com)
             }
             case 24: // M24 - Start SD print
             {
-#if FEATURE_PAUSE_PRINTING
                 if( g_pauseStatus == PAUSE_STATUS_PAUSED )
                 {
                     continuePrint();
                 }
                 else
-#endif // FEATURE_PAUSE_PRINTING
                 {
                     sd.startPrint();
                 }
@@ -826,9 +824,7 @@ void Commands::executeGCode(GCode *com)
             }
             case 25: // M25 - Pause SD print
             {
-#if FEATURE_PAUSE_PRINTING
                 pausePrint();
-#endif // FEATURE_PAUSE_PRINTING
                 break;
             }
             case 26: // M26 - Set SD index

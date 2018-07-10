@@ -168,7 +168,6 @@ unsigned long   g_nManualSteps[4]           = { uint32_t(XAXIS_STEPS_PER_MM * DE
                                                 uint32_t(ZAXIS_STEPS_PER_MM * DEFAULT_MANUAL_MM_Z),
                                                 uint32_t( EXT0_STEPS_PER_MM * DEFAULT_MANUAL_MM_E) }; //pre init
 
-#if FEATURE_PAUSE_PRINTING
 volatile long   g_nPauseSteps[4]            = { long(XAXIS_STEPS_PER_MM * DEFAULT_PAUSE_MM_X_PRINT),
                                                 long(XAXIS_STEPS_PER_MM * DEFAULT_PAUSE_MM_Y_PRINT),
                                                 long(ZAXIS_STEPS_PER_MM * DEFAULT_PAUSE_MM_Z_PRINT),
@@ -178,7 +177,6 @@ volatile char   g_pauseStatus               = PAUSE_STATUS_NONE;
 volatile char   g_pauseMode                 = PAUSE_MODE_NONE;
 volatile unsigned long  g_uPauseTime                = 0;
 volatile char           g_pauseBeepDone             = 0;
-#endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_PARK
 long            g_nParkPosition[3]          = { PARK_POSITION_X, PARK_POSITION_Y, PARK_POSITION_Z };
@@ -3420,14 +3418,12 @@ void doHeatBedZCompensation( void )
     long            nNeededZCompensation = 0;
     float           nNeededZEPerc = 0.0f;
 
-#if FEATURE_PAUSE_PRINTING
     // -> weil evtl. bewegung in xy auch solange pausestatus da ist.
     if( g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE2 && g_pauseStatus != PAUSE_STATUS_TASKGOTO_PAUSE_2 )
     {
         // there is nothing to do at the moment
         return;
     }
-#endif // FEATURE_PAUSE_PRINTING
 
     if( Printer::doHeatBedZCompensation )
     {
@@ -4742,12 +4738,10 @@ void scanWorkPart( void )
 
 void doWorkPartZCompensation( void )
 {
- #if FEATURE_PAUSE_PRINTING
     if(g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE2 && g_pauseStatus != PAUSE_STATUS_TASKGOTO_PAUSE_2){
         // there is nothing to do at the moment
         return;
     }
- #endif // FEATURE_PAUSE_PRINTING
 
     long nNeededZCompensation;
 
@@ -6174,7 +6168,6 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
     }
 #endif // FEATURE_MILLING_MODE
 
-#if FEATURE_PAUSE_PRINTING
     if( g_pauseMode != PAUSE_MODE_NONE )
     {
         // show that we are paused
@@ -6231,7 +6224,6 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
             g_uPauseTime = 0;
         }
     }
-#endif // FEATURE_PAUSE_PRINTING
 
 /* Change: 09_06_2017 Never read straingauge twice in a row: test if this helps avoiding my watchdog problem
            Thatwhy I bring the statics up and preread the value for both FEATURE_EMERGENCY_PAUSE and FEATURE_EMERGENCY_STOP_ALL */
@@ -6604,17 +6596,13 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
     }
 #endif // FEATURE_SERVICE_INTERVAL
 
-#if FEATURE_PAUSE_PRINTING
     checkPauseStatus_fromTask();
-#endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_RGB_LIGHT_EFFECTS
     updateRGBLightStatus();
 #endif // FEATURE_RGB_LIGHT_EFFECTS
 
-    nEntered --;
-    return;
-
+    nEntered --;    
 } // loopRF
 
 void outputObject( bool showerrors )
@@ -6691,7 +6679,6 @@ void parkPrinter( void )
 } // parkPrinter
 #endif // FEATURE_PARK
 
-#if FEATURE_PAUSE_PRINTING
 inline bool processingDirectMove(){
     return  (
              (Printer::directPositionTargetSteps[X_AXIS] != Printer::directPositionCurrentSteps[X_AXIS]) ||
@@ -7158,7 +7145,6 @@ void determineZPausePositionForMill( void )
     return;
 
 } // determineZPausePositionForMill
-#endif // FEATURE_PAUSE_PRINTING
 
 
 void setExtruderCurrent( uint8_t nr, uint8_t current )
@@ -8200,7 +8186,6 @@ void processCommand( GCode* pCommand )
                 break;
             }
 
-#if FEATURE_PAUSE_PRINTING
             case 3070: // M3070 [S] - pause the print as if the "Pause" button would have been pressed
             {
                 //tell octoprint and repetier-server / -host to stop sending because of pause.
@@ -8220,7 +8205,7 @@ void processCommand( GCode* pCommand )
                 //tell menu that we are now in pause mode
                 Printer::setMenuMode( MENU_MODE_PAUSED, true );
                 //stop filling up MOVE_CACHE any further, process pending moves
-                Commands::waitUntilEndOfAllMoves(); //FEATURE_PAUSE_PRINTING
+                Commands::waitUntilEndOfAllMoves(); //M3070 pause printing
                 //say "Pause" when reaching TASK_PAUSE_PRINT in MOVE_CACHE:
                 UI_STATUS_UPD( UI_TEXT_PAUSED ); //override this with "M3117 TEXT" if needed!
                 uid.refreshPage();
@@ -8232,7 +8217,6 @@ void processCommand( GCode* pCommand )
                 }
                 break;
             }
-#endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_EMERGENCY_PAUSE
             case 3075: // M3075 [S] [P] - configure the emergency pause digits
@@ -8410,7 +8394,6 @@ void processCommand( GCode* pCommand )
                 break;
             }
 
-#if FEATURE_PAUSE_PRINTING
             case 3105: // M3105 [X] [Y] [Z] [E] - configure the offset in x, y, z and e direction which shall be applied in case the "Pause" button has been pressed ( units are [mm] )
             {
                 if( pCommand->hasNoXYZ() && !pCommand->hasE() )
@@ -8466,7 +8449,6 @@ void processCommand( GCode* pCommand )
                 }
                 break;
             }
-#endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_PARK
             case 3103: // M3103 [X] [Y] [Z] - configure the x, y and z position which shall set when the printer is parked ( units are [mm] )
@@ -11080,7 +11062,6 @@ extern void processButton( int nAction )
             }
             break;
         }
-#if FEATURE_PAUSE_PRINTING
         case UI_ACTION_RF_PAUSE:
         {
             pausePrint();
@@ -11091,7 +11072,6 @@ extern void processButton( int nAction )
             continuePrint();
             break;
         }
-#endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
         case UI_ACTION_RF_SCAN_HEAT_BED:
@@ -12150,16 +12130,13 @@ void cleanupXPositions( void )
     Printer::directPositionTargetSteps[X_AXIS]  =
     Printer::directPositionCurrentSteps[X_AXIS] = 0;
 
-#if FEATURE_PAUSE_PRINTING
     g_nContinueSteps[X_AXIS] = 0;
     g_pauseStatus            = PAUSE_STATUS_NONE;
     g_pauseMode              = PAUSE_MODE_NONE;
     g_uPauseTime             = 0;
     g_pauseBeepDone          = 0;
-#endif // FEATURE_PAUSE_PRINTING
 
     noInts.unprotect(); //HAL::allowInterrupts();
-
 } // cleanupXPositions
 
 
@@ -12175,16 +12152,13 @@ void cleanupYPositions( void )
     Printer::directPositionTargetSteps[Y_AXIS]  =
     Printer::directPositionCurrentSteps[Y_AXIS] = 0;
 
-#if FEATURE_PAUSE_PRINTING
     g_nContinueSteps[Y_AXIS] = 0;
     g_pauseStatus            = PAUSE_STATUS_NONE;
     g_pauseMode              = PAUSE_MODE_NONE;
     g_uPauseTime             = 0;
     g_pauseBeepDone          = 0;
-#endif // FEATURE_PAUSE_PRINTING
 
     noInts.unprotect(); //HAL::allowInterrupts();
-
 } // cleanupYPositions
 
 
@@ -12222,16 +12196,13 @@ void cleanupZPositions( void ) //kill all! -> für stepper disabled
     Printer::directPositionTargetSteps[Z_AXIS]  =
     Printer::directPositionCurrentSteps[Z_AXIS] = 0;
 
-#if FEATURE_PAUSE_PRINTING
     g_nContinueSteps[Z_AXIS] = 0;
     g_pauseStatus            = PAUSE_STATUS_NONE;
     g_pauseMode              = PAUSE_MODE_NONE;
     g_uPauseTime             = 0;
     g_pauseBeepDone          = 0;
-#endif // FEATURE_PAUSE_PRINTING
 
     noInts.unprotect(); //HAL::allowInterrupts();
-
 } // cleanupZPositions
 
 
@@ -12242,13 +12213,11 @@ void cleanupEPositions( void )
     Printer::directPositionTargetSteps[E_AXIS]  =
     Printer::directPositionCurrentSteps[E_AXIS] = 0;
 
-#if FEATURE_PAUSE_PRINTING
     g_nContinueSteps[E_AXIS] = 0;
     g_pauseStatus            = PAUSE_STATUS_NONE;
     g_pauseMode              = PAUSE_MODE_NONE;
     g_uPauseTime             = 0;
     g_pauseBeepDone          = 0;
-#endif // FEATURE_PAUSE_PRINTING
 
     noInts.unprotect();
 } // cleanupEPositions

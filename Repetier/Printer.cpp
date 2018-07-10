@@ -2039,9 +2039,8 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
 
 bool Printer::allowQueueMove( void )
 {
-#if FEATURE_PAUSE_PRINTING
     if( g_pauseStatus == PAUSE_STATUS_PAUSED ) return false;
-#endif // FEATURE_PAUSE_PRINTING
+
     if( !( (PAUSE_STATUS_GOTO_PAUSE1 <= g_pauseStatus && g_pauseStatus <= PAUSE_STATUS_HEATING) || g_pauseStatus == PAUSE_STATUS_NONE)
         && !PrintLine::cur )
     {
@@ -2221,7 +2220,6 @@ void Printer::stopPrint() //function for aborting USB and SD-Prints
     //now mark the print to get cleaned up after some time:
     g_uStopTime = HAL::timeInMilliseconds(); //starts output object in combination with g_uBlockCommands
 
-#if FEATURE_PAUSE_PRINTING
     if( g_pauseStatus != PAUSE_STATUS_NONE )
     {
         // the printing is paused at the moment
@@ -2235,7 +2233,6 @@ void Printer::stopPrint() //function for aborting USB and SD-Prints
         g_pauseMode   = PAUSE_MODE_NONE;
     }
     Printer::setMenuMode(MENU_MODE_PAUSED,false); //egal ob nicht gesetzt.
-#endif // FEATURE_PAUSE_PRINTING
 
     //erase the coordinates and kill the current taskplaner:
     PrintLine::resetPathPlanner();

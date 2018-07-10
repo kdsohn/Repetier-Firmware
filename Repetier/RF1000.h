@@ -1077,8 +1077,6 @@ Above this value the z compensation will distribute the roughness of the surface
 // ##   configuration of the pause functionality
 // ##########################################################################################
 
-#if FEATURE_PAUSE_PRINTING
-
 /** \brief Configuration of the pause steps */
 //Nibbels: 29122017 dont know what happens if pause hits max endstop etc. ... might get shifted coordinates!
   //look here if you want to prevent clamp crashes while milling! choose your pause position right.
@@ -1094,8 +1092,6 @@ Above this value the z compensation will distribute the roughness of the surface
 #define PAUSE_Y_SPACING_MM                     5                                                                     // [mm]
 #define PAUSE_Z_MAX_SPACING_MM                15                                                                     // [mm]
 #define PAUSE_COOLDOWN                       100                                                // [°C] 0=Off and 1..255=Temp down while paused
-
-#endif // FEATURE_PAUSE_PRINTING
 
 
 // ##########################################################################################

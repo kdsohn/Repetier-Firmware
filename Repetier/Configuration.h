@@ -72,12 +72,8 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 // ##    supported features
 // ##########################################################################################
 
-/** \brief Allows to pause the processing of G-Codes */
-#define FEATURE_PAUSE_PRINTING              1                                                   // 1 = on, 0 = off
 /** \brief Enables/diables the emergency pause in case of too high pressure ... the emergency pause can be turned on only in case the general pause functionality is available */
-#if FEATURE_PAUSE_PRINTING
-  #define FEATURE_EMERGENCY_PAUSE           1                                                    // 1 = on, 0 = off
-#endif // FEATURE_PAUSE_PRINTING
+#define FEATURE_EMERGENCY_PAUSE           1                                                    // 1 = on, 0 = off
 
 /** \brief Specifies if you want to see the pressure digits within the repetier-server/repetier-host temperature message */
 #define FEATURE_PRINT_PRESSURE              1                                                    // 1 = on, 0 = off
@@ -275,15 +271,12 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 // ##   configuration of the pause functionality
 // ##########################################################################################
 
-#if FEATURE_PAUSE_PRINTING
-
 #if !FEATURE_HEAT_BED_Z_COMPENSATION && !FEATURE_WORK_PART_Z_COMPENSATION
     #error FEATURE_PAUSE_PRINTING can not be used without FEATURE_HEAT_BED_Z_COMPENSATION or FEATURE_WORK_PART_Z_COMPENSATION
 #endif // !FEATURE_HEAT_BED_Z_COMPENSATION && !FEATURE_WORK_PART_Z_COMPENSATION
 
 /** \brief Specifies the time interval after the pausing of the print at which the extruder current is reduced */
 #define EXTRUDER_CURRENT_PAUSE_DELAY        60000                                                // [ms] or 0, in order to disable the lowering of the extruder current
-#endif // FEATURE_PAUSE_PRINTING
 
 /** \brief Specifies the extruder current which shall be use after pausing of the print and before continuing of the print */
 #define EXTRUDER_CURRENT_PAUSED             32                                                  // ~0.5A
