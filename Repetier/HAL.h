@@ -70,7 +70,7 @@ extern  unsigned long g_uLastCommandLoop;
 #define PART_FAN_MODE_PWM 0
 #define PART_FAN_MODE_PDM 1
 extern  uint8_t part_fan_frequency_modulation;
-extern  uint8_t part_fan_pwm_speed; 
+extern  uint8_t part_fan_pwm_speed;
 extern  uint8_t part_fan_pwm_max; //this is calculated as 99%
 extern  uint8_t part_fan_pwm_min; //this is calculated as 1%
 
@@ -181,7 +181,7 @@ void FEATURE_READ_CALIPER_HOOK(); //read in calipers 48bit protocol bitwise!
 */
 
 #undef SERIAL_RX_BUFFER_SIZE
-//undef fix gegen compiler warning   
+//undef fix gegen compiler warning
 #define SERIAL_RX_BUFFER_SIZE   128
 #define SERIAL_RX_BUFFER_MASK   127
 
@@ -664,7 +664,7 @@ public:
         SET_INPUT(MISO_PIN);
         SET_OUTPUT(MOSI_PIN);
         SET_OUTPUT(SCK_PIN);
-        
+
         // SS must be in output mode even it is not chip select
         SET_OUTPUT(SDSS);
 
@@ -790,7 +790,7 @@ public:
         SET_OUTPUT(WATCHDOG_PIN);
         g_bPingWatchdog = 1; //allow pinging
         tellWatchdogOk(); //Nibbels: Init für g_nCommandloop
-        pingWatchdog(); //Nibbels: Hier macht der mehr sinn!        
+        pingWatchdog(); //Nibbels: Hier macht der mehr sinn!
 #endif // FEATURE_WATCHDOG && WATCHDOG_PIN>-1
 
         HAL::WDT_Init(); //Nibbels: use watchdogtimer to test var and trigger
@@ -813,7 +813,7 @@ public:
     inline static void tellWatchdogOk()
     {
 #if FEATURE_WATCHDOG && WATCHDOG_PIN>-1
-        g_uLastCommandLoop = HAL::timeInMilliseconds();    
+        g_uLastCommandLoop = HAL::timeInMilliseconds();
 #else
 
 #endif // FEATURE_WATCHDOG && WATCHDOG_PIN>-1

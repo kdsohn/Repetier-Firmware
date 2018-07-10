@@ -68,7 +68,7 @@
 #define FEATURE_230V_OUTPUT                 1                                                   // 1 = on, 0 = off
 
 /** \brief Allows to use the RGB light effects */
-#define FEATURE_RGB_LIGHT_EFFECTS           1                                                   // 1 = on, 0 = off  
+#define FEATURE_RGB_LIGHT_EFFECTS           1                                                   // 1 = on, 0 = off
 
 /** \brief Allows to use the 24V FET outputs */
 #define FEATURE_24V_FET_OUTPUTS             1                                                   // 1 = on, 0 = off
@@ -574,11 +574,11 @@ A good start is 30 lower then the optimal value. You need to leave room for cool
 /** \brief Analog pin of analog sensor to read temperature of the RF2000's optional sensor port.  */
 #define RESERVE_ANALOG_TEMP_PIN             TEMP_3_PIN
 //14 passt für Thermistor NTC 3950 100k Ohm
-#define RESERVE_ANALOG_SENSOR_TYPE          14 
+#define RESERVE_ANALOG_SENSOR_TYPE          14
 
 #define RESERVE_ANALOG_INPUTS               1
 #define RESERVE_SENSOR_INDEX                EXT0_ANALOG_INPUTS+EXT1_ANALOG_INPUTS+BED_ANALOG_INPUTS
-#define RESERVE_ANALOG_CHANNEL              ACCOMMA1 TEMP_3_PIN     
+#define RESERVE_ANALOG_CHANNEL              ACCOMMA1 TEMP_3_PIN
 
 
 // ##########################################################################################
@@ -592,7 +592,7 @@ Z-EndStop button crash RF1000: ~ >0.8f
 Z-EndStop optical button crash RF2000: ~ >1.3f
 Crash with Einhausung/Plexiglas backside RFx000: ~ >5.0 .. 6.0f
 Crash with backside metal RFx000: ~ >10.0..12.0f
-Overflow in Z-Matrix: >12.7f 
+Overflow in Z-Matrix: >12.7f
 */
 #define Z_ENDSTOP_DRIVE_OVER                 1.3f                              //mm
 #define Z_ENDSTOP_MAX_HYSTERESIS             0.1f                              //mm
@@ -666,10 +666,10 @@ can set it on for safety. */
 // ##########################################################################################
 
 /** \brief Motor Current MAX setting */
-#define MOTOR_CURRENT_MAX                       {145,140,120,105,105}                             // Values 0-255 (126 = ~2A), order: driver 1 (x), driver 2 (y), driver 3 (z), driver 4 (extruder 1), driver 5 (extruder 2)  
+#define MOTOR_CURRENT_MAX                       {145,140,120,105,105}                             // Values 0-255 (126 = ~2A), order: driver 1 (x), driver 2 (y), driver 3 (z), driver 4 (extruder 1), driver 5 (extruder 2)
 
-/** \brief Motor Current settings at start: Tweak with menu for better silence <-> stability 
-// The RF2000 has one more stepper and the same 8A-24V power supply as RF1000. We think that this is the reason for lower stepper currents set by conrad renkforce - but dont know. 
+/** \brief Motor Current settings at start: Tweak with menu for better silence <-> stability
+// The RF2000 has one more stepper and the same 8A-24V power supply as RF1000. We think that this is the reason for lower stepper currents set by conrad renkforce - but dont know.
 // I increased MAX a little bit over stock settings, but decreased normal settings to fairly low power and noise. Take that into account when tuning in your steppers according your needs.
 */
 #define MOTOR_CURRENT_NORMAL                    {110,110,105,90,90}
@@ -817,7 +817,7 @@ This is like reducing your 1/16th microstepping to 1/8 or 1/4. It is much cheape
 additional stepper interrupts with all it's overhead. As a result you can go as high as
 40000Hz. STEP_DOUBLER_FREQUENCY should be in range 5000-12000 for RFx000 but 8000 is much for RF2000 (with ADVANCE?).
 
-STEP_DOUBLER_FREQUENCY can be changed in Menu-> Configuration->Stepper->DblFq: 
+STEP_DOUBLER_FREQUENCY can be changed in Menu-> Configuration->Stepper->DblFq:
 */
 #define STEP_DOUBLER_FREQUENCY              7000
 
@@ -850,7 +850,7 @@ if you are printing many very short segments at high speed.*/
 // ##   Acceleration settings
 // ##########################################################################################
 
-// RF2000: Tests haben gezeigt, dass x-y-acceleration unter 2000 oder unter 1500 das Teil ziemlich gut aussieht. 
+// RF2000: Tests haben gezeigt, dass x-y-acceleration unter 2000 oder unter 1500 das Teil ziemlich gut aussieht.
 
 /** \brief X, Y, Z max acceleration in mm/s^2 for printing moves or retracts. Make sure your printer can go that high!
  Overridden if EEPROM activated. */
@@ -989,6 +989,7 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_PRESSURE_TOLERANCE        15                                                                      // [digits]
 #define HEAT_BED_SCAN_PRESSURE_READ_DELAY_MS    15                                                                      // [ms]
 #define HEAT_BED_SCAN_DELAY                     1000                                                                    // [ms]
+#define HEAT_BED_SCAN_ALIGN_EXTRUDERS_ABORT_DELAY  (unsigned long)3600                                                  // [s]
 
 #if FEATURE_PRECISE_HEAT_BED_SCAN
 
@@ -1013,7 +1014,7 @@ Above this value the z compensation will distribute the roughness of the surface
 #define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_RAND_MM    3
 // number of scanning iterations 2+
 #define SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS          1
-    
+
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
 
@@ -1078,7 +1079,7 @@ Above this value the z compensation will distribute the roughness of the surface
 // ##   configuration of the pause functionality
 // ##########################################################################################
 
-#if FEATURE_PAUSE_PRINTING 
+#if FEATURE_PAUSE_PRINTING
 
 /** \brief Configuration of the pause steps */
 //Nibbels: 29122017 dont know what happens if pause hits max endstop etc. ... might get shifted coordinates!

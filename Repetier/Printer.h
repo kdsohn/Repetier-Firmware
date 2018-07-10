@@ -40,7 +40,7 @@
 
 #define PRINTER_FLAG2_RESET_FILAMENT_USAGE      4
 #define PRINTER_FLAG2_GOT_TEMPS                 32
- 
+
 #define PRINTER_FLAG3_X_HOMED                   1 // flag3 alike original repetier
 #define PRINTER_FLAG3_Y_HOMED                   2 // flag3 alike original repetier
 #define PRINTER_FLAG3_Z_HOMED                   4 // flag3 alike original repetier
@@ -150,7 +150,7 @@ public:
     static volatile long    compensatedPositionCurrentStepsZ;
     static volatile float   compensatedPositionOverPercE;
     static volatile float   compensatedPositionCollectTinyE;
-    
+
     static volatile long    queuePositionZLayerCurrent_cand;
     static volatile long    queuePositionZLayerCurrent;
     static volatile long    queuePositionZLayerLast;
@@ -197,7 +197,7 @@ public:
 
 #if FEATURE_RGB_LIGHT_EFFECTS
     static char             RGBLightMode;
-    static char             RGBLightStatus;  
+    static char             RGBLightStatus;
     static  unsigned long   RGBLightIdleStart;
     static char             RGBButtonBackPressed;
     static char             RGBLightModeForceWhite;
@@ -499,7 +499,7 @@ public:
         WRITE( Y2_STEP_PIN, HIGH );
     #endif // FEATURE_TWO_YSTEPPER
     } // startYStep
-        
+
     static INLINE void startZStep()
     {
         WRITE( Z_STEP_PIN, HIGH );
@@ -533,7 +533,7 @@ public:
         endYStep();
         endZStep();
     } // endXYZSteps
-    
+
     static INLINE bool getZDirectionIsPos()
     {
         return ((READ(Z_DIR_PIN)!=0) ^ INVERT_Z_DIR);
@@ -581,7 +581,7 @@ public:
             case Z_AXIS: {
                 return (flag3 & PRINTER_FLAG3_Z_HOMED);
                 }
-        } 
+        }
         return 0;
     } // isAxisHomed
 
@@ -620,8 +620,8 @@ public:
     {
         if(x != -1) flag3 = (x ? flag3 | PRINTER_FLAG3_X_HOMED : flag3 & ~PRINTER_FLAG3_X_HOMED);
         if(y != -1) flag3 = (y ? flag3 | PRINTER_FLAG3_Y_HOMED : flag3 & ~PRINTER_FLAG3_Y_HOMED);
-        if(z != -1) flag3 = (z ? flag3 | PRINTER_FLAG3_Z_HOMED : flag3 & ~PRINTER_FLAG3_Z_HOMED);  
-        
+        if(z != -1) flag3 = (z ? flag3 | PRINTER_FLAG3_Z_HOMED : flag3 & ~PRINTER_FLAG3_Z_HOMED);
+
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         if( !isAxisHomed(Z_AXIS) ){
             Printer::disableCMPnow(true); //true == wait for move while HOMING
@@ -868,7 +868,7 @@ public:
                 // we remember that the z-max endstop is hit at the moment
                 return true;
             }
-                
+
             if( lastZDirection < 0 )
             {
                 // z-max was not hit and we are moving upwards, so z-max can not become hit right now
@@ -948,7 +948,7 @@ public:
     {
         Printer::flag0 = (defect ? flag0 | PRINTER_FLAG0_TEMPSENSOR_DEFECT : flag0 & ~PRINTER_FLAG0_TEMPSENSOR_DEFECT);
     } // setSomeTempsensorDefect
-    
+
     static INLINE bool isAnyTempsensorDefect()
     {
 #if FEATURE_MILLING_MODE
@@ -1036,7 +1036,7 @@ public:
         zp = targetZPosition();
 
     } // targetPosition
-    
+
     static inline float currentXPosition()
     {
         // return all values in [mm]
@@ -1101,7 +1101,7 @@ public:
 
             // When we see Z-Min the Extruder::current->zOffset (negative number) is not what we want to see. We want to see the diff with sensor-zeroing.
             fvalue -= (float)Extruder::current->zOffset; //adds z-Offset for T1 again to really show the axis-scale towards z-min hardware switch.
-            
+
         }
 
         else if (Printer::ZMode == Z_VALUE_MODE_SURFACE)
@@ -1187,7 +1187,7 @@ public:
     static void stopPrint();
     static bool checkAbortKeys( void );
     static bool checkPlayKey( void );
-    
+
 private:
     static void homeXAxis();
     static void homeYAxis();

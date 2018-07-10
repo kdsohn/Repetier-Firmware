@@ -573,8 +573,8 @@ void Com::printFloat(float number, uint8_t digits, bool komma_as_dot)
     // Extract the integer part of the number and print it
     unsigned long   int_part  = (unsigned long)number;
     float           remainder = number - (float)int_part;
-  
-    
+
+
     printNumber(int_part);
 
     // Print the decimal point, but only if there are digits beyond
