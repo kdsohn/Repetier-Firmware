@@ -51,7 +51,7 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
     #error Device type (RF1000 / RF2000 / RF2000v2) is not defined. Edit Configuration.h or pass the corresponding option to the compiler.
 #endif
 #if MOTHERBOARD == DEVICE_TYPE_RF2000v2
-    #error This Mod-Firmware has not been tested on a RF2000v2 yet. But created with care. Please remove this Message if you acknowledged this.
+    #error This Mod-Firmware has not been tested on a RF2000v2 yet. But the firmware has been created with care. Please remove this message if you acknowledged this.
 #endif // MOTHERBOARD == DEVICE_TYPE_RF2000v2
 
 
@@ -72,7 +72,7 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 // ##    supported features
 // ##########################################################################################
 
-/** \brief Enables/diables the emergency pause in case of too high pressure ... the emergency pause can be turned on only in case the general pause functionality is available */
+/** \brief Enables/diables the emergency pause in case of too high pressure */
 #define FEATURE_EMERGENCY_PAUSE           1                                                    // 1 = on, 0 = off
 
 /** \brief Specifies if you want to see the pressure digits within the repetier-server/repetier-host temperature message */

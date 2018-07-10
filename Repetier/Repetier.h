@@ -149,12 +149,8 @@ extern float            maxadvspeed;
 
 #include "Extruder.h"
 
-#ifndef FEATURE_DITTO_PRINTING
-#define FEATURE_DITTO_PRINTING false
-#endif // FEATURE_DITTO_PRINTING
-
 #if FEATURE_DITTO_PRINTING && NUM_EXTRUDER!=2
-#error Ditto printing requires exactly 2 extruder.
+    #error Ditto printing requires exactly 2 extruder.
 #endif // FEATURE_DITTO_PRINTING && NUM_EXTRUDER!=2
 
 extern millis_t previousMillisCmd;

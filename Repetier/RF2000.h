@@ -32,7 +32,7 @@
 
 #if NUM_EXTRUDER > 2 || NUM_EXTRUDER < 0
  #error This Firmware supports up to 2 Extruders. You might have to reimplement the 3+ code or "request it" if you really got hands on a RFx000 board with 3+ Extruders.
-#endif // FEATURE_DITTO_PRINTING && NUM_EXTRUDER!=2
+#endif // NUM_EXTRUDER > 2 || NUM_EXTRUDER < 0
 
 /** \brief Allows to use the device for milling */
 #define FEATURE_MILLING_MODE                  1                                                   // 1 = on, 0 = off
