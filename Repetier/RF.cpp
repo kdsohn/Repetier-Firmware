@@ -11222,15 +11222,6 @@ void nextPreviousXAction( int8_t increment )
         return;
     }
 
-#if !FEATURE_ALLOW_UNKNOWN_POSITIONS
-    if(!Printer::isAxisHomed(X_AXIS))
-    {
-        // we do not allow unknown positions and the printer is not homed, thus we do not move
-        showError( (void*)ui_text_x_axis, (void*)ui_text_home_unknown );
-        return;
-    }
-#endif // !FEATURE_ALLOW_UNKNOWN_POSITIONS
-
     if(increment<0 && Printer::isXMinEndstopHit())
     {
         // we shall move to the left but the x-min-endstop is hit already, so we do nothing
@@ -11363,20 +11354,6 @@ void nextPreviousYAction( int8_t increment )
         return;
     }
 
-#if !FEATURE_ALLOW_UNKNOWN_POSITIONS
-    if(!Printer::isAxisHomed(Y_AXIS))
-    {
-        // we do not allow unknown positions and the printer is not homed, thus we do not move
-        if( Printer::debugErrors() )
-        {
-            Com::printFLN( PSTR( "nextPreviousYAction(): moving y aborted (not homed)" ) );
-        }
-
-        showError( (void*)ui_text_y_axis, (void*)ui_text_home_unknown );
-        return;
-    }
-#endif // !FEATURE_ALLOW_UNKNOWN_POSITIONS
-
     if(increment<0 && Printer::isYMinEndstopHit())
     {
         // we shall move to the back but the y-min-endstop is hit already, so we do nothing
@@ -11497,20 +11474,6 @@ void nextPreviousZAction( int8_t increment )
         // we are moving already, there is nothing more to do
         return;
     }
-
-#if !FEATURE_ALLOW_UNKNOWN_POSITIONS
-    if(!Printer::isAxisHomed(Z_AXIS))
-    {
-        // we do not allow unknown positions and the printer is not homed, thus we do not move
-        if( Printer::debugErrors() )
-        {
-            Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (not homed)" ) );
-        }
-
-        showError( (void*)ui_text_z_axis, (void*)ui_text_home_unknown );
-        return;
-    }
-#endif // !FEATURE_ALLOW_UNKNOWN_POSITIONS
 
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
     if( Printer::ZEndstopUnknown )

@@ -127,11 +127,6 @@ XYZ_POSITION_BUTTON_DIRECTION = 1 : This fits more if you want to stick to stand
 /** \brief Enables/disables the park feature */
 #define FEATURE_PARK                        0                                                   // 1 = on, 0 = off
 
-/** \brief Specifies whether the x, y and z-positions can be changed manually (e.g. via the "Position X/Y/Z" menus or via the hardware buttons) in case the according axis is unknown.
-The position of an axis is unknown until the axis has been homed. The position of an axis becomes unknown in case its stepper is disabled.
-Enabling of the following feature can be dangerous because it allows to manually drive the printer above its max x/y/z position. */
-#define FEATURE_ALLOW_UNKNOWN_POSITIONS     1                                                   // 1 = allow, 0 = do not allow
-
 /** \brief Ditto printing allows 2 extruders to do the same action. This effectively allows
 to print an object two times at the speed of one. Works only with dual extruder setup. */
 #define FEATURE_DITTO_PRINTING              0                                                   // 1 = on, 0 = off
