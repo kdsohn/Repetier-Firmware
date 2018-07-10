@@ -565,7 +565,7 @@ A good start is 30 lower then the optimal value. You need to leave room for cool
 #define BED_SENSOR_INDEX                    HEATED_BED_SENSOR_PIN
 #define BED_ANALOG_CHANNEL
 
-#endif // HAVE_HEATED_BED==true && HEATED_BED_SENSOR_TYPE<101   
+#endif // HAVE_HEATED_BED==true && HEATED_BED_SENSOR_TYPE<101
 
 /** \brief Allows to choose whether the setpoint and the current value of the heat bed temperature shall be compensated so that the temperature offset which is caused by the printing plate is reduced */
 #define FEATURE_HEAT_BED_TEMP_COMPENSATION  0                                                   // 1 = on, 0 = off
@@ -591,7 +591,7 @@ Z-EndStop button crash RF1000: ~ >0.8f
 Z-EndStop optical button crash RF2000: ~ >1.3f
 Crash with Einhausung/Plexiglas backside RFx000: ~ >5.0 .. 6.0f
 Crash with backside metal RFx000: ~ >10.0..12.0f
-Overflow in Z-Matrix: >12.7f 
+Overflow in Z-Matrix: >12.7f
 */
 #define Z_ENDSTOP_DRIVE_OVER                 0.8f                              //mm
 #define Z_ENDSTOP_MAX_HYSTERESIS             0.3f                              //mm
@@ -672,8 +672,8 @@ can set it on for safety. */
 /** \brief Motor Current MAX setting */
 #define MOTOR_CURRENT_MAX                       {150,150,126,126,126}                               // Values 0-255 (126 = ~2A), order: driver 1 (x), driver 2 (y), driver 3 (z), driver 4 (extruder 1), driver 5 (reserved)
 
-/** \brief Motor Current settings at start: Tweak with menu for better silence <-> stability 
-// The RF2000 has one more stepper and the same 8A-24V power supply as RF1000. We think that this is the reason for lower stepper currents set by conrad renkforce - but dont know. 
+/** \brief Motor Current settings at start: Tweak with menu for better silence <-> stability
+// The RF2000 has one more stepper and the same 8A-24V power supply as RF1000. We think that this is the reason for lower stepper currents set by conrad renkforce - but dont know.
 // I increased MAX a little bit over stock settings, but decreased normal settings to fairly low power and noise. Take that into account when tuning in your steppers according your needs.
 */
 #define MOTOR_CURRENT_NORMAL                    {110,110,105,110,110}
@@ -853,7 +853,7 @@ if you are printing many very short segments at high speed.*/
 // ##   Acceleration settings
 // ##########################################################################################
 
-// RF2000: Tests haben gezeigt, dass x-y-acceleration unter 2000 oder unter 1500 das Teil ziemlich gut aussieht. 
+// RF2000: Tests haben gezeigt, dass x-y-acceleration unter 2000 oder unter 1500 das Teil ziemlich gut aussieht.
 
 /** \brief X, Y, Z max acceleration in mm/s^2 for printing moves or retracts. Make sure your printer can go that high!
  Overridden if EEPROM activated. */
@@ -993,7 +993,7 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_PRESSURE_READ_DELAY_MS    15                                                                      // [ms]
 #define HEAT_BED_SCAN_DELAY                     1000                                                                    // [ms]
 #define HEAT_BED_SCAN_ALIGN_EXTRUDERS_ABORT_DELAY  (unsigned long)3600                                                  // [s]
-  
+
 #if FEATURE_PRECISE_HEAT_BED_SCAN
 
 #define PRECISE_HEAT_BED_SCAN_WARMUP_DELAY          (uint32_t)600                                                       // [s]
@@ -1081,7 +1081,7 @@ Above this value the z compensation will distribute the roughness of the surface
 // ##   configuration of the pause functionality
 // ##########################################################################################
 
-#if FEATURE_PAUSE_PRINTING 
+#if FEATURE_PAUSE_PRINTING
 
 /** \brief Configuration of the pause steps */
 //Nibbels: 29122017 dont know what happens if pause hits max endstop etc. ... might get shifted coordinates!

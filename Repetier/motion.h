@@ -97,7 +97,7 @@ public:
 #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     static PrintLine    direct;
 #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-    
+
     static volatile uint8_t linesCount; // Number of lines cached 0 = nothing to do
 
     inline bool areParameterUpToDate()
@@ -538,7 +538,7 @@ public:
 
         p = getNextWriteLine();
         p->task = task;
-  
+
         nextPlannerIndex( linesWritePos );
         InterruptProtectedBlock noInts; //BEGIN_INTERRUPT_PROTECTED
         linesCount++;
@@ -599,7 +599,7 @@ inline bool isQueueEMove(){
 
 inline bool isDirectOrQueueOrCompZMove(){
     if( PrintLine::cur ) if( PrintLine::cur->isZMove() ) return true;
-    if( Printer::directPositionCurrentSteps[Z_AXIS] != Printer::directPositionTargetSteps[Z_AXIS] ) return true; 
+    if( Printer::directPositionCurrentSteps[Z_AXIS] != Printer::directPositionTargetSteps[Z_AXIS] ) return true;
     // davor version conrad 1.39, auskommentiert version nibbels: if( PrintLine::direct.isZMove() ) return true;
     if( Printer::endZCompensationStep ) return true;
     return false;

@@ -25,8 +25,8 @@
 #define UI_VERSION_STRING                   "V " REPETIER_VERSION
 
 #define BIGC0 "\001\002\003    " UI_SPACER "Renkforce"
-#define BIGC1 "\004         " UI_SPACER UI_PRINTER_NAME 
-#define BIGC2 "\005\006\007ommunity Mod" 
+#define BIGC1 "\004         " UI_SPACER UI_PRINTER_NAME
+#define BIGC2 "\005\006\007ommunity Mod"
 #define BIGC3 UI_SPACER REPETIER_VERSION
 
 // ##########################################################################################

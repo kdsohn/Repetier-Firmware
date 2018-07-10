@@ -258,7 +258,7 @@ void HAL::setupTimer()
     TIMSK1 |= (1 << OCIE1A);                          // Enable interrupt
 
 #if FEATURE_RGB_LIGHT_EFFECTS
-    // Configure Timer 4 for RGB-PWM 
+    // Configure Timer 4 for RGB-PWM
     TCCR4A  = 0;                                    // clear Register
     TCCR4B  = 0;
 
@@ -271,7 +271,7 @@ void HAL::setupTimer()
     SET_OUTPUT(RGB_LIGHT_G_PIN);                    // PH4 - Pin 16 ( OC4B )
     SET_OUTPUT(RGB_LIGHT_B_PIN);                    // PH5 - Pin 17 ( OC4C )
 
-    TCCR4A |= (1<<COM4A1)|(1<<COM4B1)|(1<<COM4C1);  // enable fast PWM                      
+    TCCR4A |= (1<<COM4A1)|(1<<COM4B1)|(1<<COM4C1);  // enable fast PWM
 
     OCR4A = 0;                                      // default R = 0 at startup
     OCR4B = 0;                                      // default G = 0 at startup
@@ -691,7 +691,7 @@ void HAL::WDT_Init(void)
     //Enable global interrupts
     sei();
 
-    // enable watchdog interrupt only mode 
+    // enable watchdog interrupt only mode
     WDTCSR |= _BV(WDIE);
 }
 
@@ -704,7 +704,7 @@ ISR(WDT_vect)
 
     WDTCSR |= (1<<WDIE); //Nibbels: nächstes mal kein Reset durch internen Watchdog, sondern wieder dieser interrupt.
     DEBUG_MEMORY
-    execute16msPeriodical = 1; //Tell commandloop that 16ms have passed 
+    execute16msPeriodical = 1; //Tell commandloop that 16ms have passed
 }
 
 // ================== Interrupt handling ======================
@@ -934,7 +934,7 @@ ISR(PWM_TIMER_VECTOR)
     static uint8_t pwm_count_heater = 0;
     static uint8_t pwm_count_cooler = 0;
     static uint8_t pwm_count_part_fan = 0;
-        
+
     static uint8_t pwm_pos_set[NUM_EXTRUDER+3];
 #if NUM_EXTRUDER > 0 && (     (defined(EXT0_HEATER_PIN) && EXT0_HEATER_PIN > -1 && EXT0_EXTRUDER_COOLER_PIN > -1) || (NUM_EXTRUDER > 1 && EXT1_EXTRUDER_COOLER_PIN > -1 && EXT1_EXTRUDER_COOLER_PIN != EXT0_EXTRUDER_COOLER_PIN)      )
     /*
@@ -946,7 +946,7 @@ ISR(PWM_TIMER_VECTOR)
     static uint8_t pwm_cooler_pos_set[NUM_EXTRUDER];
 #endif
     PWM_OCR += 64;
-    
+
     if(pwm_count_heater == 0)
     {
 #if EXT0_HEATER_PIN>-1
@@ -1051,7 +1051,7 @@ ISR(PWM_TIMER_VECTOR)
 
     static char counter10Periodical = 0; // Approximate a 10ms timer :: blocks pingwatchdog s commandloop if not working
     if(++counter10Periodical >= 39) //(int)(F_CPU/4096))
-    {        
+    {
         counter10Periodical = 0;
         execute10msPeriodical = 1;
 #if FEATURE_RGB_LIGHT_EFFECTS
@@ -1110,7 +1110,7 @@ ISR(PWM_TIMER_VECTOR)
 #endif // ANALOG_INPUTS>0
 
     UI_FAST; // Short timed user interface action
-    
+
 #if FEATURE_RGB_LIGHT_EFFECTS
     if( rgb_10ms_change_should_be_now )
     {
@@ -1212,7 +1212,7 @@ void FEATURE_READ_CALIPER_HOOK(){
 
     millis_t tdiff = time - lasttime;
     if(tdiff > 2000){ // longest diff should be 0.5ms
-        // new message arrived: 
+        // new message arrived:
         // - this happens if we begin to read within half a message -> we drop everything and read the new one.
         // - this happens if a new message begins
         bit_cache = 0x0000;

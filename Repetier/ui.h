@@ -516,7 +516,7 @@ void initNSpecchars();
 #define UI_INVERT_INCREMENT_DIRECTION   true
 
 #ifdef UI_MAIN
-void ui_init_keys() 
+void ui_init_keys()
 {
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_1);  // push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_2);  // push button, connects gnd to pin
@@ -536,7 +536,7 @@ void ui_init_keys()
 } // ui_init_keys
 
 
-void ui_check_keys(int &action) 
+void ui_check_keys(int &action)
 {
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_1,UI_ACTION_OK);          // push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_2,UI_ACTION_NEXT);        // push button, connects gnd to pin
@@ -571,7 +571,7 @@ void ui_check_keys(int &action)
 #define UI_INVERT_INCREMENT_DIRECTION   true
 
 #ifdef UI_MAIN
-void ui_init_keys() 
+void ui_init_keys()
 {
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_1);  // push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_2);  // push button, connects gnd to pin
@@ -591,7 +591,7 @@ void ui_init_keys()
 } // ui_init_keys
 
 
-void ui_check_keys(int &action) 
+void ui_check_keys(int &action)
 {
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_1,UI_ACTION_OK);          // push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_2,UI_ACTION_NEXT);        // push button, connects gnd to pin

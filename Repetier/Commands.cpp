@@ -50,11 +50,11 @@ void Commands::commandLoop()
 void Commands::checkForPeriodicalActions(enum FirmwareState state)
 {
     bool buttonactive = ((HAL::timeInMilliseconds() - uid.lastButtonStart < 15000) ? true : false);
-    
+
     if( state != NotBusy ){
         GCode::keepAlive( state );
     }
-    
+
     if(execute10msPeriodical){ //set by PWM-Timer
       execute10msPeriodical=0;
 
@@ -106,8 +106,8 @@ void Commands::waitUntilEndOfAllMoves()
 
         bWait = false;
         if( PrintLine::hasLines() )     bWait = true;
-        else                            GCode::readFromSerial(); //normalerweise braucht repetiert hier bei PrintLine::haslines kein readserial! aber wenn wir für die anderen wait=1 readserial wollen, evtl. schon. 
-        
+        else                            GCode::readFromSerial(); //normalerweise braucht repetiert hier bei PrintLine::haslines kein readserial! aber wenn wir für die anderen wait=1 readserial wollen, evtl. schon.
+
 #if FEATURE_FIND_Z_ORIGIN
         if( g_nFindZOriginStatus )      bWait = true;
 #endif // FEATURE_FIND_Z_ORIGIN
@@ -244,7 +244,7 @@ void Commands::changeFlowrateMultiply(float factorpercent)
     if(factorpercent < 25.0f)   factorpercent = 25.0f;
     if(factorpercent > 200.0f)  factorpercent = 200.0f;
     Printer::extrudeMultiply = static_cast<int>(factorpercent);
-    
+
     //if(Extruder::current->diameter <= 0)
         Printer::extrusionFactor = 0.01f * static_cast<float>(factorpercent);
     //else
@@ -257,20 +257,20 @@ void Commands::changeFlowrateMultiply(float factorpercent)
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
 uint8_t fanKickstart = 0;
 void Commands::setFanSpeed(uint8_t speed, bool recalc)
-{       
+{
     speed = constrain(speed,0,255);
-    
+
     //do nothing if the fan speed does not change at all
     if(fanSpeed == speed && !recalc) return;
-    
+
     //the new fan speed value is being remembered unchanged
     //the output of the speed within display etc. stays unscaled
     fanSpeed = speed;
-    
+
     //output the new setting unscaled to repetier-host/server UI
     Printer::setMenuMode(MENU_MODE_FAN_RUNNING, (fanSpeed > 0) );
     Com::printFLN(Com::tFanspeed, (fanSpeed == 1) ? 2 : fanSpeed ); //bei 1 zeigt repetierserver / repetierhost 0% an, was nicht stimmt. Das ist etwas Pfusch, aber nun funktionierts.
-    
+
     //wenn speed > 0 und < 255, dann wird der wertebereich eingegrenzt, sonst === 0 oder full power
     if( speed > 0 && speed < 255 )
     {
@@ -283,7 +283,7 @@ void Commands::setFanSpeed(uint8_t speed, bool recalc)
         /*
         from here "speed" is scaled to a set boundary. It will be the same scale like pwm_pos[NUM_EXTRUDER+2] has.
         Commanded (and user ui) speed is "fanSpeed", which stays unscaled.
-        */            
+        */
     }
 
 #if FAN_KICKSTART_TIME
@@ -300,7 +300,7 @@ void Commands::setFanSpeed(uint8_t speed, bool recalc)
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
-void Commands::adjustFanFrequency(uint8_t speed_divisor = PART_FAN_DEFAULT_PWM_SPEED_DIVISOR){ //1 = ~15.3hz, ~2=7.62hz, ... 
+void Commands::adjustFanFrequency(uint8_t speed_divisor = PART_FAN_DEFAULT_PWM_SPEED_DIVISOR){ //1 = ~15.3hz, ~2=7.62hz, ...
     InterruptProtectedBlock noInts;
     if(!speed_divisor) speed_divisor = 1;
     part_fan_pwm_speed = (speed_divisor <= PART_FAN_MODE_MAX ? speed_divisor : PART_FAN_DEFAULT_PWM_SPEED_DIVISOR);
@@ -421,7 +421,7 @@ void Commands::executeGCode(GCode *com)
             {
                 break;
             }
-            
+
             // fall through
         }
         case 1: // G1
@@ -448,7 +448,7 @@ void Commands::executeGCode(GCode *com)
             {
                 break;
             }
-            
+
             // fall through
         }
         case 3: // G3 - Counter-clockwise Arc
@@ -813,7 +813,7 @@ void Commands::executeGCode(GCode *com)
             case 24: // M24 - Start SD print
             {
 #if FEATURE_PAUSE_PRINTING
-                if( g_pauseStatus == PAUSE_STATUS_PAUSED ) 
+                if( g_pauseStatus == PAUSE_STATUS_PAUSED )
                 {
                     continuePrint();
                 }
@@ -970,7 +970,7 @@ void Commands::executeGCode(GCode *com)
 
 #if RETRACT_DURING_HEATUP
                         if( dirRising ){
-                            if (!retracted 
+                            if (!retracted
                                 && longTempTime
                                 && actExtruder == Extruder::current
                                 && actExtruder->waitRetractUnits > 0
@@ -984,7 +984,7 @@ void Commands::executeGCode(GCode *com)
                         if( !dirRising ){
                             if( actExtruder->tempControl.currentTemperatureC <= MAX_ROOM_TEMPERATURE ){
                                 isTempReached = true;
-                                //never wait longer than reaching lowest allowed temperature. 
+                                //never wait longer than reaching lowest allowed temperature.
                                 //This might still be a long-run-bug if you have heated chamber/hot summer and wrong settings in MAX_ROOM_TEMPERATURE!
                             }
                         }
@@ -1200,7 +1200,7 @@ void Commands::executeGCode(GCode *com)
                     maxInactiveTime = 0;
                 break;
             }
-            case 99:    // M99 S<time> 
+            case 99:    // M99 S<time>
             //Nibbels: 050118 Ich halte den Befehl für tendentiell gefährlich. Man sollte nicht abschalten, sondern Strom senken, oder hat das einen sinn? Vermutlich muss danach Homing und CMP deaktiviert werden!
             {
                 millis_t wait = 10000L;
@@ -1524,8 +1524,8 @@ void Commands::executeGCode(GCode *com)
             }
 #endif // USE_ADVANCE
 #if FEATURE_CASE_LIGHT
-// Idee und Teilcode und Vorarbeit von WESSIX 
-            //Code schaltet X19, nicht zwingend das licht! 
+// Idee und Teilcode und Vorarbeit von WESSIX
+            //Code schaltet X19, nicht zwingend das licht!
                 case 355: // M355  - Turn case light on/off / Turn X19 on and off.
                 if(com->hasS()){
                     if(com->S == 1 || com->S == 0){
@@ -1540,7 +1540,7 @@ void Commands::executeGCode(GCode *com)
                 WRITE(CASE_LIGHT_PIN, Printer::enableCaseLight);
                 Com::printFLN(PSTR("M355: X19 set to "),Printer::enableCaseLight);
                 break;
-// Ende Idee und Teilcode von WESSIX 
+// Ende Idee und Teilcode von WESSIX
 #endif // FEATURE_CASE_LIGHT
             case 400:   // M400 - Finish all moves
             {
