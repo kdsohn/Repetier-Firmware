@@ -989,6 +989,7 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_PRESSURE_TOLERANCE        15                                                                      // [digits]
 #define HEAT_BED_SCAN_PRESSURE_READ_DELAY_MS    15                                                                      // [ms]
 #define HEAT_BED_SCAN_DELAY                     1000                                                                    // [ms]
+#define HEAT_BED_SCAN_ALIGN_EXTRUDERS_ABORT_DELAY  (unsigned long)3600                                                  // [s]
 
 #if FEATURE_PRECISE_HEAT_BED_SCAN
 

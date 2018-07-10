@@ -1528,6 +1528,8 @@ void scanHeatBed( void )
                 // the left extruder is at the surface now - show that the user must move also the right extruder to the surface in order to get them to the same z-height
                 UI_STATUS_UPD( UI_TEXT_ALIGN_EXTRUDERS );
                 BEEP_ALIGN_EXTRUDERS
+                
+				g_lastScanTime = HAL::timeInMilliseconds();
 
                 g_nContinueButtonPressed = 0;
                 g_nHeatBedScanStatus     = 125;
@@ -1546,6 +1548,18 @@ void scanHeatBed( void )
                 // wait until the continue button has been pressed
                 if( !g_nContinueButtonPressed )
                 {
+					unsigned long	uRemainingSeconds;
+					uRemainingSeconds = (HAL::timeInMilliseconds() - g_lastScanTime) / 1000;
+					if( uRemainingSeconds > HEAT_BED_SCAN_ALIGN_EXTRUDERS_ABORT_DELAY )
+					{
+                        //After one hour waiting for user interaction: beep and continue without align extruders.
+                        BEEP_ABORT_ALIGN_EXTRUDERS
+                        if( uRemainingSeconds > HEAT_BED_SCAN_ALIGN_EXTRUDERS_ABORT_DELAY + 4 )
+                        {
+                            g_nHeatBedScanStatus = 149;
+                            break;
+                        }
+					}
                     break;
                 }
 
@@ -2160,6 +2174,8 @@ void alignExtruders( void )
                 UI_STATUS_UPD( UI_TEXT_ALIGN_EXTRUDERS );
                 BEEP_ALIGN_EXTRUDERS
 
+				g_lastScanTime = HAL::timeInMilliseconds();
+                
                 g_nContinueButtonPressed = 0;
                 g_nAlignExtrudersStatus     = 125;
 
@@ -2173,6 +2189,20 @@ void alignExtruders( void )
                 // wait until the continue button has been pressed
                 if( !g_nContinueButtonPressed )
                 {
+					unsigned long	uRemainingSeconds;
+					uRemainingSeconds = (HAL::timeInMilliseconds() - g_lastScanTime) / 1000;
+					if( uRemainingSeconds > HEAT_BED_SCAN_ALIGN_EXTRUDERS_ABORT_DELAY )
+					{
+                        //After one hour waiting for user interaction: beep, shut off all temps and abort.
+                        BEEP_ABORT_ALIGN_EXTRUDERS
+                        if( uRemainingSeconds > HEAT_BED_SCAN_ALIGN_EXTRUDERS_ABORT_DELAY + 4 )
+                        {
+                            g_abortZScan = 1;
+                            Extruder::setTemperatureForAllExtruders(0, false);
+                            Extruder::setHeatedBedTemperature(0);                            
+                            break;
+                        }
+					}
                     break;
                 }
 

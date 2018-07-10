@@ -79,26 +79,26 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 #define FEATURE_PAUSE_PRINTING              1                                                   // 1 = on, 0 = off
 /** \brief Enables/diables the emergency pause in case of too high pressure ... the emergency pause can be turned on only in case the general pause functionality is available */
 #if FEATURE_PAUSE_PRINTING
-  #define FEATURE_EMERGENCY_PAUSE           1                                                   // 1 = on, 0 = off
+  #define FEATURE_EMERGENCY_PAUSE           1                                                    // 1 = on, 0 = off
 #endif // FEATURE_PAUSE_PRINTING
 
 /** \brief Specifies if you want to see the pressure digits within the repetier-server/repetier-host temperature message */
-#define FEATURE_PRINT_PRESSURE              1                                                   // 1 = on, 0 = off
+#define FEATURE_PRINT_PRESSURE              1                                                    // 1 = on, 0 = off
 
 /** \brief Specifies if you want to adjust your average pressure to zero digits after homing. This pushes the weight-scale to zero by adding the idle pressure as an offset. */
 #define FEATURE_ZERO_DIGITS                 1
 
 /** \brief Auto-Retract within hardcoded scripts: Pause / Output_Object / ... Vom Hotend abhängig! V2: 10mm, E3D: 1-2mm (?) */
-#define SCRIPT_RETRACT_MM                   1                                                   //[mm] Firmwares E-Retract */
+#define SCRIPT_RETRACT_MM                   1                                                    //[mm] Firmwares E-Retract */
 
 /** \brief Enables automatic compensation in z direction for the operationg mode "print" */
-#define FEATURE_HEAT_BED_Z_COMPENSATION     1                                                   // 1 = on, 0 = off
+#define FEATURE_HEAT_BED_Z_COMPENSATION     1                                                    // 1 = on, 0 = off
 /** \brief Enables the precise heat bed scan */
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-  #define FEATURE_PRECISE_HEAT_BED_SCAN       1                                                 // 1 = on, 0 = off
-  #define FEATURE_DIGIT_Z_COMPENSATION           1                                               // 1 = on, 0 = off
-  #define FEATURE_DIGIT_FLOW_COMPENSATION        1                                               // 1 = on, 0 = off
-  #define FEATURE_SENSIBLE_PRESSURE              1                                               // 1 = on, 0 = off
+  #define FEATURE_PRECISE_HEAT_BED_SCAN     1                                                    // 1 = on, 0 = off
+  #define FEATURE_DIGIT_Z_COMPENSATION      1                                                    // 1 = on, 0 = off
+  #define FEATURE_DIGIT_FLOW_COMPENSATION   1                                                    // 1 = on, 0 = off
+  #define FEATURE_SENSIBLE_PRESSURE         1                                                    // 1 = on, 0 = off
   #if FEATURE_SENSIBLE_PRESSURE
     // mittels SENSIBLE_PRESSURE soll im grunde ausschließlich die wärmeausdehnung in einem perfekt kalibrierten system (HBS,mhier) kompensiert werden:
     // Max lift in [um]; Standard: 180um=0,18mm, darf nie 0 sein!! größer 0.2 macht normalerweise keinen Sinn.

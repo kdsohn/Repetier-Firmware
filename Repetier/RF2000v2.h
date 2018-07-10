@@ -176,7 +176,7 @@ PTC-Thermistors
 53: E3D PT100 Board (direct AD voltage in)
 60: HEATER_USES_AD8495 (Delivers 5mV/degC)
 100: AD595 */
-#define EXT0_TEMPSENSOR_TYPE                3 /* V3 Hotend -> 13 ??? */
+#define EXT0_TEMPSENSOR_TYPE                13 /* RF2000v2: V3 Hotend */
 
 /** \brief Analog input pin for reading temperatures or pin enabling SS for MAX6675 */
 #define EXT0_TEMPSENSOR_PIN                 TEMP_0_PIN
@@ -352,7 +352,7 @@ PTC-Thermistors
 53: E3D PT100 Board (direct AD voltage in)
 60: HEATER_USES_AD8495 (Delivers 5mV/degC)
 100: AD595 */
-#define EXT1_TEMPSENSOR_TYPE                3 /* V3 Hotend -> 13 ??? */
+#define EXT1_TEMPSENSOR_TYPE                13 /* RF2000v2: V3 Hotend */
 
 /** \brief Analog input pin for reading temperatures or pin enabling SS for MAX6675 */
 #define EXT1_TEMPSENSOR_PIN                 TEMP_1_PIN
@@ -989,6 +989,7 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_PRESSURE_TOLERANCE        15                                                                      // [digits]
 #define HEAT_BED_SCAN_PRESSURE_READ_DELAY_MS    15                                                                      // [ms]
 #define HEAT_BED_SCAN_DELAY                     1000                                                                    // [ms]
+#define HEAT_BED_SCAN_ALIGN_EXTRUDERS_ABORT_DELAY  (unsigned long)3600                                                  // [s]
 
 #if FEATURE_PRECISE_HEAT_BED_SCAN
 
