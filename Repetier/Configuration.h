@@ -92,7 +92,6 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 #define FEATURE_HEAT_BED_Z_COMPENSATION     1                                                    // 1 = on, 0 = off
 /** \brief Enables the precise heat bed scan */
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-  #define FEATURE_PRECISE_HEAT_BED_SCAN     1                                                    // 1 = on, 0 = off
   #define FEATURE_DIGIT_Z_COMPENSATION      1                                                    // 1 = on, 0 = off
   #define FEATURE_DIGIT_FLOW_COMPENSATION   1                                                    // 1 = on, 0 = off
   #define FEATURE_SENSIBLE_PRESSURE         1                                                    // 1 = on, 0 = off

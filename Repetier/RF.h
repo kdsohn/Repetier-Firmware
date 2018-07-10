@@ -597,9 +597,7 @@ extern  short           g_ZCompensationMatrix[COMPENSATION_MATRIX_MAX_X][COMPENS
 extern  unsigned char   g_uZMatrixMax[2];
 extern  long            g_nZScanZPosition;
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
 extern  char            g_nHeatBedScanMode;         // 0 = oldScan, 1 = PLA, 2 = ABS
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
 extern  long            g_nScanXStepSizeMm;
 extern  long            g_nScanXStepSizeSteps;

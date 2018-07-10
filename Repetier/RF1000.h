@@ -994,8 +994,6 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_DELAY                     1000                                                                    // [ms]
 #define HEAT_BED_SCAN_ALIGN_EXTRUDERS_ABORT_DELAY  (unsigned long)3600                                                  // [s]
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
-
 #define PRECISE_HEAT_BED_SCAN_WARMUP_DELAY          (uint32_t)600                                                       // [s]
 #define PRECISE_HEAT_BED_SCAN_CALIBRATION_DELAY     (uint32_t)600                                                       // [s]
 #define PRECISE_HEAT_BED_SCAN_BED_TEMP_PLA          60                                                                  // [°C]
@@ -1003,8 +1001,6 @@ Above this value the z compensation will distribute the roughness of the surface
 #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_SCAN    100                                                                 // [°C]
 #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA     210                                                                 // [°C]
 #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS     240                                                                 // [°C]
-
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
 // configuration for the head bet offset search (M3900 command)
 #define SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA   40                                                                  // [digits]

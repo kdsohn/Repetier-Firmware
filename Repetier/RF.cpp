@@ -110,9 +110,7 @@ char            g_scanRetries         = 0;
 char            g_retryZScan          = 0;
 unsigned char   g_retryStatus         = 0;
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
 char            g_nHeatBedScanMode    = 0;
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
 char            g_abortZScan          = 0;
 short           g_ZCompensationMatrix[COMPENSATION_MATRIX_MAX_X][COMPENSATION_MATRIX_MAX_Y];
@@ -643,7 +641,6 @@ void scanHeatBed( void )
                 // the scan is performed with the left extruder
                 Extruder::selectExtruderById( 0 );
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if( g_nHeatBedScanMode == HEAT_BED_SCAN_MODE_PLA )
                 {
                     Extruder::setHeatedBedTemperature( PRECISE_HEAT_BED_SCAN_BED_TEMP_PLA, false);
@@ -654,7 +651,6 @@ void scanHeatBed( void )
                     Extruder::setHeatedBedTemperature( PRECISE_HEAT_BED_SCAN_BED_TEMP_ABS, false);
                     Extruder::setTemperatureForAllExtruders(PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_SCAN, false);
                 }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
                 g_nHeatBedScanStatus = 15;
                 g_lastScanTime       = HAL::timeInMilliseconds();
@@ -710,7 +706,6 @@ void scanHeatBed( void )
                 g_nHeatBedScanStatus = 22;
                 g_lastScanTime       = HAL::timeInMilliseconds();
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( g_nHeatBedScanMode )
                 {
                     if( Printer::debugInfo() )
@@ -719,7 +714,6 @@ void scanHeatBed( void )
                         Com::printFLN( PSTR( "warmup delay [s] = " ), PRECISE_HEAT_BED_SCAN_WARMUP_DELAY );
                     }
                 }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
@@ -732,7 +726,6 @@ void scanHeatBed( void )
             }
             case 22:
             {
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( g_nHeatBedScanMode )
                 {
                     // wait some time so that the desired target temperature is reached in all parts of our components
@@ -749,7 +742,6 @@ void scanHeatBed( void )
                         break;
                     }
                 }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
                 // start at the home position
                 Printer::homeAxis( true, true, true );
@@ -1206,18 +1198,12 @@ void scanHeatBed( void )
                 // move back to the home position
                 Printer::homeAxis( true, true, true);
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( !g_nHeatBedScanMode )
                 {
                     // disable all heaters
                     Extruder::setHeatedBedTemperature( 0, false );
                     Extruder::setTemperatureForAllExtruders(0, false);
                 }
-#else
-                // disable all heaters
-                Extruder::setHeatedBedTemperature( 0, false );
-                Extruder::setTemperatureForAllExtruders(0, false);
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
                 g_nHeatBedScanStatus = 65;
 
@@ -1330,41 +1316,39 @@ void scanHeatBed( void )
                 // we have to align the two extruders
                 g_nHeatBedScanStatus = 100;
 
-#if DEBUG_HEAT_BED_SCAN == 2
+ #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
                     Com::printFLN( PSTR( "80->100" ) );
                 }
-#endif // DEBUG_HEAT_BED_SCAN == 2
-#else
-#if FEATURE_PRECISE_HEAT_BED_SCAN
+ #endif // DEBUG_HEAT_BED_SCAN == 2
+#else // NUM_EXTRUDER == 2
                 if ( g_nHeatBedScanMode )
                 {
                     // we have to determine the z-offset which is caused by different extruder temperatures
                     g_nHeatBedScanStatus = 130;
 
-#if DEBUG_HEAT_BED_SCAN == 2
+ #if DEBUG_HEAT_BED_SCAN == 2
                     if( Printer::debugInfo() )
                     {
                         Com::printF( Com::tscanHeatBed );
                         Com::printFLN( PSTR( "80->130" ) );
                     }
-#endif // DEBUG_HEAT_BED_SCAN == 2
+ #endif // DEBUG_HEAT_BED_SCAN == 2
                 }
                 else
-#endif //FEATURE_PRECISE_HEAT_BED_SCAN
                 {
                     // we are done
                     g_nHeatBedScanStatus = 150;
 
-#if DEBUG_HEAT_BED_SCAN == 2
+ #if DEBUG_HEAT_BED_SCAN == 2
                     if( Printer::debugInfo() )
                     {
                         Com::printF( Com::tscanHeatBed );
                         Com::printFLN( PSTR( "80->150" ) );
                     }
-#endif // DEBUG_HEAT_BED_SCAN == 2
+ #endif // DEBUG_HEAT_BED_SCAN == 2
                 }
 #endif // NUM_EXTRUDER == 2
                 break;
@@ -1561,7 +1545,6 @@ void scanHeatBed( void )
                     break;
                 }
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( g_nHeatBedScanMode )
                 {
                     // we have to determine the z-offset which is caused by different extruder temperatures
@@ -1576,7 +1559,6 @@ void scanHeatBed( void )
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 }
                 else
-#endif //FEATURE_PRECISE_HEAT_BED_SCAN
                 {
                     // we are done
                     g_nHeatBedScanStatus = 149;
@@ -1667,7 +1649,6 @@ void scanHeatBed( void )
             {
                 g_lastScanTime       = HAL::timeInMilliseconds();
                 // at this point we are homed and we are above the x/y position at which we shall perform the measurement of the z-offset with the hot extruder(s)
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( g_nHeatBedScanMode == HEAT_BED_SCAN_MODE_PLA )
                 {
                     Extruder::setTemperatureForAllExtruders(PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA, false);
@@ -1676,7 +1657,6 @@ void scanHeatBed( void )
                 {
                     Extruder::setTemperatureForAllExtruders(PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS, false);
                 }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
                 g_nHeatBedScanStatus = 136;
 
@@ -1715,18 +1695,15 @@ void scanHeatBed( void )
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
                     Com::printFLN( PSTR( "calibration delay [s] =  " ), (uint32_t)PRECISE_HEAT_BED_SCAN_CALIBRATION_DELAY );
                 }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
                 break;
             }
             case 137:
             {
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( g_nHeatBedScanMode )
                 {
                     // wait some time so that the desired target temperature is reached in all parts of our components
@@ -1743,7 +1720,6 @@ void scanHeatBed( void )
                         break;
                     }
                 }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
                 g_scanRetries        = HEAT_BED_SCAN_RETRIES;
                 g_retryStatus        = 139;
@@ -7528,7 +7504,6 @@ void processCommand( GCode* pCommand )
             {
                 if( isSupportedMCommand( pCommand->M, OPERATING_MODE_PRINT ) )
                 {
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                     if( pCommand->hasS() )
                     {
                         if( pCommand->S == HEAT_BED_SCAN_MODE_PLA ||
@@ -7545,8 +7520,6 @@ void processCommand( GCode* pCommand )
                     {
                         g_nHeatBedScanMode = 0;
                     }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
-
                     startHeatBedScan();
                 }
                 break;
@@ -11123,15 +11096,12 @@ extern void processButton( int nAction )
 #if FEATURE_HEAT_BED_Z_COMPENSATION
         case UI_ACTION_RF_SCAN_HEAT_BED:
         {
-#if FEATURE_PRECISE_HEAT_BED_SCAN
             g_nHeatBedScanMode = 0;
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
             startHeatBedScan();
             //gehe zurück und zeige dem User was passiert.
             uid.exitmenu();
             break;
         }
-#if FEATURE_PRECISE_HEAT_BED_SCAN
         case UI_ACTION_RF_SCAN_HEAT_BED_PLA:
         {
             g_nHeatBedScanMode = HEAT_BED_SCAN_MODE_PLA;
@@ -11148,7 +11118,6 @@ extern void processButton( int nAction )
             uid.exitmenu();
             break;
         }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
         case UI_ACTION_RF_SCAN_WORK_PART:
