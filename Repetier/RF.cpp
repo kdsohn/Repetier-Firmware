@@ -8397,7 +8397,7 @@ void processCommand( GCode* pCommand )
             }
 #endif // FEATURE_PARK
 
-#if FEATURE_WATCHDOG
+            // FEATURE_WATCHDOG
             case 3090: // M3090 - test the watchdog (this command resets the firmware)
             {
                 if( pCommand->hasS() )
@@ -8430,7 +8430,6 @@ void processCommand( GCode* pCommand )
                 }
                 break;
             }
-#endif // FEATURE_WATCHDOG
 
             case 3091: // M3091 - erase the external EEPROM
             {

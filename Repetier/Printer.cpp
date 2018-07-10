@@ -1215,13 +1215,12 @@ void Printer::setup()
     g_unlock_movement = 0;
 #endif //FEATURE_UNLOCK_MOVEMENT
 
-#if FEATURE_WATCHDOG
+    // FEATURE_WATCHDOG
     if( Printer::debugInfo() )
     {
         Com::printFLN(Com::tStartWatchdog);
     }
     HAL::startWatchdog();
-#endif // FEATURE_WATCHDOG
 } // setup()
 
 

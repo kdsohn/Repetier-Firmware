@@ -146,10 +146,6 @@ to print an object two times at the speed of one. Works only with dual extruder 
 /** \brief Enables/disables the beeper */
 #define FEATURE_BEEPER                      1                                                   // 1 = on, 0 = off
 
-/** \brief A watchdog resets the printer, if a signal is not send within predifined time limits. That way we can be sure that the board
-is always running and is not hung up for some unknown reason. */
-#define FEATURE_WATCHDOG                    1                                                   // 1 = on, 0 = off
-
 /** \brief Defines whether a change within the menu shall be stored to the EEPROM automatically or not. */
 #define FEATURE_AUTOMATIC_EEPROM_UPDATE     1                                                   // 1 = the EEPROM is updated automatically after each change via the menu, 0 = the EEPROM must be updated manually via the "Store to EEPROM" menu item
 
