@@ -51,7 +51,7 @@ To override EEPROM settings with config settings, set EEPROM_MODE 0 */
     #error Device type (RF1000 / RF2000 / RF2000v2) is not defined. Edit Configuration.h or pass the corresponding option to the compiler.
 #endif
 #if MOTHERBOARD == DEVICE_TYPE_RF2000v2
-    #error This Mod-Firmware has not been tested on a RF2000v2 yet. But created with care. Please remove this Message if you acknowledged this.
+    #error This Mod-Firmware has not been tested on a RF2000v2 yet. But the firmware has been created with care. Please remove this message if you acknowledged this.
 #endif // MOTHERBOARD == DEVICE_TYPE_RF2000v2
 
 
@@ -72,15 +72,8 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 // ##    supported features
 // ##########################################################################################
 
-/** \brief Allows to use 6 additional hardware buttons */
-#define FEATURE_EXTENDED_BUTTONS            1                                                   // 1 = on, 0 = off
-
-/** \brief Allows to pause the processing of G-Codes */
-#define FEATURE_PAUSE_PRINTING              1                                                   // 1 = on, 0 = off
-/** \brief Enables/diables the emergency pause in case of too high pressure ... the emergency pause can be turned on only in case the general pause functionality is available */
-#if FEATURE_PAUSE_PRINTING
-  #define FEATURE_EMERGENCY_PAUSE           1                                                    // 1 = on, 0 = off
-#endif // FEATURE_PAUSE_PRINTING
+/** \brief Enables/diables the emergency pause in case of too high pressure */
+#define FEATURE_EMERGENCY_PAUSE           1                                                    // 1 = on, 0 = off
 
 /** \brief Specifies if you want to see the pressure digits within the repetier-server/repetier-host temperature message */
 #define FEATURE_PRINT_PRESSURE              1                                                    // 1 = on, 0 = off
@@ -95,7 +88,6 @@ IMPORTANT: With mode <>0 some changes in Configuration.h are not set any more, a
 #define FEATURE_HEAT_BED_Z_COMPENSATION     1                                                    // 1 = on, 0 = off
 /** \brief Enables the precise heat bed scan */
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-  #define FEATURE_PRECISE_HEAT_BED_SCAN     1                                                    // 1 = on, 0 = off
   #define FEATURE_DIGIT_Z_COMPENSATION      1                                                    // 1 = on, 0 = off
   #define FEATURE_DIGIT_FLOW_COMPENSATION   1                                                    // 1 = on, 0 = off
   #define FEATURE_SENSIBLE_PRESSURE         1                                                    // 1 = on, 0 = off
@@ -130,11 +122,6 @@ XYZ_POSITION_BUTTON_DIRECTION = 1 : This fits more if you want to stick to stand
 /** \brief Enables/disables the park feature */
 #define FEATURE_PARK                        0                                                   // 1 = on, 0 = off
 
-/** \brief Specifies whether the x, y and z-positions can be changed manually (e.g. via the "Position X/Y/Z" menus or via the hardware buttons) in case the according axis is unknown.
-The position of an axis is unknown until the axis has been homed. The position of an axis becomes unknown in case its stepper is disabled.
-Enabling of the following feature can be dangerous because it allows to manually drive the printer above its max x/y/z position. */
-#define FEATURE_ALLOW_UNKNOWN_POSITIONS     1                                                   // 1 = allow, 0 = do not allow
-
 /** \brief Ditto printing allows 2 extruders to do the same action. This effectively allows
 to print an object two times at the speed of one. Works only with dual extruder setup. */
 #define FEATURE_DITTO_PRINTING              0                                                   // 1 = on, 0 = off
@@ -153,10 +140,6 @@ to print an object two times at the speed of one. Works only with dual extruder 
 
 /** \brief Enables/disables the beeper */
 #define FEATURE_BEEPER                      1                                                   // 1 = on, 0 = off
-
-/** \brief A watchdog resets the printer, if a signal is not send within predifined time limits. That way we can be sure that the board
-is always running and is not hung up for some unknown reason. */
-#define FEATURE_WATCHDOG                    1                                                   // 1 = on, 0 = off
 
 /** \brief Defines whether a change within the menu shall be stored to the EEPROM automatically or not. */
 #define FEATURE_AUTOMATIC_EEPROM_UPDATE     1                                                   // 1 = the EEPROM is updated automatically after each change via the menu, 0 = the EEPROM must be updated manually via the "Store to EEPROM" menu item
@@ -271,13 +254,9 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 // ##   configuration of the extended buttons
 // ##########################################################################################
 
-#if FEATURE_EXTENDED_BUTTONS
-
 #define EXTENDED_BUTTONS_COUNTER_NORMAL     4                                                   // 39 ~ run 100 times per second, 4 ~ run 1000 times per second
 #define EXTENDED_BUTTONS_COUNTER_FAST       4                                                   // 39 ~ run 100 times per second, 4 ~ run 1000 times per second
 #define EXTENDED_BUTTONS_STEPPER_DELAY      1                                                   // [us]
-
-#endif // FEATURE_EXTENDED_BUTTONS
 
 
 // ##########################################################################################
@@ -292,15 +271,12 @@ usage or for seraching for memory induced errors. Switch it off for production, 
 // ##   configuration of the pause functionality
 // ##########################################################################################
 
-#if FEATURE_PAUSE_PRINTING
-
 #if !FEATURE_HEAT_BED_Z_COMPENSATION && !FEATURE_WORK_PART_Z_COMPENSATION
     #error FEATURE_PAUSE_PRINTING can not be used without FEATURE_HEAT_BED_Z_COMPENSATION or FEATURE_WORK_PART_Z_COMPENSATION
 #endif // !FEATURE_HEAT_BED_Z_COMPENSATION && !FEATURE_WORK_PART_Z_COMPENSATION
 
 /** \brief Specifies the time interval after the pausing of the print at which the extruder current is reduced */
 #define EXTRUDER_CURRENT_PAUSE_DELAY        60000                                                // [ms] or 0, in order to disable the lowering of the extruder current
-#endif // FEATURE_PAUSE_PRINTING
 
 /** \brief Specifies the extruder current which shall be use after pausing of the print and before continuing of the print */
 #define EXTRUDER_CURRENT_PAUSED             32                                                  // ~0.5A
@@ -548,8 +524,6 @@ instead of driving both with a single stepper. The same works for the other axis
 // ##   configuration of the manual steps
 // ##########################################################################################
 
-#if FEATURE_EXTENDED_BUTTONS
-
 /** \brief Configuration of the manual steps */
 #define DEFAULT_MANUAL_MM_X                    0.1f                            // [mm]
 #define DEFAULT_MANUAL_MM_Y                    0.1f                            // [mm]
@@ -561,8 +535,6 @@ instead of driving both with a single stepper. The same works for the other axis
 //Dieser statische Ansatz wird evtl. mal umgebaut. Man könnte auch eine Funktion schreiben, die sinnvolle Einstellwerte automatisch anhand Microsteps und Mikrometertabelle sucht.
 #define NUM_ACCEPTABLE_STEP_SIZE_TABLE    7
 #define ACCEPTABLE_STEP_SIZE_TABLE { 5,13,26,51,64,128,256 }
-#endif // FEATURE_EXTENDED_BUTTONS
-
 
 // ###############################################################################
 // ##   Values for menu settings

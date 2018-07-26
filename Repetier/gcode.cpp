@@ -18,10 +18,6 @@
 
 #include "Repetier.h"
 
-#ifndef FEATURE_CHECKSUM_FORCED
-#define FEATURE_CHECKSUM_FORCED false
-#endif
-
 GCode    GCode::commandsBuffered[GCODE_BUFFER_SIZE]; ///< Buffer for received commands.
 uint8_t  GCode::bufferReadIndex=0; ///< Read position in gcode_buffer.
 uint8_t  GCode::bufferWriteIndex=0; ///< Write position in gcode_buffer.

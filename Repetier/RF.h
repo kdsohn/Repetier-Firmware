@@ -597,9 +597,7 @@ extern  short           g_ZCompensationMatrix[COMPENSATION_MATRIX_MAX_X][COMPENS
 extern  unsigned char   g_uZMatrixMax[2];
 extern  long            g_nZScanZPosition;
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
 extern  char            g_nHeatBedScanMode;         // 0 = oldScan, 1 = PLA, 2 = ABS
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
 extern  long            g_nScanXStepSizeMm;
 extern  long            g_nScanXStepSizeSteps;
@@ -613,29 +611,17 @@ extern  unsigned short  g_nScanRetryPressureDelta;
 extern  long            g_staticZSteps;
 extern  char            g_debugLevel;
 extern  char            g_debugLog;
-//extern    long            g_debugCounter[20];
-//extern    short           g_debugCounter[12];
-//extern    short           g_debugCounter[6];
 extern  unsigned long   g_uStopTime;
 extern volatile unsigned long   g_uBlockCommands;
-//extern    short           g_debugInt16;
-//extern    unsigned short  g_debugUInt16;
-//extern    long            g_debugInt32;
 
 // other configurable parameters
-#if FEATURE_EXTENDED_BUTTONS
 extern  unsigned long   g_nManualSteps[4];
-#endif // FEATURE_EXTENDED_BUTTONS
-
-
-#if FEATURE_PAUSE_PRINTING
 extern  volatile long   g_nPauseSteps[4];
 extern  volatile long   g_nContinueSteps[4];
 extern  volatile char   g_pauseStatus;
 extern  volatile char   g_pauseMode;
 extern  volatile unsigned long  g_uPauseTime;
 extern  volatile char   g_pauseBeepDone;
-#endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_EMERGENCY_PAUSE
 extern long             g_nEmergencyPauseDigitsMin;  //short reicht eigentlich
@@ -868,7 +854,6 @@ extern void outputObject( bool showerrors = true );
 extern void parkPrinter( void );
 #endif // FEATURE_PARK
 
-#if FEATURE_PAUSE_PRINTING
 extern bool processingDirectMove();
 extern void checkPauseStatus_fromTask();
 extern void waitforPauseStatus_fromButton();
@@ -886,7 +871,6 @@ extern void determineZPausePositionForPrint( void );
 
 // determineZPausePositionForMill()
 extern void determineZPausePositionForMill( void );
-#endif // FEATURE_PAUSE_PRINTING
 
 // setExtruderCurrent()
 extern void setExtruderCurrent( uint8_t nr, uint8_t current );

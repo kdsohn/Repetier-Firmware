@@ -812,13 +812,11 @@ void Commands::executeGCode(GCode *com)
             }
             case 24: // M24 - Start SD print
             {
-#if FEATURE_PAUSE_PRINTING
                 if( g_pauseStatus == PAUSE_STATUS_PAUSED )
                 {
                     continuePrint();
                 }
                 else
-#endif // FEATURE_PAUSE_PRINTING
                 {
                     sd.startPrint();
                 }
@@ -826,9 +824,7 @@ void Commands::executeGCode(GCode *com)
             }
             case 25: // M25 - Pause SD print
             {
-#if FEATURE_PAUSE_PRINTING
                 pausePrint();
-#endif // FEATURE_PAUSE_PRINTING
                 break;
             }
             case 26: // M26 - Set SD index
@@ -917,11 +913,7 @@ void Commands::executeGCode(GCode *com)
                     if(reportTempsensorError()) break;
                     previousMillisCmd = HAL::timeInMilliseconds();
                     if(Printer::debugDryrun()) break;
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                     Printer::waitMove = 1; //brauche ich das, wenn ich sowieso warte bis der movecache leer ist?
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-
                     g_uStartOfIdle = 0; //M109
                     Commands::waitUntilEndOfAllMoves(); //M109
                     Extruder *actExtruder = Extruder::current;
@@ -931,9 +923,7 @@ void Commands::executeGCode(GCode *com)
                     if (fabs(actExtruder->tempControl.targetTemperatureC - actExtruder->tempControl.currentTemperatureC) < TEMP_TOLERANCE)
                     {
                         // we are already in range
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                         Printer::waitMove = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                         break;
                     }
 
@@ -1004,9 +994,7 @@ void Commands::executeGCode(GCode *com)
 #endif // RETRACT_DURING_HEATUP
 #endif // NUM_EXTRUDER>0
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                     Printer::waitMove = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                     g_uStartOfIdle    = HAL::timeInMilliseconds(); //end of M109
                 }
                 previousMillisCmd = HAL::timeInMilliseconds();
@@ -1018,11 +1006,7 @@ void Commands::executeGCode(GCode *com)
                 {
 #if HAVE_HEATED_BED
                     if(Printer::debugDryrun()) break;
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                     Printer::waitMove = 1; //brauche ich das, wenn ich sowieso warte bis der movecache leer ist?
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-
                     g_uStartOfIdle = 0; //M190
                     Commands::waitUntilEndOfAllMoves(); //M190
                     if (com->hasS()) Extruder::setHeatedBedTemperature(com->S,com->hasF() && com->F>0);
@@ -1048,9 +1032,7 @@ void Commands::executeGCode(GCode *com)
                         if( !dirRising && heatedBedController.currentTemperatureC <= MAX_ROOM_TEMPERATURE ) break;
                     }
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                     Printer::waitMove = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                     g_uStartOfIdle    = HAL::timeInMilliseconds()+5000; //end of M190
 #endif // HAVE_HEATED_BED
                 }

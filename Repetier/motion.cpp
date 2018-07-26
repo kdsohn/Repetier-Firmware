@@ -85,12 +85,9 @@ uint32_t            move_cache_stats_count = 0;
 uint32_t            move_cache_stats_count_limited = 0;
 #endif //FEATURE_DEBUG_MOVE_CACHE_TIMING
 
-PrintLine PrintLine::lines[MOVE_CACHE_SIZE];            // Cache for print moves.
-PrintLine *PrintLine::cur = 0;                          // Current printing line
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-PrintLine           PrintLine::direct;                          // direct movement
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
+PrintLine           PrintLine::lines[MOVE_CACHE_SIZE];  // Cache for print moves.
+PrintLine          *PrintLine::cur = 0;                 // Current printing line
+PrintLine           PrintLine::direct;                  // direct movement
 
 uint8_t             PrintLine::linesWritePos    = 0;    // Position where we write the next cached line move.
 volatile uint8_t    PrintLine::linesCount       = 0;    // Number of lines cached 0 = nothing to do.
@@ -166,9 +163,7 @@ void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize, fl
             if(p->delta[axis] != 0){ //z achsen aufstieg/abstieg -> wir müssen durch erkennung von extrusion mögliche zlifts filtern!
                 InterruptProtectedBlock noInts;
                 Printer::queuePositionZLayerCurrent_cand = Printer::queuePositionTargetSteps[Z_AXIS] + Extruder::current->zOffset;
-    #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                 Printer::queuePositionZLayerCurrent_cand += Printer::directPositionCurrentSteps[Z_AXIS];
-    #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                 noInts.unprotect();
                 if(Printer::queuePositionZLayerCurrent_cand == Printer::queuePositionZLayerCurrent) Printer::queuePositionZLayerCurrent_cand = 0; //nach zlift nicht neu bestimmen.
             }
@@ -191,9 +186,7 @@ void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize, fl
                 if(p->delta[axis] > 0){
                     InterruptProtectedBlock noInts;
                     long nCurrentPositionStepsZ = Printer::queuePositionTargetSteps[Z_AXIS] + Extruder::current->zOffset;
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                     nCurrentPositionStepsZ += Printer::directPositionCurrentSteps[Z_AXIS];
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                     noInts.unprotect();
                     if(Printer::queuePositionZLayerCurrent_cand == nCurrentPositionStepsZ){
                         Printer::queuePositionZLayerLast = Printer::queuePositionZLayerCurrent;
@@ -302,7 +295,6 @@ void PrintLine::prepareQueueMove(uint8_t check_endstops,uint8_t pathOptimize, fl
 } // prepareQueueMove
 
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 void PrintLine::prepareDirectMove(void)
 {
     Printer::unmarkAllSteppersDisabled(); // ??? hier wird nichts enabled. Nur markiert, auch wenn später oder früher "enablestepper" passiert.
@@ -387,7 +379,6 @@ void PrintLine::stopDirectMove( void ) //Funktion ist bereits zur ausführzeit v
     }
     return;
 } // stopDirectMove
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 
 void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, fast8_t drivingAxis, float feedrate)
@@ -552,7 +543,6 @@ void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, 
 } // calculateQueueMove
 
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize, fast8_t drivingAxis)
 {
     long    axisInterval[4];
@@ -729,7 +719,6 @@ void PrintLine::calculateDirectMove(float axisDistanceMM[],uint8_t pathOptimize,
     task    = TASK_NO_TASK;
 
 } // calculateDirectMove
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 
 /** \brief
@@ -1289,7 +1278,6 @@ void PrintLine::arc(float *position, float *target, float *offset, float radius,
 long PrintLine::performPauseCheck(){
     if(cur == NULL)
     {
-#if FEATURE_PAUSE_PRINTING
         if( g_pauseStatus > PAUSE_STATUS_PAUSED && g_pauseStatus <= PAUSE_STATUS_HEATING ) //siehe gate in Printer::allowQueueMove
         {
             // pause the print now
@@ -1367,7 +1355,6 @@ long PrintLine::performPauseCheck(){
             HAL::forbidInterrupts();
             return true;
         }
-#endif //FEATURE_PAUSE_PRINTING
 
         // Pause a bit, if z-compensation is way out of line: this is usefull when starting prints using very deep bed-leveling and custom z-endstop switches which can override a lot.
         uint16_t ZcmpNachlauf = abs( Printer::compensatedPositionCurrentStepsZ - Printer::compensatedPositionTargetStepsZ );
@@ -1408,7 +1395,6 @@ long PrintLine::performQueueMove()
         {
             switch( cur->task )
             {
-#if FEATURE_PAUSE_PRINTING
                 case TASK_PAUSE_PRINT:
                 {
                     if( g_pauseMode >= PAUSE_MODE_PAUSED )
@@ -1488,7 +1474,6 @@ long PrintLine::performQueueMove()
                     removeCurrentLineForbidInterrupt();
                     return 1000;
                 }
-#endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
                 case TASK_ENABLE_Z_COMPENSATION: //M3001 M3141
@@ -1575,7 +1560,6 @@ long PrintLine::performQueueMove()
 } // performQueueMove
 
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 /**
   Processes the one-and-only direct move and moves the stepper motors one step.
   The function must be called from a timer loop. It returns the time for the next call. */
@@ -1910,7 +1894,6 @@ void PrintLine::performDirectSteps( void )
         }
     }
 } // performDirectSteps
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 
 long PrintLine::performMove(PrintLine* move, char forQueue)

@@ -20,10 +20,9 @@
 #include <compat/twi.h>
 
 
-#if FEATURE_WATCHDOG
+// FEATURE_WATCHDOG
 unsigned long g_uLastCommandLoop = 0;
 unsigned char g_bPingWatchdog    = 0;
-#endif // FEATURE_WATCHDOG
 
 HAL::HAL() {
     //ctor
@@ -698,10 +697,7 @@ void HAL::WDT_Init(void)
 //Watchdog timeout ISR
 ISR(WDT_vect)
 {
-    #if FEATURE_WATCHDOG
     HAL::pingWatchdog();
-    #endif // FEATURE_WATCHDOG
-
     WDTCSR |= (1<<WDIE); //Nibbels: nächstes mal kein Reset durch internen Watchdog, sondern wieder dieser interrupt.
     DEBUG_MEMORY
     execute16msPeriodical = 1; //Tell commandloop that 16ms have passed
@@ -807,12 +803,10 @@ ISR(TIMER1_COMPA_vect)
     Printer::performZCompensation(); //no interrupttempering
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     if( Printer::allowDirectSteps() )
     {
         PrintLine::performDirectSteps(); //no interrupttempering
     }
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
     if(PrintLine::performPauseCheck()){
         setTimer(1000);
@@ -829,7 +823,6 @@ ISR(TIMER1_COMPA_vect)
         return;
     }
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     if(Printer::allowDirectMove())
     {
         setTimer(PrintLine::performDirectMove());
@@ -837,7 +830,6 @@ ISR(TIMER1_COMPA_vect)
         sbi(TIMSK1, OCIE1A);
         return;
     }
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
     if(waitRelax == 0)
     {

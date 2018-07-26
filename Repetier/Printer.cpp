@@ -145,12 +145,10 @@ volatile long   Printer::queuePositionZLayerLast = 0;
 volatile char   Printer::endZCompensationStep = 0;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 volatile long   Printer::directPositionTargetSteps[4]  = {0, 0, 0, 0};
 volatile long   Printer::directPositionCurrentSteps[4] = {0, 0, 0, 0};
 long            Printer::directPositionLastSteps[4]    = {0, 0, 0, 0};
 char            Printer::waitMove;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_MILLING_MODE
 char            Printer::operatingMode;
@@ -245,7 +243,6 @@ void Printer::constrainQueueDestinationCoords()
 {
     if(isNoDestinationCheck()) return;
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 #if max_software_endstop_x == true
     if (queuePositionTargetSteps[X_AXIS] + directPositionTargetSteps[X_AXIS] > Printer::maxSteps[X_AXIS]) Printer::queuePositionTargetSteps[X_AXIS] = Printer::maxSteps[X_AXIS] - directPositionTargetSteps[X_AXIS];
 #endif // max_software_endstop_x == true
@@ -257,20 +254,6 @@ void Printer::constrainQueueDestinationCoords()
 #if max_software_endstop_z == true
     if (queuePositionTargetSteps[Z_AXIS] + directPositionTargetSteps[Z_AXIS] > Printer::maxSteps[Z_AXIS]) Printer::queuePositionTargetSteps[Z_AXIS] = Printer::maxSteps[Z_AXIS] - directPositionTargetSteps[Z_AXIS];
 #endif // max_software_endstop_z == true
-#else
-#if max_software_endstop_x == true
-    if (queuePositionTargetSteps[X_AXIS] > Printer::maxSteps[X_AXIS]) Printer::queuePositionTargetSteps[X_AXIS] = Printer::maxSteps[X_AXIS];
-#endif // max_software_endstop_x == true
-
-#if max_software_endstop_y == true
-    if (queuePositionTargetSteps[Y_AXIS] > Printer::maxSteps[Y_AXIS]) Printer::queuePositionTargetSteps[Y_AXIS] = Printer::maxSteps[Y_AXIS];
-#endif // max_software_endstop_y == true
-
-#if max_software_endstop_z == true
-    if (queuePositionTargetSteps[Z_AXIS] > Printer::maxSteps[Z_AXIS]) Printer::queuePositionTargetSteps[Z_AXIS] = Printer::maxSteps[Z_AXIS];
-#endif // max_software_endstop_z == true
-#endif //FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-
 } // constrainQueueDestinationCoords
 
 
@@ -283,7 +266,6 @@ void Printer::constrainDirectDestinationCoords()
         return;
         // the pause-and-continue functionality must calculate the constrains by itself
     }
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 #if max_software_endstop_x == true
     if (queuePositionTargetSteps[X_AXIS] + directPositionTargetSteps[X_AXIS] > Printer::maxSteps[X_AXIS]) Printer::directPositionTargetSteps[X_AXIS] = Printer::maxSteps[X_AXIS] - queuePositionTargetSteps[X_AXIS];
 #endif // max_software_endstop_x == true
@@ -295,7 +277,6 @@ void Printer::constrainDirectDestinationCoords()
 #if max_software_endstop_z == true
     if (queuePositionTargetSteps[Z_AXIS] + directPositionTargetSteps[Z_AXIS] > Printer::maxSteps[Z_AXIS]) Printer::directPositionTargetSteps[Z_AXIS] = Printer::maxSteps[Z_AXIS] - queuePositionTargetSteps[Z_AXIS];
 #endif // max_software_endstop_z == true
-#endif //FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 } // constrainDirectDestinationCoords
 
 void Printer::updateDerivedParameter()
@@ -987,13 +968,10 @@ void Printer::setup()
 #endif // USE_ADVANCE
 
     queuePositionLastSteps[X_AXIS] = queuePositionLastSteps[Y_AXIS] = queuePositionLastSteps[Z_AXIS] = queuePositionLastSteps[E_AXIS] = 0;
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     directPositionTargetSteps[X_AXIS]  = directPositionTargetSteps[Y_AXIS]  = directPositionTargetSteps[Z_AXIS]  = directPositionTargetSteps[E_AXIS]  = 0;
     directPositionCurrentSteps[X_AXIS] = directPositionCurrentSteps[Y_AXIS] = directPositionCurrentSteps[Z_AXIS] = directPositionCurrentSteps[E_AXIS] = 0;
     directPositionLastSteps[X_AXIS]    = directPositionLastSteps[Y_AXIS]    = directPositionLastSteps[Z_AXIS]    = directPositionLastSteps[E_AXIS]    = 0;
     waitMove                           = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
     maxJerk = MAX_JERK;
     maxZJerk = MAX_ZJERK;
@@ -1034,7 +1012,6 @@ void Printer::setup()
 
     currentZSteps                     = 0;
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     directPositionCurrentSteps[X_AXIS] =
     directPositionCurrentSteps[Y_AXIS] =
     directPositionCurrentSteps[Z_AXIS] =
@@ -1043,7 +1020,6 @@ void Printer::setup()
     directPositionTargetSteps[Y_AXIS]  =
     directPositionTargetSteps[Z_AXIS]  =
     directPositionTargetSteps[E_AXIS]  = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_MILLING_MODE
     operatingMode = DEFAULT_OPERATING_MODE;
@@ -1227,13 +1203,12 @@ void Printer::setup()
     g_unlock_movement = 0;
 #endif //FEATURE_UNLOCK_MOVEMENT
 
-#if FEATURE_WATCHDOG
+    // FEATURE_WATCHDOG
     if( Printer::debugInfo() )
     {
         Com::printFLN(Com::tStartWatchdog);
     }
     HAL::startWatchdog();
-#endif // FEATURE_WATCHDOG
 } // setup()
 
 
@@ -1703,14 +1678,11 @@ void Printer::homeXAxis()
     if (nHomeDir)
     {
         UI_STATUS_UPD(UI_TEXT_HOME_X);
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         InterruptProtectedBlock noInts;
         directPositionTargetSteps[X_AXIS]  = 0;
         directPositionCurrentSteps[X_AXIS] = 0;
         directPositionLastSteps[X_AXIS]    = 0;
         noInts.unprotect();
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
         int32_t offX = 0;
 #if NUM_EXTRUDER>1
@@ -1753,14 +1725,11 @@ void Printer::homeYAxis()
     if (nHomeDir)
     {
         UI_STATUS_UPD(UI_TEXT_HOME_Y);
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         InterruptProtectedBlock noInts;
         directPositionTargetSteps[Y_AXIS]  = 0;
         directPositionCurrentSteps[Y_AXIS] = 0;
         directPositionLastSteps[Y_AXIS]    = 0;
         noInts.unprotect();
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
         int32_t offY = 0;
 #if NUM_EXTRUDER>1
@@ -1823,12 +1792,10 @@ void Printer::homeZAxis()
         Printer::setZOriginSet(false); //removes flag wegen statusnachricht
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         //nullen und in jedem fall sofort aufhören per directSteps zu fahren!
         directPositionTargetSteps[Z_AXIS]  = 0;
         directPositionCurrentSteps[Z_AXIS] = 0;
         directPositionLastSteps[Z_AXIS]    = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         //das ist diese Scan-Positions-Z-Zusatzachse für MoveZ-Bewegungen.
@@ -2060,9 +2027,8 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
 
 bool Printer::allowQueueMove( void )
 {
-#if FEATURE_PAUSE_PRINTING
     if( g_pauseStatus == PAUSE_STATUS_PAUSED ) return false;
-#endif // FEATURE_PAUSE_PRINTING
+
     if( !( (PAUSE_STATUS_GOTO_PAUSE1 <= g_pauseStatus && g_pauseStatus <= PAUSE_STATUS_HEATING) || g_pauseStatus == PAUSE_STATUS_NONE)
         && !PrintLine::cur )
     {
@@ -2082,7 +2048,6 @@ bool Printer::allowQueueMove( void )
 } // allowQueueMove
 
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 bool Printer::allowDirectMove( void )
 {
     if( PrintLine::direct.stepsRemaining )
@@ -2129,8 +2094,6 @@ bool Printer::processAsDirectSteps( void )
     return false;
 
 } // processAsDirectSteps
-
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
@@ -2245,7 +2208,6 @@ void Printer::stopPrint() //function for aborting USB and SD-Prints
     //now mark the print to get cleaned up after some time:
     g_uStopTime = HAL::timeInMilliseconds(); //starts output object in combination with g_uBlockCommands
 
-#if FEATURE_PAUSE_PRINTING
     if( g_pauseStatus != PAUSE_STATUS_NONE )
     {
         // the printing is paused at the moment
@@ -2259,7 +2221,6 @@ void Printer::stopPrint() //function for aborting USB and SD-Prints
         g_pauseMode   = PAUSE_MODE_NONE;
     }
     Printer::setMenuMode(MENU_MODE_PAUSED,false); //egal ob nicht gesetzt.
-#endif // FEATURE_PAUSE_PRINTING
 
     //erase the coordinates and kill the current taskplaner:
     PrintLine::resetPathPlanner();

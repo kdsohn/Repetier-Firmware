@@ -32,7 +32,7 @@
 
 #if NUM_EXTRUDER > 2 || NUM_EXTRUDER < 0
  #error This Firmware supports up to 2 Extruders. You might have to reimplement the 3+ code or "request it" if you really got hands on a RFx000 board with 3+ Extruders.
-#endif // FEATURE_DITTO_PRINTING && NUM_EXTRUDER!=2
+#endif // NUM_EXTRUDER > 2 || NUM_EXTRUDER < 0
 
 /** \brief Allows to use the device for milling */
 #define FEATURE_MILLING_MODE                  0                                                   // 1 = on, 0 = off -> RF2000v2 : OFF
@@ -991,18 +991,14 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_DELAY                     1000                                                                    // [ms]
 #define HEAT_BED_SCAN_ALIGN_EXTRUDERS_ABORT_DELAY  (unsigned long)3600                                                  // [s]
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
-
-#define PRECISE_HEAT_BED_SCAN_WARMUP_DELAY          (uint32_t)600                                                  // [s]
-#define PRECISE_HEAT_BED_SCAN_CALIBRATION_DELAY     (uint32_t)600                                                  // [s]
+#define PRECISE_HEAT_BED_SCAN_WARMUP_DELAY          (uint32_t)600                                                       // [s]
+#define PRECISE_HEAT_BED_SCAN_CALIBRATION_DELAY     (uint32_t)600                                                       // [s]
 #define PRECISE_HEAT_BED_SCAN_BED_TEMP_PLA          60                                                                  // [°C]
 #define PRECISE_HEAT_BED_SCAN_BED_TEMP_ABS          100                                                                 // [°C]
 #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_SCAN    100                                                                 // [°C]
 #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA     210                                                                 // [°C]
 #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS     240                                                                 // [°C]
 #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS     240                                                                 // [°C]
-
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
 // configuration for the head bet offset search (M3900 command)
 #define SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA   40                                                                  // [digits]
@@ -1079,8 +1075,6 @@ Above this value the z compensation will distribute the roughness of the surface
 // ##   configuration of the pause functionality
 // ##########################################################################################
 
-#if FEATURE_PAUSE_PRINTING
-
 /** \brief Configuration of the pause steps */
 //Nibbels: 29122017 dont know what happens if pause hits max endstop etc. ... might get shifted coordinates!
   //look here if you want to prevent clamp crashes while milling! choose your pause position right.
@@ -1096,8 +1090,6 @@ Above this value the z compensation will distribute the roughness of the surface
 #define PAUSE_Y_SPACING_MM                     5                                                                     // [mm]
 #define PAUSE_Z_MAX_SPACING_MM                15                                                                     // [mm]
 #define PAUSE_COOLDOWN                       100                                                // [°C] 0=Off and 1..255=Temp down while paused
-
-#endif // FEATURE_PAUSE_PRINTING
 
 
 // ##########################################################################################

@@ -110,9 +110,7 @@ char            g_scanRetries         = 0;
 char            g_retryZScan          = 0;
 unsigned char   g_retryStatus         = 0;
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
 char            g_nHeatBedScanMode    = 0;
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
 char            g_abortZScan          = 0;
 short           g_ZCompensationMatrix[COMPENSATION_MATRIX_MAX_X][COMPENSATION_MATRIX_MAX_Y];
@@ -164,15 +162,12 @@ char            g_debugLog                  = 0;
 unsigned long   g_uStopTime                 = 0;
 volatile unsigned long g_uBlockCommands          = 0;
 
-#if FEATURE_EXTENDED_BUTTONS
 // other configurable parameters
 unsigned long   g_nManualSteps[4]           = { uint32_t(XAXIS_STEPS_PER_MM * DEFAULT_MANUAL_MM_X),
                                                 uint32_t(YAXIS_STEPS_PER_MM * DEFAULT_MANUAL_MM_Y),
                                                 uint32_t(ZAXIS_STEPS_PER_MM * DEFAULT_MANUAL_MM_Z),
                                                 uint32_t( EXT0_STEPS_PER_MM * DEFAULT_MANUAL_MM_E) }; //pre init
-#endif // FEATURE_EXTENDED_BUTTONS
 
-#if FEATURE_PAUSE_PRINTING
 volatile long   g_nPauseSteps[4]            = { long(XAXIS_STEPS_PER_MM * DEFAULT_PAUSE_MM_X_PRINT),
                                                 long(XAXIS_STEPS_PER_MM * DEFAULT_PAUSE_MM_Y_PRINT),
                                                 long(ZAXIS_STEPS_PER_MM * DEFAULT_PAUSE_MM_Z_PRINT),
@@ -182,7 +177,6 @@ volatile char   g_pauseStatus               = PAUSE_STATUS_NONE;
 volatile char   g_pauseMode                 = PAUSE_MODE_NONE;
 volatile unsigned long  g_uPauseTime                = 0;
 volatile char           g_pauseBeepDone             = 0;
-#endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_PARK
 long            g_nParkPosition[3]          = { PARK_POSITION_X, PARK_POSITION_Y, PARK_POSITION_Z };
@@ -645,7 +639,6 @@ void scanHeatBed( void )
                 // the scan is performed with the left extruder
                 Extruder::selectExtruderById( 0 );
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if( g_nHeatBedScanMode == HEAT_BED_SCAN_MODE_PLA )
                 {
                     Extruder::setHeatedBedTemperature( PRECISE_HEAT_BED_SCAN_BED_TEMP_PLA, false);
@@ -656,7 +649,6 @@ void scanHeatBed( void )
                     Extruder::setHeatedBedTemperature( PRECISE_HEAT_BED_SCAN_BED_TEMP_ABS, false);
                     Extruder::setTemperatureForAllExtruders(PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_SCAN, false);
                 }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
                 g_nHeatBedScanStatus = 15;
                 g_lastScanTime       = HAL::timeInMilliseconds();
@@ -712,7 +704,6 @@ void scanHeatBed( void )
                 g_nHeatBedScanStatus = 22;
                 g_lastScanTime       = HAL::timeInMilliseconds();
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( g_nHeatBedScanMode )
                 {
                     if( Printer::debugInfo() )
@@ -721,7 +712,6 @@ void scanHeatBed( void )
                         Com::printFLN( PSTR( "warmup delay [s] = " ), PRECISE_HEAT_BED_SCAN_WARMUP_DELAY );
                     }
                 }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
 #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
@@ -734,7 +724,6 @@ void scanHeatBed( void )
             }
             case 22:
             {
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( g_nHeatBedScanMode )
                 {
                     // wait some time so that the desired target temperature is reached in all parts of our components
@@ -751,7 +740,6 @@ void scanHeatBed( void )
                         break;
                     }
                 }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
                 // start at the home position
                 Printer::homeAxis( true, true, true );
@@ -1208,18 +1196,12 @@ void scanHeatBed( void )
                 // move back to the home position
                 Printer::homeAxis( true, true, true);
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( !g_nHeatBedScanMode )
                 {
                     // disable all heaters
                     Extruder::setHeatedBedTemperature( 0, false );
                     Extruder::setTemperatureForAllExtruders(0, false);
                 }
-#else
-                // disable all heaters
-                Extruder::setHeatedBedTemperature( 0, false );
-                Extruder::setTemperatureForAllExtruders(0, false);
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
                 g_nHeatBedScanStatus = 65;
 
@@ -1332,41 +1314,39 @@ void scanHeatBed( void )
                 // we have to align the two extruders
                 g_nHeatBedScanStatus = 100;
 
-#if DEBUG_HEAT_BED_SCAN == 2
+ #if DEBUG_HEAT_BED_SCAN == 2
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
                     Com::printFLN( PSTR( "80->100" ) );
                 }
-#endif // DEBUG_HEAT_BED_SCAN == 2
-#else
-#if FEATURE_PRECISE_HEAT_BED_SCAN
+ #endif // DEBUG_HEAT_BED_SCAN == 2
+#else // NUM_EXTRUDER == 2
                 if ( g_nHeatBedScanMode )
                 {
                     // we have to determine the z-offset which is caused by different extruder temperatures
                     g_nHeatBedScanStatus = 130;
 
-#if DEBUG_HEAT_BED_SCAN == 2
+ #if DEBUG_HEAT_BED_SCAN == 2
                     if( Printer::debugInfo() )
                     {
                         Com::printF( Com::tscanHeatBed );
                         Com::printFLN( PSTR( "80->130" ) );
                     }
-#endif // DEBUG_HEAT_BED_SCAN == 2
+ #endif // DEBUG_HEAT_BED_SCAN == 2
                 }
                 else
-#endif //FEATURE_PRECISE_HEAT_BED_SCAN
                 {
                     // we are done
                     g_nHeatBedScanStatus = 150;
 
-#if DEBUG_HEAT_BED_SCAN == 2
+ #if DEBUG_HEAT_BED_SCAN == 2
                     if( Printer::debugInfo() )
                     {
                         Com::printF( Com::tscanHeatBed );
                         Com::printFLN( PSTR( "80->150" ) );
                     }
-#endif // DEBUG_HEAT_BED_SCAN == 2
+ #endif // DEBUG_HEAT_BED_SCAN == 2
                 }
 #endif // NUM_EXTRUDER == 2
                 break;
@@ -1563,7 +1543,6 @@ void scanHeatBed( void )
                     break;
                 }
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( g_nHeatBedScanMode )
                 {
                     // we have to determine the z-offset which is caused by different extruder temperatures
@@ -1578,7 +1557,6 @@ void scanHeatBed( void )
 #endif // DEBUG_HEAT_BED_SCAN == 2
                 }
                 else
-#endif //FEATURE_PRECISE_HEAT_BED_SCAN
                 {
                     // we are done
                     g_nHeatBedScanStatus = 149;
@@ -1669,7 +1647,6 @@ void scanHeatBed( void )
             {
                 g_lastScanTime       = HAL::timeInMilliseconds();
                 // at this point we are homed and we are above the x/y position at which we shall perform the measurement of the z-offset with the hot extruder(s)
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( g_nHeatBedScanMode == HEAT_BED_SCAN_MODE_PLA )
                 {
                     Extruder::setTemperatureForAllExtruders(PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA, false);
@@ -1678,7 +1655,6 @@ void scanHeatBed( void )
                 {
                     Extruder::setTemperatureForAllExtruders(PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS, false);
                 }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
                 g_nHeatBedScanStatus = 136;
 
@@ -1717,18 +1693,15 @@ void scanHeatBed( void )
                 }
 #endif // DEBUG_HEAT_BED_SCAN == 2
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if( Printer::debugInfo() )
                 {
                     Com::printF( Com::tscanHeatBed );
                     Com::printFLN( PSTR( "calibration delay [s] =  " ), (uint32_t)PRECISE_HEAT_BED_SCAN_CALIBRATION_DELAY );
                 }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
                 break;
             }
             case 137:
             {
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                 if ( g_nHeatBedScanMode )
                 {
                     // wait some time so that the desired target temperature is reached in all parts of our components
@@ -1745,7 +1718,6 @@ void scanHeatBed( void )
                         break;
                     }
                 }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
                 g_scanRetries        = HEAT_BED_SCAN_RETRIES;
                 g_retryStatus        = 139;
@@ -3434,10 +3406,8 @@ long getZMatrixDepth_CurrentXY(void){
     nCurrentPositionSteps[X_AXIS] = Printer::queuePositionCurrentSteps[X_AXIS];
     nCurrentPositionSteps[Y_AXIS] = Printer::queuePositionCurrentSteps[Y_AXIS];
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     nCurrentPositionSteps[X_AXIS] += Printer::directPositionCurrentSteps[X_AXIS];
     nCurrentPositionSteps[Y_AXIS] += Printer::directPositionCurrentSteps[Y_AXIS];
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     noInts.unprotect(); //HAL::allowInterrupts();
 
     return getZMatrixDepth(nCurrentPositionSteps[X_AXIS], nCurrentPositionSteps[Y_AXIS]);
@@ -3448,22 +3418,18 @@ void doHeatBedZCompensation( void )
     long            nNeededZCompensation = 0;
     float           nNeededZEPerc = 0.0f;
 
-#if FEATURE_PAUSE_PRINTING
     // -> weil evtl. bewegung in xy auch solange pausestatus da ist.
     if( g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE2 && g_pauseStatus != PAUSE_STATUS_TASKGOTO_PAUSE_2 )
     {
         // there is nothing to do at the moment
         return;
     }
-#endif // FEATURE_PAUSE_PRINTING
 
     if( Printer::doHeatBedZCompensation )
     {
         InterruptProtectedBlock noInts;
         long nCurrentPositionStepsZ = Printer::queuePositionCurrentSteps[Z_AXIS] + Extruder::current->zOffset;
-    #if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         nCurrentPositionStepsZ += Printer::directPositionCurrentSteps[Z_AXIS];
-    #endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         noInts.unprotect(); //HAL::allowInterrupts();
 
         // Der Z-Kompensation wird das extruderspezifische Z-Offset des jeweiligen Extruders verschwiegen, sodass dieses die Höhen / Limits nicht beeinflusst. Die X- und Y-Offsets werden behalten, denn das korrigiert Düsen- zu Welligkeitsposition nach Extruderwechsel. Das extruderspezifische Z-Offset Extruder::current->zOffset wird beim Toolchange in nCurrentPositionStepsZ eingerechnet und verfahren.
@@ -4772,12 +4738,10 @@ void scanWorkPart( void )
 
 void doWorkPartZCompensation( void )
 {
- #if FEATURE_PAUSE_PRINTING
     if(g_pauseStatus != PAUSE_STATUS_NONE && g_pauseStatus != PAUSE_STATUS_GOTO_PAUSE2 && g_pauseStatus != PAUSE_STATUS_TASKGOTO_PAUSE_2){
         // there is nothing to do at the moment
         return;
     }
- #endif // FEATURE_PAUSE_PRINTING
 
     long nNeededZCompensation;
 
@@ -6204,7 +6168,6 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
     }
 #endif // FEATURE_MILLING_MODE
 
-#if FEATURE_PAUSE_PRINTING
     if( g_pauseMode != PAUSE_MODE_NONE )
     {
         // show that we are paused
@@ -6261,7 +6224,6 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
             g_uPauseTime = 0;
         }
     }
-#endif // FEATURE_PAUSE_PRINTING
 
 /* Change: 09_06_2017 Never read straingauge twice in a row: test if this helps avoiding my watchdog problem
            Thatwhy I bring the statics up and preread the value for both FEATURE_EMERGENCY_PAUSE and FEATURE_EMERGENCY_STOP_ALL */
@@ -6634,17 +6596,13 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
     }
 #endif // FEATURE_SERVICE_INTERVAL
 
-#if FEATURE_PAUSE_PRINTING
     checkPauseStatus_fromTask();
-#endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_RGB_LIGHT_EFFECTS
     updateRGBLightStatus();
 #endif // FEATURE_RGB_LIGHT_EFFECTS
 
-    nEntered --;
-    return;
-
+    nEntered --;    
 } // loopRF
 
 void outputObject( bool showerrors )
@@ -6721,7 +6679,6 @@ void parkPrinter( void )
 } // parkPrinter
 #endif // FEATURE_PARK
 
-#if FEATURE_PAUSE_PRINTING
 inline bool processingDirectMove(){
     return  (
              (Printer::directPositionTargetSteps[X_AXIS] != Printer::directPositionCurrentSteps[X_AXIS]) ||
@@ -7188,7 +7145,6 @@ void determineZPausePositionForMill( void )
     return;
 
 } // determineZPausePositionForMill
-#endif // FEATURE_PAUSE_PRINTING
 
 
 void setExtruderCurrent( uint8_t nr, uint8_t current )
@@ -7534,7 +7490,6 @@ void processCommand( GCode* pCommand )
             {
                 if( isSupportedMCommand( pCommand->M, OPERATING_MODE_PRINT ) )
                 {
-#if FEATURE_PRECISE_HEAT_BED_SCAN
                     if( pCommand->hasS() )
                     {
                         if( pCommand->S == HEAT_BED_SCAN_MODE_PLA ||
@@ -7551,8 +7506,6 @@ void processCommand( GCode* pCommand )
                     {
                         g_nHeatBedScanMode = 0;
                     }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
-
                     startHeatBedScan();
                 }
                 break;
@@ -7881,14 +7834,13 @@ void processCommand( GCode* pCommand )
                         case UI_ACTION_PREVIOUS: // 2
                         case UI_ACTION_BACK: // 1000
                         case UI_ACTION_RIGHT: // 1129
-#if FEATURE_EXTENDED_BUTTONS
+
                         case UI_ACTION_RF_HEAT_BED_UP: // 514
                         case UI_ACTION_RF_HEAT_BED_DOWN: // 515
                         case UI_ACTION_RF_EXTRUDER_RETRACT: // 517
                         case UI_ACTION_RF_EXTRUDER_OUTPUT: // 516
                         case UI_ACTION_RF_CONTINUE: // 1519
                         case UI_ACTION_RF_PAUSE: // 1518
-#endif //FEATURE_EXTENDED_BUTTONS
                         {
                             Com::printFLN( PSTR( "RequestMenu:Press:" ), pCommand->P );
                             uid.executeAction(pCommand->P);
@@ -8234,7 +8186,6 @@ void processCommand( GCode* pCommand )
                 break;
             }
 
-#if FEATURE_PAUSE_PRINTING
             case 3070: // M3070 [S] - pause the print as if the "Pause" button would have been pressed
             {
                 //tell octoprint and repetier-server / -host to stop sending because of pause.
@@ -8254,7 +8205,7 @@ void processCommand( GCode* pCommand )
                 //tell menu that we are now in pause mode
                 Printer::setMenuMode( MENU_MODE_PAUSED, true );
                 //stop filling up MOVE_CACHE any further, process pending moves
-                Commands::waitUntilEndOfAllMoves(); //FEATURE_PAUSE_PRINTING
+                Commands::waitUntilEndOfAllMoves(); //M3070 pause printing
                 //say "Pause" when reaching TASK_PAUSE_PRINT in MOVE_CACHE:
                 UI_STATUS_UPD( UI_TEXT_PAUSED ); //override this with "M3117 TEXT" if needed!
                 uid.refreshPage();
@@ -8266,7 +8217,6 @@ void processCommand( GCode* pCommand )
                 }
                 break;
             }
-#endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_EMERGENCY_PAUSE
             case 3075: // M3075 [S] [P] - configure the emergency pause digits
@@ -8404,7 +8354,7 @@ void processCommand( GCode* pCommand )
             }
 #endif // FEATURE_PARK
 
-#if FEATURE_WATCHDOG
+            // FEATURE_WATCHDOG
             case 3090: // M3090 - test the watchdog (this command resets the firmware)
             {
                 if( pCommand->hasS() )
@@ -8437,7 +8387,6 @@ void processCommand( GCode* pCommand )
                 }
                 break;
             }
-#endif // FEATURE_WATCHDOG
 
             case 3091: // M3091 - erase the external EEPROM
             {
@@ -8445,7 +8394,6 @@ void processCommand( GCode* pCommand )
                 break;
             }
 
-#if FEATURE_PAUSE_PRINTING
             case 3105: // M3105 [X] [Y] [Z] [E] - configure the offset in x, y, z and e direction which shall be applied in case the "Pause" button has been pressed ( units are [mm] )
             {
                 if( pCommand->hasNoXYZ() && !pCommand->hasE() )
@@ -8501,7 +8449,6 @@ void processCommand( GCode* pCommand )
                 }
                 break;
             }
-#endif // FEATURE_PAUSE_PRINTING
 
 #if FEATURE_PARK
             case 3103: // M3103 [X] [Y] [Z] - configure the x, y and z position which shall set when the printer is parked ( units are [mm] )
@@ -9223,10 +9170,8 @@ void processCommand( GCode* pCommand )
                             Com::printFLN( PSTR( "; zCZ;" ), Printer::compensatedPositionCurrentStepsZ );
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                             Com::printF( PSTR( "; direct TZ;" ), Printer::directPositionTargetSteps[Z_AXIS] );
                             Com::printFLN( PSTR( "; CZ;" ), Printer::directPositionCurrentSteps[Z_AXIS] );
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 //                          Com::printFLN( PSTR( "; Int32;" ), g_debugInt32 );
 
@@ -9318,7 +9263,6 @@ void processCommand( GCode* pCommand )
                             initializeLCD();
                         }
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                         case 14:
                         {
                             Com::printF( PSTR( "target = " ), Printer::directPositionTargetSteps[X_AXIS] );
@@ -9332,7 +9276,6 @@ void processCommand( GCode* pCommand )
                             Com::printFLN( PSTR( "; remaining = " ), PrintLine::direct.stepsRemaining );
                             break;
                         }
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
                         case 16:
                         {
@@ -9359,9 +9302,7 @@ void processCommand( GCode* pCommand )
                                     Com::printF( PSTR( "; oZ;" ), g_nZOriginPosition[Z_AXIS] );
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                                     Com::printF( PSTR( "; cPSZ;" ), Printer::directPositionCurrentSteps[Z_AXIS] );
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
                                     Com::printF( PSTR( "; hbO;" ), getHeatBedOffset() );
@@ -9385,9 +9326,7 @@ void processCommand( GCode* pCommand )
                                     Com::printF( PSTR( "; oZ;" ), g_nZOriginPosition[Z_AXIS] / Printer::axisStepsPerMM[Z_AXIS] );
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
                                     Com::printF( PSTR( "; cPSZ;" ), Printer::directPositionCurrentSteps[Z_AXIS] / Printer::axisStepsPerMM[Z_AXIS] );
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
                                     Com::printF( PSTR( "; hbO;" ), getHeatBedOffset() / Printer::axisStepsPerMM[Z_AXIS] );
@@ -10965,7 +10904,6 @@ extern void processButton( int nAction )
 {
     switch( nAction )
     {
-#if FEATURE_EXTENDED_BUTTONS
         case UI_ACTION_RF_HEAT_BED_UP:
         {
             //DO NOT MOVE Z: ALTER Z-OFFSET
@@ -11124,7 +11062,6 @@ extern void processButton( int nAction )
             }
             break;
         }
-#if FEATURE_PAUSE_PRINTING
         case UI_ACTION_RF_PAUSE:
         {
             pausePrint();
@@ -11135,22 +11072,16 @@ extern void processButton( int nAction )
             continuePrint();
             break;
         }
-#endif // FEATURE_PAUSE_PRINTING
-
-#endif // FEATURE_EXTENDED_BUTTONS
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
         case UI_ACTION_RF_SCAN_HEAT_BED:
         {
-#if FEATURE_PRECISE_HEAT_BED_SCAN
             g_nHeatBedScanMode = 0;
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
             startHeatBedScan();
             //gehe zurück und zeige dem User was passiert.
             uid.exitmenu();
             break;
         }
-#if FEATURE_PRECISE_HEAT_BED_SCAN
         case UI_ACTION_RF_SCAN_HEAT_BED_PLA:
         {
             g_nHeatBedScanMode = HEAT_BED_SCAN_MODE_PLA;
@@ -11167,7 +11098,6 @@ extern void processButton( int nAction )
             uid.exitmenu();
             break;
         }
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
         case UI_ACTION_RF_SCAN_WORK_PART:
@@ -11239,15 +11169,6 @@ void nextPreviousXAction( int8_t increment )
         //showError( (void*)ui_text_x_axis, (void*)ui_text_operation_denied );
         return;
     }
-
-#if !FEATURE_ALLOW_UNKNOWN_POSITIONS
-    if(!Printer::isAxisHomed(X_AXIS))
-    {
-        // we do not allow unknown positions and the printer is not homed, thus we do not move
-        showError( (void*)ui_text_x_axis, (void*)ui_text_home_unknown );
-        return;
-    }
-#endif // !FEATURE_ALLOW_UNKNOWN_POSITIONS
 
     if(increment<0 && Printer::isXMinEndstopHit())
     {
@@ -11381,20 +11302,6 @@ void nextPreviousYAction( int8_t increment )
         return;
     }
 
-#if !FEATURE_ALLOW_UNKNOWN_POSITIONS
-    if(!Printer::isAxisHomed(Y_AXIS))
-    {
-        // we do not allow unknown positions and the printer is not homed, thus we do not move
-        if( Printer::debugErrors() )
-        {
-            Com::printFLN( PSTR( "nextPreviousYAction(): moving y aborted (not homed)" ) );
-        }
-
-        showError( (void*)ui_text_y_axis, (void*)ui_text_home_unknown );
-        return;
-    }
-#endif // !FEATURE_ALLOW_UNKNOWN_POSITIONS
-
     if(increment<0 && Printer::isYMinEndstopHit())
     {
         // we shall move to the back but the y-min-endstop is hit already, so we do nothing
@@ -11515,20 +11422,6 @@ void nextPreviousZAction( int8_t increment )
         // we are moving already, there is nothing more to do
         return;
     }
-
-#if !FEATURE_ALLOW_UNKNOWN_POSITIONS
-    if(!Printer::isAxisHomed(Z_AXIS))
-    {
-        // we do not allow unknown positions and the printer is not homed, thus we do not move
-        if( Printer::debugErrors() )
-        {
-            Com::printFLN( PSTR( "nextPreviousZAction(): moving z aborted (not homed)" ) );
-        }
-
-        showError( (void*)ui_text_z_axis, (void*)ui_text_home_unknown );
-        return;
-    }
-#endif // !FEATURE_ALLOW_UNKNOWN_POSITIONS
 
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
     if( Printer::ZEndstopUnknown )
@@ -12234,22 +12127,16 @@ void cleanupXPositions( void )
     Printer::queuePositionTargetSteps[X_AXIS]  = 0;
     Printer::queuePositionLastMM[X_AXIS]       =
     Printer::queuePositionCommandMM[X_AXIS]    = 0.0f;
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     Printer::directPositionTargetSteps[X_AXIS]  =
     Printer::directPositionCurrentSteps[X_AXIS] = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
-#if FEATURE_PAUSE_PRINTING
     g_nContinueSteps[X_AXIS] = 0;
     g_pauseStatus            = PAUSE_STATUS_NONE;
     g_pauseMode              = PAUSE_MODE_NONE;
     g_uPauseTime             = 0;
     g_pauseBeepDone          = 0;
-#endif // FEATURE_PAUSE_PRINTING
 
     noInts.unprotect(); //HAL::allowInterrupts();
-
 } // cleanupXPositions
 
 
@@ -12262,22 +12149,16 @@ void cleanupYPositions( void )
     Printer::queuePositionTargetSteps[Y_AXIS]  = 0;
     Printer::queuePositionLastMM[Y_AXIS]       =
     Printer::queuePositionCommandMM[Y_AXIS]    = 0.0f;
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     Printer::directPositionTargetSteps[Y_AXIS]  =
     Printer::directPositionCurrentSteps[Y_AXIS] = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
-#if FEATURE_PAUSE_PRINTING
     g_nContinueSteps[Y_AXIS] = 0;
     g_pauseStatus            = PAUSE_STATUS_NONE;
     g_pauseMode              = PAUSE_MODE_NONE;
     g_uPauseTime             = 0;
     g_pauseBeepDone          = 0;
-#endif // FEATURE_PAUSE_PRINTING
 
     noInts.unprotect(); //HAL::allowInterrupts();
-
 } // cleanupYPositions
 
 
@@ -12312,43 +12193,33 @@ void cleanupZPositions( void ) //kill all! -> für stepper disabled
     Printer::setZOriginSet(false); //flag wegen statusnachricht
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     Printer::directPositionTargetSteps[Z_AXIS]  =
     Printer::directPositionCurrentSteps[Z_AXIS] = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
-#if FEATURE_PAUSE_PRINTING
     g_nContinueSteps[Z_AXIS] = 0;
     g_pauseStatus            = PAUSE_STATUS_NONE;
     g_pauseMode              = PAUSE_MODE_NONE;
     g_uPauseTime             = 0;
     g_pauseBeepDone          = 0;
-#endif // FEATURE_PAUSE_PRINTING
 
     noInts.unprotect(); //HAL::allowInterrupts();
-
 } // cleanupZPositions
 
 
 void cleanupEPositions( void )
 {
-    InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
+    InterruptProtectedBlock noInts;
 
-#if FEATURE_EXTENDED_BUTTONS
     Printer::directPositionTargetSteps[E_AXIS]  =
     Printer::directPositionCurrentSteps[E_AXIS] = 0;
-#endif // FEATURE_EXTENDED_BUTTONS
 
-#if FEATURE_PAUSE_PRINTING
     g_nContinueSteps[E_AXIS] = 0;
     g_pauseStatus            = PAUSE_STATUS_NONE;
     g_pauseMode              = PAUSE_MODE_NONE;
     g_uPauseTime             = 0;
     g_pauseBeepDone          = 0;
-#endif // FEATURE_PAUSE_PRINTING
 
-    noInts.unprotect(); //HAL::allowInterrupts();
-
+    noInts.unprotect();
 } // cleanupEPositions
 
 
@@ -12356,12 +12227,10 @@ void setZOrigin( void )
 {
 #if FEATURE_FIND_Z_ORIGIN
     g_nZOriginPosition[X_AXIS] = Printer::queuePositionLastSteps[X_AXIS];
-    g_nZOriginPosition[Y_AXIS] = Printer::queuePositionLastSteps[Y_AXIS];
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     g_nZOriginPosition[X_AXIS] += Printer::directPositionLastSteps[X_AXIS];
+    
+    g_nZOriginPosition[Y_AXIS] = Printer::queuePositionLastSteps[Y_AXIS];
     g_nZOriginPosition[Y_AXIS] += Printer::directPositionLastSteps[Y_AXIS];
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
     g_nZOriginPosition[Z_AXIS] = 0;
     Printer::setZOriginSet(true); //flag wegen statusnachricht

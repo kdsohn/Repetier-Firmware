@@ -59,10 +59,12 @@ All known arduino boards use 64. This value is needed for the extruder timing. *
 
 #include "fastio.h"
 
-#if FEATURE_WATCHDOG
+// FEATURE_WATCHDOG
 extern  unsigned char g_bPingWatchdog;
 extern  unsigned long g_uLastCommandLoop;
-#endif // FEATURE_WATCHDOG
+#ifndef WATCHDOG_PIN
+    #error Watchdog pin not defined. We really need some Watchdog pin with a working watchdogtimer!
+#endif
 
 //7 means down till 2.1hz is possible:
 #define PART_FAN_MODE_MAX 7
@@ -782,41 +784,28 @@ public:
     //Nibbels: Use watchdog to trigger external watchdog with constant time function according to command loop.
     static void WDT_Init(void);
 
-    // Watchdog support
+    // Watchdog support FEATURE_WATCHDOG
     inline static void startWatchdog()
     {
-#if FEATURE_WATCHDOG && WATCHDOG_PIN>-1
         // external watchdog
         SET_OUTPUT(WATCHDOG_PIN);
         g_bPingWatchdog = 1; //allow pinging
         tellWatchdogOk(); //Nibbels: Init für g_nCommandloop
         pingWatchdog(); //Nibbels: Hier macht der mehr sinn!
-#endif // FEATURE_WATCHDOG && WATCHDOG_PIN>-1
-
         HAL::WDT_Init(); //Nibbels: use watchdogtimer to test var and trigger
     } // startWatchdog
 
     inline static void stopWatchdog()
     {
         g_bPingWatchdog = 0; //disallow pinging
-
-#if FEATURE_WATCHDOG && WATCHDOG_PIN>-1
         // external watchdog
         WRITE(WATCHDOG_PIN,LOW); //Nibbels: In case you stop the watchdog it has to be set floating. thatwhy disable internal pullup as this will make the state like OUTPUT-high. This is not really needed as this function does not do anything when starting the arduino. rightnow at start it sets a pin to input which is already input.
         SET_INPUT(WATCHDOG_PIN);
-#else
-        // internal watchdog
-        //wdt_disable();
-#endif // FEATURE_WATCHDOG && WATCHDOG_PIN>-1
     } // stopWatchdog
 
     inline static void tellWatchdogOk()
     {
-#if FEATURE_WATCHDOG && WATCHDOG_PIN>-1
         g_uLastCommandLoop = HAL::timeInMilliseconds();
-#else
-
-#endif // FEATURE_WATCHDOG && WATCHDOG_PIN>-1
     } // pingWatchdog
 
     inline static void pingWatchdog()
@@ -826,33 +815,22 @@ public:
             // do not trigger the watchdog in case it is not enabled
             return;
         }
-#if FEATURE_WATCHDOG && WATCHDOG_PIN>-1
         // external watchdog
         if( (HAL::timeInMilliseconds() - g_uLastCommandLoop) < WATCHDOG_MAIN_LOOP_TIMEOUT )
         {
             // ping the watchdog only in case the mainloop is still being called
             WRITE(WATCHDOG_PIN,READ(WATCHDOG_PIN) ? 0 : 1);
         }
-#else
-        // internal watchdog
-        //wdt_reset();
-#endif // FEATURE_WATCHDOG && WATCHDOG_PIN>-1
 
     } // pingWatchdog
 
     inline static void testWatchdog()
     {
-        // start the watchdog
-        //startWatchdog();
-
-        // force the watchdog to fire
-        //InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
         while( 1 )
         {
         }
-        //noInts.unprotect(); //Davor ist ende bin mir aber wegen destruct nicht ganz sicher und optimierungen.
-
     } // testWatchdog
+// END FEATURE_WATCHDOG
 
     inline static float maxExtruderTimerFrequency()
     {
