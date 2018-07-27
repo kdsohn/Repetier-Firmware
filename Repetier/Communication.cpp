@@ -309,7 +309,9 @@ FSTRINGVALUE(Com::tEPRPrinter_FREQ_DBL,"Step Double Frequency [1/s]")
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
 FSTRINGVALUE(Com::tEPRPrinter_FAN_MODE,"Fan Modulation [0=PWM/1=PDM]")
-FSTRINGVALUE(Com::tEPRPrinter_FAN_SPEED,"Fan PWM Mode (15.3..245Hz) [15.3*2^x Hz]")
+FSTRINGVALUE(Com::tEPRPrinter_FAN_SPEED,"Fan PWM Divisor [15.3Hz/x]")
+FSTRINGVALUE(Com::tEPRPrinter_FAN_PART_FAN_PWM_MIN,"Partfan 1% Level [1..239]")
+FSTRINGVALUE(Com::tEPRPrinter_FAN_PART_FAN_PWM_MAX,"Partfan 99% Level [16..254]")
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #endif // EEPROM_MODE
@@ -340,9 +342,10 @@ FSTRINGVALUE(Com::tSDErrorCode,"SD errorCode:")
 FSTRINGVALUE(Com::tOutputObjectPrint,OUTPUT_OBJECT_SCRIPT_PRINT)
 FSTRINGVALUE(Com::tOutputObjectMill,OUTPUT_OBJECT_SCRIPT_MILL)
 
-FSTRINGVALUE(Com::tUnmountFilamentWithHeating,UNMOUNT_FILAMENT_SCRIPT_WITH_HEATING)
-FSTRINGVALUE(Com::tMountFilamentWithHeating,MOUNT_FILAMENT_SCRIPT_WITH_HEATING)
-FSTRINGVALUE(Com::tMountFilamentWithoutHeating,MOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING)
+FSTRINGVALUE(Com::tUnmountFilamentSoft,UNMOUNT_FILAMENT_SCRIPT_SOFT)
+FSTRINGVALUE(Com::tUnmountFilamentHard,UNMOUNT_FILAMENT_SCRIPT_HARD)
+FSTRINGVALUE(Com::tMountFilamentSoft,MOUNT_FILAMENT_SCRIPT_SOFT)
+FSTRINGVALUE(Com::tMountFilamentHard,MOUNT_FILAMENT_SCRIPT_HARD)
 
 #if FEATURE_FIND_Z_ORIGIN
 FSTRINGVALUE(Com::tFindZOrigin,FIND_Z_ORIGIN_SCRIPT)
@@ -570,8 +573,8 @@ void Com::printFloat(float number, uint8_t digits, bool komma_as_dot)
     // Extract the integer part of the number and print it
     unsigned long   int_part  = (unsigned long)number;
     float           remainder = number - (float)int_part;
-  
-    
+
+
     printNumber(int_part);
 
     // Print the decimal point, but only if there are digits beyond

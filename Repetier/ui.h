@@ -47,7 +47,7 @@
 #define UI_ACTION_EPOSITION                 1008
 #define UI_ACTION_BED_TEMP                  1009
 #define UI_ACTION_EXTRUDER_TEMP             1010
-#define UI_ACTION_SD_DELETE                 1012
+//#define UI_ACTION_SD_DELETE                 1012
 #define UI_ACTION_SD_PRINT                  1013
 #define UI_ACTION_SD_PAUSE                  1014
 #define UI_ACTION_SD_CONTINUE               1015
@@ -123,11 +123,14 @@
 
 #define UI_ACTION_STOP_ACK                  1109
 
+#define UI_ACTION_UNMOUNT_FILAMENT_SOFT     1110
+#define UI_ACTION_UNMOUNT_FILAMENT_HARD     1111
+#define UI_ACTION_MOUNT_FILAMENT_SOFT       1112
+#define UI_ACTION_MOUNT_FILAMENT_HARD       1113
 
-#define UI_ACTION_MAX_INACTIVE              1113
-#define UI_ACTION_BEEPER                    1114
-#define UI_ACTION_UNMOUNT_FILAMENT          1115
-#define UI_ACTION_MOUNT_FILAMENT            1116
+#define UI_ACTION_MAX_INACTIVE              1114
+#define UI_ACTION_BEEPER                    1115
+
 #define UI_ACTION_OPERATING_MODE            1117
 #define UI_ACTION_SET_XY_ORIGIN             1118
 #define UI_ACTION_Z_ENDSTOP_TYPE            1119
@@ -201,6 +204,20 @@
 #define UI_ACTION_MICROSTEPS_Z              1708
 #define UI_ACTION_MICROSTEPS_E              1709
 
+#define UI_ACTION_SENSEOFFSET_DIGITS        1710
+#define UI_ACTION_SENSEOFFSET_MAX           1711
+#define UI_ACTION_SENSEOFFSET_AUTOSTART     1712
+
+#define UI_ACTION_WOBBLE_FIX_PHASEXY        1713
+#define UI_ACTION_WOBBLE_FIX_PHASEZ         1714
+#define UI_ACTION_WOBBLE_FIX_AMPX           1715
+#define UI_ACTION_WOBBLE_FIX_AMPY1          1716
+#define UI_ACTION_WOBBLE_FIX_AMPY2          1717
+#define UI_ACTION_WOBBLE_FIX_AMPZ           1718
+
+#define UI_ACTION_FAN_PART_FAN_PWM_MIN      1719
+#define UI_ACTION_FAN_PART_FAN_PWM_MAX      1720
+
 #define UI_ACTION_FET1_OUTPUT               2001
 #define UI_ACTION_FET2_OUTPUT               2002
 
@@ -211,7 +228,6 @@
 #define UI_ACTION_MENU_XPOSFAST             4003
 #define UI_ACTION_MENU_YPOSFAST             4004
 #define UI_ACTION_MENU_ZPOSFAST             4005
-#define UI_ACTION_MENU_SDCARD               4006
 #define UI_ACTION_MENU_QUICKSETTINGS        4007
 #define UI_ACTION_MENU_EXTRUDER             4008
 #define UI_ACTION_MENU_POSITIONS            4009
@@ -231,6 +247,12 @@
 // Load basic language definition to make sure all values are defined
 #include "uilang.h"
 
+//mtype usw.
+#define UI_MENU_TYPE_INFO 0
+#define UI_MENU_TYPE_FILE_SELECTOR 1
+#define UI_MENU_TYPE_SUBMENU 2
+#define UI_MENU_TYPE_MODIFICATION_MENU 3
+#define UI_MENU_TYPE_WIZARD 5
 
 typedef struct
 {
@@ -417,9 +439,9 @@ public:
     float               lastNextAccumul;            // Accumulated value
     unsigned int        outputMask;                 // Output mask for backlight, leds etc.
     int                 repeatDuration;             // Time beween to actions if autorepeat is enabled
-    int8_t              oldMenuLevel;
     uint8_t             encoderStartScreen;
     char                statusMsg[MAX_COLS + 1];
+    char                printCols[MAX_COLS + 1];
     int8_t              encoderPos;
     int8_t              encoderLast;
     PGM_P               statusText;
@@ -494,7 +516,7 @@ void initNSpecchars();
 #define UI_INVERT_INCREMENT_DIRECTION   true
 
 #ifdef UI_MAIN
-void ui_init_keys() 
+void ui_init_keys()
 {
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_1);  // push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_2);  // push button, connects gnd to pin
@@ -502,19 +524,16 @@ void ui_init_keys()
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_4);  // push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_5);  // push button, connects gnd to pin
 
-#if FEATURE_EXTENDED_BUTTONS
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_E1); // PINJ.2, 80, X12.1 - push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_E2); // PINJ.4, 81, X12.2 - push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_E3); // PINJ.5, 82, X12.3 - push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_E4); // PINJ.6, 83, X12.4 - push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_E5); // PINH.7, 85, X12.6 - push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_E6); // PINH.2, 86, X12.7 - push button, connects gnd to pin
-#endif // FEATURE_EXTENDED_BUTTONS
-
 } // ui_init_keys
 
 
-void ui_check_keys(int &action) 
+void ui_check_keys(int &action)
 {
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_1,UI_ACTION_OK);          // push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_2,UI_ACTION_NEXT);        // push button, connects gnd to pin
@@ -522,21 +541,18 @@ void ui_check_keys(int &action)
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_4,UI_ACTION_BACK);        // push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_3,UI_ACTION_RIGHT );      // push button, connects gnd to pin
 
-#if FEATURE_EXTENDED_BUTTONS
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_E1,UI_ACTION_RF_HEAT_BED_UP);         // PINJ.2, 80, X12.1 - push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_E2,UI_ACTION_RF_HEAT_BED_DOWN);       // PINJ.4, 81, X12.2 - push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_E3,UI_ACTION_RF_EXTRUDER_RETRACT);    // PINJ.5, 82, X12.3 - push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_E4,UI_ACTION_RF_EXTRUDER_OUTPUT);     // PINJ.6, 83, X12.4 - push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_E5,UI_ACTION_RF_CONTINUE);            // PINH.7, 85, X12.6 - push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_E6,UI_ACTION_RF_PAUSE);               // PINH.2, 86, X12.7 - push button, connects gnd to pin
-#endif // FEATURE_EXTENDED_BUTTONS
-
 } // ui_check_keys
 #endif // UI_MAIN
 #endif // MOTHERBOARD == DEVICE_TYPE_RF1000
 
 
-#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+#if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000v2
 #define UI_HAS_KEYS                       1        // 1 = Some keys attached
 #define UI_HAS_BACK_KEY                   1
 #define UI_DISPLAY_TYPE                   1        // 1 = LCD Display with 4 bit data bus
@@ -549,7 +565,7 @@ void ui_check_keys(int &action)
 #define UI_INVERT_INCREMENT_DIRECTION   true
 
 #ifdef UI_MAIN
-void ui_init_keys() 
+void ui_init_keys()
 {
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_1);  // push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_2);  // push button, connects gnd to pin
@@ -557,19 +573,16 @@ void ui_init_keys()
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_4);  // push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_5);  // push button, connects gnd to pin
 
-#if FEATURE_EXTENDED_BUTTONS
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_E1); // PINJ.2, 80, X12.1 - push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_E2); // PINJ.4, 81, X12.2 - push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_E3); // PINJ.5, 82, X12.3 - push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_E4); // PINJ.6, 83, X12.4 - push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_E5); // PINH.7, 85, X12.6 - push button, connects gnd to pin
     UI_KEYS_INIT_BUTTON_LOW(ENABLE_KEY_E6); // PINH.2, 86, X12.7 - push button, connects gnd to pin
-#endif // FEATURE_EXTENDED_BUTTONS
-
 } // ui_init_keys
 
 
-void ui_check_keys(int &action) 
+void ui_check_keys(int &action)
 {
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_1,UI_ACTION_OK);          // push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_2,UI_ACTION_NEXT);        // push button, connects gnd to pin
@@ -577,18 +590,15 @@ void ui_check_keys(int &action)
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_4,UI_ACTION_BACK);        // push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_3,UI_ACTION_RIGHT );      // push button, connects gnd to pin
 
-#if FEATURE_EXTENDED_BUTTONS
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_E1,UI_ACTION_RF_HEAT_BED_UP);         // PINJ.2, 80, X12.1 - push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_E2,UI_ACTION_RF_HEAT_BED_DOWN);       // PINJ.4, 81, X12.2 - push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_E3,UI_ACTION_RF_EXTRUDER_RETRACT);    // PINJ.5, 82, X12.3 - push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_E4,UI_ACTION_RF_EXTRUDER_OUTPUT);     // PINJ.6, 83, X12.4 - push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_E5,UI_ACTION_RF_CONTINUE);            // PINH.7, 85, X12.6 - push button, connects gnd to pin
     UI_KEYS_BUTTON_LOW(ENABLE_KEY_E6,UI_ACTION_RF_PAUSE);               // PINH.2, 86, X12.7 - push button, connects gnd to pin
-#endif // FEATURE_EXTENDED_BUTTONS
-
 } // ui_check_keys
 #endif // UI_MAIN
-#endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000_V2
+#endif // MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000v2
 
 
 #if UI_ROWS==4
@@ -615,14 +625,6 @@ void ui_check_keys(int &action)
 #if UI_DISPLAY_TYPE==3
 #define COMPILE_I2C_DRIVER
 #endif // UI_DISPLAY_TYPE==3
-
-#ifndef UI_TEMP_PRECISION
-#if UI_COLS>16
-#define UI_TEMP_PRECISION 1
-#else
-#define UI_TEMP_PRECISION 0
-#endif // UI_COLS>16
-#endif // UI_TEMP_PRECISION
 
 #define UI_INITIALIZE uid.initialize();
 #define UI_FAST if(pwm_count_heater & 4) {uid.fastAction();}

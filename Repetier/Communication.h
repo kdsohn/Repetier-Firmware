@@ -305,10 +305,12 @@ public:
     FSTRINGVAR(tEPRPrinter_STEPPER_E1)
 #endif //NUM_EXTRUDER > 1
     FSTRINGVAR(tEPRPrinter_FREQ_DBL)
-    
+
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     FSTRINGVAR(tEPRPrinter_FAN_MODE)
     FSTRINGVAR(tEPRPrinter_FAN_SPEED)
+    FSTRINGVAR(tEPRPrinter_FAN_PART_FAN_PWM_MIN)
+    FSTRINGVAR(tEPRPrinter_FAN_PART_FAN_PWM_MAX)
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
 #endif // EEPROM_MODE==0
@@ -338,9 +340,10 @@ public:
 
     FSTRINGVAR(tOutputObjectPrint)
     FSTRINGVAR(tOutputObjectMill)
-    FSTRINGVAR(tUnmountFilamentWithHeating)
-    FSTRINGVAR(tMountFilamentWithHeating)
-    FSTRINGVAR(tMountFilamentWithoutHeating)
+    FSTRINGVAR(tUnmountFilamentSoft)
+    FSTRINGVAR(tUnmountFilamentHard)
+    FSTRINGVAR(tMountFilamentSoft)
+    FSTRINGVAR(tMountFilamentHard)
 
 #if FEATURE_FIND_Z_ORIGIN
     FSTRINGVAR(tFindZOrigin)

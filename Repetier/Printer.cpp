@@ -145,12 +145,10 @@ volatile long   Printer::queuePositionZLayerLast = 0;
 volatile char   Printer::endZCompensationStep = 0;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 volatile long   Printer::directPositionTargetSteps[4]  = {0, 0, 0, 0};
 volatile long   Printer::directPositionCurrentSteps[4] = {0, 0, 0, 0};
 long            Printer::directPositionLastSteps[4]    = {0, 0, 0, 0};
 char            Printer::waitMove;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_MILLING_MODE
 char            Printer::operatingMode;
@@ -215,6 +213,10 @@ unsigned char   Printer::wrongType;
 unsigned char   Printer::g_unlock_movement = 0;
 #endif //FEATURE_UNLOCK_MOVEMENT
 
+#if FEATURE_SENSIBLE_PRESSURE
+bool            Printer::g_senseoffset_autostart = false;
+#endif //FEATURE_SENSIBLE_PRESSURE
+
 uint8_t         Printer::motorCurrent[DRV8711_NUM_CHANNELS] = {0};
 
 #if FEATURE_ZERO_DIGITS
@@ -227,11 +229,20 @@ short           Printer::g_pressure_offset = 0;
 uint8_t         Printer::motorMicroStepsModeValue[DRV8711_NUM_CHANNELS] = {0}; //init later because of recalculation of value
 #endif // FEATURE_ADJUSTABLE_MICROSTEPS
 
+#if FEATURE_Kurt67_WOBBLE_FIX
+
+int8_t Printer::wobblePhaseXY = 0; //+100 = +PI | -100 = -PI
+//int8_t Printer::wobblePhaseZ  = 0; //+100 = +PI | -100 = -PI
+int16_t Printer::wobbleAmplitudes[3/*4*/] = {0}; //X, Y(X_0), Y(X_max), /*Z*/
+float   Printer::wobblefixOffset[2/*3*/] = {0};                       ///< last calculated target wobbleFixOffsets for display output.
+
+#endif // FEATURE_Kurt67_WOBBLE_FIX
+
+
 void Printer::constrainQueueDestinationCoords()
 {
     if(isNoDestinationCheck()) return;
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 #if max_software_endstop_x == true
     if (queuePositionTargetSteps[X_AXIS] + directPositionTargetSteps[X_AXIS] > Printer::maxSteps[X_AXIS]) Printer::queuePositionTargetSteps[X_AXIS] = Printer::maxSteps[X_AXIS] - directPositionTargetSteps[X_AXIS];
 #endif // max_software_endstop_x == true
@@ -243,20 +254,6 @@ void Printer::constrainQueueDestinationCoords()
 #if max_software_endstop_z == true
     if (queuePositionTargetSteps[Z_AXIS] + directPositionTargetSteps[Z_AXIS] > Printer::maxSteps[Z_AXIS]) Printer::queuePositionTargetSteps[Z_AXIS] = Printer::maxSteps[Z_AXIS] - directPositionTargetSteps[Z_AXIS];
 #endif // max_software_endstop_z == true
-#else
-#if max_software_endstop_x == true
-    if (queuePositionTargetSteps[X_AXIS] > Printer::maxSteps[X_AXIS]) Printer::queuePositionTargetSteps[X_AXIS] = Printer::maxSteps[X_AXIS];
-#endif // max_software_endstop_x == true
-
-#if max_software_endstop_y == true
-    if (queuePositionTargetSteps[Y_AXIS] > Printer::maxSteps[Y_AXIS]) Printer::queuePositionTargetSteps[Y_AXIS] = Printer::maxSteps[Y_AXIS];
-#endif // max_software_endstop_y == true
-
-#if max_software_endstop_z == true
-    if (queuePositionTargetSteps[Z_AXIS] > Printer::maxSteps[Z_AXIS]) Printer::queuePositionTargetSteps[Z_AXIS] = Printer::maxSteps[Z_AXIS];
-#endif // max_software_endstop_z == true
-#endif //FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
-
 } // constrainQueueDestinationCoords
 
 
@@ -266,10 +263,9 @@ void Printer::constrainDirectDestinationCoords()
         return;
     }
     if(g_pauseStatus){
-        return; 
+        return;
         // the pause-and-continue functionality must calculate the constrains by itself
     }
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 #if max_software_endstop_x == true
     if (queuePositionTargetSteps[X_AXIS] + directPositionTargetSteps[X_AXIS] > Printer::maxSteps[X_AXIS]) Printer::directPositionTargetSteps[X_AXIS] = Printer::maxSteps[X_AXIS] - queuePositionTargetSteps[X_AXIS];
 #endif // max_software_endstop_x == true
@@ -281,7 +277,6 @@ void Printer::constrainDirectDestinationCoords()
 #if max_software_endstop_z == true
     if (queuePositionTargetSteps[Z_AXIS] + directPositionTargetSteps[Z_AXIS] > Printer::maxSteps[Z_AXIS]) Printer::directPositionTargetSteps[Z_AXIS] = Printer::maxSteps[Z_AXIS] - queuePositionTargetSteps[Z_AXIS];
 #endif // max_software_endstop_z == true
-#endif //FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 } // constrainDirectDestinationCoords
 
 void Printer::updateDerivedParameter()
@@ -344,7 +339,7 @@ void Printer::updateDerivedParameter()
       accel = MILLER_ACCELERATION;
     }
 #endif  // FEATURE_MILLING_MODE
-    
+
     float minimumSpeed = 1.41 * accel * sqrt(2.0f / (axisStepsPerMM[X_AXIS] * accel));
 #if FEATURE_MILLING_MODE
     if( Printer::operatingMode == OPERATING_MODE_PRINT )
@@ -356,7 +351,7 @@ void Printer::updateDerivedParameter()
     else{
       accel = MILLER_ACCELERATION;
     }
-#endif  // FEATURE_MILLING_MODE    
+#endif  // FEATURE_MILLING_MODE
     float minimumSpeed2 = 1.41 * accel * sqrt(2.0f / (axisStepsPerMM[Y_AXIS] * accel));
         if(minimumSpeed2 > minimumSpeed) {
             minimumSpeed = minimumSpeed2;
@@ -393,7 +388,7 @@ void Printer::kill(uint8_t only_steppers)
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     // disable the fan
-    Commands::setFanSpeed(0);
+    Commands::setFanSpeed((uint8_t)0);
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
     disableAllSteppersNow();
@@ -488,7 +483,7 @@ void Printer::setOrigin(float xOff,float yOff,float zOff)
         Com::printF( PSTR(" z-fail") );
     }
     Com::println();
-    
+
     if( !areAxisHomed() )
     {
         // we can not set the origin when we do not know the home position
@@ -546,10 +541,57 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
     y = queuePositionCommandMM[Y_AXIS] + Printer::extruderOffset[Y_AXIS];
     z = queuePositionCommandMM[Z_AXIS] + Printer::extruderOffset[Z_AXIS];
 
+#if FEATURE_Kurt67_WOBBLE_FIX
+
+    /*
+    Zielkoordinate in Z ist: "z"
+    Wir fügen beim Umrechnen in Steps vorher noch ein Offset in XYZ ein.
+    offsetZ = amplitude des hubs                     * drehposition spindel
+    offsetY = amplitude in Richtung Y linke Spindel  * drehposition spindel
+    offsetY = amplitude in Richtung Y rechte Spindel * drehposition spindel
+    offsetX = amplitude in Richtung X                * drehposition spindel
+
+    "sinOffset = amplitude * sin( 2*Pi*(Z/5mm + zStartOffset) );"
+    */
+
+    //vorausgerechnete konstanten.
+    float zweiPi              = 6.2832f;   //2*Pi
+    float hundertstelPi       = 0.031428f; //Pi/100
+    float spindelSteigung     = 5.0f;      //[mm]
+
+    //wobble durch Bauchtanz der Druckplatte
+    //wobbleX oder wobbleY(x0) oder wobbleX(x245)
+    if(Printer::wobbleAmplitudes[0]){
+        float anglePositionWobble = cos(zweiPi*(z/spindelSteigung - (float)Printer::wobblePhaseXY * hundertstelPi ));
+        //für das wobble in Richtung X-Achse gilt immer dieselbe Amplitude, weil im extremfall beide gegeneinander arbeiten und sich aufheben könnten, oder die Spindeln arbeiten zusammen.
+        Printer::wobblefixOffset[X_AXIS] = Printer::wobbleAmplitudes[0] * anglePositionWobble;
+        x += Printer::wobblefixOffset[X_AXIS]/1000;  //offset in [um] -> kosys in [mm]
+    }
+    if(Printer::wobbleAmplitudes[1] || Printer::wobbleAmplitudes[2]){
+        float anglePositionWobble = sin(zweiPi*(z/spindelSteigung - (float)Printer::wobblePhaseXY * hundertstelPi ));
+        //gilt eher die Y-Achsen-Richtung-Amplitude links (x=0) oder rechts (x=achsenlänge)? (abhängig von der ziel-x-position wird anteilig verrechnet.)
+        float xPosPercent = x/Printer::lengthMM[X_AXIS];
+        Printer::wobblefixOffset[Y_AXIS] = ((1-xPosPercent) * Printer::wobbleAmplitudes[1] + (xPosPercent) * Printer::wobbleAmplitudes[2]) * anglePositionWobble;
+        y += Printer::wobblefixOffset[Y_AXIS]/1000;  //offset in [um] -> kosys in [mm]
+    }
+/*
+    //wobble durch Kippeln mit Hebel -> Z-Hub
+    //wobbleZ
+    if(Printer::wobbleAmplitudes[3]){
+        float anglePositionLift   = sin(zweiPi*(z/spindelSteigung + (float)Printer::wobblePhaseZ  * hundertstelPi )); //phase von +-100% -> +-Pi
+        Printer::wobblefixOffset[Z_AXIS] = Printer::wobbleAmplitudes[3] * anglePositionLift;
+        //z kippel-wobble nur mit etwas Abstand überhalb senseoffset ausgleichen. Drunter könnte das stören.
+        if(z > fabs(Printer::wobblefixOffset[Z_AXIS])+AUTOADJUST_STARTMADEN_AUSSCHLUSS){
+            z += Printer::wobblefixOffset[Z_AXIS]/1000;  //offset in [um] -> kosys in [mm]
+        }
+    }
+*/
+#endif // FEATURE_Kurt67_WOBBLE_FIX
+
     long xSteps = static_cast<long>(floor(x * axisStepsPerMM[X_AXIS] + 0.5f));
     long ySteps = static_cast<long>(floor(y * axisStepsPerMM[Y_AXIS] + 0.5f));
     long zSteps = static_cast<long>(floor(z * axisStepsPerMM[Z_AXIS] + 0.5f));
-    
+
     if(com->hasX())
     {
         queuePositionTargetSteps[X_AXIS] = xSteps;
@@ -654,7 +696,7 @@ uint8_t Printer::setDestinationStepsFromMenu( float relativeX, float relativeY, 
     long xSteps = static_cast<long>(floor(x * axisStepsPerMM[X_AXIS] + 0.5));
     long ySteps = static_cast<long>(floor(y * axisStepsPerMM[Y_AXIS] + 0.5));
     long zSteps = static_cast<long>(floor(z * axisStepsPerMM[Z_AXIS] + 0.5));
-    
+
     if( relativeX )
     {
         queuePositionTargetSteps[X_AXIS] = xSteps;
@@ -926,13 +968,10 @@ void Printer::setup()
 #endif // USE_ADVANCE
 
     queuePositionLastSteps[X_AXIS] = queuePositionLastSteps[Y_AXIS] = queuePositionLastSteps[Z_AXIS] = queuePositionLastSteps[E_AXIS] = 0;
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     directPositionTargetSteps[X_AXIS]  = directPositionTargetSteps[Y_AXIS]  = directPositionTargetSteps[Z_AXIS]  = directPositionTargetSteps[E_AXIS]  = 0;
     directPositionCurrentSteps[X_AXIS] = directPositionCurrentSteps[Y_AXIS] = directPositionCurrentSteps[Z_AXIS] = directPositionCurrentSteps[E_AXIS] = 0;
     directPositionLastSteps[X_AXIS]    = directPositionLastSteps[Y_AXIS]    = directPositionLastSteps[Z_AXIS]    = directPositionLastSteps[E_AXIS]    = 0;
     waitMove                           = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
     maxJerk = MAX_JERK;
     maxZJerk = MAX_ZJERK;
@@ -966,14 +1005,13 @@ void Printer::setup()
     staticCompensationZ     = 0; //init
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
 
-    queuePositionCurrentSteps[X_AXIS] = 
-    queuePositionCurrentSteps[Y_AXIS] = 
+    queuePositionCurrentSteps[X_AXIS] =
+    queuePositionCurrentSteps[Y_AXIS] =
     queuePositionCurrentSteps[Z_AXIS] = 0;
     blockAll                          = 0;
 
     currentZSteps                     = 0;
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
     directPositionCurrentSteps[X_AXIS] =
     directPositionCurrentSteps[Y_AXIS] =
     directPositionCurrentSteps[Z_AXIS] =
@@ -982,7 +1020,6 @@ void Printer::setup()
     directPositionTargetSteps[Y_AXIS]  =
     directPositionTargetSteps[Z_AXIS]  =
     directPositionTargetSteps[E_AXIS]  = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_MILLING_MODE
     operatingMode = DEFAULT_OPERATING_MODE;
@@ -1040,10 +1077,10 @@ void Printer::setup()
 
     SET_OUTPUT(FET1);
     WRITE(FET1, enableFET1);
-    
+
     SET_OUTPUT(FET2);
     WRITE(FET2, enableFET2);
-    
+
     SET_OUTPUT(FET3);
     WRITE(FET3, enableFET3);
 #endif // FEATURE_24V_FET_OUTPUTS
@@ -1072,7 +1109,7 @@ void Printer::setup()
 #endif // USE_ADVANCE
 
     UI_INITIALIZE;
-    
+
     EEPROM::initBaudrate();
     HAL::serialSetBaudrate(baudrate);
 
@@ -1082,12 +1119,12 @@ void Printer::setup()
 
     HAL::showStartReason();
     Extruder::initExtruder();
-    
+
     // configure all DRV8711
     drv8711Init();
-    
+
     // Read settings from eeprom if wanted [readDataFromEEPROM or destroy corrupted eeprom]
-    EEPROM::init(); 
+    EEPROM::init();
 
 
 #if FEATURE_230V_OUTPUT
@@ -1117,7 +1154,7 @@ void Printer::setup()
     Extruder::selectExtruderById(0);
 
 #if SDSUPPORT
-    sd.initsd();
+    sd.mount();
 #endif // SDSUPPORT
 
     g_nActiveHeatBed = (char)readWord24C256( I2C_ADDRESS_EXTERNAL_EEPROM, EEPROM_OFFSET_ACTIVE_HEAT_BED_Z_MATRIX );
@@ -1166,13 +1203,12 @@ void Printer::setup()
     g_unlock_movement = 0;
 #endif //FEATURE_UNLOCK_MOVEMENT
 
-#if FEATURE_WATCHDOG
+    // FEATURE_WATCHDOG
     if( Printer::debugInfo() )
     {
         Com::printFLN(Com::tStartWatchdog);
     }
     HAL::startWatchdog();
-#endif // FEATURE_WATCHDOG
 } // setup()
 
 
@@ -1236,11 +1272,15 @@ void Printer::GoToMemoryPosition(bool x,bool y,bool z,bool e,float feed)
 
 #if FEATURE_SENSIBLE_PRESSURE
 void Printer::enableSenseOffsetnow( void ){
-        short oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_DIGITS);
-        if ( oldval > 0 && oldval < EMERGENCY_PAUSE_DIGITS_MAX ){
-            g_nSensiblePressureDigits = oldval;
-        }
+    short oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_DIGITS);
+    if ( oldval > 0 && oldval < EMERGENCY_PAUSE_DIGITS_MAX ){
+        g_nSensiblePressureDigits = oldval;
     }
+    oldval = HAL::eprGetInt16(EPR_RF_MOD_SENSEOFFSET_OFFSET_MAX);
+    if( oldval > 0 && oldval < 300 ){
+       g_nSensiblePressureOffsetMax = oldval;
+    }
+}
 #endif // FEATURE_SENSIBLE_PRESSURE
 
 void Printer::enableCMPnow( void ){
@@ -1262,7 +1302,7 @@ void Printer::enableCMPnow( void ){
     if( !Printer::areAxisHomed() ){
         return; // false;
     }
-                    
+
     // enable the z compensation
     if( g_ZCompensationMatrix[0][0] != EEPROM_FORMAT )  return; // false;
 
@@ -1305,7 +1345,7 @@ bool Printer::needsCMPwait( void ){
 }
 
 bool Printer::checkCMPblocked( void ){
-    //die zcmp läuft dann, wenn die achse nicht gegenläufig steht und reserviert ist: 
+    //die zcmp läuft dann, wenn die achse nicht gegenläufig steht und reserviert ist:
     //true = zcmp ist blockiert -> ist mal möglich aber wenn nichts läuft ein fehler, weil die achse nicht zeitnah von einer anderen funktion freigegeben wird.
     //false = zcmp darf sich aktuell korrigieren, wenn sonst keine prioritären Einschränkungen aktiv sind. -> auf kompensationsende warten müsste erfolgreich verlaufen
     return ((Printer::compensatedPositionCurrentStepsZ < Printer::compensatedPositionTargetStepsZ) && !Printer::getZDirectionIsPos())
@@ -1331,7 +1371,7 @@ void Printer::disableCMPnow( bool wait ) {
  #endif // FEATURE_WORK_PART_Z_COMPENSATION
 #endif // FEATURE_MILLING_MODE
     Printer::compensatedPositionTargetStepsZ = 0; //tell CMP to move to 0. TODO: Care for positive matrix beds.
-    
+
     while( wait && compensatedPositionCurrentStepsZ - compensatedPositionTargetStepsZ ) //warte auf queue befehlsende
     {
         HAL::delayMilliseconds( 1 );
@@ -1343,7 +1383,7 @@ void Printer::disableCMPnow( bool wait ) {
 int8_t Printer::anyHomeDir(uint8_t axis){
     int8_t nHomeDir = 0;
     switch(axis){
-        case X_AXIS: 
+        case X_AXIS:
             {
                 if( (MIN_HARDWARE_ENDSTOP_X && X_MIN_PIN > -1 && X_HOME_DIR==-1) || (MAX_HARDWARE_ENDSTOP_X && X_MAX_PIN > -1 && X_HOME_DIR==1) )
                 {
@@ -1351,7 +1391,7 @@ int8_t Printer::anyHomeDir(uint8_t axis){
                 }
                 break;
             }
-        case Y_AXIS: 
+        case Y_AXIS:
             {
                 if( (MIN_HARDWARE_ENDSTOP_Y && Y_MIN_PIN > -1 && Y_HOME_DIR==-1) || (MAX_HARDWARE_ENDSTOP_Y && Y_MAX_PIN > -1 && Y_HOME_DIR==1) )
                 {
@@ -1359,7 +1399,7 @@ int8_t Printer::anyHomeDir(uint8_t axis){
                 }
                 break;
             }
-        case Z_AXIS: 
+        case Z_AXIS:
             {
     #if FEATURE_MILLING_MODE
                 if( Printer::operatingMode == OPERATING_MODE_PRINT && (MIN_HARDWARE_ENDSTOP_Z && Z_MIN_PIN > -1) )
@@ -1379,7 +1419,7 @@ int8_t Printer::anyHomeDir(uint8_t axis){
                 }
                 break;
     #endif // FEATURE_MILLING_MODE
-    
+
                 /* ALT ohne check der Pins:
                     #if FEATURE_MILLING_MODE
                         //nProcess = 1;
@@ -1405,23 +1445,23 @@ int8_t Printer::anyHomeDir(uint8_t axis){
     }
     return nHomeDir;
 }
-    
+
 #if FEATURE_CHECK_HOME
 bool Printer::anyEndstop( uint8_t axis ){
     int endstop = 0;
     for(uint8_t i = 1; i <= 3; i++){
         switch(axis){
-            case X_AXIS: 
+            case X_AXIS:
                 {
                     endstop += (Printer::isXMinEndstopHit() || Printer::isXMaxEndstopHit());
                     break;
                 }
-            case Y_AXIS: 
+            case Y_AXIS:
                 {
                     endstop += (Printer::isYMinEndstopHit() || Printer::isYMaxEndstopHit());
                     break;
                 }
-            case Z_AXIS: 
+            case Z_AXIS:
                 {
                     endstop += (Printer::isZMinEndstopHit() || Printer::isZMaxEndstopHit());
                     break;
@@ -1433,17 +1473,17 @@ bool Printer::anyEndstop( uint8_t axis ){
 
 void Printer::changeAxisDirection( uint8_t axis, int8_t direction ){
     switch(axis){
-        case X_AXIS: 
+        case X_AXIS:
             {
                 Printer::setXDirection( (direction > 0 ? true : false ) );
                 break;
             }
-        case Y_AXIS: 
+        case Y_AXIS:
             {
                 Printer::setYDirection( (direction > 0 ? true : false ) );
                 break;
             }
-        case Z_AXIS: 
+        case Z_AXIS:
             {
                 Printer::setZDirection( (direction > 0 ? true : false ) );
                 break;
@@ -1453,17 +1493,17 @@ void Printer::changeAxisDirection( uint8_t axis, int8_t direction ){
 
 void Printer::startAxisStep( uint8_t axis ){
     switch(axis){
-        case X_AXIS: 
+        case X_AXIS:
             {
                 Printer::startXStep();
                 break;
             }
-        case Y_AXIS: 
+        case Y_AXIS:
             {
                 Printer::startYStep();
                 break;
             }
-        case Z_AXIS: 
+        case Z_AXIS:
             {
                 Printer::startZStep();
                 break;
@@ -1472,17 +1512,17 @@ void Printer::startAxisStep( uint8_t axis ){
 }
 void Printer::endAxisStep(uint8_t axis){
     switch(axis){
-        case X_AXIS: 
+        case X_AXIS:
             {
                 Printer::endXStep();
                 break;
             }
-        case Y_AXIS: 
+        case Y_AXIS:
             {
                 Printer::endYStep();
                 break;
             }
-        case Z_AXIS: 
+        case Z_AXIS:
             {
                 Printer::endZStep();
                 break;
@@ -1502,13 +1542,13 @@ int8_t Printer::checkHome(int8_t axis) //X_AXIS 0, Y_AXIS 1, Z_AXIS 2
     //do not allow Z jet because we have to check compensation behaviour
     Com::printFLN( PSTR( "checkHome: start axis" ), axis );
     //if(axis == Z_AXIS) return -1; //noch verboten, weil solange das läuft der emergency-Stop nicht funktioniert. funktion wird evtl. wie HBS oder ZOS geteilt.
-    
+
     if(axis > Z_AXIS) return -1;
-    
+
     //do not allow checkHome without Home
     if( !Printer::isAxisHomed(axis) ) return -1;
     Com::printFLN( PSTR( "ishomed!" ) );
-    
+
     //do not allow checkHome when some endstop is already reached
     if( Printer::anyEndstop(axis) ) return -1; //knopf gedrückt = kein sinnvoller rückfahrweg bzw. nicht vertrauenswürdige coordinaten.
 
@@ -1516,7 +1556,7 @@ int8_t Printer::checkHome(int8_t axis) //X_AXIS 0, Y_AXIS 1, Z_AXIS 2
     char nHomeDir = Printer::anyHomeDir(axis);
     Com::printFLN( PSTR( "nHomeDir=" ), nHomeDir );
     if(!nHomeDir) return -1;
-    
+
     //set stepper direction as homing direction
     Printer::changeAxisDirection( axis, nHomeDir );
 
@@ -1524,13 +1564,13 @@ int8_t Printer::checkHome(int8_t axis) //X_AXIS 0, Y_AXIS 1, Z_AXIS 2
     long Didsteps = 0;
     bool finish = false;
     int mmLoops = Printer::axisStepsPerMM[axis]; //fahre in mm-Blöcken.
-    
+
     while(1){
         /* Pfusch, das hier extra einzufügen? -> ^^ Prototype -> Funktion muss u.U. später gesplittet und mit einer Art M400 geschützt werden. */
         HAL::tellWatchdogOk(); //ultra ausnahme!! Das gibts normal nur in RF.cpp an einer Stelle. TODO!!
         Extruder::manageTemperatures();
         GCode::keepAlive( Processing );
-        
+
         for( int i=0; i < mmLoops; i++ )
         {
             Printer::stepAxisStep(axis);
@@ -1541,16 +1581,16 @@ int8_t Printer::checkHome(int8_t axis) //X_AXIS 0, Y_AXIS 1, Z_AXIS 2
             }
             //verbot unendlich weiterzufahren, wenn endstop kaputt
             if( abs(Didsteps) > abs(Printer::maxSteps[axis] - Printer::minSteps[axis])*110/100 ) finish = true;
-            
+
             if(finish) break;
         }
         if(finish) break;
     }
-    
+
     //steps to log
     Com::printFLN( PSTR( "didsteps=" ), Didsteps );
     Com::printFLN( PSTR( "wassteps=" ), (Printer::queuePositionCurrentSteps[axis] + Printer::directPositionCurrentSteps[axis]) );
-    
+
     Com::printFLN( PSTR( "recheck endstop:" ) );
     //check ob endstop da (oder defekt oder nicht erreicht: return)
     if (!Printer::anyEndstop(axis)) return -1;
@@ -1572,11 +1612,11 @@ int8_t Printer::checkHome(int8_t axis) //X_AXIS 0, Y_AXIS 1, Z_AXIS 2
 
     //check ob endstop nach 1mm immernoch gedrückt:
     if ( Printer::anyEndstop(axis) ) return -1;
-    
+
     //merke schalter-aus-punkt für hysteresemessung:
     long hysterese = Didsteps;
 
-    //Neu und langsamer in den Schalter fahren:    
+    //Neu und langsamer in den Schalter fahren:
     //change stepper direction to drive against homing direction
     Printer::changeAxisDirection( axis, nHomeDir );
     finish = false; // Neue Abbruchbedingung
@@ -1589,37 +1629,37 @@ int8_t Printer::checkHome(int8_t axis) //X_AXIS 0, Y_AXIS 1, Z_AXIS 2
             Didsteps += nHomeDir;
         }
         if(finish) break;
-    }    
+    }
     //check ob endstop nach 1mm immernoch nicht gedrückt:
     if ( !Printer::anyEndstop(axis) ) return -1;
-    
+
     hysterese -= Didsteps;
     Com::printFLN( PSTR( "aus-ein-hysterese=" ), hysterese );
-    
+
     //check ob steps verloren gehen:
     long delta;
     if(axis == Z_AXIS) delta = Printer::currentZSteps; //zählt hoch und runter. alternativ achsen-kosys wie bei x und y, aber wegen zcompensation problematisch, weil verzerrt (??-> noch nicht fertig durchdacht).
     else               delta = Printer::queuePositionCurrentSteps[axis] + Printer::directPositionCurrentSteps[axis] + Didsteps;
-    
+
     Com::printFLN( PSTR( "delta=" ), delta );
 
     //fahre zurück an Startpunkt:
     Printer::changeAxisDirection( axis, -1*nHomeDir );
-    
+
     Didsteps = abs(Didsteps);
     while(Didsteps > 0){
         /* Pfusch, das hier extra einzufügen? -> ^^ Prototype -> Funktion muss u.U. später gesplittet und mit einer Art M400 geschützt werden. */
         HAL::tellWatchdogOk(); //ultra ausnahme!! Das gibts normal nur in RF.cpp an einer Stelle. TODO!!
         Extruder::manageTemperatures();
         GCode::keepAlive( Processing );
-        
+
         if(Didsteps >= mmLoops){
             Didsteps -= mmLoops;
         }else{
             mmLoops = Didsteps;
             Didsteps = 0;
         }
-        
+
         for( int i=0; i < mmLoops; i++ )
         {
             Printer::stepAxisStep(axis);
@@ -1638,14 +1678,11 @@ void Printer::homeXAxis()
     if (nHomeDir)
     {
         UI_STATUS_UPD(UI_TEXT_HOME_X);
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         InterruptProtectedBlock noInts;
         directPositionTargetSteps[X_AXIS]  = 0;
         directPositionCurrentSteps[X_AXIS] = 0;
         directPositionLastSteps[X_AXIS]    = 0;
         noInts.unprotect();
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
         int32_t offX = 0;
 #if NUM_EXTRUDER>1
@@ -1688,14 +1725,11 @@ void Printer::homeYAxis()
     if (nHomeDir)
     {
         UI_STATUS_UPD(UI_TEXT_HOME_Y);
-
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         InterruptProtectedBlock noInts;
         directPositionTargetSteps[Y_AXIS]  = 0;
         directPositionCurrentSteps[Y_AXIS] = 0;
         directPositionLastSteps[Y_AXIS]    = 0;
         noInts.unprotect();
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
         int32_t offY = 0;
 #if NUM_EXTRUDER>1
@@ -1737,12 +1771,12 @@ void Printer::homeZAxis()
     if( nHomeDir )
     {
         UI_STATUS_UPD( UI_TEXT_HOME_Z );
-        
+
         // if we have circuit-type Z endstops and we don't know at which endstop we currently are, first move down a bit
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
         if( Printer::ZEndstopUnknown ) {
             //RF1000 und Min-oder-Max gedrückt - nicht klar welcher. Man fährt immer nach unten! Der Schalter hält das aus.
-            PrintLine::moveRelativeDistanceInSteps(0, 0, axisStepsPerMM[Z_AXIS] * ENDSTOP_Z_BACK_MOVE, 0, homingFeedrate[Z_AXIS] / ENDSTOP_Z_RETEST_REDUCTION_FACTOR, true, false); //drucker muss immer nach 
+            PrintLine::moveRelativeDistanceInSteps(0, 0, axisStepsPerMM[Z_AXIS] * ENDSTOP_Z_BACK_MOVE, 0, homingFeedrate[Z_AXIS] / ENDSTOP_Z_RETEST_REDUCTION_FACTOR, true, false); //drucker muss immer nach
         }
 #endif
 
@@ -1758,18 +1792,16 @@ void Printer::homeZAxis()
         Printer::setZOriginSet(false); //removes flag wegen statusnachricht
 #endif // FEATURE_FIND_Z_ORIGIN
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
         //nullen und in jedem fall sofort aufhören per directSteps zu fahren!
         directPositionTargetSteps[Z_AXIS]  = 0;
         directPositionCurrentSteps[Z_AXIS] = 0;
         directPositionLastSteps[Z_AXIS]    = 0;
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
         //das ist diese Scan-Positions-Z-Zusatzachse für MoveZ-Bewegungen.
         g_nZScanZPosition = 0;
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-        
+
         /*
         moveRelativeDistanceInSteps bedeutet: Printer::queuePositionTargetSteps[Z_AXIS] = Printer::queuePositionLastSteps[Z_AXIS] + deltaZ;
         dann ab in den MOVE_CACHE
@@ -1779,12 +1811,12 @@ void Printer::homeZAxis()
         //wir tun so als wären wir JETZT am anderen koordinaten-ende. Maximal weit weg vom Schalter.
         queuePositionLastSteps[Z_AXIS] = (nHomeDir == -1) ? maxSteps[Z_AXIS] : minSteps[Z_AXIS];
         noInts.unprotect();
-                
+
         //1. Schnelles Fahren bis zum Schalterkontakt:
-            //Ist der Schalter gedrückt, wird sofort geskipped. 
+            //Ist der Schalter gedrückt, wird sofort geskipped.
             //Ansonsten bis Schalter fahren. Doppelte mögliche Distanz, sodass Fahrt nicht zu früh aufhören kann.
-        PrintLine::moveRelativeDistanceInSteps(0, 0, long( 2 * abs(maxSteps[Z_AXIS] - minSteps[Z_AXIS]) * nHomeDir ), 0, homingFeedrate[Z_AXIS], true, true); 
-        
+        PrintLine::moveRelativeDistanceInSteps(0, 0, long( 2 * abs(maxSteps[Z_AXIS] - minSteps[Z_AXIS]) * nHomeDir ), 0, homingFeedrate[Z_AXIS], true, true);
+
         //2. in jedem Fall Freifahren vom Schalterkontakt:
             //ENDSTOP_Z_BACK_MOVE größer als 32768 ist eigentlich nicht möglich, nicht sinnvoll und würde, da das überfahren bei 32microsteps von der z-matrix >-12,7mm abhängig ist verboten sein.
             //darum ist uint16_t in jedem fall ohne overflow.
@@ -1800,7 +1832,7 @@ void Printer::homeZAxis()
                 break;
             }
         }
-        
+
         //3. langsames Fahren bis zum Schalterkontakt:
         PrintLine::moveRelativeDistanceInSteps(0, 0, long(axisStepsPerMM[Z_AXIS] * (0.1f + ENDSTOP_Z_BACK_MOVE) * nHomeDir),          0, float(homingFeedrate[Z_AXIS] / ENDSTOP_Z_RETEST_REDUCTION_FACTOR), true, true);
 
@@ -1897,14 +1929,14 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
         }
     }
 #endif //FEATURE_CONFIGURABLE_Z_ENDSTOPS
-    
+
 #if FEATURE_MILLING_MODE
     if(operatingMode == OPERATING_MODE_PRINT){ //wollte nicht milling mode, weil ich die mechanik da nicht kenne, dieses if ist unter umständen nutzlos.
 #endif // FEATURE_MILLING_MODE
       if( (!yaxis && zaxis) || ( /* z vor y */ homingOrder == HOME_ORDER_XZY || homingOrder == HOME_ORDER_ZXY || homingOrder == HOME_ORDER_ZYX ) )
       {
        // do not allow homing Z-Only within menu, when the Extruder is configured < 0 and over bed.
-       if( !Printer::isZHomeSafe() ) 
+       if( !Printer::isZHomeSafe() )
        {
           homeYAxis(); //bevor die düse gegen das bett knallen könnte, weil positive z-matix oder tipdown-extruder sollte erst y genullt werden: kann das im printermode schädlich sein?
           //wenn Z genullt wird, sollte auch Y genullt werden dürfen.
@@ -1985,7 +2017,7 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
     updateCurrentPosition(true);
     moveToReal(startX,startY,startZ,IGNORE_COORDINATE,(zaxis ? homingFeedrate[Z_AXIS] : RMath::min(homingFeedrate[X_AXIS],homingFeedrate[Y_AXIS]) ));
     //###############################
-    
+
     if(xaxis && yaxis && zaxis) Printer::homeDigits();
 
     g_uStartOfIdle = HAL::timeInMilliseconds(); //homing xyz just ended
@@ -1995,10 +2027,9 @@ void Printer::homeAxis(bool xaxis,bool yaxis,bool zaxis) // home non-delta print
 
 bool Printer::allowQueueMove( void )
 {
-#if FEATURE_PAUSE_PRINTING
     if( g_pauseStatus == PAUSE_STATUS_PAUSED ) return false;
-#endif // FEATURE_PAUSE_PRINTING
-    if( !( (PAUSE_STATUS_GOTO_PAUSE1 <= g_pauseStatus && g_pauseStatus <= PAUSE_STATUS_HEATING) || g_pauseStatus == PAUSE_STATUS_NONE) 
+
+    if( !( (PAUSE_STATUS_GOTO_PAUSE1 <= g_pauseStatus && g_pauseStatus <= PAUSE_STATUS_HEATING) || g_pauseStatus == PAUSE_STATUS_NONE)
         && !PrintLine::cur )
     {
         // do not allow to process new moves from the queue while the printing is paused
@@ -2017,7 +2048,6 @@ bool Printer::allowQueueMove( void )
 } // allowQueueMove
 
 
-#if FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 bool Printer::allowDirectMove( void )
 {
     if( PrintLine::direct.stepsRemaining )
@@ -2064,8 +2094,6 @@ bool Printer::processAsDirectSteps( void )
     return false;
 
 } // processAsDirectSteps
-
-#endif // FEATURE_EXTENDED_BUTTONS || FEATURE_PAUSE_PRINTING
 
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
@@ -2164,7 +2192,7 @@ void Printer::stopPrint() //function for aborting USB and SD-Prints
     {
          //block sdcard from reading more.
         Com::printFLN( PSTR("SD print stopped.") );
-        sd.sdmode = false;
+        sd.sdmode = 0;
     }
     else
 #endif //SDSUPPORT
@@ -2179,8 +2207,7 @@ void Printer::stopPrint() //function for aborting USB and SD-Prints
     g_uBlockCommands = 1; //keine gcodes mehr ausführen bis beenden beendet.
     //now mark the print to get cleaned up after some time:
     g_uStopTime = HAL::timeInMilliseconds(); //starts output object in combination with g_uBlockCommands
-    
-#if FEATURE_PAUSE_PRINTING
+
     if( g_pauseStatus != PAUSE_STATUS_NONE )
     {
         // the printing is paused at the moment
@@ -2194,7 +2221,6 @@ void Printer::stopPrint() //function for aborting USB and SD-Prints
         g_pauseMode   = PAUSE_MODE_NONE;
     }
     Printer::setMenuMode(MENU_MODE_PAUSED,false); //egal ob nicht gesetzt.
-#endif // FEATURE_PAUSE_PRINTING
 
     //erase the coordinates and kill the current taskplaner:
     PrintLine::resetPathPlanner();

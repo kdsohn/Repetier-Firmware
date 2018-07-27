@@ -32,10 +32,10 @@
 
 #if NUM_EXTRUDER > 2 || NUM_EXTRUDER < 0
  #error This Firmware supports up to 2 Extruders. You might have to reimplement the 3+ code or "request it" if you really got hands on a RFx000 board with 3+ Extruders.
-#endif // FEATURE_DITTO_PRINTING && NUM_EXTRUDER!=2
+#endif // NUM_EXTRUDER > 2 || NUM_EXTRUDER < 0
 
 /** \brief Allows to use the device for milling */
-#define FEATURE_MILLING_MODE                1                                                   // 1 = on, 0 = off
+#define FEATURE_MILLING_MODE                  1                                                   // 1 = on, 0 = off
 
 #if FEATURE_MILLING_MODE
 
@@ -68,7 +68,7 @@
 #define FEATURE_230V_OUTPUT                 1                                                   // 1 = on, 0 = off
 
 /** \brief Allows to use the RGB light effects */
-#define FEATURE_RGB_LIGHT_EFFECTS           1                                                   // 1 = on, 0 = off  
+#define FEATURE_RGB_LIGHT_EFFECTS           1                                                   // 1 = on, 0 = off
 
 /** \brief Allows to use the 24V FET outputs */
 #define FEATURE_24V_FET_OUTPUTS             1                                                   // 1 = on, 0 = off
@@ -122,66 +122,6 @@ Overridden if EEPROM activated.*/
 
 /** \brief Number of steps for a 1mm move in z direction  Overridden if EEPROM activated.*/
 #define ZAXIS_STEPS_PER_MM                  float(80 * (float)RF_MICRO_STEPS_Z)
-
-
-// ##########################################################################################
-// ##   Common extruder configuration
-// ##########################################################################################
-
-/** \brief for each extruder, fan will stay on until extruder temperature is below this value */
-#define EXTRUDER_FAN_COOL_TEMP              50
-
-/** \brief Maximal temperature which can be set for the extruder */
-#define EXTRUDER_MAX_TEMP                   275
-
-/** \brief Extruder allow cold movement which can be set for the extruder */
-#define EXTRUDER_ALLOW_COLD_MOVE            0
-
-
-// ##########################################################################################
-// ##   Hotend V1
-// ##########################################################################################
-
-/** \brief The maximum value, I-gain can contribute to the output. */
-#define HT2_PID_INTEGRAL_DRIVE_MAX          130
-/** \brief lower value for integral part. */
-#define HT2_PID_INTEGRAL_DRIVE_MIN          30
-/** \brief P-gain. */
-#define HT2_PID_P                           37.52
-/** \brief I-gain. */
-#define HT2_PID_I                           10
-/** \brief Dgain. */
-#define HT2_PID_D                           35.18
-
-// ##########################################################################################
-// ##   Hotend V2
-// ##########################################################################################
-
-/** \brief The maximum value, I-gain can contribute to the output. */
-#define HT3_PID_INTEGRAL_DRIVE_MAX          120
-/** \brief lower value for integral part. */
-#define HT3_PID_INTEGRAL_DRIVE_MIN          30
-/** \brief P-gain. */
-#define HT3_PID_P                           12.5
-/** \brief I-gain. */
-#define HT3_PID_I                           3.2
-/** \brief Dgain. */
-#define HT3_PID_D                           18
-
-// ##########################################################################################
-// ##	Hotend V3 : Nibbels 23.12.2017: PID Werte sind noch die falschen alten Werte vom V2
-// ##########################################################################################
-
-/** \brief The maximum value, I-gain can contribute to the output. */
-#define HT4_PID_INTEGRAL_DRIVE_MAX			180
-/** \brief lower value for integral part. */
-#define HT4_PID_INTEGRAL_DRIVE_MIN			40
-/** \brief P-gain. */
-#define HT4_PID_P							95
-/** \brief I-gain. */
-#define HT4_PID_I							120
-/** \brief Dgain. */
-#define HT4_PID_D							130
 
 // ##########################################################################################
 // ##   Miller type 1 (= one track)
@@ -281,7 +221,7 @@ Overridden if EEPROM activated. */
 #define EXT0_PID_P                          HT2_PID_P
 /** \brief I-gain. Overridden if EEPROM activated. */
 #define EXT0_PID_I                          HT2_PID_I
-/** \brief Dgain. Overridden if EEPROM activated.*/
+/** \brief D-gain. Overridden if EEPROM activated.*/
 #define EXT0_PID_D                          HT2_PID_D
 
 #endif // EXT0_HOTEND_TYPE == HOTEND_TYPE_V1
@@ -297,10 +237,26 @@ Overridden if EEPROM activated. */
 #define EXT0_PID_P                          HT3_PID_P
 /** \brief I-gain. Overridden if EEPROM activated. */
 #define EXT0_PID_I                          HT3_PID_I
-/** \brief Dgain. Overridden if EEPROM activated.*/
+/** \brief D-gain. Overridden if EEPROM activated.*/
 #define EXT0_PID_D                          HT3_PID_D
 
 #endif // EXT0_HOTEND_TYPE == HOTEND_TYPE_V2
+
+
+#if EXT0_HOTEND_TYPE == HOTEND_TYPE_V3
+
+/** \brief The maximum value, I-gain can contribute to the output. Overridden if EEPROM activated. */
+#define EXT0_PID_INTEGRAL_DRIVE_MAX         HT4_PID_INTEGRAL_DRIVE_MAX
+/** \brief lower value for integral part. Overridden if EEPROM activated. */
+#define EXT0_PID_INTEGRAL_DRIVE_MIN         HT4_PID_INTEGRAL_DRIVE_MIN
+/** \brief P-gain. Overridden if EEPROM activated. */
+#define EXT0_PID_P                          HT4_PID_P
+/** \brief I-gain. Overridden if EEPROM activated. */
+#define EXT0_PID_I                          HT4_PID_I
+/** \brief D-gain. Overridden if EEPROM activated.*/
+#define EXT0_PID_D                          HT4_PID_D
+
+#endif // EXT0_HOTEND_TYPE == HOTEND_TYPE_V3
 
 
 /** \brief maximum time the heater is can be switched on. Max = 255.  Overridden if EEPROM activated. */
@@ -435,16 +391,12 @@ Overridden if EEPROM activated. */
 
 /** \brief The maximum value, I-gain can contribute to the output. Overridden if EEPROM activated. */
 #define EXT1_PID_INTEGRAL_DRIVE_MAX         HT2_PID_INTEGRAL_DRIVE_MAX
-
 /** \brief lower value for integral part. Overridden if EEPROM activated. */
 #define EXT1_PID_INTEGRAL_DRIVE_MIN         HT2_PID_INTEGRAL_DRIVE_MIN
-
 /** \brief P-gain.  Overridden if EEPROM activated. */
 #define EXT1_PID_P                          HT2_PID_P
-
 /** \brief I-gain. Overridden if EEPROM activated. */
 #define EXT1_PID_I                          HT2_PID_I
-
 /** \brief Dgain.  Overridden if EEPROM activated.*/
 #define EXT1_PID_D                          HT2_PID_D
 
@@ -455,20 +407,32 @@ Overridden if EEPROM activated. */
 
 /** \brief The maximum value, I-gain can contribute to the output. Overridden if EEPROM activated. */
 #define EXT1_PID_INTEGRAL_DRIVE_MAX         HT3_PID_INTEGRAL_DRIVE_MAX
-
 /** \brief lower value for integral part. Overridden if EEPROM activated. */
 #define EXT1_PID_INTEGRAL_DRIVE_MIN         HT3_PID_INTEGRAL_DRIVE_MIN
-
 /** \brief P-gain.  Overridden if EEPROM activated. */
 #define EXT1_PID_P                          HT3_PID_P
-
 /** \brief I-gain. Overridden if EEPROM activated. */
 #define EXT1_PID_I                          HT3_PID_I
-
-/** \brief Dgain.  Overridden if EEPROM activated.*/
+/** \brief D-gain.  Overridden if EEPROM activated.*/
 #define EXT1_PID_D                          HT3_PID_D
 
 #endif // EXT1_HOTEND_TYPE == HOTEND_TYPE_V2
+
+
+#if EXT1_HOTEND_TYPE == HOTEND_TYPE_V3
+
+/** \brief The maximum value, I-gain can contribute to the output. Overridden if EEPROM activated. */
+#define EXT1_PID_INTEGRAL_DRIVE_MAX         HT4_PID_INTEGRAL_DRIVE_MAX
+/** \brief lower value for integral part. Overridden if EEPROM activated. */
+#define EXT1_PID_INTEGRAL_DRIVE_MIN         HT4_PID_INTEGRAL_DRIVE_MIN
+/** \brief P-gain. Overridden if EEPROM activated. */
+#define EXT1_PID_P                          HT4_PID_P
+/** \brief I-gain. Overridden if EEPROM activated. */
+#define EXT1_PID_I                          HT4_PID_I
+/** \brief D-gain. Overridden if EEPROM activated.*/
+#define EXT1_PID_D                          HT4_PID_D
+
+#endif // EXT1_HOTEND_TYPE == HOTEND_TYPE_V3
 
 
 /** \brief maximum time the heater is can be switched on. Max = 255.  Overridden if EEPROM activated. */
@@ -607,14 +571,14 @@ A good start is 30 lower then the optimal value. You need to leave room for cool
 // ##   Configuration of the 4. temperature sensor
 // ##########################################################################################
 
-/** \brief Analog pin of analog sensor to read temperature of heated bed.  */
+/** \brief Analog pin of analog sensor to read temperature of the RF2000's optional sensor port.  */
 #define RESERVE_ANALOG_TEMP_PIN             TEMP_3_PIN
-//Thermistor NTC 3950 100k Ohm
-#define RESERVE_ANALOG_SENSOR_TYPE          14 
+//14 passt für Thermistor NTC 3950 100k Ohm
+#define RESERVE_ANALOG_SENSOR_TYPE          14
 
 #define RESERVE_ANALOG_INPUTS               1
 #define RESERVE_SENSOR_INDEX                EXT0_ANALOG_INPUTS+EXT1_ANALOG_INPUTS+BED_ANALOG_INPUTS
-#define RESERVE_ANALOG_CHANNEL              ACCOMMA1 TEMP_3_PIN     
+#define RESERVE_ANALOG_CHANNEL              ACCOMMA1 TEMP_3_PIN
 
 
 // ##########################################################################################
@@ -628,7 +592,7 @@ Z-EndStop button crash RF1000: ~ >0.8f
 Z-EndStop optical button crash RF2000: ~ >1.3f
 Crash with Einhausung/Plexiglas backside RFx000: ~ >5.0 .. 6.0f
 Crash with backside metal RFx000: ~ >10.0..12.0f
-Overflow in Z-Matrix: >12.7f 
+Overflow in Z-Matrix: >12.7f
 */
 #define Z_ENDSTOP_DRIVE_OVER                 1.3f                              //mm
 #define Z_ENDSTOP_MAX_HYSTERESIS             0.1f                              //mm
@@ -698,18 +662,31 @@ can set it on for safety. */
 
 
 // ##########################################################################################
-// ##   miscellaneous configurations
+// ##   Motor Current & Stepper configurations
 // ##########################################################################################
 
 /** \brief Motor Current MAX setting */
-#define MOTOR_CURRENT_MAX                       {145,140,120,105,105}                             // Values 0-255 (126 = ~2A), order: driver 1 (x), driver 2 (y), driver 3 (z), driver 4 (extruder 1), driver 5 (extruder 2)  
+#define MOTOR_CURRENT_MAX                       {145,140,120,105,105}                             // Values 0-255 (126 = ~2A), order: driver 1 (x), driver 2 (y), driver 3 (z), driver 4 (extruder 1), driver 5 (extruder 2)
 
-/** \brief Motor Current settings at start: Tweak with menu for better silence <-> stability 
-// The RF2000 has one more stepper and the same 8A-24V power supply as RF1000. We think that this is the reason for lower stepper currents set by conrad renkforce - but dont know. 
+/** \brief Motor Current settings at start: Tweak with menu for better silence <-> stability
+// The RF2000 has one more stepper and the same 8A-24V power supply as RF1000. We think that this is the reason for lower stepper currents set by conrad renkforce - but dont know.
 // I increased MAX a little bit over stock settings, but decreased normal settings to fairly low power and noise. Take that into account when tuning in your steppers according your needs.
 */
 #define MOTOR_CURRENT_NORMAL                    {110,110,105,90,90}
 #define MOTOR_CURRENT_MIN                       EXTRUDER_CURRENT_PAUSED
+
+/** \brief Specifies whether the firmware shall wait a short time after turning on of the stepper motors - this shall avoid that the first steps are sent to the stepper before it is ready */
+#define STEPPER_ON_DELAY                    25                                                  // [ms]
+
+/** \brief If your stepper needs a longer high signal then given, you can add a delay here.
+The delay is realized as a simple loop wasting time, which is not available for other
+computations. So make it as low as possible. For the most common drivers no delay is needed, as the
+included delay is already enough. */
+#define STEPPER_HIGH_DELAY                  0
+
+// ##########################################################################################
+// ##   miscellaneous configurations
+// ##########################################################################################
 
 /** \brief number of analog input signals. Normally 1 for each temperature sensor */
 #define ANALOG_INPUTS (EXT0_ANALOG_INPUTS+EXT1_ANALOG_INPUTS+BED_ANALOG_INPUTS+RESERVE_ANALOG_INPUTS)
@@ -735,27 +712,44 @@ can set it on for safety. */
 #define XYZ_STEPPER_HIGH_DELAY              100                                                 // [us] speed for moveZ
 #define XYZ_STEPPER_LOW_DELAY               100                                                 // [us] speed for moveZ
 
+// ##########################################################################################
+// ##   Script configuration
+// ##########################################################################################
+
 /** \brief Automatic filament change, unmounting of the filament - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
-#define UNMOUNT_FILAMENT_SCRIPT_WITH_HEATING        "M3914 P4500"
+#define UNMOUNT_FILAMENT_SCRIPT_SOFT        "M3914 P4500"
+#define UNMOUNT_FILAMENT_SCRIPT_HARD        "M3914 P7000"
 
-/** \brief Automatic filament mount, mounting of the filament with heating. Stop @ 3500 digits */
-#define MOUNT_FILAMENT_SCRIPT_WITH_HEATING          "M3913 P3500 F3"
+/** \brief Automatic filament mount, mounting of the filament with heating. Stop @ XXXX digits */
+#define MOUNT_FILAMENT_SCRIPT_SOFT          "M3913 P3500 F3"
+#define MOUNT_FILAMENT_SCRIPT_HARD          "M3913 P20000 F6"
 
-/** \brief Automatic filament mount, mounting of the filament without heating. Stop @ 3500 digits */
-#define MOUNT_FILAMENT_SCRIPT_WITHOUT_HEATING       "M3913 P3500 F3"
+// ##########################################################################################
+// ##   PWM configuration
+// ##########################################################################################
 
-/** \brief speed of the PWM signal, 0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz, 3 = 122.06Hz, 4 = 244.12Hz */
+/** \brief Heaters: speed of the PWM signal,          0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz */
 #define HEATER_PWM_SPEED                    1
-#define COOLER_PWM_SPEED                    2 //Nibbels 28.09.17: original ist 3, aber 3 ist wegen nem Bug wie 2, nun stimmt der Code, daher hier 2: bleibt also gleich.
+
+/** \brief Extruder Coolers: speed of the PWM signal, 0 = 15.25Hz, 1 = 30.51Hz, 2 = 61.03Hz */
+#define COOLER_PWM_SPEED                    0
+
+// ##########################################################################################
+// ##   Part Fan configuration
+// ##########################################################################################
+
+/** \brief Part Fan:                                  1 = 15.3Hz,  2 = 7.62Hz, 3 = 5.1Hz, 4 = 3.82Hz,  5 = 3.06Hz,  6 = 2.55Hz, 7 = 2.1Hz */
+#define PART_FAN_DEFAULT_PWM_SPEED_DIVISOR  3
+/** \brief the following values can be used in order to fine-tune the operating range of the cooler: */
+#define PART_FAN_PWM_MIN                    1                                                     // 1 ... 254 equals 1 ... 99 %
+#define PART_FAN_PWM_MAX                    160                                                   // 1 ... 254 equals 1 ... 99 %
 
 /** Some fans won't start for low values, but would run if started with higher power at the beginning.
-This defines the full power duration before returning to set value. Time is in milliseconds */
-#define FAN_KICKSTART_TIME  100                                                                 // [ms]
-
-/** Defines the max. fan speed for M106 controlled fans. Normally 255 to use full range, but for
- 12V fans on 24V this might help preventing a defect. For all other fans there is a explicit maximum PWM value
- you can set, so this is not used for other fans! */
-#define MAX_FAN_PWM 255
+This defines the full power duration before returning to set value. Time is in milliseconds
+Only values which are a factor of 10ms or 0==OFF will work precisely */
+#define PART_FAN_KICKSTART_THRESHOLD          128                                                 // 0 ... 255 equals 0 ... 100 % (unscaled!)
+#define PART_FAN_KICKSTART_TIME_OFF_ON        400                                                 // [ms]
+#define PART_FAN_KICKSTART_TIME_BOOST         100                                                 // [ms]
 
 /** \brief use PDM instead of PWM for part fan */
 // --> set EEPROM value or change mode in printers menu
@@ -814,19 +808,6 @@ own weight, so this is nearly never needed. */
 #define Y_BACKLASH                          0
 
 // ##########################################################################################
-// ##   configuration of the stepper drivers
-// ##########################################################################################
-
-/** \brief Specifies whether the firmware shall wait a short time after turning on of the stepper motors - this shall avoid that the first steps are sent to the stepper before it is ready */
-#define STEPPER_ON_DELAY                    25                                                  // [ms]
-
-/** \brief If your stepper needs a longer high signal then given, you can add a delay here.
-The delay is realized as a simple loop wasting time, which is not available for other
-computations. So make it as low as possible. For the most common drivers no delay is needed, as the
-included delay is already enough. */
-#define STEPPER_HIGH_DELAY                  0
-
-// ##########################################################################################
 // ##   configuration of the speed vs. cpu usage
 // ##########################################################################################
 
@@ -836,7 +817,7 @@ This is like reducing your 1/16th microstepping to 1/8 or 1/4. It is much cheape
 additional stepper interrupts with all it's overhead. As a result you can go as high as
 40000Hz. STEP_DOUBLER_FREQUENCY should be in range 5000-12000 for RFx000 but 8000 is much for RF2000 (with ADVANCE?).
 
-STEP_DOUBLER_FREQUENCY can be changed in Menu-> Configuration->Stepper->DblFq: 
+STEP_DOUBLER_FREQUENCY can be changed in Menu-> Configuration->Stepper->DblFq:
 */
 #define STEP_DOUBLER_FREQUENCY              7000
 
@@ -869,7 +850,7 @@ if you are printing many very short segments at high speed.*/
 // ##   Acceleration settings
 // ##########################################################################################
 
-// RF2000: Tests haben gezeigt, dass x-y-acceleration unter 2000 oder unter 1500 das Teil ziemlich gut aussieht. 
+// RF2000: Tests haben gezeigt, dass x-y-acceleration unter 2000 oder unter 1500 das Teil ziemlich gut aussieht.
 
 /** \brief X, Y, Z max acceleration in mm/s^2 for printing moves or retracts. Make sure your printer can go that high!
  Overridden if EEPROM activated. */
@@ -1008,19 +989,16 @@ Above this value the z compensation will distribute the roughness of the surface
 #define HEAT_BED_SCAN_PRESSURE_TOLERANCE        15                                                                      // [digits]
 #define HEAT_BED_SCAN_PRESSURE_READ_DELAY_MS    15                                                                      // [ms]
 #define HEAT_BED_SCAN_DELAY                     1000                                                                    // [ms]
+#define HEAT_BED_SCAN_ALIGN_EXTRUDERS_ABORT_DELAY  (unsigned long)3600                                                  // [s]
 
-#if FEATURE_PRECISE_HEAT_BED_SCAN
-
-#define PRECISE_HEAT_BED_SCAN_WARMUP_DELAY          (uint32_t)600                                                  // [s]
-#define PRECISE_HEAT_BED_SCAN_CALIBRATION_DELAY     (uint32_t)600                                                  // [s]
+#define PRECISE_HEAT_BED_SCAN_WARMUP_DELAY          (uint32_t)600                                                       // [s]
+#define PRECISE_HEAT_BED_SCAN_CALIBRATION_DELAY     (uint32_t)600                                                       // [s]
 #define PRECISE_HEAT_BED_SCAN_BED_TEMP_PLA          60                                                                  // [°C]
 #define PRECISE_HEAT_BED_SCAN_BED_TEMP_ABS          100                                                                 // [°C]
 #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_SCAN    100                                                                 // [°C]
 #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_PLA     210                                                                 // [°C]
 #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS     240                                                                 // [°C]
 #define PRECISE_HEAT_BED_SCAN_EXTRUDER_TEMP_ABS     240                                                                 // [°C]
-
-#endif // FEATURE_PRECISE_HEAT_BED_SCAN
 
 // configuration for the head bet offset search (M3900 command)
 #define SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA   40                                                                  // [digits]
@@ -1032,7 +1010,7 @@ Above this value the z compensation will distribute the roughness of the surface
 #define SEARCH_HEAT_BED_OFFSET_SCAN_POSITION_RAND_MM    3
 // number of scanning iterations 2+
 #define SEARCH_HEAT_BED_OFFSET_SCAN_ITERATIONS          1
-    
+
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
 
@@ -1097,8 +1075,6 @@ Above this value the z compensation will distribute the roughness of the surface
 // ##   configuration of the pause functionality
 // ##########################################################################################
 
-#if FEATURE_PAUSE_PRINTING 
-
 /** \brief Configuration of the pause steps */
 //Nibbels: 29122017 dont know what happens if pause hits max endstop etc. ... might get shifted coordinates!
   //look here if you want to prevent clamp crashes while milling! choose your pause position right.
@@ -1114,8 +1090,6 @@ Above this value the z compensation will distribute the roughness of the surface
 #define PAUSE_Y_SPACING_MM                     5                                                                     // [mm]
 #define PAUSE_Z_MAX_SPACING_MM                15                                                                     // [mm]
 #define PAUSE_COOLDOWN                       100                                                // [°C] 0=Off and 1..255=Temp down while paused
-
-#endif // FEATURE_PAUSE_PRINTING
 
 
 // ##########################################################################################
