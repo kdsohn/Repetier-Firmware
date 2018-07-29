@@ -1,6 +1,9 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 
+V RF.01.42.04.Mod (2018-07-10)
+- replaced PID-Parameters for RF2000v2 with Parameters found by zero_k.
+
 V RF.01.42.03.Mod (2018-07-10)
 - some cleanup and merging of mandatory features
 
