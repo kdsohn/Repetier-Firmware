@@ -1,6 +1,9 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 
+V RF.01.42.05.Mod (2018-08-10)
+- SD-Card Mount is now "silent" at boottime to prevent the RF1000 print errors with missing sd-card. (RF1000 has no automount pin)
+
 V RF.01.42.04.Mod (2018-07-10)
 - replaced PID-Parameters for RF2000v2 with Parameters found by zero_k.
 

@@ -793,7 +793,7 @@ void Commands::executeGCode(GCode *com)
             }
             case 21: // M21 - init SD card
             {
-                sd.mount();
+                sd.mount(/*not silent mount*/);
                 break;
             }
             case 22: // M22 - release SD card
