@@ -338,6 +338,9 @@ public:
     FSTRINGVAR(tSDErrorCode)
 #endif // SDSUPPORT
 
+    FSTRINGVAR(tHeaterDecoupled)
+    FSTRINGVAR(tHeaterDecoupledWarning)
+
     FSTRINGVAR(tOutputObjectPrint)
     FSTRINGVAR(tOutputObjectMill)
     FSTRINGVAR(tUnmountFilamentSoft)

@@ -963,7 +963,7 @@ void UIDisplay::parse(char *txt,bool ram)
                     for(uint8_t controller = 0; controller < NUM_TEMPERATURE_LOOPS; controller++)
                     {
                         TemperatureController *act = tempController[controller];
-                        if(act->isDefect()){
+                        if(act->isSensorDefect() || act->isSensorDecoupled()){
                             if(addone) addStringP(Com::tSlash);
                             addone = true;
                             if(controller < NUM_EXTRUDER){
@@ -981,7 +981,23 @@ void UIDisplay::parse(char *txt,bool ram)
 
                 if(Printer::isAnyTempsensorDefect())
                 {
-                    addStringP(PSTR("def"));
+					uint8_t countDefect = 0;
+					uint8_t countDecoupled = 0;
+					for(uint8_t controller = 0; controller < NUM_TEMPERATURE_LOOPS; controller++)
+                    {
+                        TemperatureController *act = tempController[controller];
+                        if (act->isSensorDefect()) {
+							countDefect++;
+						}
+						if (act->isSensorDecoupled()) {
+							countDecoupled++;
+                        }
+                    }
+					if (countDecoupled > countDefect) {
+						addStringP(PSTR("dec"));
+					}else{
+						addStringP(PSTR("def"));
+					}
                     break;
                 }
 

@@ -1,6 +1,14 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 
+V RF.01.42.06.Mod (2018-08-11)
+- improved thermal safety:
+   Added the sensor-heater-decoupling test to the temperature manager.
+   This test is 3D-Printer standard today, but has not been the content of this firmware so far.
+- changed gcode description within Repetier.ino
+- suppress compilation error because of missing watchdog pin if no motherboard (/ printer type) is defined.
+- cleanup of comment annotation within configuration.h
+
 V RF.01.42.05.Mod (2018-08-10)
 - SD-Card Mount is now "silent" at boottime to prevent the RF1000 print errors with missing sd-card. (RF1000 has no automount pin)
 
