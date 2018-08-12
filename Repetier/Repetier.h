@@ -47,16 +47,6 @@
 #include "ui.h"
 #include "Communication.h"
 
-#if SDSUPPORT
-inline void memcopy2(void *dest,void *source) {
-    *((int16_t*)dest) = *((int16_t*)source);
-}
-inline void memcopy4(void *dest,void *source) {
-    *((int32_t*)dest) = *((int32_t*)source);
-}
-#include "src/SdFat/SdFat.h"
-#endif // SDSUPPORT
-
 #undef min
 #undef max
 
@@ -178,8 +168,14 @@ extern uint8_t fanKickstart;
 extern char                 tempLongFilename[LONG_FILENAME_LENGTH+1];
 extern char                 fullName[LONG_FILENAME_LENGTH*SD_MAX_FOLDER_DEPTH+SD_MAX_FOLDER_DEPTH+1];
 #if SDSUPPORT
-#define SHORT_FILENAME_LENGTH 14
 #include "src/SdFat/SdFat.h"
+inline void memcopy2(void *dest,void *source) {
+    *((int16_t*)dest) = *((int16_t*)source);
+}
+inline void memcopy4(void *dest,void *source) {
+    *((int32_t*)dest) = *((int32_t*)source);
+}
+#define SHORT_FILENAME_LENGTH 14
 
 enum LsAction {LS_SerialPrint,LS_Count,LS_GetFilename};
 
@@ -197,11 +193,11 @@ public:
     bool savetosd;
 
     SDCard();
-    void initsd();
+    void initsd(bool silent = false);
     void writeCommand(GCode *code);
-    bool selectFileByName(const char *filename,bool silent=false);
-    bool selectFileByPos(uint16_t filePos, bool silent=false);
-    void mount();
+    bool selectFileByName(const char *filename, bool silent = false);
+    bool selectFileByPos(uint16_t filePos, bool silent = false);
+    void mount(bool silent = false);
     void unmount();
     void startPrint();
     void pausePrint(bool intern = false);

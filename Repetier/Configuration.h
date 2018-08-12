@@ -207,11 +207,11 @@ WARNING: Servos can draw a considerable amount of current. Make sure your system
 /** \brief lower value for integral part. */
 #define HT4_PID_INTEGRAL_DRIVE_MIN          30
 /** \brief P-gain. */
-#define HT4_PID_P                           98.0
+#define HT4_PID_P                           17.11
 /** \brief I-gain. */
-#define HT4_PID_I                           0.63
+#define HT4_PID_I                           2.05
 /** \brief Dgain. */
-#define HT4_PID_D                           132.0
+#define HT4_PID_D                           35.75
 
 // ##########################################################################################
 // ##   common configuration

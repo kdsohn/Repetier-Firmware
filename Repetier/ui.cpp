@@ -5165,7 +5165,7 @@ void UIDisplay::executeAction(int action)
             }
             case UI_ACTION_SD_MOUNT:
             {
-                sd.mount();
+                sd.mount(/*not silent mount*/);
                 break;
             }
 #endif // SDSUPPORT
