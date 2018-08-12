@@ -870,7 +870,10 @@ void Commands::executeGCode(GCode *com)
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
 #if NUM_EXTRUDER>0
-                    if(reportTempsensorError()) break;
+                    if(Printer::isAnyTempsensorDefect()){
+						reportTempsensorAndHeaterErrors();
+						break;
+					}
                     previousMillisCmd = HAL::timeInMilliseconds();
                     if(Printer::debugDryrun()) break;
 
@@ -898,7 +901,10 @@ void Commands::executeGCode(GCode *com)
             {
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
-                    if(reportTempsensorError()) break;
+                    if(Printer::isAnyTempsensorDefect()){
+						reportTempsensorAndHeaterErrors();
+						break;
+					}
                     previousMillisCmd = HAL::timeInMilliseconds();
                     if(Printer::debugDryrun()) break;
                     if (com->hasS()) Extruder::setHeatedBedTemperature(com->S,com->hasF() && com->F>0);
@@ -910,7 +916,10 @@ void Commands::executeGCode(GCode *com)
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
 #if NUM_EXTRUDER>0
-                    if(reportTempsensorError()) break;
+                    if(Printer::isAnyTempsensorDefect()){
+						reportTempsensorAndHeaterErrors();
+						break;
+					}
                     previousMillisCmd = HAL::timeInMilliseconds();
                     if(Printer::debugDryrun()) break;
                     Printer::waitMove = 1; //brauche ich das, wenn ich sowieso warte bis der movecache leer ist?
@@ -1005,6 +1014,10 @@ void Commands::executeGCode(GCode *com)
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
 #if HAVE_HEATED_BED
+                    if(Printer::isAnyTempsensorDefect()){
+						reportTempsensorAndHeaterErrors();
+						break;
+					}
                     if(Printer::debugDryrun()) break;
                     Printer::waitMove = 1; //brauche ich das, wenn ich sowieso warte bis der movecache leer ist?
                     g_uStartOfIdle = 0; //M190
@@ -1448,6 +1461,41 @@ void Commands::executeGCode(GCode *com)
                 }
                 break;
             }
+			case 218:
+			{
+				// New MCode with https://github.com/repetier/Repetier-Firmware/commit/e5db16080d0c98776ae82f543e2bc6ef643a63c7
+				// I added this MCode for compatibility-Reasons with Repetier and Marlin.
+				
+				int extId = 0;
+				if (com->hasT()) {
+					extId = com->T;
+				}
+				if (extId >= 0 && extId < NUM_EXTRUDER) {
+					if (com->hasX()) {
+						extruder[extId].xOffset = com->X * Printer::axisStepsPerMM[X_AXIS];
+					}
+					if (com->hasY()) {
+						 extruder[extId].yOffset = com->Y * Printer::axisStepsPerMM[Y_AXIS];
+					}
+					// Special RFx000-Constraint: This Mod doesnt support Extruder-Z-Offset here because it might be mixed up with Bed Z-Offset.
+					// Change Extruder Z-Offset via Menu. You have to activate UI_SHOW_TIPDOWN_IN_ZCONFIGURATION to see the menu entry to do so for the right extruder.
+					// Or change the Extruder Z-Offset via EEPROM.
+					/*if (com->hasZ() && com->Z < 0 && com->Z > -2) {
+						extruder[extId].zOffset = com->Z * Printer::axisStepsPerMM[Z_AXIS];
+					} else if (com->hasZ()) {
+						Com::printFLN(PSTR("M218 Error Z limited to -2..0"));
+					}*/	
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+					if(com->hasS() && com->S > 0) {
+						if (com->hasX()) HAL::eprSetFloat(EEPROM::getExtruderOffset(extId)+EPR_EXTRUDER_X_OFFSET, com->X);
+						if (com->hasY()) HAL::eprSetFloat(EEPROM::getExtruderOffset(extId)+EPR_EXTRUDER_Y_OFFSET, com->Y);
+						//if (com->hasZ() && com->Z < 0 && com->Z > -2) HAL::eprSetFloat(EEPROM::getExtruderOffset(extId)+EPR_EXTRUDER_Z_OFFSET, com->Z);
+						EEPROM::updateChecksum();
+					}
+#endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
+				}
+				break;
+			}
             case 220:   // M220 - S<Feedrate multiplier in percent>
             {
                 changeFeedrateMultiply(com->getS(100));

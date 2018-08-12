@@ -105,7 +105,7 @@ void Extruder::manageTemperatures()
                     Printer::setSomeTempsensorDefect(true);
                     Printer::flag2 |= PRINTER_FLAG2_GOT_TEMPS; //we are not waiting for first temp measurements anymore.
 
-                    reportTempsensorError();
+                    reportTempsensorAndHeaterErrors();
 					requestUSBSenderStopDisconnect();
 
                     showError( (void*)ui_text_temperature_manager, (void*)ui_text_sensor_error );
@@ -135,12 +135,16 @@ void Extruder::manageTemperatures()
                         act->setSensorDecoupled(true);
                         if (!Printer::isAnyTempsensorDefect()) {
                             Printer::setSomeTempsensorDefect(true);
-							UI_ERROR_P(Com::tHeaterDecoupled);
+							
 							Com::printErrorFLN(Com::tHeaterDecoupledWarning);
 							Com::printF(PSTR("Error:Temp. raised to slow. Rise = "), act->currentTemperatureC - act->lastDecoupleTemp);
 							Com::printF(PSTR(" after "), (int32_t)(time - act->lastDecoupleTest));
 							Com::printFLN(PSTR(" ms"));
+							
+							reportTempsensorAndHeaterErrors();
 							requestUSBSenderStopDisconnect();
+							
+							showError( (void*)ui_text_temperature_manager, (void*)ui_text_heater_error );
                         }
                     }
                 } else {
@@ -157,12 +161,16 @@ void Extruder::manageTemperatures()
                         act->setSensorDecoupled(true);
                         if (!Printer::isAnyTempsensorDefect()) {
                             Printer::setSomeTempsensorDefect(true);
-							UI_ERROR_P(Com::tHeaterDecoupled);
+							
 							Com::printErrorFLN(Com::tHeaterDecoupledWarning);
 							Com::printF(PSTR("Error:Could not hold temperature "), act->lastDecoupleTemp);
 							Com::printF(PSTR(" measured "), act->currentTemperatureC);
-							Com::printFLN(PSTR(" deg. C"));
+							Com::printFLN(Com::tC);
+							
+							reportTempsensorAndHeaterErrors();
 							requestUSBSenderStopDisconnect();
+							
+							showError( (void*)ui_text_temperature_manager, (void*)ui_text_heater_error );
                         }
                     }
                 } else {
@@ -1285,35 +1293,27 @@ void requestUSBSenderStopDisconnect() {
 	Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
 }
 
-bool reportTempsensorError()
+void reportTempsensorAndHeaterErrors()
 {
-    if(!Printer::isAnyTempsensorDefect()) return false;
+	//Write full status list to console output
+	for(uint8_t i=0; i<NUM_TEMPERATURE_LOOPS; i++)
+	{
+		if(i==NUM_EXTRUDER) Com::printF(Com::tHeatedBed);
+		else Com::printF(Com::tExtruderSpace,i);
 
-    for(uint8_t i=0; i<NUM_TEMPERATURE_LOOPS; i++)
-    {
-        int temp = tempController[i]->currentTemperatureC;
-
-        if(i==NUM_EXTRUDER) Com::printF(Com::tHeatedBed);
-        else Com::printF(Com::tExtruderSpace,i);
-
-        if (temp<MIN_DEFECT_TEMPERATURE || temp>MAX_DEFECT_TEMPERATURE) {
-            Com::printFLN(Com::tTempSensorDefect);
-        } else {
-            Com::printFLN(Com::tTempSensorWorking);
-        }
-    }
-
-#if FEATURE_MILLING_MODE
-    if( Printer::operatingMode == OPERATING_MODE_PRINT )
-    {
-#endif // FEATURE_MILLING_MODE
-        Com::printErrorFLN(Com::tDryModeUntilRestart);
-#if FEATURE_MILLING_MODE
-    }
-#endif // FEATURE_MILLING_MODE
-
-    return true;
-} // reportTempsensorError
+		if (tempController[i]->isSensorDefect()) {
+			Com::printF(Com::tTempSensorDefect);
+		}
+		if (tempController[i]->isSensorDecoupled()) {
+			Com::printF(Com::tTempHeaterDefect);
+		}
+		if (!tempController[i]->isSensorDecoupled() && !tempController[i]->isSensorDefect()) {
+			Com::printF(Com::tTempSensorWorking);
+		}
+		Com::println();
+	}
+	Com::printErrorFLN(Com::tDryModeUntilRestart);
+} // reportTempsensorAndHeaterErrors
 
 
 Extruder *Extruder::current;

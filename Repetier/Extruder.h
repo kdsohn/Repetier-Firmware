@@ -25,7 +25,7 @@
 
 // Updates the temperature of all extruders and heated bed if it's time.
 // Toggels the heater power if necessary.
-extern bool     reportTempsensorError(); ///< Report defect sensors
+extern void     reportTempsensorAndHeaterErrors(); ///< Report defect sensors
 extern uint8_t  manageMonitor;
 extern void     requestUSBSenderStopDisconnect();
 

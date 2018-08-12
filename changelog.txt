@@ -1,6 +1,11 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 
+V RF.01.42.07.Mod (2018-08-12)
+- changed SD-Card communication Mhz to a more reasonable correct value which is not "just limited" by ATMega speed.
+- partly support for Repetier/Marlins M218 to change Extruder-Offsets by Gcode (only for compatibility reasons, repetier just added it)
+- sensor-heater-decoupling-test got better output- and UI-information messages
+
 V RF.01.42.06.Mod (2018-08-11)
 - improved thermal safety:
    Added the sensor-heater-decoupling test to the temperature manager.

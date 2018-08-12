@@ -171,6 +171,7 @@ FSTRINGVALUE(Com::tMTEMPColon,"MTEMP:")
 FSTRINGVALUE(Com::tHeatedBed,"heated bed")
 FSTRINGVALUE(Com::tExtruderSpace,"extruder ")
 FSTRINGVALUE(Com::tTempSensorDefect,": temp sensor defect")
+FSTRINGVALUE(Com::tTempHeaterDefect,": heater decoupled")
 FSTRINGVALUE(Com::tTempSensorWorking,": working")
 FSTRINGVALUE(Com::tDryModeUntilRestart,"Printer set into dry run mode until restart!")
 
@@ -339,7 +340,6 @@ FSTRINGVALUE(Com::tCreationFailed,"Creation failed")
 FSTRINGVALUE(Com::tSDErrorCode,"SD errorCode:")
 #endif // SDSUPPORT
 
-FSTRINGVALUE(Com::tHeaterDecoupled, "Heater decoupled")
 FSTRINGVALUE(Com::tHeaterDecoupledWarning, "One heater seems decoupled from thermistor - disabling all for safety!")
 
 FSTRINGVALUE(Com::tOutputObjectPrint,OUTPUT_OBJECT_SCRIPT_PRINT)

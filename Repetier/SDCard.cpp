@@ -84,10 +84,10 @@ void SDCard::initsd(bool silent)
 
     //fix in https://github.com/repetier/Repetier-Firmware/commit/d4e396d0f4d1b81cc4d388360be461f11ceb9edd ??
     HAL::delayMilliseconds(50);       // wait for stabilization of contacts, bootup ...
-    fat.begin(SDSS, SD_SCK_MHZ(50));  // dummy init of SD_CARD
+    fat.begin(SDSS, SD_SCK_MHZ(4));  // dummy init of SD_CARD
     HAL::delayMilliseconds(50);       // wait for init end
 
-    if(!fat.begin(SDSS, SD_SCK_MHZ(50))) {
+    if(!fat.begin(SDSS, SD_SCK_MHZ(4))) {
 		if (!silent) {
 			Com::printFLN(Com::tSDInitFail);
 			sdmode = 100; // prevent automount loop!

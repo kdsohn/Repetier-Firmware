@@ -58,6 +58,7 @@ FSTRINGVALUE( ui_text_max_reached, UI_TEXT_MAX_REACHED )
 FSTRINGVALUE( ui_text_temperature_wrong, UI_TEXT_TEMPERATURE_WRONG )
 FSTRINGVALUE( ui_text_timeout, UI_TEXT_TIMEOUT )
 FSTRINGVALUE( ui_text_sensor_error, UI_TEXT_SENSOR_ERROR )
+FSTRINGVALUE( ui_text_heater_error, UI_TEXT_HEATER_ERROR )
 FSTRINGVALUE( ui_text_heat_bed_zoffset_search_status, UI_TEXT_HEAT_BED_ZOFFSET_SEARCH_STATUS )
 FSTRINGVALUE( ui_text_heat_bed_zoffset_fix_z1, UI_TEXT_HEAT_BED_ZOFFSET_FIX_Z1 )
 FSTRINGVALUE( ui_text_question, UI_TEXT_UNKNOWN )
@@ -9148,9 +9149,17 @@ void processCommand( GCode* pCommand )
                         case 5:
                         {
                             // simulate a temp sensor error
-                            Com::printFLN( PSTR( "M3200: simulating a defect temperature sensor" ) );
+                            Com::printFLN( PSTR( "M3200: simulating defect sensor" ) );
+							//ext 0 soll defekt aussehen
+							TemperatureController *act0 = tempController[0];
+							act0->setSensorDefect(true);
+							//ext 1/bett soll decoupled aussehen
+							TemperatureController *act1 = tempController[1];
+							act1->setSensorDecoupled(true);
+							//generelle defekt-einstufung
                             Printer::setSomeTempsensorDefect(true);
-                            reportTempsensorError();
+							//fehlermeldung ausgeben
+                            reportTempsensorAndHeaterErrors();
                             break;
                         }
                         case 6:
