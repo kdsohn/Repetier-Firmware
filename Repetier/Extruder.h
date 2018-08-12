@@ -25,11 +25,15 @@
 
 // Updates the temperature of all extruders and heated bed if it's time.
 // Toggels the heater power if necessary.
-extern bool     reportTempsensorError(); ///< Report defect sensors
+extern void     reportTempsensorAndHeaterErrors(); ///< Report defect sensors
 extern uint8_t  manageMonitor;
+extern void     requestUSBSenderStopDisconnect();
 
-#define TEMPERATURE_CONTROLLER_FLAG_ALARM  1
-#define TEMPERATURE_CONTROLLER_FLAG_DEFECT 2
+#define TEMPERATURE_CONTROLLER_FLAG_ALARM         1
+#define TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_FULL 2    ///< Full heating enabled
+#define TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_HOLD 4    ///< Holding target temperature
+#define TEMPERATURE_CONTROLLER_FLAG_SENSDEFECT    8    ///< Indicating sensor defect
+#define TEMPERATURE_CONTROLLER_FLAG_SENSDECOUPLED 16   ///< Indicating sensor decoupling
 /** TemperatureController manages one heater-temperature sensore loop. You can have up to
 4 loops allowing pid for up to 3 extruder and the heated bed.
 
@@ -63,16 +67,97 @@ public:
     float       tempArray[16];
 
     uint8_t     flags;
+    
+    millis_t    lastDecoupleTest;    ///< Last time of decoupling sensor-heater test
+    float       lastDecoupleTemp;    ///< Temperature on last test
+    millis_t    decoupleTestPeriod;  ///< Time between setting and testing decoupling.
 
     void setTargetTemperature(float target, float offset);
     void updateCurrentTemperature();
     void updateTempControlVars();
-    inline bool isAlarm() {return flags & TEMPERATURE_CONTROLLER_FLAG_ALARM;}
-    inline void setAlarm(bool on) {if(on) flags |= TEMPERATURE_CONTROLLER_FLAG_ALARM; else flags &= ~TEMPERATURE_CONTROLLER_FLAG_ALARM;}
-    inline bool isDefect() {return flags & TEMPERATURE_CONTROLLER_FLAG_DEFECT;}
-    inline void setDefect(bool on) {if(on) flags |= TEMPERATURE_CONTROLLER_FLAG_DEFECT; else flags &= ~TEMPERATURE_CONTROLLER_FLAG_DEFECT;}
     void waitForTargetTemperature(uint8_t plus_temp_tolerance = 0);
     void autotunePID(float temp, uint8_t controllerId, int maxCycles, bool storeResult, int method);
+
+    inline bool isAlarm() {
+        return flags & TEMPERATURE_CONTROLLER_FLAG_ALARM;
+    }
+    inline void setAlarm(bool on) {
+        if(on) flags |= TEMPERATURE_CONTROLLER_FLAG_ALARM; 
+        else flags &= ~TEMPERATURE_CONTROLLER_FLAG_ALARM;
+    }	
+	
+	//Code für den Decouple-Test der Heizkreisläufe:
+    inline bool isDecoupleFull()
+    {
+        return flags & TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_FULL;
+    }
+    inline void setDecoupleFull()
+    {
+        flags &= ~(TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_HOLD); //hold aus
+        flags |= TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_FULL;    //full an
+    }
+    inline bool isDecoupleHold()
+    {
+        return flags & TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_HOLD;
+    }
+    inline void setDecoupleHold()
+    {
+        flags &= ~(TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_FULL); //full aus
+        flags |= TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_HOLD;    //hold an
+    }
+    inline void stopDecouple()
+    {
+        flags &= ~(TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_FULL | TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_HOLD);
+    }
+
+	//Phase 1: wir stehen auf einer Stufe und merken uns die Zeit und die Temperatur. Das wird später mit der neuen Temperatur verglichen und dann muss die Temperatur gestiegen sein.
+    inline void startFullDecoupleTest(millis_t &t)
+    {
+        if(isDecoupleFull()) return;
+        lastDecoupleTest = t;
+        lastDecoupleTemp = currentTemperatureC;
+		//switch active test method to "temperature has to rise":
+		setDecoupleFull();
+    }
+	
+	//Phase 2: Wir sind voll aufgeheizt und prüfen ob die Temperatur ohne Änderung der Zieltemperatur abdriftet.
+	//         Schlägt an, wenn die Heizkartusche kaputt geht oder rausrutscht. Oder auch wenn der Sensorwert willkürlich wandert.
+	//         Ist der Sensor ausserhalb der bekannten MIN-MAX Limits wird das auch erkannt.
+	//
+	//         ???: 
+	//         Der Regler steuert, wenn der Fehler anfängt, soweit es geht noch nach. Driftet der Sensorwert wegen schleichendem Sensordefekt !langsam! nach unten, heizt der PID-Regler um so mehr.
+	//         Solange der PID-Regler den Drift kompensieren kann und das System glaubt, die Temperaturen sind im Rahmen von MIN-MAX könnte der Heizblock heißer sein als gewollt!
+	//         Allerdings sollte der Thermistor > 300°C schnell das Zeitliche segnen völligen Mist anzeigen und dann greifen die Checks wieder.
+    inline void startHoldDecoupleTest(millis_t &t)
+    {
+		//nur starten, wenn es nicht schon läuft.
+        if(isDecoupleHold()) return;
+		//nicht starten, wenn die temperatur "noch" ausserhalb der decoupling varianz liegt. kann z.b. sein, dass die pid-control-range 30 grad ist und das hier 20.
+        if(fabs(currentTemperatureC - targetTemperatureC) + 1 > DECOUPLING_TEST_MAX_HOLD_VARIANCE) return;
+		//beim ersten start setzt man den timer auf "jetzt". Es dauert also bis zum ersten check nicht 1 sekunde sondern so wie die config eingestellt ist.
+		//erst danach macht der code jede sekunde den "Wackelcheck".
+        lastDecoupleTest = t;
+        lastDecoupleTemp = targetTemperatureC;
+		//switch active test method to "temperature has to stay where it was":
+		setDecoupleHold();
+    }
+	
+	//4 Funktionen um die Sensorstatus Flags in den einzelnen TemperatureController zu schreiben.
+    inline void setSensorDefect(bool on) {
+        if(on) flags |= TEMPERATURE_CONTROLLER_FLAG_SENSDEFECT;
+        else flags &= ~TEMPERATURE_CONTROLLER_FLAG_SENSDEFECT;
+    }
+    inline bool isSensorDefect() {
+        return flags & TEMPERATURE_CONTROLLER_FLAG_SENSDEFECT;
+    }
+    inline void setSensorDecoupled(bool on) {
+        if(on) flags |= TEMPERATURE_CONTROLLER_FLAG_SENSDECOUPLED;
+        else flags &= ~TEMPERATURE_CONTROLLER_FLAG_SENSDECOUPLED;
+    }
+    inline bool isSensorDecoupled()
+    {
+        return flags & TEMPERATURE_CONTROLLER_FLAG_SENSDECOUPLED;
+    }
 }; // TemperatureController
 
 

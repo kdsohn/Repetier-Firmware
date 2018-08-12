@@ -536,6 +536,7 @@ extern const char   ui_text_max_reached[]           PROGMEM;
 extern const char   ui_text_temperature_wrong[]     PROGMEM;
 extern const char   ui_text_timeout[]               PROGMEM;
 extern const char   ui_text_sensor_error[]          PROGMEM;
+extern const char   ui_text_heater_error[]          PROGMEM;
 extern const char   ui_text_saving_success[]        PROGMEM;
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION

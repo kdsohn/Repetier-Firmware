@@ -93,35 +93,94 @@ void Extruder::manageTemperatures()
                     extruder[controller].coolerPWM = extruder[controller].coolerSpeed;
         }
 
-        if(!act->isDefect() && (act->currentTemperatureC < MIN_DEFECT_TEMPERATURE || act->currentTemperatureC > MAX_DEFECT_TEMPERATURE))   // no temp sensor or short in sensor, disable heater
+        if(!act->isSensorDefect() && (act->currentTemperatureC < MIN_DEFECT_TEMPERATURE || act->currentTemperatureC > MAX_DEFECT_TEMPERATURE))   // no temp sensor or short in sensor, disable heater
         {
             extruderTempErrors++; //pro sensor. max +10+1+1+1.... bleibt also < 255
             errorDetected = 1;
 
             if(extruderTempErrors > 10)   // Ignore short temporary failures
             {
-                act->setDefect(true);
+                act->setSensorDefect(true);
                 if(!Printer::isAnyTempsensorDefect()){
                     Printer::setSomeTempsensorDefect(true);
                     Printer::flag2 |= PRINTER_FLAG2_GOT_TEMPS; //we are not waiting for first temp measurements anymore.
 
-                    reportTempsensorError();
-                    Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetier-host / server to stop printing
-                    Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
+                    reportTempsensorAndHeaterErrors();
+					requestUSBSenderStopDisconnect();
 
                     showError( (void*)ui_text_temperature_manager, (void*)ui_text_sensor_error );
                 }
             }
         }
         if(Printer::isAnyTempsensorDefect()) continue;
+		
         uint8_t on = act->currentTemperatureC >= act->targetTemperatureC ? LOW : HIGH;
-
         if(!on && act->isAlarm())
         {
             beep(50*(controller+1),3);
             act->setAlarm(false);  //reset alarm
         }
 
+        
+        millis_t time = HAL::timeInMilliseconds(); // compare time for decouple tests
+        // Run test if heater and sensor are decoupled
+        bool decoupleTestRequired = !errorDetected && act->decoupleTestPeriod > 0 && (time - act->lastDecoupleTest) > act->decoupleTestPeriod; // time enough for temperature change?
+        if (decoupleTestRequired) { // Only test when powered
+            if (act->isDecoupleFull()) { // Phase 1: Heating fully until target range is reached
+                if (act->currentTemperatureC - act->lastDecoupleTemp < DECOUPLING_TEST_MIN_TEMP_RISE) { // failed test
+                    extruderTempErrors++;
+                    errorDetected = 1;
+
+                    if (extruderTempErrors > 10) { // Ignore short temporary failures
+                        act->setSensorDecoupled(true);
+                        if (!Printer::isAnyTempsensorDefect()) {
+                            Printer::setSomeTempsensorDefect(true);
+							
+							Com::printErrorFLN(Com::tHeaterDecoupledWarning);
+							Com::printF(PSTR("Error:Temp. raised to slow. Rise = "), act->currentTemperatureC - act->lastDecoupleTemp);
+							Com::printF(PSTR(" after "), (int32_t)(time - act->lastDecoupleTest));
+							Com::printFLN(PSTR(" ms"));
+							
+							reportTempsensorAndHeaterErrors();
+							requestUSBSenderStopDisconnect();
+							
+							showError( (void*)ui_text_temperature_manager, (void*)ui_text_heater_error );
+                        }
+                    }
+                } else {
+					//wir ziehen hier die zeit und die temperatur hoch: starten einen neuen test auf einer neuen stufe.
+                    act->stopDecouple(); //without stop no clean start.
+                    act->startFullDecoupleTest(time); //set new time and current temp
+                }
+            } else if (act->isDecoupleHold()) { // Phase 2: Holding temperature inside a target corridor
+                if (fabs(act->currentTemperatureC - act->targetTemperatureC) > DECOUPLING_TEST_MAX_HOLD_VARIANCE) { // failed test
+                    extruderTempErrors++;
+                    errorDetected = 1;
+
+                    if (extruderTempErrors > 10) { // Ignore short temporary failures
+                        act->setSensorDecoupled(true);
+                        if (!Printer::isAnyTempsensorDefect()) {
+                            Printer::setSomeTempsensorDefect(true);
+							
+							Com::printErrorFLN(Com::tHeaterDecoupledWarning);
+							Com::printF(PSTR("Error:Could not hold temperature "), act->lastDecoupleTemp);
+							Com::printF(PSTR(" measured "), act->currentTemperatureC);
+							Com::printFLN(Com::tC);
+							
+							reportTempsensorAndHeaterErrors();
+							requestUSBSenderStopDisconnect();
+							
+							showError( (void*)ui_text_temperature_manager, (void*)ui_text_heater_error );
+                        }
+                    }
+                } else {
+					//this test ignores decoupleTestPeriod in configuration: "- act->decoupleTestPeriod" and runs every second. But not at first hold-start-time.
+                    act->lastDecoupleTest = time - act->decoupleTestPeriod + 1000; // once running test every second
+                }
+            }
+        }
+        if (Printer::isAnyTempsensorDefect()) continue;
+        
         act->tempArray[act->tempPointer++] = act->currentTemperatureC; //ist in jedem fall voll mit gültigen temperaturen, wenn der regelbereich erreicht wird.
         //act->tempPointer &= 3; // 3 = springe von 4 = 100b auf 0 zurück,    wenn 3. -> 1/300ms  -> 3.33 = reciproke     !!tempArray needs [4] ...
         //act->tempPointer &= 7; // 7 = springe von 8 = 1000b auf 0 zurück,   wenn 7. -> 1/700ms  -> 1.42 = reciproke     !!tempArray needs [8] ...
@@ -130,25 +189,32 @@ void Extruder::manageTemperatures()
         uint8_t output;
         float error = act->targetTemperatureC - act->currentTemperatureC;
 
-        if( act->targetTemperatureC < 20.0f )
+        if ( act->targetTemperatureC < 20.0f || act->targetTemperatureC < MAX_ROOM_TEMPERATURE )
         {
+			//targetTemperature is off
+			//we never set heating on if the commanded temperature might be lower than max room temperature.
             output = 0; // off is off, even if damping term wants a heat peak!
+            act->stopDecouple();
             act->tempIState = 0;
         }
-        else if( error > PID_CONTROL_RANGE )
+        else if ( error > PID_CONTROL_RANGE )
         {
+			//heating up to targetTemperature
             output = act->pidMax;
+            act->startFullDecoupleTest(time);
             act->tempIState = 0;
         }
-        else if( error < -PID_CONTROL_RANGE )
+        else if ( error < -PID_CONTROL_RANGE )
         {
+			//cooling down to targetTemperature
             output = 0;
             act->tempIState = 0;
         }
         else
         {
+            act->startHoldDecoupleTest(time);
+			
             float pidTerm = 0;
-
             float pgain = act->pidPGain * error;
             pidTerm += pgain;
             act->tempIState = constrain(act->tempIState + error, act->tempIStateLimitMin, act->tempIStateLimitMax);
@@ -166,28 +232,29 @@ void Extruder::manageTemperatures()
         pwm_pos[act->pwmIndex] = output;
 
 #ifdef EXTRUDER_MAX_TEMP
-        if(act->currentTemperatureC>EXTRUDER_MAX_TEMP) // Force heater off if EXTRUDER_MAX_TEMP is exceeded
+        if (act->currentTemperatureC>EXTRUDER_MAX_TEMP) // Force heater off if EXTRUDER_MAX_TEMP is exceeded
             pwm_pos[act->pwmIndex] = 0;
 #endif // EXTRUDER_MAX_TEMP
 
 #if LED_PIN>-1
-        if(act == &Extruder::current->tempControl)
+        if (act == &Extruder::current->tempControl)
             WRITE(LED_PIN,on);
 #endif // LED_PIN>-1
-    }
+    } // for controller
 
-    if(errorDetected == 0 && extruderTempErrors>0)
+    if (errorDetected == 0 && extruderTempErrors>0)
         extruderTempErrors--;
 
-    if(Printer::isAnyTempsensorDefect())
+    if (Printer::isAnyTempsensorDefect())
     {
-        for(uint8_t i=0; i<NUM_TEMPERATURE_LOOPS; i++)
+        for (uint8_t i = 0; i < NUM_TEMPERATURE_LOOPS; i++)
         {
+            tempController[i]->targetTemperatureC = 0;
             pwm_pos[tempController[i]->pwmIndex] = 0;
         }
         Printer::debugLevel |= 8; // Go into dry mode
-    }else{
-        if(!errorDetected) Printer::flag2 |= PRINTER_FLAG2_GOT_TEMPS; //we are not waiting for first temp measurements anymore.
+    } else {
+        if (!errorDetected) Printer::flag2 |= PRINTER_FLAG2_GOT_TEMPS; //we are not waiting for first temp measurements anymore.
     }
 
 } // manageTemperatures
@@ -975,6 +1042,7 @@ void TemperatureController::updateCurrentTemperature()
 void TemperatureController::setTargetTemperature(float target, float offset)
 {
     targetTemperatureC = target;
+    stopDecouple();
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
     offsetC =  offset; //this->offsetC
 #else
@@ -1219,47 +1287,33 @@ see also: http://www.mstarlabs.com/control/znrule.html
     g_uStartOfIdle = HAL::timeInMilliseconds(); //end autotunePID with error
 } // autotunePID
 
-bool reportTempsensorError()
+	
+void requestUSBSenderStopDisconnect() {
+	Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetier-host / server to stop printing
+	Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
+}
+
+void reportTempsensorAndHeaterErrors()
 {
-    if(!Printer::isAnyTempsensorDefect()) return false;
+	//Write full status list to console output
+	for(uint8_t i=0; i<NUM_TEMPERATURE_LOOPS; i++)
+	{
+		if(i==NUM_EXTRUDER) Com::printF(Com::tHeatedBed);
+		else Com::printF(Com::tExtruderSpace,i);
 
-    for(uint8_t i=0; i<NUM_TEMPERATURE_LOOPS; i++)
-    {
-        int temp = tempController[i]->currentTemperatureC;
-
-        if( Printer::debugInfo() )
-        {
-            if(i==NUM_EXTRUDER) Com::printF(Com::tHeatedBed);
-            else Com::printF(Com::tExtruderSpace,i);
-        }
-
-        if(temp<MIN_DEFECT_TEMPERATURE || temp>MAX_DEFECT_TEMPERATURE)
-        {
-            if( Printer::debugErrors() )
-            {
-                Com::printFLN(Com::tTempSensorDefect);
-            }
-        }
-        else if( Printer::debugInfo() )
-        {
-            Com::printFLN(Com::tTempSensorWorking);
-        }
-    }
-
-#if FEATURE_MILLING_MODE
-    if( Printer::operatingMode == OPERATING_MODE_PRINT )
-    {
-#endif // FEATURE_MILLING_MODE
-        if( Printer::debugErrors() )
-        {
-            Com::printErrorFLN(Com::tDryModeUntilRestart);
-        }
-#if FEATURE_MILLING_MODE
-    }
-#endif // FEATURE_MILLING_MODE
-
-    return true;
-} // reportTempsensorError
+		if (tempController[i]->isSensorDefect()) {
+			Com::printF(Com::tTempSensorDefect);
+		}
+		if (tempController[i]->isSensorDecoupled()) {
+			Com::printF(Com::tTempHeaterDefect);
+		}
+		if (!tempController[i]->isSensorDecoupled() && !tempController[i]->isSensorDefect()) {
+			Com::printF(Com::tTempSensorWorking);
+		}
+		Com::println();
+	}
+	Com::printErrorFLN(Com::tDryModeUntilRestart);
+} // reportTempsensorAndHeaterErrors
 
 
 Extruder *Extruder::current;
@@ -1296,8 +1350,10 @@ Extruder extruder[NUM_EXTRUDER] =
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
             0,
             0,EXT0_PID_INTEGRAL_DRIVE_MAX,EXT0_PID_INTEGRAL_DRIVE_MIN,EXT0_PID_P,EXT0_PID_I,EXT0_PID_D,EXT0_PID_MAX,0,0,
-            0,{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0}
-        ,0}
+            0,{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+            0,
+            0, 0, EXT0_DECOUPLE_TEST_PERIOD
+        }
         ,ext0_select_cmd,ext0_deselect_cmd,EXT0_EXTRUDER_COOLER_SPEED,0
 #if STEPPER_ON_DELAY
         , '\x0'
@@ -1327,8 +1383,9 @@ Extruder extruder[NUM_EXTRUDER] =
             0,
             0,EXT1_PID_INTEGRAL_DRIVE_MAX,EXT1_PID_INTEGRAL_DRIVE_MIN,EXT1_PID_P,EXT1_PID_I,EXT1_PID_D,EXT1_PID_MAX,0,0,
             0,{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-            0
-         }
+            0,
+            0, 0, EXT1_DECOUPLE_TEST_PERIOD
+        }
         ,ext1_select_cmd,ext1_deselect_cmd,EXT1_EXTRUDER_COOLER_SPEED,0
 #if STEPPER_ON_DELAY
         , '\x0'
@@ -1348,7 +1405,8 @@ TemperatureController heatedBedController = {
             0,
             0,HEATED_BED_PID_INTEGRAL_DRIVE_MAX,HEATED_BED_PID_INTEGRAL_DRIVE_MIN,HEATED_BED_PID_PGAIN,HEATED_BED_PID_IGAIN,HEATED_BED_PID_DGAIN,HEATED_BED_PID_MAX,0,0,
             0,{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-            0
+            0,
+            0, 0, BED_DECOUPLE_TEST_PERIOD
         };
 #else
 #define NUM_TEMPERATURE_LOOPS NUM_EXTRUDER
@@ -1370,7 +1428,8 @@ TemperatureController optTempController = {
         0,
         0,0,0,0,0,0,0,0,0,
         0,{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-        0
+        0,
+        0, 0, 0 /*0 = no decouple test*/
         };
 #endif // RESERVE_ANALOG_INPUTS
 
