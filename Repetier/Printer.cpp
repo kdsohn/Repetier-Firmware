@@ -1154,7 +1154,7 @@ void Printer::setup()
     Extruder::selectExtruderById(0);
 
 #if SDSUPPORT
-    sd.mount();
+    sd.mount(true /* Silent mount because otherwise RF1000 prints errors if no sdcard is present at boottime*/);
 #endif // SDSUPPORT
 
     g_nActiveHeatBed = (char)readWord24C256( I2C_ADDRESS_EXTERNAL_EEPROM, EEPROM_OFFSET_ACTIVE_HEAT_BED_Z_MATRIX );

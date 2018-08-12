@@ -59,7 +59,7 @@ void SDCard::automount()
     } else {
         if(!sdactive && sdmode != 100) {
             UI_STATUS( UI_TEXT_SD_INSERTED );
-            mount();
+            mount(/*not silent mount*/);
             if(sdmode != 100) // send message only if we have success
                 Com::printFLN(PSTR("SD card inserted")); // Not translatable or host will not understand signal
 #if UI_DISPLAY_TYPE!=0
@@ -73,7 +73,7 @@ void SDCard::automount()
 #endif // defined(SDCARDDETECT) && SDCARDDETECT>-1
 } // automount
 
-void SDCard::initsd()
+void SDCard::initsd(bool silent)
 {
     sdactive = false;
 #if SDSS >- 1
@@ -88,51 +88,53 @@ void SDCard::initsd()
     HAL::delayMilliseconds(50);       // wait for init end
 
     if(!fat.begin(SDSS, SD_SCK_MHZ(50))) {
-        Com::printFLN(Com::tSDInitFail);
-        sdmode = 100; // prevent automount loop!
-        if (fat.card()->errorCode()) {
-            Com::printFLN(PSTR("\nSD initialization failed.\n"
-                               "Do not reformat the card!\n"
-                               "Is the card correctly inserted?\n"
-                               "Is chipSelect set to the correct value?\n"
-                               "Does another SPI device need to be disabled?\n"
-                               "Is there a wiring/soldering problem?"));
-            Com::printFLN(PSTR("errorCode: "), int(fat.card()->errorCode()));
+		if (!silent) {
+			Com::printFLN(Com::tSDInitFail);
+			sdmode = 100; // prevent automount loop!
+			if (fat.card()->errorCode()) {
+				Com::printFLN(PSTR("\nSD initialization failed.\n"
+								   "Do not reformat the card!\n"
+								   "Is the card correctly inserted?\n"
+								   "Is chipSelect set to the correct value?\n"
+								   "Does another SPI device need to be disabled?\n"
+								   "Is there a wiring/soldering problem?"));
+				Com::printFLN(PSTR("errorCode: "), int(fat.card()->errorCode()));
 
-            char szStatus[21];
-            strcpy( szStatus, UI_TEXT_SD_ERROR );
-            addLong( szStatus, int(fat.card()->errorCode()), 3 );
-            switch(fat.card()->errorCode()){
-                case 32:
-                {
-                    strcat( szStatus, " Timeout" );
-                    Com::printFLN(PSTR("SD Timeout"));
-                    break;
-                }
-                default:
-                {
-                    break;
-                }
-            }
-            UI_STATUS_UPD_RAM( szStatus );
-            return;
-        }
-        if (fat.vol()->fatType() == 0) {
-            Com::printFLN(PSTR("Can't find a valid FAT16/FAT32 partition.\n"));
-            char szStatus[21];
-            strcpy( szStatus, UI_TEXT_SD_ERROR );
-            strcat( szStatus, "FAT16/32 not" );
-            UI_STATUS_UPD_RAM( szStatus );
-            return;
-        }
-        if (!fat.vwd()->isOpen()) {
-            Com::printFLN(PSTR("Can't open root directory.\n"));
-            char szStatus[21];
-            strcpy( szStatus, UI_TEXT_SD_ERROR );
-            strcat( szStatus, " root dir" );
-            UI_STATUS_UPD_RAM( szStatus );
-            return;
-        }
+				char szStatus[21];
+				strcpy( szStatus, UI_TEXT_SD_ERROR );
+				addLong( szStatus, int(fat.card()->errorCode()), 3 );
+				switch(fat.card()->errorCode()){
+					case 32:
+					{
+						strcat( szStatus, " Timeout" );
+						Com::printFLN(PSTR("SD Timeout"));
+						break;
+					}
+					default:
+					{
+						break;
+					}
+				}
+				UI_STATUS_UPD_RAM( szStatus );
+				return;
+			}
+			if (fat.vol()->fatType() == 0) {
+				Com::printFLN(PSTR("Can't find a valid FAT16/FAT32 partition.\n"));
+				char szStatus[21];
+				strcpy( szStatus, UI_TEXT_SD_ERROR );
+				strcat( szStatus, "FAT16/32 not" );
+				UI_STATUS_UPD_RAM( szStatus );
+				return;
+			}
+			if (!fat.vwd()->isOpen()) {
+				Com::printFLN(PSTR("Can't open root directory.\n"));
+				char szStatus[21];
+				strcpy( szStatus, UI_TEXT_SD_ERROR );
+				strcat( szStatus, " root dir" );
+				UI_STATUS_UPD_RAM( szStatus );
+				return;
+			}
+		}
         return;
     }
     Com::printFLN(PSTR("Card successfully initialized."));
@@ -147,10 +149,10 @@ void SDCard::initsd()
 #endif // SDSS >- 1
 } // initsd
 
-void SDCard::mount()
+void SDCard::mount(bool silent)
 {
     sdmode = 0;
-    initsd();
+    initsd(silent);
 } // mount
 
 void SDCard::unmount()
