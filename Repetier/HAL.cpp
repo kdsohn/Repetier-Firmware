@@ -1057,6 +1057,13 @@ ISR(PWM_TIMER_VECTOR)
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
     }
 
+    static char counter2Periodical = 0; // Approximate a 1ms timer :: blocks pingwatchdog s commandloop if not working
+    if(++counter2Periodical >= 8) //(int)(F_CPU/4096))
+    {
+        counter2Periodical = 0;
+        execute2msPeriodical = 1;
+    }
+
     // read analog values
 #if ANALOG_INPUTS>0
     if((ADCSRA & _BV(ADSC))==0)   // Conversion finished?

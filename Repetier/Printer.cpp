@@ -2185,7 +2185,7 @@ void Printer::performZCompensation( void )
 void Printer::stopPrint() //function for aborting USB and SD-Prints
 {
     if( !Printer::isPrinting() ) return;
-    g_uStartOfIdle = 0; //jetzt nicht mehr in showidle() gehen;
+    g_uStartOfIdle = 0; //jetzt nicht mehr in showidle() gehen, das erledigt später g_uStopTime;
 
 #if SDSUPPORT
     if( sd.sdmode ) //prüfung auf !sdmode sollte hier eigenlicht nicht mehr nötig sein, aber ..

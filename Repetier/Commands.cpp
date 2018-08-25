@@ -55,31 +55,29 @@ void Commands::checkForPeriodicalActions(enum FirmwareState state)
         GCode::keepAlive( state );
     }
 
+    if(execute2msPeriodical){ //set by PWM-Timer
+      execute2msPeriodical=0;
+	  //recompute very fast, but not within every loop.
+	  doZCompensation();
+    }
+
     if(execute10msPeriodical){ //set by PWM-Timer
       execute10msPeriodical=0;
-
       HAL::tellWatchdogOk();  //dieses freigabesignal sollte aus dem PWM-Timer kommen, denn dann ist klar, dass auch der noch läuft. Dann laufen für den Watchdogreset der Timer und checkForPeriodicalActions().
-      doZCompensation();  //100x pro sekunde -> 100mm/s : jede 1mm Weg
-
     }
 
     if(execute16msPeriodical){ //set by internal Watchdog-Timer
       execute16msPeriodical = 0;
       if(buttonactive) UI_SLOW;
-
     }
 
     if(execute100msPeriodical){ //set by PWM-Timer
       execute100msPeriodical=0;
-
-      loopRF();
-
+      loopFeatures();
       if(!buttonactive) UI_SLOW;
-
       Extruder::manageTemperatures();
       Commands::printTemperatures(); //selfcontrolling timediff
-
-    }
+    }	
 } // checkForPeriodicalActions
 
 

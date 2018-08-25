@@ -691,23 +691,13 @@ extern unsigned char    g_uRGBTargetG;
 extern unsigned char    g_uRGBTargetB;
 #endif // FEATURE_RGB_LIGHT_EFFECTS
 
-// initRF()
 extern void initRF( void );
-
-// initStrainGauge()
 extern void initStrainGauge( void );
-
-// readStrainGauge()
 extern short readStrainGauge( unsigned char uAddress );
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
-// startHeatBedScan()
 extern void startHeatBedScan( void );
-
-// scanHeatBed()
 extern void scanHeatBed( void );
-
-// searchZOScan()
 extern void startZOScan( bool automatrixleveling = false );
 extern void searchZOScan( void );
 
@@ -721,182 +711,87 @@ extern void calculateZScrewCorrection( void );
 //Menüumschalter für Z-Step-Höhe
 extern void configureMANUAL_STEPS_Z( int8_t increment );
 
-// abortSearchHeatBedZOffset()
 extern void abortSearchHeatBedZOffset( bool reloadMatrix );
-
-// testExtruderTemperature()
 extern short testExtruderTemperature( void );
-
-// testHeatBedTemperature()
 extern short testHeatBedTemperature( void );
-
-// getZMatrixDepth()
 extern long getZMatrixDepth( long x, long y );
-
-// getZMatrixDepth_CurrentXY()
 extern long getZMatrixDepth_CurrentXY( void );
-
-// doHeatBedZCompensation()
 extern void doHeatBedZCompensation( void );
 
-// getHeatBedOffset()
 extern long getHeatBedOffset( void );
-
-// switchActiveHeatBed()
 extern void switchActiveHeatBed( char newActiveHeatBed );
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
 
 #if FEATURE_ALIGN_EXTRUDERS
-// startAlignExtruders()
 extern void startAlignExtruders( void );
-
-// alignExtruders()
 extern void alignExtruders( void );
 #endif // FEATURE_ALIGN_EXTRUDERS
 
 #if FEATURE_WORK_PART_Z_COMPENSATION
-// startWorkPartScan()
 extern void startWorkPartScan( char nMode );
-
-// scanWorkPart()
 extern void scanWorkPart( void );
-
-// doWorkPartZCompensation()
 extern void doWorkPartZCompensation( void );
-
-// getWorkPartOffset()
 extern long getWorkPartOffset( void );
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
 
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
-// readIdlePressure()
 extern short readIdlePressure( short* pnIdlePressure );
-
-// testIdlePressure()
 extern short testIdlePressure( void );
-
-// readAveragePressure()
 extern short readAveragePressure( short* pnAveragePressure );
 
-// moveZUpFast()
 extern void moveZUpFast();
-
-// moveZDownSlow()
 extern void moveZDownSlow( uint8_t acuteness = 1 );
-
-// moveZUpSlow()
 extern void moveZUpSlow( short* pnContactPressure, uint8_t acuteness = 1 );
-
-// moveZDownFast()
 extern void moveZDownFast();
-
-// moveZ()
 extern void moveZ( int nSteps );
-
-// restoreDefaultScanParameters()
 extern void restoreDefaultScanParameters( void );
-
-// outputScanParameters()
 extern void outputScanParameters( void );
-
-// outputCompensationMatrix()
 extern void outputCompensationMatrix( char format = 0 );
-
-// initCompensationMatrix()
 extern void initCompensationMatrix( void );
-
-// prepareCompensationMatrix()
-extern char prepareCompensationMatrix( void );
-
-// determineCompensationOffsetZ()
 extern void determineCompensationOffsetZ( void );
-
-// adjustCompensationMatrix()
 extern void adjustCompensationMatrix( short nZ );
-
-// saveCompensationMatrix()
 extern void saveCompensationMatrix( unsigned int uAddress );
-
-// loadCompensationMatrix()
-extern char loadCompensationMatrix( unsigned int uAddress );
-
-// clearCompensationMatrix()
 extern void clearCompensationMatrix( unsigned int uAddress );
+
+extern char prepareCompensationMatrix( void );
+extern char loadCompensationMatrix( unsigned int uAddress );
 
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION || FEATURE_WORK_PART_Z_COMPENSATION
 
-// clearExternalEEPROM()
 extern void clearExternalEEPROM( void );
-
-// writeByte24C256()
 extern void writeByte24C256( int addressI2C, unsigned int addressEEPROM, unsigned char data );
-
-// writeWord24C256()
 extern void writeWord24C256( int addressI2C, unsigned int addressEEPROM, unsigned short data );
 
-// readByte24C256()
 extern unsigned char readByte24C256( int addressI2C, unsigned int addressEEPROM );
-
-// readWord24C256()
 extern unsigned short readWord24C256( int addressI2C, unsigned int addressEEPROM );
 
-// doZCompensation()
 extern void doZCompensation( void );
-
-// loopRF()
-extern void loopRF( void );
-
-// outputObject()
+extern void loopFeatures( void );
 extern void outputObject( bool showerrors = true );
 
 #if FEATURE_PARK
-// parkPrinter()
 extern void parkPrinter( void );
 #endif // FEATURE_PARK
 
 extern bool processingDirectMove();
+
 extern void checkPauseStatus_fromTask();
 extern void waitforPauseStatus_fromButton();
-// pausePrint()
 extern void pausePrint( void );
-
-// continuePrint()
 extern void continuePrint( void );
-
-// determinePausePosition()
 extern void determinePausePosition( void );
-
-// determineZPausePositionForPrint()
 extern void determineZPausePositionForPrint( void );
-
-// determineZPausePositionForMill()
 extern void determineZPausePositionForMill( void );
-
-// setExtruderCurrent()
 extern void setExtruderCurrent( uint8_t nr, uint8_t current );
-
-// processCommand()
 extern void processCommand( GCode* pCommand );
-
-// queueTask()
 extern void queueTask( char task );
-
-// processButton()
 extern void processButton( int nAction );
-
-// nextPreviousXAction()
 extern void nextPreviousXAction( int8_t increment );
-
-// nextPreviousYAction()
 extern void nextPreviousYAction( int8_t increment );
-
-// nextPreviousZAction()
 extern void nextPreviousZAction( int8_t increment );
 
-
 #if STEPPER_CURRENT_CONTROL==CURRENT_CONTROL_DRV8711
-// setMotorCurrent()
 extern void setMotorCurrent( unsigned char driver, uint8_t level );
 
 // adjust/set Microsteps()
@@ -905,129 +800,62 @@ extern unsigned short drv8711ModeValue_2_MicroSteps(uint8_t modeValue);
 extern uint8_t        drv8711MicroSteps_2_ModeValue(unsigned short microsteps);
 extern void           drv8711adjustMicroSteps(unsigned char driver);
 
-// motorCurrentControlInit()
 extern void drv8711Init( void );
 #if FEATURE_READ_STEPPER_STATUS
 extern unsigned short readMotorStatus( unsigned char driver );
 #endif //FEATURE_READ_STEPPER_STATUS
 #endif // CURRENT_CONTROL_DRV8711
 
-
-// cleanupXPositions
 extern void cleanupXPositions( void );
-
-// cleanupYPositions
 extern void cleanupYPositions( void );
-
-// cleanupZPositions
 extern void cleanupZPositions( void );
-
-// cleanupEPositions
 extern void cleanupEPositions( void );
-
-// setZOrigin()
 extern void setZOrigin( void );
 
-
 #if FEATURE_FIND_Z_ORIGIN
-// startFindZOrigin()
 extern void startFindZOrigin( void );
-
-// findZOrigin()
 extern void findZOrigin( void );
 #endif // FEATURE_FIND_Z_ORIGIN
 
-// switchOperatingMode()
 extern void switchOperatingMode( char newOperatingMode );
 
 #if FEATURE_MILLING_MODE
-
-// switchActiveWorkPart()
 extern void switchActiveWorkPart( char newActiveWorkPart );
-
-// setScanXYStart()
 extern void setScanXYStart( void );
-
-// setScanXYEnd()
 extern void setScanXYEnd( void );
 #endif // FEATURE_MILLING_MODE
 
 #if FEATURE_RGB_LIGHT_EFFECTS
-// setRGBTargetColors()
 extern void setRGBTargetColors( uint8_t R, uint8_t G, uint8_t B );
-
-// setRGBLEDs()
 extern void setRGBLEDs( uint8_t R, uint8_t G, uint8_t B );
-
-// updateRGBLightStatus()
 extern void updateRGBLightStatus( void );
 #endif // FEATURE_RGB_LIGHT_EFFECTS
 
-
-// setupForPrinting
 extern void setupForPrinting( void );
-
-// setupForMilling()
 extern void setupForMilling( void );
-
-// prepareZCompensation()
 extern void prepareZCompensation( void );
-
-// isSupportedGCommand()
 extern unsigned char isSupportedGCommand( unsigned int currentGCode, char neededMode, char outputLog = 1 );
-
-// isSupportedMCommand()
 extern unsigned char isSupportedMCommand( unsigned int currentMCode, char neededMode, char outputLog = 1 );
-
-// isMovingAllowed()
 extern unsigned char isMovingAllowed( const char* pszCommand, char outputLog = 1 );
-
-// isHomingAllowed()
 extern unsigned char isHomingAllowed( GCode* com, char outputLog = 1 );
-
-// showInvalidSyntax()
 extern void showInvalidSyntax( unsigned int currentMCode );
-
-// addUInt32()
 extern void addUInt32( char* pszString, uint32_t uNumber );
-
-// addFloat()
 extern void addFloat( char* pszString, float fNumber, uint8_t uDigits );
 
-
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
-// getHeatBedTemperatureOffset
 extern float getHeatBedTemperatureOffset( float temperatureInCelsius );
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
 
-
 #if FEATURE_TYPE_EEPROM
-// determineHardwareType()
 extern void determineHardwareType( void );
-
-// notifyAboutWrongHardwareType()
 extern void notifyAboutWrongHardwareType( unsigned char guessedHardwareType );
 #endif // FEATURE_TYPE_EEPROM
-
-// showIdle()
 extern void showIdle( void );
-
-// showError()
 extern void showError( const void* line2, const void* line3 = NULL, const void* line4 = NULL );
-
-// showWarning()
 extern void showWarning( const void* line2, const void* line3 = NULL, const void* line4 = NULL );
-
-// showInformation()
 extern void showInformation( const void* line2, const void* line3 = NULL, const void* line4 = NULL );
-
-// showMyPage()
 extern void showMyPage( const void* line1, const void* line2 = NULL, const void* line3 = NULL, const void* line4 = NULL );
 
-// doEmergencyStop()
 void doEmergencyStop( char reason );
-
-// addLong() to string
 void addLong( char* string, long value, char digits );
-
 #endif // RF_H

@@ -1,6 +1,12 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 
+V RF.01.42.08.Mod (2018-08-12)
+- refactoring for the feature loop function
+- zcompensation is calculated a bit more often to see if that prevents snoring noise
+- some rework on stopprint because of defect sensors
+- some codestyle
+
 V RF.01.42.07.Mod (2018-08-12)
 - changed SD-Card communication Mhz to a more reasonable correct value which is not "just limited" by ATMega speed.
 - partly support for Repetier/Marlins M218 to change Extruder-Offsets by Gcode (only for compatibility reasons, repetier just added it)
@@ -1157,7 +1163,7 @@ V RF.01.35c.mod
 - Included StarTonys Fan-Mod http://www.rf1000.de/viewtopic.php?f=7&t=1638
 
 V RF.01.35c
-- Changed ZOS Strategy to a "switch"-Type triggered by loopRF for better communication.
+- Changed ZOS Strategy to a "switch"-Type triggered by loopFeatures for better communication.
 - ZOS Message cleanup
 - ZOS now reloads Matrix on +z-Matrix-Entry
 - Fixed almost all Compiler-Warnings
