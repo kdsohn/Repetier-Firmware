@@ -1,6 +1,11 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 
+V RF.01.42.09.Mod (2018-08-12)
+- Load und Unload-Filament in mode "hard" should now behave like in version 1.39+
+- fix missing line break after loading of factory defaults
+- increase LOW_TICKS_PER_MOVE to 1,5mio as a test
+
 V RF.01.42.08.Mod (2018-08-12)
 - refactoring for the feature loop function
 - zcompensation is calculated a bit more often to see if that prevents snoring noise
