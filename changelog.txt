@@ -1,7 +1,12 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 
-V RF.01.42.09.Mod (2018-08-12)
+V RF.01.42.10.Mod (2018-08-25)
+- Fix: Oldstyle Load Filament on all printers
+- Rename Load/Unload Filament text within menu
+- emergency pause is only triggered when all axis are homed, because pausing works homed only and we print homed only.
+
+V RF.01.42.09.Mod (2018-08-25)
 - Load und Unload-Filament in mode "hard" should now behave like in version 1.39+
 - fix missing line break after loading of factory defaults
 - increase LOW_TICKS_PER_MOVE to 1,5mio as a test

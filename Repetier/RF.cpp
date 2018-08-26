@@ -6262,7 +6262,7 @@ void handleStrainGaugeFeatures(millis_t uTime){
         {
             uLastPressureTime = uTime;
 
-            if( !Printer::isMenuMode(MENU_MODE_PAUSED) && Printer::isPrinting() )
+            if( !Printer::isMenuMode(MENU_MODE_PAUSED) && Printer::isPrinting() && Printer::areAxisHomed() )
             {
                 // this check shall be done only during the printing (for example, it shall not be done in case filament is extruded manually)
                 nPressureSum    += pressure;

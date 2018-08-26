@@ -1042,7 +1042,7 @@ ISR(PWM_TIMER_VECTOR)
 #endif // FEATURE_RGB_LIGHT_EFFECTS
 
     static char counter10Periodical = 0; // Approximate a 10ms timer :: blocks pingwatchdog s commandloop if not working
-    if(++counter10Periodical >= 39) //(int)(F_CPU/4096))
+    if(++counter10Periodical >= 39)
     {
         counter10Periodical = 0;
         execute10msPeriodical = 1;
@@ -1058,7 +1058,7 @@ ISR(PWM_TIMER_VECTOR)
     }
 
     static char counter2Periodical = 0; // Approximate a 1ms timer :: blocks pingwatchdog s commandloop if not working
-    if(++counter2Periodical >= 8) //(int)(F_CPU/4096))
+    if(++counter2Periodical >= 8)
     {
         counter2Periodical = 0;
         execute2msPeriodical = 1;
