@@ -313,7 +313,7 @@ ich glaube gesehen zu haben, dass acceleration und feedrates nicht neu eingelese
     g_nManualSteps[Z_AXIS] = uint32_t(Printer::axisStepsPerMM[Z_AXIS] * DEFAULT_MANUAL_MM_Z);
     g_nManualSteps[E_AXIS] = uint32_t(Extruder::current->stepsPerMM * DEFAULT_MANUAL_MM_E);
 
-    Com::printInfoF(Com::tEPRConfigResetDefaults);
+    Com::printInfoFLN(Com::tEPRConfigResetDefaults);
 #endif // EEPROM_MODE!=0
 
 } // restoreEEPROMSettingsFromConfiguration

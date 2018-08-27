@@ -718,11 +718,11 @@ included delay is already enough. */
 
 /** \brief Automatic filament change, unmounting of the filament - ensure that G1 does not attempt to extrude more than EXTRUDE_MAXLENGTH */
 #define UNMOUNT_FILAMENT_SCRIPT_SOFT        "M3914 P4500"
-#define UNMOUNT_FILAMENT_SCRIPT_HARD        "M3914 P7000"
+#define UNMOUNT_FILAMENT_SCRIPT_HARD        "M109 S" xstr(UI_SET_PRESET_EXTRUDER_TEMP_PLA) "\nG21\nG92 E0\nG1 E-90 F500\nG92 E0\nM104 S0"
 
 /** \brief Automatic filament mount, mounting of the filament with heating. Stop @ XXXX digits */
 #define MOUNT_FILAMENT_SCRIPT_SOFT          "M3913 P3500 F3"
-#define MOUNT_FILAMENT_SCRIPT_HARD          "M3913 P20000 F6"
+#define MOUNT_FILAMENT_SCRIPT_HARD          "M109 S" xstr(UI_SET_PRESET_EXTRUDER_TEMP_ABS) "\nG21\nG92 E0\nG1 E90 F100\nG92 E0\nM104 S0"
 
 // ##########################################################################################
 // ##   PWM configuration
@@ -828,18 +828,18 @@ for some printers causing an early stall. */
 /** \brief Number of moves we can cache in advance.
 This number of moves can be cached in advance. If you wan't to cache more, increase this. Especially on
 many very short moves the cache may go empty. The minimum value is 5. */
-#define MOVE_CACHE_SIZE                     17
+#define MOVE_CACHE_SIZE                     16
 
 /** \brief Low filled cache size.
 If the cache contains less then MOVE_CACHE_LOW segments, the time per segment is limited to LOW_TICKS_PER_MOVE clock cycles.
 If a move would be shorter, the feedrate will be reduced. This should prevent buffer underflows. Set this to 0 if you
 don't care about empty buffers during print. */
-#define MOVE_CACHE_LOW                      14
+#define MOVE_CACHE_LOW                      13
 
 /** \brief Cycles per move, if move cache is low.
 This value must be high enough, that the buffer has time to fill up. The problem only occurs at the beginning of a print or
 if you are printing many very short segments at high speed.*/
-#define LOW_TICKS_PER_MOVE                  500000
+#define LOW_TICKS_PER_MOVE                  1500000
 
 /** \brief Adds a M3993 / or like "M3993 P300000" to set another or default LOW_TICKS_PER_MOVE and gather statistics about the fill level of the MOVE_CACHE while printing */
 #define FEATURE_DEBUG_MOVE_CACHE_TIMING              0

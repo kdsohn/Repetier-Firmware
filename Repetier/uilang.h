@@ -416,7 +416,7 @@
 
 #if MOTHERBOARD == DEVICE_TYPE_RF2000 || MOTHERBOARD == DEVICE_TYPE_RF2000v2
     #define UI_TEXT_UNMOUNT_FILAMENT_SOFT   "Max. 210\002C/Soft"
-    #define UI_TEXT_UNMOUNT_FILAMENT_HARD   "Max. 210\002C"
+    #define UI_TEXT_UNMOUNT_FILAMENT_HARD   "Oldstyle pull"
     #define UI_TEXT_WOBBLE_FIX_PHASEXY      "Phase XY: %wP%%%Pi"
     #define UI_TEXT_WOBBLE_FIX_AMPX         "Amplit.X: %wa[um]"
     #define UI_TEXT_WOBBLE_FIX_AMPY1        "Amp. Y-l: %wb[um]"
@@ -479,7 +479,7 @@
     #define UI_TEXT_TEMPERATURE_WRONG       "Temperature wrong"
 #else
     #define UI_TEXT_UNMOUNT_FILAMENT_SOFT   "Max. 210\002C/Soft"
-    #define UI_TEXT_UNMOUNT_FILAMENT_HARD   "Max. 210\002C"
+    #define UI_TEXT_UNMOUNT_FILAMENT_HARD   "Oldstyle pull"
     #define UI_TEXT_WOBBLE_FIX_PHASEXY      "PhaseXY:%wP%%%Pi"
     #define UI_TEXT_WOBBLE_FIX_AMPX         "Ampli.X:%waum"
     #define UI_TEXT_WOBBLE_FIX_AMPY1        "Amp.Y-l:%wbum"
@@ -886,7 +886,7 @@
     #define UI_TEXT_DISABLE_STEPPER         "Motoren ausschalten"
     #define UI_TEXT_UNMOUNT_FILAMENT        "Filament entladen"
     #define UI_TEXT_UNMOUNT_FILAMENT_SOFT   "Max. 210\002C/Soft"
-    #define UI_TEXT_UNMOUNT_FILAMENT_HARD   "Max. 210\002C"
+    #define UI_TEXT_UNMOUNT_FILAMENT_HARD   "Oldstyle pull"
     #define UI_TEXT_E_POSITION              "Position Extruder"
     #define UI_TEXT_ACTIVE_EXTRUDER         "Aktiver Extruder:%Oa"
     #define UI_TEXT_CONFIG_SINGLE_STEPS     "Z-Sprung: %Sz um"
@@ -980,7 +980,7 @@
     #define UI_TEXT_DISABLE_STEPPER         "Motoren aussch."
     #define UI_TEXT_UNMOUNT_FILAMENT        "Filament entl."
     #define UI_TEXT_UNMOUNT_FILAMENT_SOFT   "Max.210\002C/Soft"
-    #define UI_TEXT_UNMOUNT_FILAMENT_HARD   "Max.210\002C"
+    #define UI_TEXT_UNMOUNT_FILAMENT_HARD   "Oldstyle pull"
     #define UI_TEXT_E_POSITION              "Position Extr."
     #define UI_TEXT_ACTIVE_EXTRUDER         "Aktiver Extr. %Oa"
     #define UI_TEXT_CONFIG_SINGLE_STEPS     "Z-Sprung: %Sz um"

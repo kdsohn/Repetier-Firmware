@@ -27,7 +27,6 @@
 // Toggels the heater power if necessary.
 extern void     reportTempsensorAndHeaterErrors(); ///< Report defect sensors
 extern uint8_t  manageMonitor;
-extern void     requestUSBSenderStopDisconnect();
 
 #define TEMPERATURE_CONTROLLER_FLAG_ALARM         1
 #define TEMPERATURE_CONTROLLER_FLAG_DECOUPLE_FULL 2    ///< Full heating enabled

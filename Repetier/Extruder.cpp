@@ -28,6 +28,7 @@ uint8_t             manageMonitor = 255; ///< Temp. we want to monitor with our 
 volatile uint8_t    execute100msPeriodical = 0;
 volatile uint8_t    execute16msPeriodical = 0;
 volatile uint8_t    execute10msPeriodical = 0;
+volatile uint8_t    execute2msPeriodical = 0;
 
 #if FEATURE_DITTO_PRINTING
 uint8_t             Extruder::dittoMode = 0;
@@ -106,7 +107,7 @@ void Extruder::manageTemperatures()
                     Printer::flag2 |= PRINTER_FLAG2_GOT_TEMPS; //we are not waiting for first temp measurements anymore.
 
                     reportTempsensorAndHeaterErrors();
-					requestUSBSenderStopDisconnect();
+					Printer::stopPrint();
 
                     showError( (void*)ui_text_temperature_manager, (void*)ui_text_sensor_error );
                 }
@@ -142,7 +143,7 @@ void Extruder::manageTemperatures()
 							Com::printFLN(PSTR(" ms"));
 							
 							reportTempsensorAndHeaterErrors();
-							requestUSBSenderStopDisconnect();
+							Printer::stopPrint();
 							
 							showError( (void*)ui_text_temperature_manager, (void*)ui_text_heater_error );
                         }
@@ -168,7 +169,7 @@ void Extruder::manageTemperatures()
 							Com::printFLN(Com::tC);
 							
 							reportTempsensorAndHeaterErrors();
-							requestUSBSenderStopDisconnect();
+							Printer::stopPrint();
 							
 							showError( (void*)ui_text_temperature_manager, (void*)ui_text_heater_error );
                         }
@@ -1286,12 +1287,6 @@ see also: http://www.mstarlabs.com/control/znrule.html
     }
     g_uStartOfIdle = HAL::timeInMilliseconds(); //end autotunePID with error
 } // autotunePID
-
-	
-void requestUSBSenderStopDisconnect() {
-	Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetier-host / server to stop printing
-	Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
-}
 
 void reportTempsensorAndHeaterErrors()
 {
