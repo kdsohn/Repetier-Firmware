@@ -1,5 +1,6 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
+TODO: zero K and nikibalboa say that they experienced a hard reset while starting "unload filament soft" or "load filament soft"
 
 V RF.01.42.10.Mod (2018-08-25)
 - Fix: Oldstyle Load Filament on all printers
