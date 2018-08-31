@@ -2,6 +2,15 @@ TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 TODO: zero K and nikibalboa say that they experienced a hard reset while starting "unload filament soft" or "load filament soft"
 
+V RF.01.42.11.Mod (2018-08-25)
+- Patch SdFat Lib to 1.0.7
+- removed the wrong hint that we support Arduino 1.6.5. 
+  Since the time we included the SdFat library which is not located within the main directory next to the Repetier.ino that is not true anymore. 
+  Because this "file not found" error is highly arduino version specific. 1.6.5 is not supporting subdirectory includes.
+  I dont think I will put much more work into supporting 1.6.5 anymore.
+- moved comments in pins.h prior to the pin definitions
+- fixed some bug in M908.
+
 V RF.01.42.10.Mod (2018-08-25)
 - Fix: Oldstyle Load Filament on all printers
 - Rename Load/Unload Filament text within menu

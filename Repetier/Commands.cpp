@@ -1593,7 +1593,7 @@ void Commands::executeGCode(GCode *com)
             {
                 if( com->hasP() && com->hasS() ){
                     uint8_t current = com->S;
-                    if(com->hasP() > 3 + NUM_EXTRUDER) break;
+                    if(com->P > 3 + NUM_EXTRUDER) break;
                     if(current > 150){
                        //break;
                     }else if(current < MOTOR_CURRENT_MIN){
