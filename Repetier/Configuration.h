@@ -956,8 +956,10 @@ we use blocks of 2 kByte size for the structure of our EEPROM
 
 /** \brief For Nibbels external interrupt 3 plus an extra pin is used for reading digital calipers. You will have to solder some logic-converter from 1.8v to 5v see http://www.instructables.com/id/Reading-Digital-Callipers-with-an-Arduino-USB/ */
 #define FEATURE_READ_CALIPER               0                                                   // 0 = OFF, 1 = ON
-#define FEATURE_READ_CALIPER_INT_PIN       RESERVE_DIGITAL_PIN_PD3                             // RF2000/RF1000: RESERVE_DIGITAL_PIN_PD3 is INT3 for having clocks falling edges collected
-#define FEATURE_READ_CALIPER_DATA_PIN      RESERVE_DIGITAL_PIN_PE4                             // RF2000: RESERVE_DIGITAL_PIN_PE4 is some reserve pin for reading off data while clocks falling edge.
+// RF2000/RF1000: RESERVE_DIGITAL_PIN_PD3 is INT3 for having clocks falling edges collected
+#define FEATURE_READ_CALIPER_INT_PIN       RESERVE_DIGITAL_PIN_PD3                             
+// RF2000: RESERVE_DIGITAL_PIN_PE4 is some reserve pin for reading off data while clocks falling edge.
+#define FEATURE_READ_CALIPER_DATA_PIN      RESERVE_DIGITAL_PIN_PE4                             
 #if FEATURE_READ_CALIPER && MOTHERBOARD == DEVICE_TYPE_RF1000 && FEATURE_READ_CALIPER_DATA_PIN == RESERVE_DIGITAL_PIN_PE4
  #error You cannot use RESERVE_DIGITAL_PIN_PE4 on an RF1000, please connect and choose another one.
 #endif
