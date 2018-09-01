@@ -47,8 +47,10 @@ void Commands::commandLoop()
             Commands::executeGCode(code);
 		}
         code->popCurrentCommand();
-    }
-    Commands::checkForPeriodicalActions();  //check heater and other stuff every n milliseconds
+		Commands::checkForPeriodicalActions(Processing);  //check heater and other stuff every n milliseconds
+    } else {
+		Commands::checkForPeriodicalActions(NotBusy);  //check heater and other stuff every n milliseconds
+	}
 } // commandLoop
 
 
@@ -58,38 +60,31 @@ void Commands::checkForPeriodicalActions(enum FirmwareState state)
         GCode::keepAlive( state );
     }
 
-    if(execute3msPeriodical){ //set by PWM-Timer
-      execute3msPeriodical=0;
-	  //recompute very fast, but not within every loop.
-	  doZCompensation();
-    }
-
     if(execute10msPeriodical){ //set by PWM-Timer
-      execute10msPeriodical=0;
+      execute10msPeriodical = 0;
       HAL::tellWatchdogOk();  //dieses freigabesignal sollte aus dem PWM-Timer kommen, denn dann ist klar, dass auch der noch läuft. Dann laufen für den Watchdogreset der Timer und checkForPeriodicalActions().
     }
 
-    if(execute16msPeriodical){ //set by internal Watchdog-Timer
-      execute16msPeriodical = 0;
-	  bool buttonSpeedBoost = ((HAL::timeInMilliseconds() - uid.lastButtonStart < 20000) ? true : false);
-      if(buttonSpeedBoost) UI_SLOW;
-    }
-
-    if(execute50msPeriodical){ //set by internal Watchdog-Timer
-      execute50msPeriodical = 0;
-	  millis_t uTime = HAL::timeInMilliseconds();
-      bool buttonSpeedBoost = ((uTime - uid.lastButtonStart < 20000) ? true : false);
-      if(!buttonSpeedBoost) UI_SLOW;
-      loopFeatures(uTime);
-    }
-
     if(execute100msPeriodical){ //set by PWM-Timer
-      execute100msPeriodical=0;
+      execute100msPeriodical = 0;
       Extruder::manageTemperatures();
       Commands::printTemperatures(); //selfcontrolling timediff
 #if defined(SDCARDDETECT) && SDCARDDETECT>-1 && defined(SDSUPPORT) && SDSUPPORT
       sd.automount();
 #endif // defined(SDCARDDETECT) && SDCARDDETECT>-1 && defined(SDSUPPORT) && SDSUPPORT
+	  UI_SLOW;
+    }
+
+    if(execute16msPeriodical){ //set by internal Watchdog-Timer
+      execute16msPeriodical = 0;
+	  bool buttonSpeedBoost = (!execute100msPeriodical && HAL::timeInMilliseconds() - uid.lastButtonStart < 20000);
+      if(buttonSpeedBoost) UI_SLOW;
+	  doZCompensation();
+    }
+
+    if(execute50msPeriodical){ //set by internal Watchdog-Timer
+      execute50msPeriodical = 0;
+      loopFeatures();
     }
 
 	DEBUG_MEMORY;

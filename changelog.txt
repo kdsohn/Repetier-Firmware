@@ -2,6 +2,9 @@ TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 TODO: zero K and nikibalboa say that they experienced a hard reset while starting "unload filament soft" or "load filament soft"
 
+V RF.01.42.13.Mod (2018-09-01)
+- some tempering with code and order
+
 V RF.01.42.12.Mod (2018-09-01)
 - cleanup of disable-things-functions: Removed this horribly chosen function name "Printer::kill" and removed that Printer::kill(true) is intended to switch off steppers.
 - M84 does not shut down Fan anymore, only steppers as intended.

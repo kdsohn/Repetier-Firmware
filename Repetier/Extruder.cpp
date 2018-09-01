@@ -29,7 +29,6 @@ volatile uint8_t    execute100msPeriodical = 0;
 volatile uint8_t    execute50msPeriodical = 0;
 volatile uint8_t    execute16msPeriodical = 0;
 volatile uint8_t    execute10msPeriodical = 0;
-volatile uint8_t    execute3msPeriodical = 0;
 
 #if FEATURE_DITTO_PRINTING
 uint8_t             Extruder::dittoMode = 0;

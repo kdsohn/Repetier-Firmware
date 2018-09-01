@@ -159,7 +159,6 @@ extern volatile uint8_t     execute100msPeriodical;
 extern volatile uint8_t     execute50msPeriodical;
 extern volatile uint8_t     execute16msPeriodical;
 extern volatile uint8_t     execute10msPeriodical;
-extern volatile uint8_t     execute3msPeriodical;
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
 extern uint8_t fanKickstart;

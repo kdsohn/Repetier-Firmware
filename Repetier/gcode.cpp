@@ -149,7 +149,6 @@ void GCode::keepAlive( enum FirmwareState state )
 {
     millis_t now = HAL::timeInMilliseconds();
 
-
     if( state != NotBusy && keepAliveInterval != 0 )
     {
         if( (now - lastBusySignal) < keepAliveInterval )
@@ -171,8 +170,8 @@ void GCode::keepAlive( enum FirmwareState state )
         }
     }
     lastBusySignal = now;
-    return;
 
+    return;
 } // keepAlive
 
 
@@ -254,7 +253,6 @@ void GCode::checkAndPushCommand()
     wasLastCommandReceivedAsBinary = sendAsBinary;
     keepAlive( NotBusy );
     waitingForResend = -1; // everything is ok.
-
 } // checkAndPushCommand
 
 
@@ -335,7 +333,7 @@ void GCode::executeFString(FSTRINGPARAM(cmd))
         if(code.parseAscii((char *)buf,false) && (code.params & 518))   // Success
         {
             Commands::executeGCode(&code);
-            Commands::checkForPeriodicalActions( Processing );  //check heater and other stuff every n milliseconds
+            Commands::checkForPeriodicalActions( Processing );
         }
     }
     while(c);
@@ -378,11 +376,10 @@ void GCode::executeString(char *cmd)
         if(code.parseAscii((char *)buf,false) && (code.params & 518))   // Success
         {
             Commands::executeGCode(&code);
-            Commands::checkForPeriodicalActions( Processing );  //check heater and other stuff every n milliseconds
+            Commands::checkForPeriodicalActions( Processing );
         }
     }
     while(c);
-
 } // executeString
 
 
@@ -394,7 +391,6 @@ void GCode::readFromSerial()
     if(bufferLength >= GCODE_BUFFER_SIZE || (waitUntilAllCommandsAreParsed && bufferLength))
     {
         // all buffers full
-        keepAlive(Processing);
         return;
     }
 
@@ -499,7 +495,6 @@ void GCode::readFromSD()
     if(bufferLength >= GCODE_BUFFER_SIZE || (waitUntilAllCommandsAreParsed && bufferLength))
     {
         // all buffers full
-        keepAlive(Processing);
         return;
     }
 

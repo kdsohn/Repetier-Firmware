@@ -6673,12 +6673,14 @@ void outputObject( bool showerrors )
     g_uStartOfIdle = HAL::timeInMilliseconds(); //outputobject ends
 } // outputObject
 
-void loopFeatures( millis_t uTime ) //wird so aufgerufen, dass es ein ~100ms Takt sein sollte.
+void loopFeatures() //wird so aufgerufen, dass es ein ~100ms Takt sein sollte.
 {
     static char     nEntered = 0;
     if( nEntered ) return; // do not enter more than once
     nEntered ++;
 	
+	millis_t uTime = HAL::timeInMilliseconds();
+	  
 	handleFanOffPlanner(uTime);
 	handleScanWorkTasks();
 	handlePauseTime(uTime);
