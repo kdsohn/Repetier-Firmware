@@ -767,7 +767,7 @@ extern unsigned char readByte24C256( int addressI2C, unsigned int addressEEPROM 
 extern unsigned short readWord24C256( int addressI2C, unsigned int addressEEPROM );
 
 extern void doZCompensation( void );
-extern void loopFeatures( void );
+extern void loopFeatures( millis_t uTime );
 extern void outputObject( bool showerrors = true );
 
 #if FEATURE_PARK

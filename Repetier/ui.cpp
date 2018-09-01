@@ -4884,7 +4884,7 @@ void UIDisplay::executeAction(int action)
                 }
 
                 // disable and turn off everything before we switch the operating mode
-                Printer::kill( false );
+                Printer::switchEverythingOff();
 
                 if( Printer::operatingMode == OPERATING_MODE_PRINT )
                 {
@@ -5050,7 +5050,7 @@ void UIDisplay::executeAction(int action)
             }
             case UI_ACTION_DISABLE_STEPPER:
             {
-                Printer::kill( true );
+				Printer::disableAllSteppersNow();
                 break;
             }
             case UI_ACTION_MOUNT_FILAMENT_SOFT:

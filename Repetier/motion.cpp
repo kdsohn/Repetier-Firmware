@@ -107,7 +107,7 @@ void PrintLine::moveRelativeDistanceInSteps(long x,long y,long z,long e,float fe
     if(waitEnd)
         Commands::waitUntilEndOfAllMoves(); //moveRelativeDistanceInSteps + wait
 
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 } // moveRelativeDistanceInSteps
 
 
@@ -123,8 +123,7 @@ void PrintLine::moveRelativeDistanceInStepsReal(long x,long y,long z,long e,floa
     if(waitEnd)
         Commands::waitUntilEndOfAllMoves(); //moveRelativeDistanceInStepsReal + wait
 
-    previousMillisCmd = HAL::timeInMilliseconds();
-
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 } // moveRelativeDistanceInStepsReal
 
 

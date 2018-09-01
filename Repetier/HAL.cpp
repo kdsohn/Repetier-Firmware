@@ -1035,8 +1035,13 @@ ISR(PWM_TIMER_VECTOR)
     {
         counter100Periodical = 0;
         execute100msPeriodical = 1;
+        execute50msPeriodical = 1;  //volle 100ms Zeit -> Ping 50ms
     }
-
+    if(counter100Periodical == 196) //halbe 100ms Zeit -> Ping 50ms
+    {
+        execute50msPeriodical = 1;
+    }
+	
 #if FEATURE_RGB_LIGHT_EFFECTS
     bool rgb_10ms_change_should_be_now = false;
 #endif // FEATURE_RGB_LIGHT_EFFECTS
@@ -1057,11 +1062,11 @@ ISR(PWM_TIMER_VECTOR)
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
     }
 
-    static char counter2Periodical = 0; // Approximate a 1ms timer :: blocks pingwatchdog s commandloop if not working
-    if(++counter2Periodical >= 8)
+    static char counter3Periodical = 0; // Approximate a 3ms timer :: blocks pingwatchdog s commandloop if not working
+    if(++counter3Periodical >= 12)
     {
-        counter2Periodical = 0;
-        execute2msPeriodical = 1;
+        counter3Periodical = 0;
+        execute3msPeriodical = 1;
     }
 
     // read analog values

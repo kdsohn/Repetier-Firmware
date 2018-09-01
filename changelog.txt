@@ -2,7 +2,14 @@ TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 TODO: zero K and nikibalboa say that they experienced a hard reset while starting "unload filament soft" or "load filament soft"
 
-V RF.01.42.11.Mod (2018-08-25)
+V RF.01.42.12.Mod (2018-09-01)
+- cleanup of disable-things-functions: Removed this horribly chosen function name "Printer::kill" and removed that Printer::kill(true) is intended to switch off steppers.
+- M84 does not shut down Fan anymore, only steppers as intended.
+- finally split GCode::readFromSerial() and GCode::readFromSD() into two independend functions.
+- removed defaultLoopActions() and moved its functionality to alot better place.
+- removed GCode::readFromSerial() from places where the printer waits for some processing.
+
+V RF.01.42.11.Mod (2018-08-31)
 - Patch SdFat Lib to 1.0.7
 - removed the wrong hint that we support Arduino 1.6.5. 
   Since the time we included the SdFat library which is not located within the main directory next to the Repetier.ino that is not true anymore. 

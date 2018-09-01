@@ -331,7 +331,7 @@ void EEPROM::clearEEPROM()
         currentTime = HAL::timeInMilliseconds();
         if( (currentTime - lastTime) > PERIODICAL_ACTIONS_CALL_INTERVAL )
         {
-            Commands::checkForPeriodicalActions();
+            Commands::checkForPeriodicalActions( Processing );
             lastTime = currentTime;
         }
     }
@@ -1477,7 +1477,7 @@ uint8_t EEPROM::computeChecksum()
         currentTime = HAL::timeInMilliseconds();
         if( (currentTime - lastTime) > PERIODICAL_ACTIONS_CALL_INTERVAL )
         {
-            Commands::checkForPeriodicalActions();
+            Commands::checkForPeriodicalActions( Processing );
             lastTime = currentTime;
         }
     }
