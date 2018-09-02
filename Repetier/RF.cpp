@@ -10564,6 +10564,15 @@ void processCommand( GCode* pCommand )
                         if(Lines > 5) Lines = 5;
                     }
 
+                    float y = 23.0f; /*+Printer::minMM[Y_AXIS]*/
+                    if ( pCommand->hasY() ){
+                        y = (float)pCommand->Y;
+                        if(y < 0.5f) y = 0.5f;
+						// Länge y Achse - halbe Bahnbreite - 1.5 pro Versatz - Schrägversatz nur bei Dual. Übertrieben aber das sollte genau sein.
+						float maxY = Printer::lengthMM[Y_AXIS] - 0.5f - Lines * 1.5f - (NUM_EXTRUDER > 1 ? 5.0f : 0.0f);
+                        if(y > maxY) y = maxY;
+                    }
+
                     //bezogen auf : M3411 S P F-90 -> Flow CMP Speed einstellungen werden kurz substituiert und dann resubstituiert
                     g_nDigitFlowCompensation_Fmin = min;
                     g_nDigitFlowCompensation_Fmax = max;
@@ -10580,7 +10589,6 @@ void processCommand( GCode* pCommand )
                     const float spacerXd = (NUM_EXTRUDER > 1 ? extruder[1].xOffset * Printer::invAxisStepsPerMM[X_AXIS] : 0);
 
                     float x = spacerX;
-                    float y = 23.0f; /*+Printer::minMM[Y_AXIS]*/
 #if NUM_EXTRUDER > 0
                     if ( Extruder::current->id != 0 ){
                         //if you use T1 then dont make the start line ontop of the startline of T0

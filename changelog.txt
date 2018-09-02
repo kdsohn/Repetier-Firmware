@@ -2,6 +2,9 @@ TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 TODO: zero K and nikibalboa say that they experienced a hard reset while starting "unload filament soft" or "load filament soft"
 
+V RF.01.42.14.Mod (2018-09-01)
+- M3912 Auto-Startmade can now be configured by parameter Y. Standard start Y is 23 mm.
+
 V RF.01.42.13.Mod (2018-09-01)
 - some tempering with code and order
 
