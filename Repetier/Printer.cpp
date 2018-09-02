@@ -381,43 +381,23 @@ void Printer::updateDerivedParameter()
 
 
 /** \brief Stop heater and stepper motors. Disable power,if possible. */
-void Printer::kill(uint8_t only_steppers)
+void Printer::switchEverythingOff()
 {
-    if(areAllSteppersDisabled() && only_steppers) return;
-    if(Printer::isAllKilled()) return;
+    if(Printer::isAllSwitchedOff()) return;
 
 #if FAN_PIN>-1 && FEATURE_FAN_CONTROL
     // disable the fan
     Commands::setFanSpeed((uint8_t)0);
 #endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
 
-    disableAllSteppersNow();
+    Printer::disableAllSteppersNow();
 
-#if FAN_BOARD_PIN>-1
-    pwm_pos[NUM_EXTRUDER+1] = 0;
-#endif // FAN_BOARD_PIN
+	Extruder::setTemperatureForAllExtruders(0, false);
+	Extruder::setHeatedBedTemperature(0);
+	UI_STATUS_UPD(UI_TEXT_SWITCHED_OFF);
 
-    if(!only_steppers)
-    {
-        Extruder::setTemperatureForAllExtruders(0, false);
-        Extruder::setHeatedBedTemperature(0);
-        UI_STATUS_UPD(UI_TEXT_KILLED);
-
-#if defined(PS_ON_PIN) && PS_ON_PIN>-1
-        //pinMode(PS_ON_PIN,INPUT);
-        SET_OUTPUT(PS_ON_PIN); //GND
-        WRITE(PS_ON_PIN, (POWER_INVERTING ? LOW : HIGH));
-#endif // defined(PS_ON_PIN) && PS_ON_PIN>-1
-
-        Printer::setAllKilled(true);
-    }
-    else
-    {
-        UI_STATUS_UPD(UI_TEXT_STEPPER_DISABLED);
-    }
-
-} // kill
-
+	Printer::setAllSwitchedOff(true);
+} // switchEverythingOff
 
 void Printer::updateAdvanceFlags()
 {
@@ -1211,37 +1191,6 @@ void Printer::setup()
     HAL::startWatchdog();
 } // setup()
 
-
-void Printer::defaultLoopActions()
-{
-    Commands::checkForPeriodicalActions();  //check heater every n milliseconds
-
-    millis_t curtime = HAL::timeInMilliseconds();
-
-    if( PrintLine::hasLines() || Printer::isPrinting() || isMenuMode(MENU_MODE_PAUSED) )
-    {
-        previousMillisCmd = curtime;
-    }
-    else
-    {
-        curtime -= previousMillisCmd;
-        if( maxInactiveTime != 0 && curtime > maxInactiveTime ) Printer::kill(false);
-        else Printer::setAllKilled(false); // prevent repeated kills
-        if( stepperInactiveTime != 0 && curtime > stepperInactiveTime )
-        {
-            Printer::kill(true);
-        }
-    }
-
-#if defined(SDCARDDETECT) && SDCARDDETECT>-1 && defined(SDSUPPORT) && SDSUPPORT
-    sd.automount();
-#endif // defined(SDCARDDETECT) && SDCARDDETECT>-1 && defined(SDSUPPORT) && SDSUPPORT
-
-    DEBUG_MEMORY;
-
-} // defaultLoopActions
-
-
 #if FEATURE_MEMORY_POSITION
 void Printer::MemoryPosition()
 {
@@ -1566,10 +1515,7 @@ int8_t Printer::checkHome(int8_t axis) //X_AXIS 0, Y_AXIS 1, Z_AXIS 2
     int mmLoops = Printer::axisStepsPerMM[axis]; //fahre in mm-Blöcken.
 
     while(1){
-        /* Pfusch, das hier extra einzufügen? -> ^^ Prototype -> Funktion muss u.U. später gesplittet und mit einer Art M400 geschützt werden. */
-        HAL::tellWatchdogOk(); //ultra ausnahme!! Das gibts normal nur in RF.cpp an einer Stelle. TODO!!
-        Extruder::manageTemperatures();
-        GCode::keepAlive( Processing );
+        Commands::checkForPeriodicalActions( Processing );
 
         for( int i=0; i < mmLoops; i++ )
         {
@@ -1648,10 +1594,7 @@ int8_t Printer::checkHome(int8_t axis) //X_AXIS 0, Y_AXIS 1, Z_AXIS 2
 
     Didsteps = abs(Didsteps);
     while(Didsteps > 0){
-        /* Pfusch, das hier extra einzufügen? -> ^^ Prototype -> Funktion muss u.U. später gesplittet und mit einer Art M400 geschützt werden. */
-        HAL::tellWatchdogOk(); //ultra ausnahme!! Das gibts normal nur in RF.cpp an einer Stelle. TODO!!
-        Extruder::manageTemperatures();
-        GCode::keepAlive( Processing );
+        Commands::checkForPeriodicalActions( Processing );
 
         if(Didsteps >= mmLoops){
             Didsteps -= mmLoops;
@@ -1711,7 +1654,7 @@ void Printer::homeXAxis()
 #endif // NUM_EXTRUDER>1
 
         // show that we are active
-        previousMillisCmd = HAL::timeInMilliseconds();
+        previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
         setHomed( true , -1 , -1);
     }
 
@@ -1758,7 +1701,7 @@ void Printer::homeYAxis()
 #endif // NUM_EXTRUDER>1
 
         // show that we are active
-        previousMillisCmd = HAL::timeInMilliseconds();
+        previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
         setHomed( -1 , true , -1);
     }
 } // homeYAxis
@@ -1856,7 +1799,7 @@ void Printer::homeZAxis()
         setHomed( -1 , -1 , true);
 
         // show that we are active
-        previousMillisCmd = HAL::timeInMilliseconds();
+        previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 #if FEATURE_CONFIGURABLE_Z_ENDSTOPS
         ZEndstopUnknown = false;
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS

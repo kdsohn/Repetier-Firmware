@@ -26,9 +26,9 @@
 
 uint8_t             manageMonitor = 255; ///< Temp. we want to monitor with our host. 1+NUM_EXTRUDER is heated bed
 volatile uint8_t    execute100msPeriodical = 0;
+volatile uint8_t    execute50msPeriodical = 0;
 volatile uint8_t    execute16msPeriodical = 0;
 volatile uint8_t    execute10msPeriodical = 0;
-volatile uint8_t    execute2msPeriodical = 0;
 
 #if FEATURE_DITTO_PRINTING
 uint8_t             Extruder::dittoMode = 0;
@@ -1074,7 +1074,7 @@ void TemperatureController::waitForTargetTemperature(uint8_t plus_temp_tolerance
     }else{
         UI_STATUS_UPD( UI_TEXT_COOLING_DOWN );
     }
-    g_uStartOfIdle = 0; //end waitForTargetTemperature
+    g_uStartOfIdle = 0; //start waitForTargetTemperature
     while(true) {
         Commands::printTemperatures();
         Commands::checkForPeriodicalActions( WaitHeater );

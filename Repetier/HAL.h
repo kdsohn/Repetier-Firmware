@@ -793,7 +793,7 @@ public:
         // external watchdog
         SET_OUTPUT(WATCHDOG_PIN);
         g_bPingWatchdog = 1; //allow pinging
-        tellWatchdogOk(); //Nibbels: Init für g_nCommandloop
+        tellWatchdogOk(); //Nibbels: Init für g_uLastCommandLoop
         pingWatchdog(); //Nibbels: Hier macht der mehr sinn!
         HAL::WDT_Init(); //Nibbels: use watchdogtimer to test var and trigger
     } // startWatchdog

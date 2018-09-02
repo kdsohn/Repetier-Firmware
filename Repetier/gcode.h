@@ -23,8 +23,9 @@
 
 enum FirmwareState { NotBusy=0, Processing, Paused, WaitHeater };
 
+#if SDSUPPORT
 class SDCard;
-
+#endif //SDSUPPORT
 
 class GCode   // 52 uint8_ts per command needed
 {
@@ -225,7 +226,9 @@ public:
     void echoCommand();
     static GCode *peekCurrentCommand();
     static void readFromSerial();
+#if SDSUPPORT
     static void readFromSD();
+#endif //SDSUPPORT
     static void pushCommand();
     static void executeFString(FSTRINGPARAM(cmd));
     static void executeString(char *cmd);
@@ -233,7 +236,9 @@ public:
     static void keepAlive(enum FirmwareState state);
     static uint32_t keepAliveInterval;
 
+#if SDSUPPORT
     friend class SDCard;
+#endif //SDSUPPORT
     friend class UIDisplay;
 
 private:

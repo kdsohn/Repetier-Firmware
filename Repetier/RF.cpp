@@ -565,7 +565,7 @@ void scanHeatBed( void )
     }
 
     // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     if( g_nHeatBedScanStatus )
     {
@@ -2047,7 +2047,7 @@ void alignExtruders( void )
     }
 
     // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     if( g_nAlignExtrudersStatus )
     {
@@ -2323,7 +2323,7 @@ void searchZOScan( void )
 
                 //nun zu den settings:
                 if(g_ZOS_Auto_Matrix_Leveling_State <= 1){
-                    previousMillisCmd = HAL::timeInMilliseconds();
+                    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 }
                 //HERE THE FUNCTION MIGHT JUMP IN TO REDO SCANS FOR AUTO_MATRIX_LEVELING
                 switch(g_ZOS_Auto_Matrix_Leveling_State){
@@ -3060,7 +3060,7 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
     if(incrementfeedrate < 0.02) incrementfeedrate = 0.02;
     Com::printFLN( PSTR( "FeedrateIncrement = " ) , incrementfeedrate , 2 );
 
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     if( !Printer::areAxisHomed() )
     {
@@ -3186,7 +3186,7 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
                 sd.file.write_P(Com::tNewline);
             }
 
-            previousMillisCmd = HAL::timeInMilliseconds();
+            previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
             if(extrudedigits < g_nCurrentIdlePressure - maxdigits || extrudedigits > g_nCurrentIdlePressure + maxdigits || extrudedigits < -maxdigits || extrudedigits > maxdigits) {
                 PrintLine::moveRelativeDistanceInSteps( 0, 0, 0 , (long)( -0.5 * Printer::axisStepsPerMM[E_AXIS] ), 10, true, true ); //loose some force on dms
@@ -3635,7 +3635,7 @@ void findZOrigin( void )
     }
 
     // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     if( g_nFindZOriginStatus )
     {
@@ -3672,7 +3672,7 @@ void findZOrigin( void )
                     Com::printFLN( PSTR( ", nMaxPressureContact = " ), nMaxPressureContact );
                 }
 
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 Printer::enableZStepper();
 
                 g_nFindZOriginStatus = 2;
@@ -3944,7 +3944,7 @@ void scanWorkPart( void )
     }
 
     // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     if( g_nWorkPartScanStatus )
     {
@@ -4022,7 +4022,7 @@ void scanWorkPart( void )
             case 25:
             {
                 // move to the first position
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 //Printer::enableZStepper(); //nibbels: ???? vorher homing .. oder ist das hier falls z nicht gehomed und nicht aktiviert wird? //08.02.2018 removed enable z stepper ->  it gets activated in case 10 for sure.
 
                 PrintLine::moveRelativeDistanceInSteps( g_nScanXStartSteps, 0, 0, 0, Printer::homingFeedrate[X_AXIS], true, true );
@@ -6102,7 +6102,7 @@ void handleStrainGaugeFeatures(millis_t uTime){
     static millis_t        nSensiblePressureTime   = 0;
     static long            nSensiblePressureSum    = 0;
     static char            nSensiblePressureChecks = 0;
-    if( (uTime - nSensiblePressureTime) > SENSIBLE_PRESSURE_INTERVAL ) //jede 100ms -> das macht hier drin wenig sinn.
+    if( (uTime - nSensiblePressureTime) > SENSIBLE_PRESSURE_INTERVAL ) //max. jede 50ms
     {
         i_need_strain_value = 1;
     }
@@ -6112,7 +6112,7 @@ void handleStrainGaugeFeatures(millis_t uTime){
     static millis_t        uLastPressureTime         = 0;
     static long            nPressureSum              = 0;
     static char            nPressureChecks           = 0;
-    if( (uTime - uLastPressureTime) > EMERGENCY_PAUSE_INTERVAL ) //jede 100ms -> das macht hier drin wenig sinn.
+    if( (uTime - uLastPressureTime) > EMERGENCY_PAUSE_INTERVAL ) //max. jede 100ms
     {
         i_need_strain_value = 1;
     }
@@ -6122,7 +6122,7 @@ void handleStrainGaugeFeatures(millis_t uTime){
     static millis_t        uLastZPressureTime        = 0;
     static long            nZPressureSum             = 0;
     static char            nZPressureChecks          = 0;
-    if( (uTime - uLastZPressureTime) > EMERGENCY_STOP_INTERVAL ) //jede 10ms -> das macht hier drin überhaupt garkeinen sinn. : kurz, das heißt "absolut immer" jede 100ms.
+    if( (uTime - uLastZPressureTime) > EMERGENCY_STOP_INTERVAL ) //max. jede 10ms
     {
         i_need_strain_value = 1;
     }
@@ -6605,6 +6605,30 @@ void handleGoIdle(millis_t uTime) {
     }
 }
 
+
+void handleGoIdleShutdownDevices(millis_t uTime) {
+    if( PrintLine::hasLines() || Printer::isPrinting() || Printer::isMenuMode(MENU_MODE_PAUSED) )
+    {
+        previousMillisCmd = uTime; //prevent inactive shutdown of steppers/temps
+    }
+    else
+    {
+        uTime -= previousMillisCmd;
+		
+        if( maxInactiveTime != 0 && uTime > maxInactiveTime ) Printer::switchEverythingOff(); //kill not only steppers
+        else Printer::setAllSwitchedOff(false); // reset if not time to kill: prevents repeated kills
+		
+        if( stepperInactiveTime != 0 && uTime > stepperInactiveTime && !Printer::areAllSteppersDisabled() )
+        {
+			Printer::disableAllSteppersNow();
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+			// disable the part fan
+			Commands::setFanSpeed((uint8_t)0);
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
+        }
+    }
+}
+
 void outputObject( bool showerrors )
 {
     if( PrintLine::linesCount )
@@ -6649,14 +6673,14 @@ void outputObject( bool showerrors )
     g_uStartOfIdle = HAL::timeInMilliseconds(); //outputobject ends
 } // outputObject
 
-
-void loopFeatures( void ) //wird so aufgerufen, dass es ein ~100ms Takt sein sollte.
+void loopFeatures() //wird so aufgerufen, dass es ein ~100ms Takt sein sollte.
 {
     static char     nEntered = 0;
     if( nEntered ) return; // do not enter more than once
     nEntered ++;
 	
-    millis_t uTime = HAL::timeInMilliseconds();
+	millis_t uTime = HAL::timeInMilliseconds();
+	  
 	handleFanOffPlanner(uTime);
 	handleScanWorkTasks();
 	handlePauseTime(uTime);
@@ -6664,6 +6688,7 @@ void loopFeatures( void ) //wird so aufgerufen, dass es ein ~100ms Takt sein sol
 	handleStartPrint();
 	handleStopPrint(uTime);
 	handleGoIdle(uTime);
+	handleGoIdleShutdownDevices(uTime);
     if( Printer::isAnyTempsensorDefect() && Printer::isPrinting() )
     {
         // we are printing from the SD card and a temperature sensor got defect - abort the current printing
@@ -10539,6 +10564,15 @@ void processCommand( GCode* pCommand )
                         if(Lines > 5) Lines = 5;
                     }
 
+                    float y = 23.0f; /*+Printer::minMM[Y_AXIS]*/
+                    if ( pCommand->hasY() ){
+                        y = (float)pCommand->Y;
+                        if(y < 0.5f) y = 0.5f;
+						// Länge y Achse - halbe Bahnbreite - 1.5 pro Versatz - Schrägversatz nur bei Dual. Übertrieben aber das sollte genau sein.
+						float maxY = Printer::lengthMM[Y_AXIS] - 0.5f - Lines * 1.5f - (NUM_EXTRUDER > 1 ? 5.0f : 0.0f);
+                        if(y > maxY) y = maxY;
+                    }
+
                     //bezogen auf : M3411 S P F-90 -> Flow CMP Speed einstellungen werden kurz substituiert und dann resubstituiert
                     g_nDigitFlowCompensation_Fmin = min;
                     g_nDigitFlowCompensation_Fmax = max;
@@ -10555,7 +10589,6 @@ void processCommand( GCode* pCommand )
                     const float spacerXd = (NUM_EXTRUDER > 1 ? extruder[1].xOffset * Printer::invAxisStepsPerMM[X_AXIS] : 0);
 
                     float x = spacerX;
-                    float y = 23.0f; /*+Printer::minMM[Y_AXIS]*/
 #if NUM_EXTRUDER > 0
                     if ( Extruder::current->id != 0 ){
                         //if you use T1 then dont make the start line ontop of the startline of T0
@@ -10588,6 +10621,7 @@ void processCommand( GCode* pCommand )
                             e += (float)Extrusion * ((/*Printer::minMM[X_AXIS]+*/Printer::lengthMM[X_AXIS]) - 2*spacerX - spacerXd)/200;
                         }
                         for(float i = 0.0025f; i <= 1.0f; i+=0.0025f){
+							Commands::checkForPeriodicalActions( Processing );
                             //split full line into 100 small pieces so that we can adjust flow like speed.
                             Printer::moveToReal( x_0 + (x - x_0)*i,
                                                  y_0 + (y - y_0)*i,
@@ -10650,6 +10684,7 @@ void processCommand( GCode* pCommand )
 
                 float e = 0.0f;
                 while(e < float(Extrusion) ){
+					Commands::checkForPeriodicalActions( Processing );
                     if( g_uBlockCommands || abs(readStrainGauge( ACTIVE_STRAIN_GAUGE )) > maxP /* digits sind soweit gestiegen, dass abbruch.*/ ){
                         UI_STATUS_UPD( UI_TEXT_OK );
                         break;
@@ -10706,13 +10741,13 @@ void processCommand( GCode* pCommand )
                 while( t < float(UI_SET_EXTRUDER_MAX_TEMP_UNMOUNT) && fabs(e) < float(outputLength) ){
                     millis_t time = HAL::timeInMilliseconds() + 2000;
                     while( HAL::timeInMilliseconds() <= time ){
-                        UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT );
-                        Commands::printTemperatures();
                         Commands::checkForPeriodicalActions( WaitHeater );
+                        UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT );
                         if( g_uBlockCommands ) break;
                     }
                     if( g_uBlockCommands ) break;
                     while( fabs(e) < float(outputLength) ){
+						Commands::checkForPeriodicalActions( Processing );
                         if( g_uBlockCommands ) break;
                         if( abs(readStrainGauge( ACTIVE_STRAIN_GAUGE )) > maxForce /* digits sind soweit INS MINUS gestiegen, dass abbruch.*/ ){
                             t += 3.33; // +1°K
@@ -10950,7 +10985,7 @@ extern void processButton( int nAction )
             if( uid.menuLevel == 0 && uid.menuPos[0] == 1 ){ //wenn im Mod-Menü für Z-Offset/Matrix Sense-Offset/Limiter, dann anders!
                 beep(1,4);
                 // show that we are active
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 long nTemp = Printer::ZOffset; //um --> mm*1000
                 nTemp -= Z_OFFSET_BUTTON_STEPS;
                 //beim Unterschreiten von 0, soll 0 erreicht werden, sodass man nicht mit krummen Zahlen rumhantieren muss.
@@ -10998,7 +11033,7 @@ extern void processButton( int nAction )
             if( uid.menuLevel == 0 && uid.menuPos[0] == 1 ){ //wenn im Mod-Menü für Z-Offset/Matrix Z-Offset/Matrix Sense-Offset/Limiter, dann anders!
                 beep(1,4);
                 // show that we are active
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
                 long nTemp = Printer::ZOffset; //um --> mm*1000
                 nTemp += Z_OFFSET_BUTTON_STEPS;
@@ -11045,7 +11080,7 @@ extern void processButton( int nAction )
     #endif // !EXTRUDER_ALLOW_COLD_MOVE
 
                 // show that we are active
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
                 if( uint32_t(abs(Printer::directPositionTargetSteps[E_AXIS] - Printer::directPositionCurrentSteps[E_AXIS])) <= (g_nManualSteps[E_AXIS]>>1) )
                 {
@@ -11083,7 +11118,7 @@ extern void processButton( int nAction )
     #endif // !EXTRUDER_ALLOW_COLD_MOVE
 
                 // show that we are active
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
                 if( uint32_t(abs(Printer::directPositionTargetSteps[E_AXIS] - Printer::directPositionCurrentSteps[E_AXIS])) <= (g_nManualSteps[E_AXIS]>>1) )
                 {
@@ -11225,7 +11260,7 @@ void nextPreviousXAction( int8_t increment )
     }
 
     // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     switch( Printer::moveMode[X_AXIS] )
     {
@@ -11357,7 +11392,7 @@ void nextPreviousYAction( int8_t increment )
     }
 
     // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     switch( Printer::moveMode[Y_AXIS] )
     {
@@ -11501,7 +11536,7 @@ void nextPreviousZAction( int8_t increment )
     }
 
     // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     moveMode = Printer::moveMode[Z_AXIS];
     if( Printer::processAsDirectSteps() )
@@ -11560,7 +11595,7 @@ void nextPreviousZAction( int8_t increment )
             }
             else
             {
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 Printer::enableZStepper();
 
                 noInts.protect();
@@ -13532,7 +13567,12 @@ void doEmergencyStop( char reason )
     moveZ( int(Printer::axisStepsPerMM[Z_AXIS] * 5) );
 
     // we are not going to perform any further operations until the restart of the firmware
-    Printer::kill( false );
+    Printer::switchEverythingOff();
+
+#if defined(PS_ON_PIN) && PS_ON_PIN>-1
+	SET_OUTPUT(PS_ON_PIN); //GND
+	WRITE(PS_ON_PIN, (POWER_INVERTING ? LOW : HIGH));
+#endif // defined(PS_ON_PIN) && PS_ON_PIN>-1
 } // doEmergencyStop
 
 

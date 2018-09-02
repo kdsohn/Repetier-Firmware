@@ -97,7 +97,7 @@
     // Max lift in [um]; Standard: 180um=0,18mm, darf nie 0 sein!! größer 0.2 macht normalerweise keinen Sinn.
     // Läuft dieser Wert ins Limit ist die Düse nicht in Ordnung, die Digit-Begrenzung zu niedrig oder das Z-Offset falsch justiert.
     #define SENSIBLE_PRESSURE_MAX_OFFSET                180
-    #define SENSIBLE_PRESSURE_INTERVAL                  100                                      //weniger macht keinen sinn. ob diese einschränkung sinn macht, aber sie bleibt vorerst mal da!
+    #define SENSIBLE_PRESSURE_INTERVAL                   50                                      //weniger macht keinen sinn. ob diese einschränkung sinn macht, aber sie bleibt vorerst mal da!
   #endif // FEATURE_SENSIBLE_PRESSURE
   /** \brief Enables debug outputs from the heat bed scan */
   #define DEBUG_HEAT_BED_SCAN               0                                                    // 0 = off, 1 = on, 2 = on with more debug outputs

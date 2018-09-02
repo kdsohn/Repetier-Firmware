@@ -24,6 +24,9 @@ int         Commands::lowestRAMValueSend = MAX_RAM;
 void Commands::commandLoop()
 {
     GCode::readFromSerial();
+#if SDSUPPORT
+    GCode::readFromSD();
+#endif //SDSUPPORT
     GCode *code = GCode::peekCurrentCommand();
     if(code)
     {
@@ -40,44 +43,57 @@ void Commands::commandLoop()
         }
         else
 #endif //SDSUPPORT
+		{
             Commands::executeGCode(code);
+		}
         code->popCurrentCommand();
-    }
-    Printer::defaultLoopActions();
+		Commands::checkForPeriodicalActions(Processing);  //check heater and other stuff every n milliseconds
+    } else {
+		Commands::checkForPeriodicalActions(NotBusy);  //check heater and other stuff every n milliseconds
+	}
 } // commandLoop
 
 
 void Commands::checkForPeriodicalActions(enum FirmwareState state)
 {
-    bool buttonactive = ((HAL::timeInMilliseconds() - uid.lastButtonStart < 15000) ? true : false);
-
-    if( state != NotBusy ){
+	/* 
+	 * The execute variables are set by PWM-Timer. This timer ticks with about 3910 Hz and the ms clocks are made with software counter dividors.
+	 * Except this 16ms execute variable which is set by internal watchdog timer.
+	 */
+    if (state != NotBusy) {
         GCode::keepAlive( state );
     }
 
-    if(execute2msPeriodical){ //set by PWM-Timer
-      execute2msPeriodical=0;
-	  //recompute very fast, but not within every loop.
+    if (execute10msPeriodical) {
+      execute10msPeriodical = 0;
+	  // Dieses freigabesignal sollte aus dem PWM-Timer kommen, denn dann ist klar, dass auch der noch läuft.
+	  // Dann laufen für den Watchdogreset der Timer und checkForPeriodicalActions().
+      HAL::tellWatchdogOk();	  
+    }
+
+    if (execute16msPeriodical) {
+      execute16msPeriodical = 0;
+	  bool buttonSpeedBoost = (!execute100msPeriodical && HAL::timeInMilliseconds() - uid.lastButtonStart < 20000);
+      if(buttonSpeedBoost) UI_SLOW;
 	  doZCompensation();
     }
 
-    if(execute10msPeriodical){ //set by PWM-Timer
-      execute10msPeriodical=0;
-      HAL::tellWatchdogOk();  //dieses freigabesignal sollte aus dem PWM-Timer kommen, denn dann ist klar, dass auch der noch läuft. Dann laufen für den Watchdogreset der Timer und checkForPeriodicalActions().
-    }
-
-    if(execute16msPeriodical){ //set by internal Watchdog-Timer
-      execute16msPeriodical = 0;
-      if(buttonactive) UI_SLOW;
-    }
-
-    if(execute100msPeriodical){ //set by PWM-Timer
-      execute100msPeriodical=0;
-      loopFeatures();
-      if(!buttonactive) UI_SLOW;
+    if (execute100msPeriodical) {
+      execute100msPeriodical = 0;
       Extruder::manageTemperatures();
       Commands::printTemperatures(); //selfcontrolling timediff
-    }	
+#if defined(SDCARDDETECT) && SDCARDDETECT>-1 && defined(SDSUPPORT) && SDSUPPORT
+      sd.automount();
+#endif // defined(SDCARDDETECT) && SDCARDDETECT>-1 && defined(SDSUPPORT) && SDSUPPORT
+	  UI_SLOW;
+    }
+
+    if (execute50msPeriodical) {
+      execute50msPeriodical = 0;
+      loopFeatures();
+    }
+
+	DEBUG_MEMORY;
 } // checkForPeriodicalActions
 
 
@@ -104,7 +120,6 @@ void Commands::waitUntilEndOfAllMoves()
 
         bWait = false;
         if( PrintLine::hasLines() )     bWait = true;
-        else                            GCode::readFromSerial(); //normalerweise braucht repetiert hier bei PrintLine::haslines kein readserial! aber wenn wir für die anderen wait=1 readserial wollen, evtl. schon.
 
 #if FEATURE_FIND_Z_ORIGIN
         if( g_nFindZOriginStatus )      bWait = true;
@@ -113,9 +128,7 @@ void Commands::waitUntilEndOfAllMoves()
 #if FEATURE_HEAT_BED_Z_COMPENSATION
         bWait = (Printer::needsCMPwait() ? true : bWait);
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
-
     }
-
 } // waitUntilEndOfAllMoves
 
 
@@ -128,7 +141,6 @@ void Commands::waitUntilEndOfZOS()
 
     while( bWait )
     {
-        GCode::readFromSerial();
         Commands::checkForPeriodicalActions( Processing );
 
         bWait = 0;
@@ -777,7 +789,7 @@ void Commands::executeGCode(GCode *com)
             break;
         }
       }
-      previousMillisCmd = HAL::timeInMilliseconds();
+      previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
     }
     else if(com->hasM())    // Process M Code
     {
@@ -872,7 +884,7 @@ void Commands::executeGCode(GCode *com)
 						reportTempsensorAndHeaterErrors();
 						break;
 					}
-                    previousMillisCmd = HAL::timeInMilliseconds();
+                    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                     if(Printer::debugDryrun()) break;
 
                     //TODO man müsste das in den Movecache legen!
@@ -903,7 +915,7 @@ void Commands::executeGCode(GCode *com)
 						reportTempsensorAndHeaterErrors();
 						break;
 					}
-                    previousMillisCmd = HAL::timeInMilliseconds();
+                    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                     if(Printer::debugDryrun()) break;
                     if (com->hasS()) Extruder::setHeatedBedTemperature(com->S,com->hasF() && com->F>0);
                 }
@@ -918,7 +930,7 @@ void Commands::executeGCode(GCode *com)
 						reportTempsensorAndHeaterErrors();
 						break;
 					}
-                    previousMillisCmd = HAL::timeInMilliseconds();
+                    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                     if(Printer::debugDryrun()) break;
                     Printer::waitMove = 1; //brauche ich das, wenn ich sowieso warte bis der movecache leer ist?
                     g_uStartOfIdle = 0; //M109
@@ -1004,7 +1016,7 @@ void Commands::executeGCode(GCode *com)
                     Printer::waitMove = 0;
                     g_uStartOfIdle    = HAL::timeInMilliseconds(); //end of M109
                 }
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 break;
             }
             case 190: // M190 - Wait bed for heater to reach target.
@@ -1048,7 +1060,7 @@ void Commands::executeGCode(GCode *com)
 #endif // HAVE_HEATED_BED
                 }
 
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 break;
             }
             case 116: // M116 - Wait for temperatures to reach target temperature
@@ -1147,7 +1159,7 @@ void Commands::executeGCode(GCode *com)
             {
 #if PS_ON_PIN > -1
                 Commands::waitUntilEndOfAllMoves();  //M80 command
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 SET_OUTPUT(PS_ON_PIN); //GND
                 WRITE(PS_ON_PIN, (POWER_INVERTING ? HIGH : LOW));
 #endif // PS_ON_PIN > -1
@@ -1181,7 +1193,7 @@ void Commands::executeGCode(GCode *com)
                 else
                 {
                     Commands::waitUntilEndOfAllMoves(); //M84
-                    Printer::kill(true);
+					Printer::disableAllSteppersNow();
                 }
                 break;
             }
@@ -1209,7 +1221,7 @@ void Commands::executeGCode(GCode *com)
 
                 while(wait-HAL::timeInMilliseconds() < 100000L)
                 {
-                    Printer::defaultLoopActions();
+                    Commands::checkForPeriodicalActions( Paused );  //check heater and other stuff every n milliseconds
                 }
                 if(com->hasX())
                     Printer::enableXStepper();
