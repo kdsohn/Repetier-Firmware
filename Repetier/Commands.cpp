@@ -56,16 +56,29 @@ void Commands::commandLoop()
 
 void Commands::checkForPeriodicalActions(enum FirmwareState state)
 {
-    if( state != NotBusy ){
+	/* 
+	 * The execute variables are set by PWM-Timer. This timer ticks with about 3910 Hz and the ms clocks are made with software counter dividors.
+	 * Except this 16ms execute variable which is set by internal watchdog timer.
+	 */
+    if (state != NotBusy) {
         GCode::keepAlive( state );
     }
 
-    if(execute10msPeriodical){ //set by PWM-Timer
+    if (execute10msPeriodical) {
       execute10msPeriodical = 0;
-      HAL::tellWatchdogOk();  //dieses freigabesignal sollte aus dem PWM-Timer kommen, denn dann ist klar, dass auch der noch läuft. Dann laufen für den Watchdogreset der Timer und checkForPeriodicalActions().
+	  // Dieses freigabesignal sollte aus dem PWM-Timer kommen, denn dann ist klar, dass auch der noch läuft.
+	  // Dann laufen für den Watchdogreset der Timer und checkForPeriodicalActions().
+      HAL::tellWatchdogOk();	  
     }
 
-    if(execute100msPeriodical){ //set by PWM-Timer
+    if (execute16msPeriodical) {
+      execute16msPeriodical = 0;
+	  bool buttonSpeedBoost = (!execute100msPeriodical && HAL::timeInMilliseconds() - uid.lastButtonStart < 20000);
+      if(buttonSpeedBoost) UI_SLOW;
+	  doZCompensation();
+    }
+
+    if (execute100msPeriodical) {
       execute100msPeriodical = 0;
       Extruder::manageTemperatures();
       Commands::printTemperatures(); //selfcontrolling timediff
@@ -75,14 +88,7 @@ void Commands::checkForPeriodicalActions(enum FirmwareState state)
 	  UI_SLOW;
     }
 
-    if(execute16msPeriodical){ //set by internal Watchdog-Timer
-      execute16msPeriodical = 0;
-	  bool buttonSpeedBoost = (!execute100msPeriodical && HAL::timeInMilliseconds() - uid.lastButtonStart < 20000);
-      if(buttonSpeedBoost) UI_SLOW;
-	  doZCompensation();
-    }
-
-    if(execute50msPeriodical){ //set by internal Watchdog-Timer
+    if (execute50msPeriodical) {
       execute50msPeriodical = 0;
       loopFeatures();
     }

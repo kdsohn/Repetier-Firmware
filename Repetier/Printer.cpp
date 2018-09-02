@@ -1515,10 +1515,7 @@ int8_t Printer::checkHome(int8_t axis) //X_AXIS 0, Y_AXIS 1, Z_AXIS 2
     int mmLoops = Printer::axisStepsPerMM[axis]; //fahre in mm-Blöcken.
 
     while(1){
-        /* Pfusch, das hier extra einzufügen? -> ^^ Prototype -> Funktion muss u.U. später gesplittet und mit einer Art M400 geschützt werden. */
-        HAL::tellWatchdogOk(); //ultra ausnahme!! Das gibts normal nur in RF.cpp an einer Stelle. TODO!!
-        Extruder::manageTemperatures();
-        GCode::keepAlive( Processing );
+        Commands::checkForPeriodicalActions( Processing );
 
         for( int i=0; i < mmLoops; i++ )
         {
@@ -1597,10 +1594,7 @@ int8_t Printer::checkHome(int8_t axis) //X_AXIS 0, Y_AXIS 1, Z_AXIS 2
 
     Didsteps = abs(Didsteps);
     while(Didsteps > 0){
-        /* Pfusch, das hier extra einzufügen? -> ^^ Prototype -> Funktion muss u.U. später gesplittet und mit einer Art M400 geschützt werden. */
-        HAL::tellWatchdogOk(); //ultra ausnahme!! Das gibts normal nur in RF.cpp an einer Stelle. TODO!!
-        Extruder::manageTemperatures();
-        GCode::keepAlive( Processing );
+        Commands::checkForPeriodicalActions( Processing );
 
         if(Didsteps >= mmLoops){
             Didsteps -= mmLoops;
