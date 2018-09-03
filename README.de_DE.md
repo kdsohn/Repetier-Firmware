@@ -1,7 +1,7 @@
 [<img src="us.png" height="30">](README.md)
 [<img src="de.png" height="30">](README.de_DE.md)
 
-# Inoffizielle Modifikation der RF Firmware für RF1000 und RF2000 Geräte
+# Inoffizielle Modifikation der RF Firmware für RF1000 und RF2000 / RF2000v2 Geräte
 
 Basierend auf der Repetier-Firmware - die schnelle und benutzerfreundliche Firmware  
 
@@ -11,15 +11,17 @@ Für etwaige Schäden, die an Ihrem Gerät entstehen könnten, kann keine Verant
 BENUTZUNG AUF EIGENE GEFAHR. 
 
 Link zur offiziellen Version der Firmware:
-https://github.com/RF1000/Repetier-Firmware (siehe Branch developement)  
+https://github.com/RF1000/Repetier-Firmware (siehe Branch developement. Oder auch auf den Produktseiten auf www.conrad.de)  
 
 ## Installationsanleitung
 
 - Das Firmwarepaket `Branch: community_development` herunterladen und entpacken.  
 - Installiere die Arduino.cc IDE 1.8.6 oder neuer, wenn es nicht bereits installiert ist.  
-- Man bearbeitet und speichert die Configuration.h bei Zeile 46 und 47, je nachdem welchen Drucker man besitzt mit einem Texteditor. Man muss die zwei **//** vor dem Druckermodell entfernen, welches man aktivieren will:  
+- Man bearbeitet und speichert die Configuration.h bei Zeile 46 bis 48, je nachdem welchen Drucker man besitzt mit einem Texteditor. Man muss die zwei **//** vor dem Druckermodell entfernen, welches man aktivieren will:  
 `#define MOTHERBOARD                         DEVICE_TYPE_RF1000` or  
-`#define MOTHERBOARD                         DEVICE_TYPE_RF2000`
+`#define MOTHERBOARD                         DEVICE_TYPE_RF2000` or  
+`#define MOTHERBOARD                         DEVICE_TYPE_RF2000v2`  
+- Wer den Fräsmodus nicht benötigt, kann ihn aus der Firmware entfernen. Dazu stellt man in der RF1000.h/RF2000.h/RF2000v2.h das FEATURE_MILLING_MODE auf 0.
 - Optional: Man bearbeitet und speichert Configuration.h und RF1000.h oder RF2000.h, wie man es für seinen speziellen Drucker braucht.
 - Der Drucker wird mit dem USB-Kabel angeschlossen und angeschaltet.
 - Die Datei /Repetier/Repetier.ino doppelklicken. 
@@ -37,7 +39,7 @@ Unter Linux kann man diese Firmwares mit
 ```avrdude -patmega2560 -cwiring -P/dev/ttyUSB0 -b115200 -D -Uflash:w:Repetier.hex:i``` 
 in die Drucker einspielen.
 
-## Wenn du von Version from 1.37r oder früher updatest, mache bitte einen neuen M303 PID-Autotune bei allen Heizelementen!  
+## Wenn du von einer älteren Version als 1.37r.Mod oder der offiziellen Firmware bis 1.39 updatest, führe bitte einen neuen M303 PID-Autotune bei allen Heizelementen aus!  
 - RF2000/RF1000 Extruder links: Menü -> Configuration -> Temperatures -> Extruder 0 -> PID Pessen-Rule  
 - RF2000 Extruder rechts:       Menü -> Configuration -> Temperatures -> Extruder 1 -> PID Pessen-Rule  
 - RF2000/RF1000 Heizbett:       Menü -> Configuration -> Temperatures -> Heated Bed -> PID Tyreus-Lyben  
@@ -45,9 +47,15 @@ Starte mit I-Anteil limits (EEPROM-Werte) `PID I drive min = 30` and `PID I driv
 - Menü -> Configuration -> Temperatures -> (...) -> I-drive min = 20 .. 30  
 - Menü -> Configuration -> Temperatures -> (...) -> I-drive max = 100 .. 130  
 
-## Version RF 1.39+.Mod - wichtige Threads im Forum
+## Community-Mod Wiki - Für Feature-Beschreibungen GCodes und detailliertere Erklärung.
 
-http://www.rf1000.de/viewtopic.php?f=67&t=2043 (Thread to Stable 1.37v8 / 18.10.2017)
+http://www.rf1000.de/wiki/index.php/Kategorie:CommunityMod_Firmware  
+
+## Version RF 1.42.Mod - wichtige Threads im Forum
+
+http://www.rf1000.de/viewtopic.php?f=67&t=2324 (Thread to Stable 1.42 / 28.07.2018)  
+http://www.rf1000.de/viewtopic.php?f=67&t=2084 (Thread to Stable 1.37x7 / 26.11.2017)  
+http://www.rf1000.de/viewtopic.php?f=67&t=2043 (Thread to Stable 1.37v8 / 18.10.2017)  
 http://www.rf1000.de/viewtopic.php?f=74&t=1674 (Nibbels/Wessix SenseOffset-Thread)  
 http://www.rf1000.de/viewtopic.php?f=7&t=1504#p14882 (mhier Mod)  
 http://www.rf1000.de/viewtopic.php?f=7&t=1504&start=60#p16397 (added feature)  

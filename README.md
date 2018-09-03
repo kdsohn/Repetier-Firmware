@@ -1,7 +1,7 @@
 [<img src="us.png" height="30">](README.md)
 [<img src="de.png" height="30">](README.de_DE.md)
 
-# Inofficial modification of the RF firmware for RF1000 and RF2000 devices
+# Inofficial modification of the RF firmware for RF1000 and RF2000 / RF2000v2 devices
 Based on Repetier-Firmware - the fast and user friendly firmware.
 
 ## Disclaimer
@@ -11,15 +11,17 @@ supported by the developers of the RF1000 firmware.
 USE AT YOUR OWN RISK.
 
 For the official version, have a look at the upstream repository:
-https://github.com/RF1000/Repetier-Firmware (see branch development)
+https://github.com/RF1000/Repetier-Firmware (see branch development. Or else look on the products pages on www.conrad.de.)
 
 ## HowTo Install
 
 - Download the Firmware `Branch: community_development` and unzip all the files.  
 - Install Arduino.cc IDE 1.8.6 and later if it is not installed on your computer already.  
-- Edit and save Configuration.h @Line46 and 47 according to your printers model. You have to remove the two **//** in front of the printers name you wish to activate:  
+- Edit and save Configuration.h Line 46 to 48 according to your printers model. You have to remove the two **//** in front of the printers name you wish to activate:  
 `#define MOTHERBOARD                         DEVICE_TYPE_RF1000` or  
-`#define MOTHERBOARD                         DEVICE_TYPE_RF2000`
+`#define MOTHERBOARD                         DEVICE_TYPE_RF2000` or  
+`#define MOTHERBOARD                         DEVICE_TYPE_RF2000v2`  
+- If you do not need the milling mode, you can remove it from the firmware. To do this, set the FEATURE_MILLING_MODE to 0 in RF1000.h / RF2000.h / RF2000v2.h.
 - Optional: Edit and save the Configuration.h and RF1000.h or RF2000.h to your needs in case you use special specialized hardware.
 - Connect your Printer with a USB-cable and switch it on.
 - Go to and doubleclick /Repetier/Repetier.ino
@@ -36,7 +38,7 @@ Find more information and discussion here: http://www.rf1000.de/viewtopic.php?f=
 Using linux you can flash the .hex-files to your printer with this command:
 ```avrdude -patmega2560 -cwiring -P/dev/ttyUSB0 -b115200 -D -Uflash:w:Repetier.hex:i``` 
 
-## If you upgrade to this Version from 1.37r or earlier please do a fresh M303 PID-Autotune on all heaters!  
+## If you upgrade to this Version from 1.37r or earlier or from the official Firmware until 1.39 please execute a fresh M303 PID-Autotune on all heaters!  
 - RF2000/RF1000 Extruder left: Menu -> Configuration -> Temperatures -> Extruder 0 -> PID Pessen-Rule  
 - RF2000 Extruder right:       Menu -> Configuration -> Temperatures -> Extruder 1 -> PID Pessen-Rule  
 - RF2000/RF1000 Heated Bed:    Menu -> Configuration -> Temperatures -> Heated Bed -> PID Tyreus-Lyben  
@@ -44,9 +46,15 @@ Start with an integral limit with EEPROM-values of `PID I drive min = 30` and `P
 - Menu -> Configuration -> Temperatures -> (...) -> I-drive min = 20 .. 30  
 - Menu -> Configuration -> Temperatures -> (...) -> I-drive max = 100 .. 130  
 
-## Version 1.39+.Mod
+## Community-Mod Wiki - For feature descriptions gcodes and detailed explaination.
 
-http://www.rf1000.de/viewtopic.php?f=67&t=2043 (Thread to Stable 1.37v8 / 18.10.2017)
+http://www.rf1000.de/wiki/index.php/Kategorie:CommunityMod_Firmware  
+
+## Version 1.42.Mod - usefull threads within our forum
+
+http://www.rf1000.de/viewtopic.php?f=67&t=2324 (Thread to Stable 1.42 / 28.07.2018)  
+http://www.rf1000.de/viewtopic.php?f=67&t=2084 (Thread to Stable 1.37x7 / 26.11.2017)  
+http://www.rf1000.de/viewtopic.php?f=67&t=2043 (Thread to Stable 1.37v8 / 18.10.2017)  
 http://www.rf1000.de/viewtopic.php?f=74&t=1674 (Nibbels/Wessix SenseOffset-Thread)  
 http://www.rf1000.de/viewtopic.php?f=7&t=1504#p14882 (mhier Mod)  
 http://www.rf1000.de/viewtopic.php?f=7&t=1504&start=60#p16397 (added feature)  
