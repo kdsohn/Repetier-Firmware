@@ -62,8 +62,11 @@ All known arduino boards use 64. This value is needed for the extruder timing. *
 // FEATURE_WATCHDOG
 extern  unsigned char g_bPingWatchdog;
 extern  unsigned long g_uLastCommandLoop;
-#ifndef WATCHDOG_PIN
+
+#ifdef MOTHERBOARD
+ #ifndef WATCHDOG_PIN
     #error Watchdog pin not defined. We really need some Watchdog pin with a working watchdogtimer!
+ #endif
 #endif
 
 //7 means down till 2.1hz is possible:
@@ -790,7 +793,7 @@ public:
         // external watchdog
         SET_OUTPUT(WATCHDOG_PIN);
         g_bPingWatchdog = 1; //allow pinging
-        tellWatchdogOk(); //Nibbels: Init für g_nCommandloop
+        tellWatchdogOk(); //Nibbels: Init für g_uLastCommandLoop
         pingWatchdog(); //Nibbels: Hier macht der mehr sinn!
         HAL::WDT_Init(); //Nibbels: use watchdogtimer to test var and trigger
     } // startWatchdog

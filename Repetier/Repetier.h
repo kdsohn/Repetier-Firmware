@@ -155,9 +155,8 @@ extern void drv8711Init();
 
 extern long baudrate;
 
-#include "HAL.h"
-
 extern volatile uint8_t     execute100msPeriodical;
+extern volatile uint8_t     execute50msPeriodical;
 extern volatile uint8_t     execute16msPeriodical;
 extern volatile uint8_t     execute10msPeriodical;
 

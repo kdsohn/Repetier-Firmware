@@ -58,6 +58,7 @@ FSTRINGVALUE( ui_text_max_reached, UI_TEXT_MAX_REACHED )
 FSTRINGVALUE( ui_text_temperature_wrong, UI_TEXT_TEMPERATURE_WRONG )
 FSTRINGVALUE( ui_text_timeout, UI_TEXT_TIMEOUT )
 FSTRINGVALUE( ui_text_sensor_error, UI_TEXT_SENSOR_ERROR )
+FSTRINGVALUE( ui_text_heater_error, UI_TEXT_HEATER_ERROR )
 FSTRINGVALUE( ui_text_heat_bed_zoffset_search_status, UI_TEXT_HEAT_BED_ZOFFSET_SEARCH_STATUS )
 FSTRINGVALUE( ui_text_heat_bed_zoffset_fix_z1, UI_TEXT_HEAT_BED_ZOFFSET_FIX_Z1 )
 FSTRINGVALUE( ui_text_question, UI_TEXT_UNKNOWN )
@@ -215,7 +216,7 @@ bool            g_nDigitZCompensationDigits_active = true;
 #endif // FEATURE_DIGIT_Z_COMPENSATION
 
 #if FEATURE_EMERGENCY_STOP_ALL
-unsigned long   uLastZPressureTime_IgnoreUntil = 0;
+millis_t        uLastZPressureTime_IgnoreUntil = 0;
 #endif // FEATURE_EMERGENCY_STOP_ALL
 
 #if FEATURE_FIND_Z_ORIGIN
@@ -564,7 +565,7 @@ void scanHeatBed( void )
     }
 
     // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     if( g_nHeatBedScanStatus )
     {
@@ -2046,7 +2047,7 @@ void alignExtruders( void )
     }
 
     // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     if( g_nAlignExtrudersStatus )
     {
@@ -2322,7 +2323,7 @@ void searchZOScan( void )
 
                 //nun zu den settings:
                 if(g_ZOS_Auto_Matrix_Leveling_State <= 1){
-                    previousMillisCmd = HAL::timeInMilliseconds();
+                    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 }
                 //HERE THE FUNCTION MIGHT JUMP IN TO REDO SCANS FOR AUTO_MATRIX_LEVELING
                 switch(g_ZOS_Auto_Matrix_Leveling_State){
@@ -3059,7 +3060,7 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
     if(incrementfeedrate < 0.02) incrementfeedrate = 0.02;
     Com::printFLN( PSTR( "FeedrateIncrement = " ) , incrementfeedrate , 2 );
 
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     if( !Printer::areAxisHomed() )
     {
@@ -3185,7 +3186,7 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
                 sd.file.write_P(Com::tNewline);
             }
 
-            previousMillisCmd = HAL::timeInMilliseconds();
+            previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
             if(extrudedigits < g_nCurrentIdlePressure - maxdigits || extrudedigits > g_nCurrentIdlePressure + maxdigits || extrudedigits < -maxdigits || extrudedigits > maxdigits) {
                 PrintLine::moveRelativeDistanceInSteps( 0, 0, 0 , (long)( -0.5 * Printer::axisStepsPerMM[E_AXIS] ), 10, true, true ); //loose some force on dms
@@ -3634,7 +3635,7 @@ void findZOrigin( void )
     }
 
     // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     if( g_nFindZOriginStatus )
     {
@@ -3671,7 +3672,7 @@ void findZOrigin( void )
                     Com::printFLN( PSTR( ", nMaxPressureContact = " ), nMaxPressureContact );
                 }
 
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 Printer::enableZStepper();
 
                 g_nFindZOriginStatus = 2;
@@ -3943,7 +3944,7 @@ void scanWorkPart( void )
     }
 
     // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     if( g_nWorkPartScanStatus )
     {
@@ -4021,7 +4022,7 @@ void scanWorkPart( void )
             case 25:
             {
                 // move to the first position
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 //Printer::enableZStepper(); //nibbels: ???? vorher homing .. oder ist das hier falls z nicht gehomed und nicht aktiviert wird? //08.02.2018 removed enable z stepper ->  it gets activated in case 10 for sure.
 
                 PrintLine::moveRelativeDistanceInSteps( g_nScanXStartSteps, 0, 0, 0, Printer::homingFeedrate[X_AXIS], true, true );
@@ -6089,143 +6090,8 @@ void doZCompensation( void )
 } // doZCompensation
 
 
-void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
-{
-    static char     nEntered = 0;
-    if( nEntered ) return; // do not enter more than once
-    nEntered ++;
-
-    unsigned long   uTime = HAL::timeInMilliseconds();
-    short           nPressure;
-
-    if( g_uStartOfIdle )
-    {
-        if( g_uStartOfIdle < uTime ){
-            if ( (uTime - g_uStartOfIdle) > MINIMAL_IDLE_TIME ) //500ms nach config
-            {
-                // show that we are idle for a while already
-                showIdle();
-                g_uStartOfIdle  = 0;
-                Printer::setPrinting(false);
-            }
-        }
-    }
-
-    if( PrintLine::linesCount > 2 )
-    {
-        // this check shall be done only during the printing (for example, it shall not be done in case filament is extruded manually)
-        Printer::setPrinting(true);
-    }
-
-#if FEATURE_CASE_FAN && !CASE_FAN_ALWAYS_ON
-    if( Printer::prepareFanOff )
-    {
-        if( (uTime - Printer::prepareFanOff) > Printer::fanOffDelay ) //60s wäre standard nach config
-        {
-            // it is time to turn the case fan off
-            Printer::prepareFanOff = 0;
-            if( !Printer::ignoreFanOn ) WRITE( CASE_FAN_PIN, 0 );
-        }
-    }
-#endif // FEATURE_CASE_FAN && !CASE_FAN_ALWAYS_ON
-
-#if FEATURE_MILLING_MODE
-    if( Printer::operatingMode == OPERATING_MODE_PRINT )
-    {
-#endif // FEATURE_MILLING_MODE
- #if FEATURE_HEAT_BED_Z_COMPENSATION
-        if( g_nHeatBedScanStatus )
-        {
-            scanHeatBed();
-        }
-        if( g_nZOSScanStatus )
-        {
-            searchZOScan();
-        }
- #endif // FEATURE_HEAT_BED_Z_COMPENSATION
- #if FEATURE_ALIGN_EXTRUDERS
-        if( g_nAlignExtrudersStatus )
-        {
-            alignExtruders();
-        }
- #endif // FEATURE_ALIGN_EXTRUDERS
-#if FEATURE_MILLING_MODE
-    }
-    else
-    {
- #if FEATURE_WORK_PART_Z_COMPENSATION
-        if( g_nWorkPartScanStatus )
-        {
-            scanWorkPart();
-        }
- #endif // FEATURE_WORK_PART_Z_COMPENSATION
- #if FEATURE_FIND_Z_ORIGIN
-        if( g_nFindZOriginStatus )
-        {
-            findZOrigin();
-        }
- #endif // FEATURE_FIND_Z_ORIGIN
-    }
-#endif // FEATURE_MILLING_MODE
-
-    if( g_pauseMode != PAUSE_MODE_NONE )
-    {
-        // show that we are paused
-        GCode::keepAlive( Paused ); //keepAlive limitiert seine Ausführzeit selbst: alle 2s, darunter wird geskipped.
-    }
-
-    if( g_uPauseTime )
-    {
-        if( !g_pauseBeepDone )
-        {
-            BEEP_PAUSE
-            g_pauseBeepDone = 1;
-        }
-
-        if( g_pauseStatus == PAUSE_STATUS_PAUSED ) //and absolutly not PAUSE_STATUS_HEATING
-        {
-#if EXTRUDER_CURRENT_PAUSE_DELAY
-            if( (uTime - g_uPauseTime) > EXTRUDER_CURRENT_PAUSE_DELAY ) //das sind alle 30s
-            {
-                char    nProcessExtruder = 0;
-#if FEATURE_MILLING_MODE
-                if( Printer::operatingMode == OPERATING_MODE_PRINT )
-                {
-#endif // FEATURE_MILLING_MODE
-                    // process the extruder only in case we are in mode "print"
-                    nProcessExtruder = 1;
-#if FEATURE_MILLING_MODE
-                }
-#endif // FEATURE_MILLING_MODE
-
-                if( nProcessExtruder )
-                {
-                    // we have paused a few moments ago - reduce the current of the extruder motor in order to avoid unwanted heating of the filament for use cases where the printing is paused for several minutes
-#if NUM_EXTRUDER > 0
-                    for(uint8_t i = 0; i < NUM_EXTRUDER; i++) {
-#if EXTRUDER_CURRENT_PAUSE_DELAY
-                        setExtruderCurrent( i, EXTRUDER_CURRENT_PAUSED );
-#endif //EXTRUDER_CURRENT_PAUSE_DELAY
-                        if(!extruder[i].paused){ //temperaturminimierung in paused ablegen. maximal -255 °C als Zahl 255. Config aktuell nur über RFx000.h bei PAUSE_COOLDOWN
-                            extruder[i].paused = (PAUSE_COOLDOWN > 255) ? 255 : ( ( extruder[i].tempControl.targetTemperatureC > PAUSE_COOLDOWN ) ? PAUSE_COOLDOWN : extruder[i].tempControl.targetTemperatureC );
-                            extruder[i].tempControl.targetTemperatureC -= (float)extruder[i].paused;
-                            //laden bei continuePrint(), indem paused addiert und gewartet wird.
-                        }
-                    }
-#endif
-                }
-                g_uPauseTime = 0;
-            }
-#endif // EXTRUDER_CURRENT_PAUSE_DELAY
-        }
-        else
-        {
-            // we are not paused any more
-            g_uPauseTime = 0;
-        }
-    }
-
-/* Change: 09_06_2017 Never read straingauge twice in a row: test if this helps avoiding my watchdog problem
+void handleStrainGaugeFeatures(millis_t uTime){
+	/* Change: 09_06_2017 Never read straingauge twice in a row: test if this helps avoiding my watchdog problem
            Thatwhy I bring the statics up and preread the value for both FEATURE_EMERGENCY_PAUSE and FEATURE_EMERGENCY_STOP_ALL */
 /* Update: 19_06_2017 This is really nice and clean but it has not been the problem. */
 #if FEATURE_EMERGENCY_PAUSE || FEATURE_EMERGENCY_STOP_ALL
@@ -6233,30 +6099,30 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 #endif //FEATURE_EMERGENCY_PAUSE || FEATURE_EMERGENCY_STOP_ALL
 
 #if FEATURE_SENSIBLE_PRESSURE
-    static unsigned long   nSensiblePressureTime   = 0;
+    static millis_t        nSensiblePressureTime   = 0;
     static long            nSensiblePressureSum    = 0;
     static char            nSensiblePressureChecks = 0;
-    if( (uTime - nSensiblePressureTime) > SENSIBLE_PRESSURE_INTERVAL ) //jede 100ms -> das macht hier drin wenig sinn.
+    if( (uTime - nSensiblePressureTime) > SENSIBLE_PRESSURE_INTERVAL ) //max. jede 50ms
     {
         i_need_strain_value = 1;
     }
 #endif // FEATURE_SENSIBLE_PRESSURE
 
 #if FEATURE_EMERGENCY_PAUSE
-    static unsigned long   uLastPressureTime         = 0;
+    static millis_t        uLastPressureTime         = 0;
     static long            nPressureSum              = 0;
     static char            nPressureChecks           = 0;
-    if( (uTime - uLastPressureTime) > EMERGENCY_PAUSE_INTERVAL ) //jede 100ms -> das macht hier drin wenig sinn.
+    if( (uTime - uLastPressureTime) > EMERGENCY_PAUSE_INTERVAL ) //max. jede 100ms
     {
         i_need_strain_value = 1;
     }
 #endif // FEATURE_EMERGENCY_PAUSE
 
 #if FEATURE_EMERGENCY_STOP_ALL
-    static unsigned long   uLastZPressureTime        = 0;
+    static millis_t        uLastZPressureTime        = 0;
     static long            nZPressureSum             = 0;
     static char            nZPressureChecks          = 0;
-    if( (uTime - uLastZPressureTime) > EMERGENCY_STOP_INTERVAL ) //jede 10ms -> das macht hier drin überhaupt garkeinen sinn. : kurz, das heißt "absolut immer" jede 100ms.
+    if( (uTime - uLastZPressureTime) > EMERGENCY_STOP_INTERVAL ) //max. jede 10ms
     {
         i_need_strain_value = 1;
     }
@@ -6269,6 +6135,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
     }
 #endif //FEATURE_EMERGENCY_PAUSE || FEATURE_EMERGENCY_STOP_ALL || FEATURE_SENSIBLE_PRESSURE
 
+    short           nPressure;
 #if FEATURE_SENSIBLE_PRESSURE
     //ohne Z-Kompensation kein SensiblePressure!
     if( g_nSensiblePressureDigits && !Printer::doHeatBedZCompensation ){
@@ -6388,7 +6255,6 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
     }
 #endif // FEATURE_SENSIBLE_PRESSURE
 
-
 #if FEATURE_EMERGENCY_PAUSE
     if( g_nEmergencyPauseDigitsMin || g_nEmergencyPauseDigitsMax )
     {
@@ -6396,7 +6262,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
         {
             uLastPressureTime = uTime;
 
-            if( !Printer::isMenuMode(MENU_MODE_PAUSED) && Printer::isPrinting() )
+            if( !Printer::isMenuMode(MENU_MODE_PAUSED) && Printer::isPrinting() && Printer::areAxisHomed() )
             {
                 // this check shall be done only during the printing (for example, it shall not be done in case filament is extruded manually)
                 nPressureSum    += pressure;
@@ -6404,7 +6270,7 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
 
                 if( nPressureChecks == EMERGENCY_PAUSE_CHECKS )
                 {
-                    nPressure        = (short)(nPressureSum / nPressureChecks);
+                    short nPressure = (short)(nPressureSum / nPressureChecks);
                     nPressureSum    = 0;
                     nPressureChecks = 0;
 
@@ -6476,7 +6342,191 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
         }
     }
 #endif // FEATURE_EMERGENCY_STOP_ALL
+}
 
+void handleFanOffPlanner(millis_t uTime){
+#if FEATURE_CASE_FAN && !CASE_FAN_ALWAYS_ON
+    if( Printer::prepareFanOff )
+    {
+        if( (uTime - Printer::prepareFanOff) > Printer::fanOffDelay ) //60s wäre standard nach config
+        {
+            // it is time to turn the case fan off
+            Printer::prepareFanOff = 0;
+            if( !Printer::ignoreFanOn ) WRITE( CASE_FAN_PIN, 0 );
+        }
+    }
+#endif // FEATURE_CASE_FAN && !CASE_FAN_ALWAYS_ON
+}
+
+void handlePauseTime(millis_t uTime){
+	if( g_pauseMode != PAUSE_MODE_NONE )
+    {
+        // show that we are paused
+        GCode::keepAlive( Paused ); //keepAlive limitiert seine Ausführzeit selbst: alle 2s, darunter wird geskipped.
+    }
+
+    if( g_uPauseTime )
+    {
+        if( !g_pauseBeepDone )
+        {
+            BEEP_PAUSE
+            g_pauseBeepDone = 1;
+        }
+
+        if( g_pauseStatus == PAUSE_STATUS_PAUSED ) //and absolutly not PAUSE_STATUS_HEATING
+        {
+#if EXTRUDER_CURRENT_PAUSE_DELAY
+            if( (uTime - g_uPauseTime) > EXTRUDER_CURRENT_PAUSE_DELAY ) //das sind alle 30s
+            {
+                char    nProcessExtruder = 0;
+#if FEATURE_MILLING_MODE
+                if( Printer::operatingMode == OPERATING_MODE_PRINT )
+                {
+#endif // FEATURE_MILLING_MODE
+                    // process the extruder only in case we are in mode "print"
+                    nProcessExtruder = 1;
+#if FEATURE_MILLING_MODE
+                }
+#endif // FEATURE_MILLING_MODE
+
+                if( nProcessExtruder )
+                {
+                    // we have paused a few moments ago - reduce the current of the extruder motor in order to avoid unwanted heating of the filament for use cases where the printing is paused for several minutes
+#if NUM_EXTRUDER > 0
+                    for(uint8_t i = 0; i < NUM_EXTRUDER; i++) {
+#if EXTRUDER_CURRENT_PAUSE_DELAY
+                        setExtruderCurrent( i, EXTRUDER_CURRENT_PAUSED );
+#endif //EXTRUDER_CURRENT_PAUSE_DELAY
+                        if(!extruder[i].paused){ //temperaturminimierung in paused ablegen. maximal -255 °C als Zahl 255. Config aktuell nur über RFx000.h bei PAUSE_COOLDOWN
+                            extruder[i].paused = (PAUSE_COOLDOWN > 255) ? 255 : ( ( extruder[i].tempControl.targetTemperatureC > PAUSE_COOLDOWN ) ? PAUSE_COOLDOWN : extruder[i].tempControl.targetTemperatureC );
+                            extruder[i].tempControl.targetTemperatureC -= (float)extruder[i].paused;
+                            //laden bei continuePrint(), indem paused addiert und gewartet wird.
+                        }
+                    }
+#endif
+                }
+                g_uPauseTime = 0;
+            }
+#endif // EXTRUDER_CURRENT_PAUSE_DELAY
+        }
+        else
+        {
+            // we are not paused any more
+            g_uPauseTime = 0;
+        }
+    }
+}
+
+void handleScanWorkTasks(){
+	#if FEATURE_MILLING_MODE
+    if( Printer::operatingMode == OPERATING_MODE_PRINT )
+    {
+#endif // FEATURE_MILLING_MODE
+ #if FEATURE_HEAT_BED_Z_COMPENSATION
+        if( g_nHeatBedScanStatus )
+        {
+            scanHeatBed();
+        }
+        if( g_nZOSScanStatus )
+        {
+            searchZOScan();
+        }
+ #endif // FEATURE_HEAT_BED_Z_COMPENSATION
+ #if FEATURE_ALIGN_EXTRUDERS
+        if( g_nAlignExtrudersStatus )
+        {
+            alignExtruders();
+        }
+ #endif // FEATURE_ALIGN_EXTRUDERS
+#if FEATURE_MILLING_MODE
+    }
+    else
+    {
+ #if FEATURE_WORK_PART_Z_COMPENSATION
+        if( g_nWorkPartScanStatus )
+        {
+            scanWorkPart();
+        }
+ #endif // FEATURE_WORK_PART_Z_COMPENSATION
+ #if FEATURE_FIND_Z_ORIGIN
+        if( g_nFindZOriginStatus )
+        {
+            findZOrigin();
+        }
+ #endif // FEATURE_FIND_Z_ORIGIN
+    }
+#endif // FEATURE_MILLING_MODE
+}
+
+#if FEATURE_SERVICE_INTERVAL
+void handleServiceInterval(millis_t uTime) {	
+    if ( !g_nEnteredService )
+    {
+        if ( ( uTime - g_nlastServiceTime ) > 5000 )
+        {
+            g_uStartOfIdle = uTime; //enter FEATURE_SERVICE_INTERVAL
+
+#if FEATURE_MILLING_MODE
+            if( Printer::operatingMode == OPERATING_MODE_PRINT )
+            {
+#endif // FEATURE_MILLING_MODE
+                if( READ(5) == 0 && READ(11) == 0 && READ(42) == 0 )
+                {
+                    if ( g_nServiceRequest == 1 )
+                    {
+                        HAL::eprSetInt32(EPR_PRINTING_TIME_SERVICE,0);
+                        EEPROM::updateChecksum();
+                        HAL::eprSetFloat(EPR_PRINTING_DISTANCE_SERVICE,0);
+                        EEPROM::updateChecksum();
+                        Com::printF( PSTR( "Service Reset" ) );
+                    }
+                }
+                else
+                {
+                    g_nServiceRequest = 0;
+                }
+#if FEATURE_MILLING_MODE
+            }
+            else
+            {
+                if( READ(5) == 0 && READ(11) == 0 && READ(42) == 0 )
+                {
+                    if ( g_nServiceRequest == 1 )
+                    {
+                        HAL::eprSetInt32(EPR_MILLING_TIME_SERVICE,0);
+                        EEPROM::updateChecksum();
+                        Com::printF( PSTR( " Service Reset = OK " ) );
+                    }
+                }
+                else
+                {
+                    g_nServiceRequest = 0;
+                }
+            }
+#endif // FEATURE_MILLING_MODE
+            g_nEnteredService  = 1;
+        }
+    }
+}
+#endif // FEATURE_SERVICE_INTERVAL
+
+void handleStartPrint() {
+    if( PrintLine::linesCount > 2 && !g_uStopTime && !g_uBlockCommands )
+    {
+        // this check shall be done only during the printing (for example, it shall not be done in case filament is extruded manually)
+        Printer::setPrinting(true);
+    }
+}
+
+/**
+ * Handle Print Stops. Printer::stopPrint()
+ * -> g_uStopTime > 0 and g_uBlockCommands == 1
+ * -> g_uBlockCommands
+ * -> OutputObject
+ * -> g_uStartOfIdle
+ * -> Printer::setPrinting(false);
+ */
+void handleStopPrint(millis_t uTime) {
     if( g_uStopTime )
     {
         GCode::readFromSerial(); //consume gcode buffers but dont put gcodes into queue rightnow, because of g_uBlockCommands
@@ -6538,72 +6588,46 @@ void loopRF( void ) //wird so aufgerufen, dass es ein ~100ms takt sein sollte.
             outputObject(false); //in g_uBlockCommands > 1
         }
     }
+}
 
-    if( Printer::isAnyTempsensorDefect() && Printer::isPrinting() )
+void handleGoIdle(millis_t uTime) {
+    if( g_uStartOfIdle )
     {
-        // we are printing from the SD card and a temperature sensor got defect - abort the current printing
-        Com::printFLN( PSTR( "ERROR: a temperature sensor defect. aborting print" ) );
-        Printer::stopPrint();
-    }
-
-#if FEATURE_SERVICE_INTERVAL
-    if ( !g_nEnteredService )
-    {
-        if ( ( HAL::timeInMilliseconds() - g_nlastServiceTime ) > 5000 )
-        {
-            g_uStartOfIdle = HAL::timeInMilliseconds(); //enter FEATURE_SERVICE_INTERVAL
-
-#if FEATURE_MILLING_MODE
-            if( Printer::operatingMode == OPERATING_MODE_PRINT )
+        if( g_uStartOfIdle < uTime ){
+            if ( (uTime - g_uStartOfIdle) > MINIMAL_IDLE_TIME ) //500ms nach config
             {
-#endif // FEATURE_MILLING_MODE
-                if( READ(5) == 0 && READ(11) == 0 && READ(42) == 0 )
-                {
-                    if ( g_nServiceRequest == 1 )
-                    {
-                        HAL::eprSetInt32(EPR_PRINTING_TIME_SERVICE,0);
-                        EEPROM::updateChecksum();
-                        HAL::eprSetFloat(EPR_PRINTING_DISTANCE_SERVICE,0);
-                        EEPROM::updateChecksum();
-                        Com::printF( PSTR( "Service Reset" ) );
-                    }
-                }
-                else
-                {
-                    g_nServiceRequest = 0;
-                }
-#if FEATURE_MILLING_MODE
+                // show that we are idle for a while already
+                showIdle();
+                g_uStartOfIdle  = 0;
+                Printer::setPrinting(false);
             }
-            else
-            {
-                if( READ(5) == 0 && READ(11) == 0 && READ(42) == 0 )
-                {
-                    if ( g_nServiceRequest == 1 )
-                    {
-                        HAL::eprSetInt32(EPR_MILLING_TIME_SERVICE,0);
-                        EEPROM::updateChecksum();
-                        Com::printF( PSTR( " Service Reset = OK " ) );
-                    }
-                }
-                else
-                {
-                    g_nServiceRequest = 0;
-                }
-            }
-#endif // FEATURE_MILLING_MODE
-            g_nEnteredService  = 1;
         }
     }
-#endif // FEATURE_SERVICE_INTERVAL
+}
 
-    checkPauseStatus_fromTask();
 
-#if FEATURE_RGB_LIGHT_EFFECTS
-    updateRGBLightStatus();
-#endif // FEATURE_RGB_LIGHT_EFFECTS
-
-    nEntered --;    
-} // loopRF
+void handleGoIdleShutdownDevices(millis_t uTime) {
+    if( PrintLine::hasLines() || Printer::isPrinting() || Printer::isMenuMode(MENU_MODE_PAUSED) )
+    {
+        previousMillisCmd = uTime; //prevent inactive shutdown of steppers/temps
+    }
+    else
+    {
+        uTime -= previousMillisCmd;
+		
+        if( maxInactiveTime != 0 && uTime > maxInactiveTime ) Printer::switchEverythingOff(); //kill not only steppers
+        else Printer::setAllSwitchedOff(false); // reset if not time to kill: prevents repeated kills
+		
+        if( stepperInactiveTime != 0 && uTime > stepperInactiveTime && !Printer::areAllSteppersDisabled() )
+        {
+			Printer::disableAllSteppersNow();
+#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+			// disable the part fan
+			Commands::setFanSpeed((uint8_t)0);
+#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
+        }
+    }
+}
 
 void outputObject( bool showerrors )
 {
@@ -6648,6 +6672,39 @@ void outputObject( bool showerrors )
 
     g_uStartOfIdle = HAL::timeInMilliseconds(); //outputobject ends
 } // outputObject
+
+void loopFeatures() //wird so aufgerufen, dass es ein ~100ms Takt sein sollte.
+{
+    static char     nEntered = 0;
+    if( nEntered ) return; // do not enter more than once
+    nEntered ++;
+	
+	millis_t uTime = HAL::timeInMilliseconds();
+	  
+	handleFanOffPlanner(uTime);
+	handleScanWorkTasks();
+	handlePauseTime(uTime);
+	handleStrainGaugeFeatures(uTime);
+	handleStartPrint();
+	handleStopPrint(uTime);
+	handleGoIdle(uTime);
+	handleGoIdleShutdownDevices(uTime);
+    if( Printer::isAnyTempsensorDefect() && Printer::isPrinting() )
+    {
+        // we are printing from the SD card and a temperature sensor got defect - abort the current printing
+        Com::printFLN( PSTR( "ERROR: a temperature sensor defect. aborting print" ) );
+        Printer::stopPrint();
+    }
+#if FEATURE_SERVICE_INTERVAL
+	handleServiceInterval(uTime);
+#endif // FEATURE_SERVICE_INTERVAL
+    checkPauseStatus_fromTask();
+#if FEATURE_RGB_LIGHT_EFFECTS
+    updateRGBLightStatus();
+#endif // FEATURE_RGB_LIGHT_EFFECTS
+
+    nEntered --;    
+} // loopFeatures
 
 #if FEATURE_PARK
 void parkPrinter( void )
@@ -9148,9 +9205,17 @@ void processCommand( GCode* pCommand )
                         case 5:
                         {
                             // simulate a temp sensor error
-                            Com::printFLN( PSTR( "M3200: simulating a defect temperature sensor" ) );
+                            Com::printFLN( PSTR( "M3200: simulating defect sensor" ) );
+							//ext 0 soll defekt aussehen
+							TemperatureController *act0 = tempController[0];
+							act0->setSensorDefect(true);
+							//ext 1/bett soll decoupled aussehen
+							TemperatureController *act1 = tempController[1];
+							act1->setSensorDecoupled(true);
+							//generelle defekt-einstufung
                             Printer::setSomeTempsensorDefect(true);
-                            reportTempsensorError();
+							//fehlermeldung ausgeben
+                            reportTempsensorAndHeaterErrors();
                             break;
                         }
                         case 6:
@@ -10499,6 +10564,15 @@ void processCommand( GCode* pCommand )
                         if(Lines > 5) Lines = 5;
                     }
 
+                    float y = 23.0f; /*+Printer::minMM[Y_AXIS]*/
+                    if ( pCommand->hasY() ){
+                        y = (float)pCommand->Y;
+                        if(y < 0.5f) y = 0.5f;
+						// Länge y Achse - halbe Bahnbreite - 1.5 pro Versatz - Schrägversatz nur bei Dual. Übertrieben aber das sollte genau sein.
+						float maxY = Printer::lengthMM[Y_AXIS] - 0.5f - Lines * 1.5f - (NUM_EXTRUDER > 1 ? 5.0f : 0.0f);
+                        if(y > maxY) y = maxY;
+                    }
+
                     //bezogen auf : M3411 S P F-90 -> Flow CMP Speed einstellungen werden kurz substituiert und dann resubstituiert
                     g_nDigitFlowCompensation_Fmin = min;
                     g_nDigitFlowCompensation_Fmax = max;
@@ -10515,7 +10589,6 @@ void processCommand( GCode* pCommand )
                     const float spacerXd = (NUM_EXTRUDER > 1 ? extruder[1].xOffset * Printer::invAxisStepsPerMM[X_AXIS] : 0);
 
                     float x = spacerX;
-                    float y = 23.0f; /*+Printer::minMM[Y_AXIS]*/
 #if NUM_EXTRUDER > 0
                     if ( Extruder::current->id != 0 ){
                         //if you use T1 then dont make the start line ontop of the startline of T0
@@ -10548,6 +10621,7 @@ void processCommand( GCode* pCommand )
                             e += (float)Extrusion * ((/*Printer::minMM[X_AXIS]+*/Printer::lengthMM[X_AXIS]) - 2*spacerX - spacerXd)/200;
                         }
                         for(float i = 0.0025f; i <= 1.0f; i+=0.0025f){
+							Commands::checkForPeriodicalActions( Processing );
                             //split full line into 100 small pieces so that we can adjust flow like speed.
                             Printer::moveToReal( x_0 + (x - x_0)*i,
                                                  y_0 + (y - y_0)*i,
@@ -10610,6 +10684,7 @@ void processCommand( GCode* pCommand )
 
                 float e = 0.0f;
                 while(e < float(Extrusion) ){
+					Commands::checkForPeriodicalActions( Processing );
                     if( g_uBlockCommands || abs(readStrainGauge( ACTIVE_STRAIN_GAUGE )) > maxP /* digits sind soweit gestiegen, dass abbruch.*/ ){
                         UI_STATUS_UPD( UI_TEXT_OK );
                         break;
@@ -10666,13 +10741,13 @@ void processCommand( GCode* pCommand )
                 while( t < float(UI_SET_EXTRUDER_MAX_TEMP_UNMOUNT) && fabs(e) < float(outputLength) ){
                     millis_t time = HAL::timeInMilliseconds() + 2000;
                     while( HAL::timeInMilliseconds() <= time ){
-                        UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT );
-                        Commands::printTemperatures();
                         Commands::checkForPeriodicalActions( WaitHeater );
+                        UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT );
                         if( g_uBlockCommands ) break;
                     }
                     if( g_uBlockCommands ) break;
                     while( fabs(e) < float(outputLength) ){
+						Commands::checkForPeriodicalActions( Processing );
                         if( g_uBlockCommands ) break;
                         if( abs(readStrainGauge( ACTIVE_STRAIN_GAUGE )) > maxForce /* digits sind soweit INS MINUS gestiegen, dass abbruch.*/ ){
                             t += 3.33; // +1°K
@@ -10910,7 +10985,7 @@ extern void processButton( int nAction )
             if( uid.menuLevel == 0 && uid.menuPos[0] == 1 ){ //wenn im Mod-Menü für Z-Offset/Matrix Sense-Offset/Limiter, dann anders!
                 beep(1,4);
                 // show that we are active
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 long nTemp = Printer::ZOffset; //um --> mm*1000
                 nTemp -= Z_OFFSET_BUTTON_STEPS;
                 //beim Unterschreiten von 0, soll 0 erreicht werden, sodass man nicht mit krummen Zahlen rumhantieren muss.
@@ -10958,7 +11033,7 @@ extern void processButton( int nAction )
             if( uid.menuLevel == 0 && uid.menuPos[0] == 1 ){ //wenn im Mod-Menü für Z-Offset/Matrix Z-Offset/Matrix Sense-Offset/Limiter, dann anders!
                 beep(1,4);
                 // show that we are active
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
                 long nTemp = Printer::ZOffset; //um --> mm*1000
                 nTemp += Z_OFFSET_BUTTON_STEPS;
@@ -11005,7 +11080,7 @@ extern void processButton( int nAction )
     #endif // !EXTRUDER_ALLOW_COLD_MOVE
 
                 // show that we are active
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
                 if( uint32_t(abs(Printer::directPositionTargetSteps[E_AXIS] - Printer::directPositionCurrentSteps[E_AXIS])) <= (g_nManualSteps[E_AXIS]>>1) )
                 {
@@ -11043,7 +11118,7 @@ extern void processButton( int nAction )
     #endif // !EXTRUDER_ALLOW_COLD_MOVE
 
                 // show that we are active
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
                 if( uint32_t(abs(Printer::directPositionTargetSteps[E_AXIS] - Printer::directPositionCurrentSteps[E_AXIS])) <= (g_nManualSteps[E_AXIS]>>1) )
                 {
@@ -11185,7 +11260,7 @@ void nextPreviousXAction( int8_t increment )
     }
 
     // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     switch( Printer::moveMode[X_AXIS] )
     {
@@ -11317,7 +11392,7 @@ void nextPreviousYAction( int8_t increment )
     }
 
     // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     switch( Printer::moveMode[Y_AXIS] )
     {
@@ -11461,7 +11536,7 @@ void nextPreviousZAction( int8_t increment )
     }
 
     // show that we are active
-    previousMillisCmd = HAL::timeInMilliseconds();
+    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
 
     moveMode = Printer::moveMode[Z_AXIS];
     if( Printer::processAsDirectSteps() )
@@ -11520,7 +11595,7 @@ void nextPreviousZAction( int8_t increment )
             }
             else
             {
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 Printer::enableZStepper();
 
                 noInts.protect();
@@ -13476,8 +13551,6 @@ void doEmergencyStop( char reason )
     Printer::blockAll                 = 1;
 
     showError( (void*)ui_text_emergency_stop );
-    Com::printFLN( PSTR( "RequestStop:" ) ); //tell repetierserver to stop.
-    Com::printFLN( PSTR( "// action:disconnect" ) ); //tell octoprint to disconnect
 
     Com::printF( PSTR( "doEmergencyStop(): block all" ) );
     if( reason == STOP_BECAUSE_OF_Z_MIN )
@@ -13488,16 +13561,18 @@ void doEmergencyStop( char reason )
     {
         Com::printFLN( PSTR( " (Z-Block)" ) );
     }
-
+	
+    Printer::stopPrint(); //and tell usb senders to stop
 
     moveZ( int(Printer::axisStepsPerMM[Z_AXIS] * 5) );
 
     // we are not going to perform any further operations until the restart of the firmware
-    Printer::stopPrint();
+    Printer::switchEverythingOff();
 
-    Printer::kill( false );
-    return;
-
+#if defined(PS_ON_PIN) && PS_ON_PIN>-1
+	SET_OUTPUT(PS_ON_PIN); //GND
+	WRITE(PS_ON_PIN, (POWER_INVERTING ? LOW : HIGH));
+#endif // defined(PS_ON_PIN) && PS_ON_PIN>-1
 } // doEmergencyStop
 
 

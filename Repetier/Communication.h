@@ -163,6 +163,7 @@ public:
     FSTRINGVAR(tHeatedBed)
     FSTRINGVAR(tExtruderSpace)
     FSTRINGVAR(tTempSensorDefect)
+	FSTRINGVAR(tTempHeaterDefect)
     FSTRINGVAR(tTempSensorWorking)
     FSTRINGVAR(tDryModeUntilRestart)
 
@@ -337,6 +338,8 @@ public:
     FSTRINGVAR(tCreationFailed)
     FSTRINGVAR(tSDErrorCode)
 #endif // SDSUPPORT
+
+    FSTRINGVAR(tHeaterDecoupledWarning)
 
     FSTRINGVAR(tOutputObjectPrint)
     FSTRINGVAR(tOutputObjectMill)

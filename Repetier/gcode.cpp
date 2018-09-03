@@ -149,7 +149,6 @@ void GCode::keepAlive( enum FirmwareState state )
 {
     millis_t now = HAL::timeInMilliseconds();
 
-
     if( state != NotBusy && keepAliveInterval != 0 )
     {
         if( (now - lastBusySignal) < keepAliveInterval )
@@ -171,8 +170,8 @@ void GCode::keepAlive( enum FirmwareState state )
         }
     }
     lastBusySignal = now;
-    return;
 
+    return;
 } // keepAlive
 
 
@@ -206,7 +205,7 @@ void GCode::checkAndPushCommand()
             waitingForResend = -1;
             return;
         }
-        if(M==112)   // Emergency kill - freeze printer
+        if(M==112)   // Emergency kill - freeze/reset printer
         {
             Commands::emergencyStop();
         }
@@ -254,7 +253,6 @@ void GCode::checkAndPushCommand()
     wasLastCommandReceivedAsBinary = sendAsBinary;
     keepAlive( NotBusy );
     waitingForResend = -1; // everything is ok.
-
 } // checkAndPushCommand
 
 
@@ -265,18 +263,10 @@ void GCode::pushCommand()
 #if !ECHO_ON_EXECUTE
     commandsBuffered[bufferWriteIndex].echoCommand();
 #endif
+
     if(++bufferWriteIndex >= GCODE_BUFFER_SIZE) bufferWriteIndex = 0;
     bufferLength++;
 } // pushCommand
-
-
-/** \brief Get the next buffered command. Returns 0 if no more commands are buffered. For each
-    returned command, the popCurrentCommand() function must be called. */
-GCode *GCode::peekCurrentCommand()
-{
-    if(bufferLength==0) return NULL; // No more data
-    return &commandsBuffered[bufferReadIndex];
-} // peekCurrentCommand
 
 
 /** \brief Removes the last returned command from cache. */
@@ -288,10 +278,18 @@ void GCode::popCurrentCommand()
     echoCommand();
 #endif // ECHO_ON_EXECUTE
 
-    if(++bufferReadIndex == GCODE_BUFFER_SIZE) bufferReadIndex = 0;
+    if(++bufferReadIndex >= GCODE_BUFFER_SIZE) bufferReadIndex = 0;
     bufferLength--;
-
 } // popCurrentCommand
+
+
+/** \brief Get the next buffered command. Returns 0 if no more commands are buffered. For each
+    returned command, the popCurrentCommand() function must be called. */
+GCode *GCode::peekCurrentCommand()
+{
+    if(bufferLength==0) return NULL; // No more data
+    return &commandsBuffered[bufferReadIndex];
+} // peekCurrentCommand
 
 
 void GCode::echoCommand()
@@ -301,7 +299,6 @@ void GCode::echoCommand()
         Com::printF(Com::tEcho);
         printCommand();
     }
-
 } // echoCommand
 
 /** \brief Execute commands in progmem stored string. Multiple commands are seperated by \n */
@@ -336,7 +333,7 @@ void GCode::executeFString(FSTRINGPARAM(cmd))
         if(code.parseAscii((char *)buf,false) && (code.params & 518))   // Success
         {
             Commands::executeGCode(&code);
-            Printer::defaultLoopActions();
+            Commands::checkForPeriodicalActions( Processing );
         }
     }
     while(c);
@@ -379,11 +376,10 @@ void GCode::executeString(char *cmd)
         if(code.parseAscii((char *)buf,false) && (code.params & 518))   // Success
         {
             Commands::executeGCode(&code);
-            Printer::defaultLoopActions();
+            Commands::checkForPeriodicalActions( Processing );
         }
     }
     while(c);
-
 } // executeString
 
 
@@ -392,10 +388,9 @@ void GCode::executeString(char *cmd)
     It must be called frequently to empty the incoming buffer. */
 void GCode::readFromSerial()
 {
-    if(bufferLength>=GCODE_BUFFER_SIZE || (waitUntilAllCommandsAreParsed && bufferLength))
+    if(bufferLength >= GCODE_BUFFER_SIZE || (waitUntilAllCommandsAreParsed && bufferLength))
     {
         // all buffers full
-        keepAlive(Processing);
         return;
     }
 
@@ -417,6 +412,7 @@ void GCode::readFromSerial()
         }
 #endif // WAITING_IDENTIFIER
     }
+
     while(HAL::serialByteAvailable() && commandsReceivingWritePosition < MAX_CMD_SIZE)    // consume data until no data or buffer full
     {
         timeOfLastDataPacket = time; //HAL::timeInMilliseconds();
@@ -488,16 +484,20 @@ void GCode::readFromSerial()
             return;
         }
     }
-    readFromSD();
-
 } // readFromSerial
 
 
+#if SDSUPPORT
 /** \brief Read from sdcard.
 This function is the main function to read the commands from sdcard. */
 void GCode::readFromSD()
 {
-#if SDSUPPORT
+    if(bufferLength >= GCODE_BUFFER_SIZE || (waitUntilAllCommandsAreParsed && bufferLength))
+    {
+        // all buffers full
+        return;
+    }
+
     if(sd.sdmode == 0 || sd.sdmode >= 100 || commandsReceivingWritePosition!=0)     // not reading or incoming serial command
         return;
 
@@ -588,9 +588,8 @@ void GCode::readFromSD()
     commandsReceivingWritePosition = 0;
     commentDetected = false;
     Printer::stopPrint(); //hier drin ist auch repetiers sd.mode = 0
-#endif // SDSUPPORT
-
 } // readFromSD
+#endif // SDSUPPORT
 
 
 /** \brief Converts a binary uint8_tfield containing one GCode line into a GCode structure.

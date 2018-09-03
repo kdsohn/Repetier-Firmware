@@ -963,7 +963,7 @@ void UIDisplay::parse(char *txt,bool ram)
                     for(uint8_t controller = 0; controller < NUM_TEMPERATURE_LOOPS; controller++)
                     {
                         TemperatureController *act = tempController[controller];
-                        if(act->isDefect()){
+                        if(act->isSensorDefect() || act->isSensorDecoupled()){
                             if(addone) addStringP(Com::tSlash);
                             addone = true;
                             if(controller < NUM_EXTRUDER){
@@ -981,7 +981,23 @@ void UIDisplay::parse(char *txt,bool ram)
 
                 if(Printer::isAnyTempsensorDefect())
                 {
-                    addStringP(PSTR("def"));
+					uint8_t countDefect = 0;
+					uint8_t countDecoupled = 0;
+					for(uint8_t controller = 0; controller < NUM_TEMPERATURE_LOOPS; controller++)
+                    {
+                        TemperatureController *act = tempController[controller];
+                        if (act->isSensorDefect()) {
+							countDefect++;
+						}
+						if (act->isSensorDecoupled()) {
+							countDecoupled++;
+                        }
+                    }
+					if (countDecoupled > countDefect) {
+						addStringP(PSTR("dec"));
+					}else{
+						addStringP(PSTR("def"));
+					}
                     break;
                 }
 
@@ -4868,7 +4884,7 @@ void UIDisplay::executeAction(int action)
                 }
 
                 // disable and turn off everything before we switch the operating mode
-                Printer::kill( false );
+                Printer::switchEverythingOff();
 
                 if( Printer::operatingMode == OPERATING_MODE_PRINT )
                 {
@@ -5034,7 +5050,7 @@ void UIDisplay::executeAction(int action)
             }
             case UI_ACTION_DISABLE_STEPPER:
             {
-                Printer::kill( true );
+				Printer::disableAllSteppersNow();
                 break;
             }
             case UI_ACTION_MOUNT_FILAMENT_SOFT:
@@ -5046,32 +5062,30 @@ void UIDisplay::executeAction(int action)
                 while( Printer::checkAbortKeys() ) Commands::checkForPeriodicalActions(); //dont quit script by holding the ok longer than 1ms if no temp is involved. -> min einmal OK loslassen.
                 bool unmount = (action == UI_ACTION_UNMOUNT_FILAMENT_SOFT || action == UI_ACTION_UNMOUNT_FILAMENT_HARD);
                 exitmenu();
-                if(unmount){ UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT ); }
-                else       { UI_STATUS_UPD( UI_TEXT_MOUNT_FILAMENT ); }
+
                 if( unmount ){
+					UI_STATUS_UPD( UI_TEXT_UNMOUNT_FILAMENT );
                     if(action == UI_ACTION_UNMOUNT_FILAMENT_SOFT){
                         GCode::executeFString(Com::tUnmountFilamentSoft);
                     }else{
                         GCode::executeFString(Com::tUnmountFilamentHard);
                     }
                 }else{
-                    if( Extruder::current->tempControl.targetTemperatureC < UI_SET_MIN_EXTRUDER_TEMP )
-                    {
-                        Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_ABS,Extruder::current->id,true);
-                        Extruder::current->tempControl.waitForTargetTemperature();
-                        if(action == UI_ACTION_MOUNT_FILAMENT_SOFT){
-                            GCode::executeFString(Com::tMountFilamentSoft);
-                        }else{
-                            GCode::executeFString(Com::tMountFilamentHard);
-                        }
-                        Extruder::setTemperatureForExtruder(0,Extruder::current->id,false);
-                    }else{
-                        if(action == UI_ACTION_MOUNT_FILAMENT_SOFT){
-                            GCode::executeFString(Com::tMountFilamentSoft);
-                        }else{
-                            GCode::executeFString(Com::tMountFilamentHard);
-                        }
-                    }
+					UI_STATUS_UPD( UI_TEXT_MOUNT_FILAMENT );
+                    if(action == UI_ACTION_MOUNT_FILAMENT_SOFT){
+						/* Diese PLA Temp ist bei ~180 °C, die meisten Filamente werden gerade so weich. Wenn man keine mindesetens "weiche" Temperatur eingestellt hat, soll geheizt werden.*/
+						if( Extruder::current->tempControl.targetTemperatureC < UI_SET_PRESET_EXTRUDER_TEMP_PLA )
+						{
+							Extruder::setTemperatureForExtruder(UI_SET_PRESET_EXTRUDER_TEMP_PLA,Extruder::current->id, true);
+							Extruder::current->tempControl.waitForTargetTemperature();
+							GCode::executeFString(Com::tMountFilamentSoft);
+							Extruder::setTemperatureForExtruder(0, Extruder::current->id, false);
+						}else{
+							GCode::executeFString(Com::tMountFilamentSoft);
+						}
+					}else{
+						GCode::executeFString(Com::tMountFilamentHard);
+					}
                 }
                 g_uStartOfIdle = HAL::timeInMilliseconds(); // UI_ACTION_UNMOUNT_FILAMENT UI_ACTION_MOUNT_FILAMENT
                 break;

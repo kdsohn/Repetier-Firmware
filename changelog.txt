@@ -1,5 +1,57 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
+TODO: zero K and nikibalboa say that they experienced a hard reset while starting "unload filament soft" or "load filament soft"
+
+V RF.01.42.15.Mod (2018-09-01)
+- M3912 Auto-Startmade can now be configured by parameter Y. Standard start Y is 23 mm.
+
+V RF.01.42.13.Mod (2018-09-01)
+- some tempering with code and order
+
+V RF.01.42.12.Mod (2018-09-01)
+- cleanup of disable-things-functions: Removed this horribly chosen function name "Printer::kill" and removed that Printer::kill(true) is intended to switch off steppers.
+- M84 does not shut down Fan anymore, only steppers as intended.
+- finally split GCode::readFromSerial() and GCode::readFromSD() into two independend functions.
+- removed defaultLoopActions() and moved its functionality to alot better place.
+- removed GCode::readFromSerial() from places where the printer waits for some processing.
+
+V RF.01.42.11.Mod (2018-08-31)
+- Patch SdFat Lib to 1.0.7
+- removed the wrong hint that we support Arduino 1.6.5. 
+  Since the time we included the SdFat library which is not located within the main directory next to the Repetier.ino that is not true anymore. 
+  Because this "file not found" error is highly arduino version specific. 1.6.5 is not supporting subdirectory includes.
+  I dont think I will put much more work into supporting 1.6.5 anymore.
+- moved comments in pins.h prior to the pin definitions
+- fixed some bug in M908.
+
+V RF.01.42.10.Mod (2018-08-25)
+- Fix: Oldstyle Load Filament on all printers
+- Rename Load/Unload Filament text within menu
+- emergency pause is only triggered when all axis are homed, because pausing works homed only and we print homed only.
+
+V RF.01.42.09.Mod (2018-08-25)
+- Load und Unload-Filament in mode "hard" should now behave like in version 1.39+
+- fix missing line break after loading of factory defaults
+- increase LOW_TICKS_PER_MOVE to 1,5mio as a test
+
+V RF.01.42.08.Mod (2018-08-12)
+- refactoring for the feature loop function
+- zcompensation is calculated a bit more often to see if that prevents snoring noise
+- some rework on stopprint because of defect sensors
+- some codestyle
+
+V RF.01.42.07.Mod (2018-08-12)
+- changed SD-Card communication Mhz to a more reasonable correct value which is not "just limited" by ATMega speed.
+- partly support for Repetier/Marlins M218 to change Extruder-Offsets by Gcode (only for compatibility reasons, repetier just added it)
+- sensor-heater-decoupling-test got better output- and UI-information messages
+
+V RF.01.42.06.Mod (2018-08-11)
+- improved thermal safety:
+   Added the sensor-heater-decoupling test to the temperature manager.
+   This test is 3D-Printer standard today, but has not been the content of this firmware so far.
+- changed gcode description within Repetier.ino
+- suppress compilation error because of missing watchdog pin if no motherboard (/ printer type) is defined.
+- cleanup of comment annotation within configuration.h
 
 V RF.01.42.05.Mod (2018-08-10)
 - SD-Card Mount is now "silent" at boottime to prevent the RF1000 print errors with missing sd-card. (RF1000 has no automount pin)
@@ -1144,7 +1196,7 @@ V RF.01.35c.mod
 - Included StarTonys Fan-Mod http://www.rf1000.de/viewtopic.php?f=7&t=1638
 
 V RF.01.35c
-- Changed ZOS Strategy to a "switch"-Type triggered by loopRF for better communication.
+- Changed ZOS Strategy to a "switch"-Type triggered by loopFeatures for better communication.
 - ZOS Message cleanup
 - ZOS now reloads Matrix on +z-Matrix-Entry
 - Fixed almost all Compiler-Warnings

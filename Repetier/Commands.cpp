@@ -24,6 +24,9 @@ int         Commands::lowestRAMValueSend = MAX_RAM;
 void Commands::commandLoop()
 {
     GCode::readFromSerial();
+#if SDSUPPORT
+    GCode::readFromSD();
+#endif //SDSUPPORT
     GCode *code = GCode::peekCurrentCommand();
     if(code)
     {
@@ -40,46 +43,57 @@ void Commands::commandLoop()
         }
         else
 #endif //SDSUPPORT
+		{
             Commands::executeGCode(code);
+		}
         code->popCurrentCommand();
-    }
-    Printer::defaultLoopActions();
+		Commands::checkForPeriodicalActions(Processing);  //check heater and other stuff every n milliseconds
+    } else {
+		Commands::checkForPeriodicalActions(NotBusy);  //check heater and other stuff every n milliseconds
+	}
 } // commandLoop
 
 
 void Commands::checkForPeriodicalActions(enum FirmwareState state)
 {
-    bool buttonactive = ((HAL::timeInMilliseconds() - uid.lastButtonStart < 15000) ? true : false);
-
-    if( state != NotBusy ){
+	/* 
+	 * The execute variables are set by PWM-Timer. This timer ticks with about 3910 Hz and the ms clocks are made with software counter dividors.
+	 * Except this 16ms execute variable which is set by internal watchdog timer.
+	 */
+    if (state != NotBusy) {
         GCode::keepAlive( state );
     }
 
-    if(execute10msPeriodical){ //set by PWM-Timer
-      execute10msPeriodical=0;
-
-      HAL::tellWatchdogOk();  //dieses freigabesignal sollte aus dem PWM-Timer kommen, denn dann ist klar, dass auch der noch läuft. Dann laufen für den Watchdogreset der Timer und checkForPeriodicalActions().
-      doZCompensation();  //100x pro sekunde -> 100mm/s : jede 1mm Weg
-
+    if (execute10msPeriodical) {
+      execute10msPeriodical = 0;
+	  // Dieses freigabesignal sollte aus dem PWM-Timer kommen, denn dann ist klar, dass auch der noch läuft.
+	  // Dann laufen für den Watchdogreset der Timer und checkForPeriodicalActions().
+      HAL::tellWatchdogOk();	  
     }
 
-    if(execute16msPeriodical){ //set by internal Watchdog-Timer
+    if (execute16msPeriodical) {
       execute16msPeriodical = 0;
-      if(buttonactive) UI_SLOW;
-
+	  bool buttonSpeedBoost = (!execute100msPeriodical && HAL::timeInMilliseconds() - uid.lastButtonStart < 20000);
+      if(buttonSpeedBoost) UI_SLOW;
+	  doZCompensation();
     }
 
-    if(execute100msPeriodical){ //set by PWM-Timer
-      execute100msPeriodical=0;
-
-      loopRF();
-
-      if(!buttonactive) UI_SLOW;
-
+    if (execute100msPeriodical) {
+      execute100msPeriodical = 0;
       Extruder::manageTemperatures();
       Commands::printTemperatures(); //selfcontrolling timediff
-
+#if defined(SDCARDDETECT) && SDCARDDETECT>-1 && defined(SDSUPPORT) && SDSUPPORT
+      sd.automount();
+#endif // defined(SDCARDDETECT) && SDCARDDETECT>-1 && defined(SDSUPPORT) && SDSUPPORT
+	  UI_SLOW;
     }
+
+    if (execute50msPeriodical) {
+      execute50msPeriodical = 0;
+      loopFeatures();
+    }
+
+	DEBUG_MEMORY;
 } // checkForPeriodicalActions
 
 
@@ -106,7 +120,6 @@ void Commands::waitUntilEndOfAllMoves()
 
         bWait = false;
         if( PrintLine::hasLines() )     bWait = true;
-        else                            GCode::readFromSerial(); //normalerweise braucht repetiert hier bei PrintLine::haslines kein readserial! aber wenn wir für die anderen wait=1 readserial wollen, evtl. schon.
 
 #if FEATURE_FIND_Z_ORIGIN
         if( g_nFindZOriginStatus )      bWait = true;
@@ -115,9 +128,7 @@ void Commands::waitUntilEndOfAllMoves()
 #if FEATURE_HEAT_BED_Z_COMPENSATION
         bWait = (Printer::needsCMPwait() ? true : bWait);
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
-
     }
-
 } // waitUntilEndOfAllMoves
 
 
@@ -130,7 +141,6 @@ void Commands::waitUntilEndOfZOS()
 
     while( bWait )
     {
-        GCode::readFromSerial();
         Commands::checkForPeriodicalActions( Processing );
 
         bWait = 0;
@@ -779,7 +789,7 @@ void Commands::executeGCode(GCode *com)
             break;
         }
       }
-      previousMillisCmd = HAL::timeInMilliseconds();
+      previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
     }
     else if(com->hasM())    // Process M Code
     {
@@ -870,8 +880,11 @@ void Commands::executeGCode(GCode *com)
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
 #if NUM_EXTRUDER>0
-                    if(reportTempsensorError()) break;
-                    previousMillisCmd = HAL::timeInMilliseconds();
+                    if(Printer::isAnyTempsensorDefect()){
+						reportTempsensorAndHeaterErrors();
+						break;
+					}
+                    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                     if(Printer::debugDryrun()) break;
 
                     //TODO man müsste das in den Movecache legen!
@@ -898,8 +911,11 @@ void Commands::executeGCode(GCode *com)
             {
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
-                    if(reportTempsensorError()) break;
-                    previousMillisCmd = HAL::timeInMilliseconds();
+                    if(Printer::isAnyTempsensorDefect()){
+						reportTempsensorAndHeaterErrors();
+						break;
+					}
+                    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                     if(Printer::debugDryrun()) break;
                     if (com->hasS()) Extruder::setHeatedBedTemperature(com->S,com->hasF() && com->F>0);
                 }
@@ -910,8 +926,11 @@ void Commands::executeGCode(GCode *com)
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
 #if NUM_EXTRUDER>0
-                    if(reportTempsensorError()) break;
-                    previousMillisCmd = HAL::timeInMilliseconds();
+                    if(Printer::isAnyTempsensorDefect()){
+						reportTempsensorAndHeaterErrors();
+						break;
+					}
+                    previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                     if(Printer::debugDryrun()) break;
                     Printer::waitMove = 1; //brauche ich das, wenn ich sowieso warte bis der movecache leer ist?
                     g_uStartOfIdle = 0; //M109
@@ -997,7 +1016,7 @@ void Commands::executeGCode(GCode *com)
                     Printer::waitMove = 0;
                     g_uStartOfIdle    = HAL::timeInMilliseconds(); //end of M109
                 }
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 break;
             }
             case 190: // M190 - Wait bed for heater to reach target.
@@ -1005,6 +1024,10 @@ void Commands::executeGCode(GCode *com)
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
 #if HAVE_HEATED_BED
+                    if(Printer::isAnyTempsensorDefect()){
+						reportTempsensorAndHeaterErrors();
+						break;
+					}
                     if(Printer::debugDryrun()) break;
                     Printer::waitMove = 1; //brauche ich das, wenn ich sowieso warte bis der movecache leer ist?
                     g_uStartOfIdle = 0; //M190
@@ -1037,7 +1060,7 @@ void Commands::executeGCode(GCode *com)
 #endif // HAVE_HEATED_BED
                 }
 
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 break;
             }
             case 116: // M116 - Wait for temperatures to reach target temperature
@@ -1136,7 +1159,7 @@ void Commands::executeGCode(GCode *com)
             {
 #if PS_ON_PIN > -1
                 Commands::waitUntilEndOfAllMoves();  //M80 command
-                previousMillisCmd = HAL::timeInMilliseconds();
+                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 SET_OUTPUT(PS_ON_PIN); //GND
                 WRITE(PS_ON_PIN, (POWER_INVERTING ? HIGH : LOW));
 #endif // PS_ON_PIN > -1
@@ -1170,7 +1193,7 @@ void Commands::executeGCode(GCode *com)
                 else
                 {
                     Commands::waitUntilEndOfAllMoves(); //M84
-                    Printer::kill(true);
+					Printer::disableAllSteppersNow();
                 }
                 break;
             }
@@ -1198,7 +1221,7 @@ void Commands::executeGCode(GCode *com)
 
                 while(wait-HAL::timeInMilliseconds() < 100000L)
                 {
-                    Printer::defaultLoopActions();
+                    Commands::checkForPeriodicalActions( Paused );  //check heater and other stuff every n milliseconds
                 }
                 if(com->hasX())
                     Printer::enableXStepper();
@@ -1448,6 +1471,41 @@ void Commands::executeGCode(GCode *com)
                 }
                 break;
             }
+			case 218:
+			{
+				// New MCode with https://github.com/repetier/Repetier-Firmware/commit/e5db16080d0c98776ae82f543e2bc6ef643a63c7
+				// I added this MCode for compatibility-Reasons with Repetier and Marlin.
+				
+				int extId = 0;
+				if (com->hasT()) {
+					extId = com->T;
+				}
+				if (extId >= 0 && extId < NUM_EXTRUDER) {
+					if (com->hasX()) {
+						extruder[extId].xOffset = com->X * Printer::axisStepsPerMM[X_AXIS];
+					}
+					if (com->hasY()) {
+						 extruder[extId].yOffset = com->Y * Printer::axisStepsPerMM[Y_AXIS];
+					}
+					// Special RFx000-Constraint: This Mod doesnt support Extruder-Z-Offset here because it might be mixed up with Bed Z-Offset.
+					// Change Extruder Z-Offset via Menu. You have to activate UI_SHOW_TIPDOWN_IN_ZCONFIGURATION to see the menu entry to do so for the right extruder.
+					// Or change the Extruder Z-Offset via EEPROM.
+					/*if (com->hasZ() && com->Z < 0 && com->Z > -2) {
+						extruder[extId].zOffset = com->Z * Printer::axisStepsPerMM[Z_AXIS];
+					} else if (com->hasZ()) {
+						Com::printFLN(PSTR("M218 Error Z limited to -2..0"));
+					}*/	
+#if FEATURE_AUTOMATIC_EEPROM_UPDATE
+					if(com->hasS() && com->S > 0) {
+						if (com->hasX()) HAL::eprSetFloat(EEPROM::getExtruderOffset(extId)+EPR_EXTRUDER_X_OFFSET, com->X);
+						if (com->hasY()) HAL::eprSetFloat(EEPROM::getExtruderOffset(extId)+EPR_EXTRUDER_Y_OFFSET, com->Y);
+						//if (com->hasZ() && com->Z < 0 && com->Z > -2) HAL::eprSetFloat(EEPROM::getExtruderOffset(extId)+EPR_EXTRUDER_Z_OFFSET, com->Z);
+						EEPROM::updateChecksum();
+					}
+#endif //FEATURE_AUTOMATIC_EEPROM_UPDATE
+				}
+				break;
+			}
             case 220:   // M220 - S<Feedrate multiplier in percent>
             {
                 changeFeedrateMultiply(com->getS(100));
@@ -1547,7 +1605,7 @@ void Commands::executeGCode(GCode *com)
             {
                 if( com->hasP() && com->hasS() ){
                     uint8_t current = com->S;
-                    if(com->hasP() > 3 + NUM_EXTRUDER) break;
+                    if(com->P > 3 + NUM_EXTRUDER) break;
                     if(current > 150){
                        //break;
                     }else if(current < MOTOR_CURRENT_MIN){

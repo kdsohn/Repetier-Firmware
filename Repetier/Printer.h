@@ -33,7 +33,7 @@
 
 #define PRINTER_FLAG1_AUTOMOUNT                 2
 #define PRINTER_FLAG1_ANIMATION                 4
-#define PRINTER_FLAG1_ALLKILLED                 8
+#define PRINTER_FLAG1_ALLSWITCHEDOFF            8
 #define PRINTER_FLAG1_UI_ERROR_MESSAGE          16
 #define PRINTER_FLAG1_NO_DESTINATION_CHECK      32
 #define PRINTER_FLAG1_Z_ORIGIN_SET              64
@@ -637,15 +637,15 @@ public:
         flag1 = (b ? flag1 | PRINTER_FLAG1_Z_ORIGIN_SET : flag1 & ~PRINTER_FLAG1_Z_ORIGIN_SET);
     } // setZOriginSet
 
-    static INLINE uint8_t isAllKilled()
+    static INLINE uint8_t isAllSwitchedOff()
     {
-        return flag1 & PRINTER_FLAG1_ALLKILLED;
-    } // isAllKilled
+        return flag1 & PRINTER_FLAG1_ALLSWITCHEDOFF;
+    } // isAllSwitchedOff
 
-    static INLINE void setAllKilled(uint8_t b)
+    static INLINE void setAllSwitchedOff(uint8_t b)
     {
-        flag1 = (b ? flag1 | PRINTER_FLAG1_ALLKILLED : flag1 & ~PRINTER_FLAG1_ALLKILLED);
-    } // setAllKilled
+        flag1 = (b ? flag1 | PRINTER_FLAG1_ALLSWITCHEDOFF : flag1 & ~PRINTER_FLAG1_ALLSWITCHEDOFF);
+    } // setAllSwitchedOff
 
     static INLINE uint8_t isAutomount()
     {
@@ -919,6 +919,10 @@ public:
         flag0 |= PRINTER_FLAG0_STEPPER_DISABLED;
         // when the stepper is disabled we loose our home position because somebody else can move our mechanical parts
         setHomed( false, false, false ); //mag sein, dass wir das nicht brauchen, weil sowieso die einzelnen stepper deaktiviert werden müssen.
+		
+#if FAN_BOARD_PIN>-1
+		pwm_pos[NUM_EXTRUDER+1] = 0;
+#endif // FAN_BOARD_PIN
     } // markAllSteppersDisabled
 
     static INLINE void unmarkAllSteppersDisabled()
@@ -932,6 +936,9 @@ public:
 
     static void disableAllSteppersNow()
     {
+		if( !areAllSteppersDisabled() ){
+			UI_STATUS_UPD(UI_TEXT_STEPPER_DISABLED);
+		}
         markAllSteppersDisabled();
 #if FEATURE_UNLOCK_MOVEMENT
         Printer::g_unlock_movement = 0; //again lock movement until homing or keypress or another print happens. --> toooooo much? Ich aktiviers: http://www.rf1000.de/viewtopic.php?f=70&t=2282
@@ -939,7 +946,7 @@ public:
         disableXStepper();
         disableYStepper();
         disableZStepper();
-        Extruder::disableAllExtruders();
+        Extruder::disableAllExtruders();		
     } // disableAllSteppersNow
 
     static INLINE void setSomeTempsensorDefect(bool defect)
@@ -1115,10 +1122,9 @@ public:
     static void constrainDirectDestinationCoords();
     static void updateDerivedParameter();
     static void updateCurrentPosition(bool copyLastCmd = false);
-    static void kill(uint8_t only_steppers);
+    static void switchEverythingOff();
     static void updateAdvanceFlags();
     static void setup();
-    static void defaultLoopActions();
     static uint8_t setDestinationStepsFromGCode(GCode *com);
     static uint8_t setDestinationStepsFromMenu( float relativeX, float relativeY, float relativeZ );
     static void moveToReal(float x,float y,float z,float e,float feedrate);
