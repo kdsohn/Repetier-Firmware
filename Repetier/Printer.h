@@ -213,7 +213,7 @@ public:
 
 #if FEATURE_CASE_FAN
     static bool ignoreFanOn;
-    static unsigned long    prepareFanOff;
+    static millis_t         prepareFanOff;
     static unsigned long    fanOffDelay;
 #endif // FEATURE_CASE_FAN
 

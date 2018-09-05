@@ -200,7 +200,7 @@ char            Printer::enableFET3;
 
 #if FEATURE_CASE_FAN
 bool            Printer::ignoreFanOn = false;
-unsigned long   Printer::prepareFanOff = 0;
+millis_t        Printer::prepareFanOff = 0;
 unsigned long   Printer::fanOffDelay = 0;
 #endif // FEATURE_CASE_FAN
 

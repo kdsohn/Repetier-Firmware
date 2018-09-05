@@ -558,7 +558,7 @@ extern const char   ui_text_saving_success[]        PROGMEM;
 
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION && FEATURE_WORK_PART_Z_COMPENSATION
 
-extern  unsigned long   g_uStartOfIdle;
+extern  millis_t        g_uStartOfIdle;
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 extern  long            g_offsetZCompensationSteps; // this is the minimal distance between the heat bed and the extruder at the moment when the z-min endstop is hit
@@ -612,8 +612,8 @@ extern  unsigned short  g_nScanRetryPressureDelta;
 extern  long            g_staticZSteps;
 extern  char            g_debugLevel;
 extern  char            g_debugLog;
-extern  unsigned long   g_uStopTime;
-extern volatile unsigned long   g_uBlockCommands;
+extern  millis_t        g_uStopTime;
+extern volatile millis_t g_uBlockCommands;
 
 // other configurable parameters
 extern  unsigned long   g_nManualSteps[4];
@@ -621,7 +621,7 @@ extern  volatile long   g_nPauseSteps[4];
 extern  volatile long   g_nContinueSteps[4];
 extern  volatile char   g_pauseStatus;
 extern  volatile char   g_pauseMode;
-extern  volatile unsigned long  g_uPauseTime;
+extern  volatile millis_t g_uPauseTime;
 extern  volatile char   g_pauseBeepDone;
 
 #if FEATURE_EMERGENCY_PAUSE
