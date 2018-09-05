@@ -67,7 +67,7 @@ FSTRINGVALUE( ui_text_statusmsg, UI_TEXT_STATUSMSG )
 
 FSTRINGVALUE( ui_text_saving_success, UI_TEXT_SAVING_SUCCESS )
 
-unsigned long   g_uStartOfIdle             = 0;
+millis_t        g_uStartOfIdle             = 0;
 
 #if FEATURE_HEAT_BED_Z_COMPENSATION
 long            g_offsetZCompensationSteps = 0;
@@ -160,8 +160,8 @@ short           g_nScanPressureTolerance     = 0;
 long            g_staticZSteps              = 0;
 char            g_debugLevel                = 0;
 char            g_debugLog                  = 0;
-unsigned long   g_uStopTime                 = 0;
-volatile unsigned long g_uBlockCommands          = 0;
+millis_t        g_uStopTime                 = 0;
+volatile millis_t g_uBlockCommands          = 0;
 
 // other configurable parameters
 unsigned long   g_nManualSteps[4]           = { uint32_t(XAXIS_STEPS_PER_MM * DEFAULT_MANUAL_MM_X),
@@ -176,8 +176,8 @@ volatile long   g_nPauseSteps[4]            = { long(XAXIS_STEPS_PER_MM * DEFAUL
 volatile long   g_nContinueSteps[4]         = { 0, 0, 0, 0 };
 volatile char   g_pauseStatus               = PAUSE_STATUS_NONE;
 volatile char   g_pauseMode                 = PAUSE_MODE_NONE;
-volatile unsigned long  g_uPauseTime                = 0;
-volatile char           g_pauseBeepDone             = 0;
+volatile millis_t g_uPauseTime                = 0;
+volatile char     g_pauseBeepDone             = 0;
 
 #if FEATURE_PARK
 long            g_nParkPosition[3]          = { PARK_POSITION_X, PARK_POSITION_Y, PARK_POSITION_Z };
@@ -6070,7 +6070,6 @@ unsigned short readWord24C256( int addressI2C, unsigned int addressEEPROM )
 void doZCompensation( void )
 {
 #if FEATURE_MILLING_MODE
-
     if( Printer::operatingMode == OPERATING_MODE_MILL )
     {
 #if FEATURE_WORK_PART_Z_COMPENSATION
@@ -6078,15 +6077,12 @@ void doZCompensation( void )
 #endif // FEATURE_WORK_PART_Z_COMPENSATION
     }
     else
-
 #endif // FEATURE_MILLING_MODE
-
     {
 #if FEATURE_HEAT_BED_Z_COMPENSATION
         doHeatBedZCompensation();
 #endif // FEATURE_HEAT_BED_Z_COMPENSATION
     }
-
 } // doZCompensation
 
 
@@ -6348,6 +6344,9 @@ void handleFanOffPlanner(millis_t uTime){
 #if FEATURE_CASE_FAN && !CASE_FAN_ALWAYS_ON
     if( Printer::prepareFanOff )
     {
+		if( Printer::prepareFanOff > uTime ){
+			return;
+		}
         if( (uTime - Printer::prepareFanOff) > Printer::fanOffDelay ) //60s wäre standard nach config
         {
             // it is time to turn the case fan off
@@ -6376,6 +6375,9 @@ void handlePauseTime(millis_t uTime){
         if( g_pauseStatus == PAUSE_STATUS_PAUSED ) //and absolutly not PAUSE_STATUS_HEATING
         {
 #if EXTRUDER_CURRENT_PAUSE_DELAY
+			if( g_uPauseTime > uTime ){
+				return;
+			}
             if( (uTime - g_uPauseTime) > EXTRUDER_CURRENT_PAUSE_DELAY ) //das sind alle 30s
             {
                 char    nProcessExtruder = 0;
@@ -6462,6 +6464,11 @@ void handleScanWorkTasks(){
 void handleServiceInterval(millis_t uTime) {	
     if ( !g_nEnteredService )
     {
+		/*
+		Eigentlich überall so, aber hier völlig unnötig.
+		if( g_nlastServiceTime > uTime ){
+			return;
+		}*/
         if ( ( uTime - g_nlastServiceTime ) > 5000 )
         {
             g_uStartOfIdle = uTime; //enter FEATURE_SERVICE_INTERVAL
@@ -6529,6 +6536,9 @@ void handleStartPrint() {
 void handleStopPrint(millis_t uTime) {
     if( g_uStopTime )
     {
+		if( g_uStopTime > uTime ){
+			return;
+		}
         GCode::readFromSerial(); //consume gcode buffers but dont put gcodes into queue rightnow, because of g_uBlockCommands
         if( (uTime - g_uStopTime) > 2000 ) //jede 1 sekunden  wäre standard nach config
         {
@@ -6575,12 +6585,17 @@ void handleStopPrint(millis_t uTime) {
 
                 BEEP_STOP_PRINTING
 
-                g_uBlockCommands = HAL::timeInMilliseconds();
+                g_uBlockCommands = uTime;
             }
         }
     }
     if( g_uBlockCommands > 1 ) //=1 scheint zu blocken, dann muss g_uStopTime aktiv sein und hier drüber erst eine Uhrzeit reinsetzen.
     {
+		/*
+		Prüfung unnötig, es wird niemals eine Echtzeit reingeschrieben.
+		if( g_uBlockCommands > uTime ){
+			return;
+		}*/
         if( (uTime - g_uBlockCommands) > 1000 ) //jede 1 sekunden wäre standard nach config
         {
             g_uBlockCommands = 0;
@@ -6593,40 +6608,44 @@ void handleStopPrint(millis_t uTime) {
 void handleGoIdle(millis_t uTime) {
     if( g_uStartOfIdle )
     {
-        if( g_uStartOfIdle < uTime ){
-            if ( (uTime - g_uStartOfIdle) > MINIMAL_IDLE_TIME ) //500ms nach config
-            {
-                // show that we are idle for a while already
-                showIdle();
-                g_uStartOfIdle  = 0;
-                Printer::setPrinting(false);
-            }
+        if( g_uStartOfIdle > uTime ){
+            return;
         }
+        if ( (uTime - g_uStartOfIdle) > MINIMAL_IDLE_TIME ) //500ms nach config
+        {
+			// show that we are idle for a while already
+			showIdle();
+			g_uStartOfIdle  = 0;
+			Printer::setPrinting(false);
+		}
     }
 }
 
 
 void handleGoIdleShutdownDevices(millis_t uTime) {
-    if( PrintLine::hasLines() || Printer::isPrinting() || Printer::isMenuMode(MENU_MODE_PAUSED) )
-    {
-        previousMillisCmd = uTime; //prevent inactive shutdown of steppers/temps
-    }
-    else
-    {
-        uTime -= previousMillisCmd;
+	if( PrintLine::hasLines() || Printer::isPrinting() || Printer::isMenuMode(MENU_MODE_PAUSED) )
+	{
+		previousMillisCmd = uTime; //prevent inactive shutdown of steppers/temps
+	}
+	else
+	{
+		if( previousMillisCmd > uTime ){
+			return;
+		}
+		uTime -= previousMillisCmd;
 		
-        if( maxInactiveTime != 0 && uTime > maxInactiveTime ) Printer::switchEverythingOff(); //kill not only steppers
-        else Printer::setAllSwitchedOff(false); // reset if not time to kill: prevents repeated kills
+		if( maxInactiveTime != 0 && uTime > maxInactiveTime ) Printer::switchEverythingOff(); //kill not only steppers
+		else Printer::setAllSwitchedOff(false); // reset if not time to kill: prevents repeated kills
 		
-        if( stepperInactiveTime != 0 && uTime > stepperInactiveTime && !Printer::areAllSteppersDisabled() )
-        {
+		if( stepperInactiveTime != 0 && uTime > stepperInactiveTime && !Printer::areAllSteppersDisabled() )
+		{
 			Printer::disableAllSteppersNow();
-#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
+	#if FAN_PIN>-1 && FEATURE_FAN_CONTROL
 			// disable the part fan
 			Commands::setFanSpeed((uint8_t)0);
-#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
-        }
-    }
+	#endif // FAN_PIN>-1 && FEATURE_FAN_CONTROL
+		}
+	}
 }
 
 void outputObject( bool showerrors )
@@ -6677,18 +6696,16 @@ void loopFeatures() //wird so aufgerufen, dass es ein ~100ms Takt sein sollte.
 {
     static char     nEntered = 0;
     if( nEntered ) return; // do not enter more than once
-    nEntered ++;
-	
+    nEntered ++;	
 	millis_t uTime = HAL::timeInMilliseconds();
-	  
+	
+	handleGoIdleShutdownDevices(uTime);	  
 	handleFanOffPlanner(uTime);
-	handleScanWorkTasks();
 	handlePauseTime(uTime);
 	handleStrainGaugeFeatures(uTime);
 	handleStartPrint();
 	handleStopPrint(uTime);
 	handleGoIdle(uTime);
-	handleGoIdleShutdownDevices(uTime);
     if( Printer::isAnyTempsensorDefect() && Printer::isPrinting() )
     {
         // we are printing from the SD card and a temperature sensor got defect - abort the current printing
@@ -6702,7 +6719,8 @@ void loopFeatures() //wird so aufgerufen, dass es ein ~100ms Takt sein sollte.
 #if FEATURE_RGB_LIGHT_EFFECTS
     updateRGBLightStatus();
 #endif // FEATURE_RGB_LIGHT_EFFECTS
-
+	handleScanWorkTasks();
+	
     nEntered --;    
 } // loopFeatures
 
