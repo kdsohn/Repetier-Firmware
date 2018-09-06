@@ -71,6 +71,8 @@ public:
     float       lastDecoupleTemp;    ///< Temperature on last test
     millis_t    decoupleTestPeriod;  ///< Time between setting and testing decoupling.
 
+    uint8_t     paused;
+
     void setTargetTemperature(float target, float offset);
     void updateCurrentTemperature();
     void updateTempControlVars();
@@ -211,8 +213,6 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
 #if STEPPER_ON_DELAY
     char        enabled;
 #endif // STEPPER_ON_DELAY
-
-    uint8_t     paused;
 
     /** \brief Sends the high-signal to the stepper for next extruder step.
     Call this function only, if interrupts are disabled.
@@ -379,7 +379,6 @@ class Extruder   // Size: 12*1 Byte+12*4 Byte+4*2Byte = 68 Byte
     static void disableCurrentExtruderMotor();
     static void disableAllExtruders();
     static void selectExtruderById(uint8_t extruderId);
-    static void disableAllHeater();
     static void initExtruder();
     static void initHeatedBed();
     static void setHeatedBedTemperature(float temperatureInCelsius,bool beep = false);
