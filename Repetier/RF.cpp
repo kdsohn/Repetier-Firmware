@@ -6356,19 +6356,17 @@ void handlePauseTime(millis_t uTime){
 			if( g_uPauseTime > uTime ){
 				return;
 			}
-            if( (uTime - g_uPauseTime) > (EXTRUDER_CURRENT_PAUSE_DELAY ? EXTRUDER_CURRENT_PAUSE_DELAY : 60000) ) //das sind alle 60s
+            if( (uTime - g_uPauseTime) > (EXTRUDER_CURRENT_PAUSE_DELAY < 30000 ? 30000 : EXTRUDER_CURRENT_PAUSE_DELAY) ) //das sind alle 60s
             {
 #if FEATURE_MILLING_MODE
                 if( Printer::operatingMode == OPERATING_MODE_PRINT )
 #endif // FEATURE_MILLING_MODE
 #if NUM_EXTRUDER > 0
                 {
-					Com::printFLN( PSTR("Pause: Saving Energy"), extruder[i].tempControl.paused );
+					Com::printFLN( PSTR("Pause: Saving Energy") );
                     // we have paused a few moments ago - reduce the current of the extruder motor in order to avoid unwanted heating of the filament for use cases where the printing is paused for several minutes
                     for(uint8_t i = 0; i < NUM_EXTRUDER; i++) {
-#if EXTRUDER_CURRENT_PAUSE_DELAY
                         setExtruderCurrent( i, EXTRUDER_CURRENT_PAUSED );
-#endif //EXTRUDER_CURRENT_PAUSE_DELAY
                         if(!extruder[i].tempControl.paused){ // Temperatur-Senk-Differenz in .tempControl.paused ablegen. maximal -255 °C als Zahl 255. Config aktuell nur über RFx000.h bei PAUSE_COOLDOWN
 							uint8_t coolDownSetting = constrain(PAUSE_COOLDOWN,0,255);
 							coolDownSetting = ( (uint8_t)extruder[i].tempControl.targetTemperatureC > coolDownSetting ? coolDownSetting : (uint8_t)extruder[i].tempControl.targetTemperatureC );
@@ -6903,9 +6901,7 @@ void continuePrintLoadTemperatures(uint8_t plus_temp_tolerance){
 	g_pauseStatus = PAUSE_STATUS_HEATING;
 	bool wait = false;
 	for(uint8_t i = 0; i < NUM_EXTRUDER; i++){
-#if EXTRUDER_CURRENT_PAUSE_DELAY
 		setExtruderCurrent( i, Printer::motorCurrent[E_AXIS+i] );
-#endif //EXTRUDER_CURRENT_PAUSE_DELAY
 		if(extruder[i].tempControl.paused){ 
 			// Setze Temperatur zurück auf Vor-Pause-Wert. Config aktuell nur über RFx000.h bei PAUSE_COOLDOWN
 			// Wird nicht zurückgesetzt, wenn Temperatur in Pause verändert wurde. dann ist ".pause === 0"
