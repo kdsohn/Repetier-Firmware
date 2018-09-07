@@ -776,7 +776,6 @@ extern void parkPrinter( void );
 
 extern bool processingDirectMove();
 
-extern void checkPauseStatus_fromTask();
 extern void waitforPauseStatus_fromButton();
 extern void pausePrint( void );
 extern void continuePrint( void );

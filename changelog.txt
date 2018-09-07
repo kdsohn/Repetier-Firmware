@@ -2,6 +2,17 @@ TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 TODO: zero K and nikibalboa say that they experienced a hard reset while starting "unload filament soft" or "load filament soft"
 
+V RF.01.42.17.Mod (2018-09-06)
+- Fix for Heater-Decoupled-Error if the printer drops temperature within pause.
+- Removed all places where Temperatures are set by manipulating the targetTemperatureC
+- Removed some unused code
+- Removed extra check for printing status and defect Thermistors, because it was unnecessary and faulty.
+- When the printer pauses, it drops the temperatures which are auto recovered at resume.
+  If the temperatures are changed within pause, the old temperature does not auto recover anymore. 
+  This is an improvement in usability for the pause feature.
+- We have 2 methods/systems which look for a printers sleep/standby/idle-state. I put them togehther into one handleStartStandby() function.
+  (previousMillisCmd vs. g_uStartOfIdle. Both are triggering something quite similar except the time span is another.)
+
 V RF.01.42.16.Mod (2018-09-05)
 - Hotfix for disabling steppers because of unsigned time calculation bug.
 

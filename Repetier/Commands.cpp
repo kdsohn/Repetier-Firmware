@@ -1016,7 +1016,6 @@ void Commands::executeGCode(GCode *com)
                     Printer::waitMove = 0;
                     g_uStartOfIdle    = HAL::timeInMilliseconds(); //end of M109
                 }
-                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 break;
             }
             case 190: // M190 - Wait bed for heater to reach target.
@@ -1024,6 +1023,7 @@ void Commands::executeGCode(GCode *com)
                 if( isSupportedMCommand( com->M, OPERATING_MODE_PRINT ) )
                 {
 #if HAVE_HEATED_BED
+					previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                     if(Printer::isAnyTempsensorDefect()){
 						reportTempsensorAndHeaterErrors();
 						break;
@@ -1059,8 +1059,6 @@ void Commands::executeGCode(GCode *com)
                     g_uStartOfIdle    = HAL::timeInMilliseconds()+5000; //end of M190
 #endif // HAVE_HEATED_BED
                 }
-
-                previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
                 break;
             }
             case 116: // M116 - Wait for temperatures to reach target temperature
