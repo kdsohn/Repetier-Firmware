@@ -248,10 +248,9 @@ void Extruder::manageTemperatures()
 
     if (Printer::isAnyTempsensorDefect())
     {
-        for (uint8_t i = 0; i < NUM_TEMPERATURE_LOOPS; i++)
+        for (uint8_t controller = 0; controller < NUM_TEMPERATURE_LOOPS; controller++)
         {
-            tempController[i]->targetTemperatureC = 0;
-            pwm_pos[tempController[i]->pwmIndex] = 0;
+			tempController[controller]->setTargetTemperature(0,0);
         }
         Printer::debugLevel |= 8; // Go into dry mode
     } else {
@@ -266,7 +265,6 @@ void Extruder::initHeatedBed()
 #if HAVE_HEATED_BED
     heatedBedController.updateTempControlVars();
 #endif // HAVE_HEATED_BED
-
 } // initHeatedBed
 
 
@@ -463,11 +461,12 @@ void Extruder::setTemperatureForExtruder(float temperatureInCelsius,uint8_t extr
         if(tempController[i]->targetTemperatureC > 0) alloffs = false;
 
 #ifdef EXTRUDER_MAX_TEMP
-    if(temperatureInCelsius>EXTRUDER_MAX_TEMP) temperatureInCelsius = EXTRUDER_MAX_TEMP;
+    if(temperatureInCelsius > EXTRUDER_MAX_TEMP) temperatureInCelsius = EXTRUDER_MAX_TEMP;
 #endif // EXTRUDER_MAX_TEMP
 
     if(temperatureInCelsius < 0) temperatureInCelsius=0;
     TemperatureController *tc = tempController[extr];
+	if(tc->isSensorDefect() || tc->isSensorDecoupled()) temperatureInCelsius = 0;
     if(tc->sensorType == 0) temperatureInCelsius = 0;
     tc->setTargetTemperature(temperatureInCelsius,0);
     tc->updateTempControlVars();
@@ -564,6 +563,8 @@ void Extruder::setHeatedBedTemperature(float temperatureInCelsius,bool beep)
 
     if(temperatureInCelsius>HEATED_BED_MAX_TEMP) temperatureInCelsius = HEATED_BED_MAX_TEMP;
     if(temperatureInCelsius<0) temperatureInCelsius = 0;
+	if(heatedBedController.isSensorDefect() || heatedBedController.isSensorDecoupled()) temperatureInCelsius = 0;
+							
     if(heatedBedController.targetTemperatureC==temperatureInCelsius) return; // don't flood log with messages if killed
 
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
@@ -578,7 +579,6 @@ void Extruder::setHeatedBedTemperature(float temperatureInCelsius,bool beep)
         Com::printFLN(Com::tTargetBedColon,heatedBedController.targetTemperatureC,0);
     }
 #endif // HAVE_HEATED_BED
-
 } // setHeatedBedTemperature
 
 float Extruder::getHeatedBedTemperature()
@@ -1049,22 +1049,12 @@ void TemperatureController::setTargetTemperature(float target, float offset)
 #else
     (void)offset;
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
+	
+	//do not set back temperatures to "not idle temperatures" after pause, if they have been changed manually within the pause.
+	paused = 0;
 } // setTargetTemperature
 
 uint8_t autotuneIndex = 255;
-void Extruder::disableAllHeater()
-{
-    for(uint8_t i=0; i<NUM_TEMPERATURE_LOOPS; i++)
-    {
-        TemperatureController *c = tempController[i];
-        c->targetTemperatureC = 0;
-#if FEATURE_HEAT_BED_TEMP_COMPENSATION
-        c->offsetC = 0;
-#endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
-        pwm_pos[c->pwmIndex] = 0;
-    }
-    autotuneIndex = 255;
-} // disableAllHeater
 
 void TemperatureController::waitForTargetTemperature(uint8_t plus_temp_tolerance) {
     if(Printer::debugDryrun()) return;
@@ -1266,7 +1256,6 @@ see also: http://www.mstarlabs.com/control/znrule.html
             Com::printErrorFLN(Com::tAPIDFailedTimeout);
             showError( (void*)ui_text_autodetect_pid, (void*)ui_text_timeout );
             autotuneIndex = 255;
-            g_uStartOfIdle = HAL::timeInMilliseconds(); //end autotunePID timeout
             break;
         }
         if(cycles > maxCycles)
@@ -1348,12 +1337,12 @@ Extruder extruder[NUM_EXTRUDER] =
             0,{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
             0,
             0, 0, EXT0_DECOUPLE_TEST_PERIOD
+			,0 //uint8_t paused
         }
         ,ext0_select_cmd,ext0_deselect_cmd,EXT0_EXTRUDER_COOLER_SPEED,0
 #if STEPPER_ON_DELAY
         , '\x0'
 #endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
-        ,0 //uint8_t paused
     }
 #endif // NUM_EXTRUDER>0
 
@@ -1380,12 +1369,12 @@ Extruder extruder[NUM_EXTRUDER] =
             0,{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
             0,
             0, 0, EXT1_DECOUPLE_TEST_PERIOD
+			,0 //uint8_t paused
         }
         ,ext1_select_cmd,ext1_deselect_cmd,EXT1_EXTRUDER_COOLER_SPEED,0
 #if STEPPER_ON_DELAY
         , '\x0'
 #endif // STEPPER_ON_DELAY by Nibbels gegen xtruder.cpp:1620:1: warning: missing initializer for member 'Extruder::enabled'
-        ,0 //uint8_t paused
     }
 #endif // NUM_EXTRUDER>1
 };
@@ -1393,16 +1382,17 @@ Extruder extruder[NUM_EXTRUDER] =
 #if HAVE_HEATED_BED
 #define NUM_TEMPERATURE_LOOPS NUM_EXTRUDER+1
 TemperatureController heatedBedController = {
-            NUM_EXTRUDER,HEATED_BED_SENSOR_TYPE,BED_SENSOR_INDEX,0,0,0,
+		NUM_EXTRUDER,HEATED_BED_SENSOR_TYPE,BED_SENSOR_INDEX,0,0,0,
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
-            0,
+		0,
 #endif // FEATURE_HEAT_BED_TEMP_COMPENSATION
-            0,
-            0,HEATED_BED_PID_INTEGRAL_DRIVE_MAX,HEATED_BED_PID_INTEGRAL_DRIVE_MIN,HEATED_BED_PID_PGAIN,HEATED_BED_PID_IGAIN,HEATED_BED_PID_DGAIN,HEATED_BED_PID_MAX,0,0,
-            0,{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
-            0,
-            0, 0, BED_DECOUPLE_TEST_PERIOD
-        };
+		0,
+		0,HEATED_BED_PID_INTEGRAL_DRIVE_MAX,HEATED_BED_PID_INTEGRAL_DRIVE_MIN,HEATED_BED_PID_PGAIN,HEATED_BED_PID_IGAIN,HEATED_BED_PID_DGAIN,HEATED_BED_PID_MAX,0,0,
+		0,{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
+		0,
+		0, 0, BED_DECOUPLE_TEST_PERIOD,
+		0 //uint8_t paused
+    };
 #else
 #define NUM_TEMPERATURE_LOOPS NUM_EXTRUDER
 #endif // HAVE_HEATED_BED
@@ -1424,8 +1414,9 @@ TemperatureController optTempController = {
         0,0,0,0,0,0,0,0,0,
         0,{0,0,0,0,0,0,0,0,0,0,0,0,0,0,0,0},
         0,
-        0, 0, 0 /*0 = no decouple test*/
-        };
+        0, 0, 0 /*0 = no decouple test*/,
+		0 //uint8_t paused
+    };
 #endif // RESERVE_ANALOG_INPUTS
 
 

@@ -1657,7 +1657,6 @@ void Printer::homeXAxis()
         previousMillisCmd = HAL::timeInMilliseconds(); //prevent inactive shutdown of steppers/temps
         setHomed( true , -1 , -1);
     }
-
 } // homeXAxis
 
 
@@ -1804,7 +1803,6 @@ void Printer::homeZAxis()
         ZEndstopUnknown = false;
 #endif // FEATURE_CONFIGURABLE_Z_ENDSTOPS
     }
-
 } // homeZAxis
 
 void Printer::homeDigits(){

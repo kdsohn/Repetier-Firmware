@@ -285,7 +285,7 @@
 #endif // !FEATURE_HEAT_BED_Z_COMPENSATION && !FEATURE_WORK_PART_Z_COMPENSATION
 
 /** \brief Specifies the time interval after the pausing of the print at which the extruder current is reduced */
-#define EXTRUDER_CURRENT_PAUSE_DELAY        60000                                                // [ms] or 0, in order to disable the lowering of the extruder current
+#define EXTRUDER_CURRENT_PAUSE_DELAY        60000                                               // [ms] Minimum 30000 -> 30s.
 
 /** \brief Specifies the extruder current which shall be use after pausing of the print and before continuing of the print */
 #define EXTRUDER_CURRENT_PAUSED             32                                                  // ~0.5A
