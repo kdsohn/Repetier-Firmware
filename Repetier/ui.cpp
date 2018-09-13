@@ -5601,7 +5601,7 @@ void UIDisplay::fastAction()
 {
 #if UI_HAS_KEYS==1
     // Check keys
-    InterruptProtectedBlock noInts; //HAL::forbidInterrupts();
+    InterruptProtectedBlock noInts;
 
     if( (flags & (UI_FLAG_KEY_TEST_RUNNING + UI_FLAG_SLOW_KEY_ACTION)) == 0 )
     {
@@ -5633,9 +5633,8 @@ void UIDisplay::fastAction()
 
         flags &= ~UI_FLAG_KEY_TEST_RUNNING;
     }
-    noInts.unprotect(); //HAL::allowInterrupts();
+    noInts.unprotect();
 #endif //  UI_HAS_KEYS==1
-
 } // fastAction
 
 
