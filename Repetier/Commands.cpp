@@ -268,7 +268,7 @@ void Commands::changeFlowrateMultiply(float factorpercent)
 uint8_t fanKickstart = 0;
 void Commands::setFanSpeed(uint8_t speed, bool recalc)
 {
-    speed = constrain(speed,0,255);
+    //speed = constrain(speed,0,255); nichts anderes passt in uint8_t hinein.
 
     //do nothing if the fan speed does not change at all
     if(fanSpeed == speed && !recalc) return;
