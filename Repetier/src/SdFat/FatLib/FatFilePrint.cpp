@@ -232,6 +232,7 @@ void FatFile::lsRecursive(uint8_t level, bool isJson)
  * list to indicate subdirectory level.
  */
 void FatFile::ls(uint8_t flags, uint8_t indent) {
+  (void)flags;
   *fullName = 0;
   lsRecursive(0, false);
 }
