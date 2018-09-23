@@ -1,9 +1,11 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
-TODO: zero K and nikibalboa say that they experienced a hard reset while starting "unload filament soft" or "load filament soft"
+
+V RF.01.42.20.Mod (2018-09-23)
+- Changed phase formula for Kurts Wobblefix: We now use the z coordinate from z-min endstop instead of print coordinates. That should avoid that the wobblefix moves within z axis when we change the matrix or z-offset values.
 
 V RF.01.42.19.Mod (2018-09-23)
-- Changed phase formula for Kurts Wobblefix. This is a possible fix for wrong phase angles.
+- Changed phase formula for Kurts Wobblefix: This is a possible fix for wrong phase angles.
 
 V RF.01.42.18.Mod (2018-09-23)
 - Kurt Wobble Fix: The phase value will now jump from negative to positive.

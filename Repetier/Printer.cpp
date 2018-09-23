@@ -538,17 +538,18 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
     float zweiPi              = 6.2832f;   //2*Pi
     float hundertstelPi       = 0.031428f; //Pi/100
     float spindelSteigung     = 5.0f;      //[mm]
-
+	float zSchalterZ          = Printer::currentZSteps * invAxisStepsPerMM[Z_AXIS];
+	
     //wobble durch Bauchtanz der Druckplatte
     //wobbleX oder wobbleY(x0) oder wobbleX(x245)
     if(Printer::wobbleAmplitudes[0]){
-        float anglePositionWobble = cos(zweiPi*(z/spindelSteigung) - (float)Printer::wobblePhaseXY * hundertstelPi);
+        float anglePositionWobble = cos(zweiPi*(zSchalterZ/spindelSteigung) - (float)Printer::wobblePhaseXY * hundertstelPi);
         //für das wobble in Richtung X-Achse gilt immer dieselbe Amplitude, weil im extremfall beide gegeneinander arbeiten und sich aufheben könnten, oder die Spindeln arbeiten zusammen.
         Printer::wobblefixOffset[X_AXIS] = Printer::wobbleAmplitudes[0] * anglePositionWobble;
         x += Printer::wobblefixOffset[X_AXIS]/1000;  //offset in [um] -> kosys in [mm]
     }
     if(Printer::wobbleAmplitudes[1] || Printer::wobbleAmplitudes[2]){
-        float anglePositionWobble = sin(zweiPi*(z/spindelSteigung) - (float)Printer::wobblePhaseXY * hundertstelPi);
+        float anglePositionWobble = sin(zweiPi*(zSchalterZ/spindelSteigung) - (float)Printer::wobblePhaseXY * hundertstelPi);
         //gilt eher die Y-Achsen-Richtung-Amplitude links (x=0) oder rechts (x=achsenlänge)? (abhängig von der ziel-x-position wird anteilig verrechnet.)
         float xPosPercent = x/Printer::lengthMM[X_AXIS];
         Printer::wobblefixOffset[Y_AXIS] = ((1-xPosPercent) * Printer::wobbleAmplitudes[1] + (xPosPercent) * Printer::wobbleAmplitudes[2]) * anglePositionWobble;
@@ -558,7 +559,7 @@ uint8_t Printer::setDestinationStepsFromGCode(GCode *com)
     //wobble durch Kippeln mit Hebel -> Z-Hub
     //wobbleZ
     if(Printer::wobbleAmplitudes[3]){
-        float anglePositionLift   = sin(zweiPi*(z/spindelSteigung) + (float)Printer::wobblePhaseZ * hundertstelPi); //phase von +-100% -> +-Pi
+        float anglePositionLift   = sin(zweiPi*(zSchalterZ/spindelSteigung) + (float)Printer::wobblePhaseZ * hundertstelPi); //phase von +-100% -> +-Pi
         Printer::wobblefixOffset[Z_AXIS] = Printer::wobbleAmplitudes[3] * anglePositionLift;
         //z kippel-wobble nur mit etwas Abstand überhalb senseoffset ausgleichen. Drunter könnte das stören.
         if(z > fabs(Printer::wobblefixOffset[Z_AXIS])+AUTOADJUST_STARTMADEN_AUSSCHLUSS){
