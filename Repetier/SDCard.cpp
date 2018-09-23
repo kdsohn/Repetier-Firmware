@@ -167,6 +167,7 @@ void SDCard::unmount()
     uid.cwd[1] = 0;
     uid.folderLevel = 0;
 #endif // UI_DISPLAY_TYPE!=0
+	Com::printFLN(PSTR("SD Card unmounted"));
 } // unmount
 
 void SDCard::startPrint()

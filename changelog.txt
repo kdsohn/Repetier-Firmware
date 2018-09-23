@@ -7,6 +7,8 @@ V RF.01.42.18.Mod (2018-09-23)
 - Kurt Wobble Fix: The phase value within menu will now have +-180° (degree) instead of "+-100% Pi"
 - Movement: I reverted our MOVE_CACHE_LOW settings to the settings that repetier nowadays uses.
   I think my testfile now produces more smooth movements, because the throttling was too early when it wasnt needed.
+- Pulled some fix from repetier to have better support for long filenames.
+- Removed SD-Card now prints a message through serial/usb.
 
 V RF.01.42.17.Mod (2018-09-06)
 - Fix for Heater-Decoupled-Error if the printer drops temperature within pause.
