@@ -233,6 +233,7 @@ void FatFile::lsRecursive(uint8_t level, bool isJson)
  */
 void FatFile::ls(uint8_t flags, uint8_t indent) {
   (void)flags;
+  (void)indent;
   *fullName = 0;
   lsRecursive(0, false);
 }

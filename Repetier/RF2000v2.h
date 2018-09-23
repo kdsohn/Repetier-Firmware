@@ -834,12 +834,12 @@ many very short moves the cache may go empty. The minimum value is 5. */
 If the cache contains less then MOVE_CACHE_LOW segments, the time per segment is limited to LOW_TICKS_PER_MOVE clock cycles.
 If a move would be shorter, the feedrate will be reduced. This should prevent buffer underflows. Set this to 0 if you
 don't care about empty buffers during print. */
-#define MOVE_CACHE_LOW                      (MOVE_CACHE_SIZE - 5)
+#define MOVE_CACHE_LOW                      10
 
 /** \brief Cycles per move, if move cache is low.
 This value must be high enough, that the buffer has time to fill up. The problem only occurs at the beginning of a print or
 if you are printing many very short segments at high speed.*/
-#define LOW_TICKS_PER_MOVE                  500000
+#define LOW_TICKS_PER_MOVE                  250000
 
 /** \brief Adds a M3993 / or like "M3993 P300000" to set another or default LOW_TICKS_PER_MOVE and gather statistics about the fill level of the MOVE_CACHE while printing */
 #define FEATURE_DEBUG_MOVE_CACHE_TIMING              0

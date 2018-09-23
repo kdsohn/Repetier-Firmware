@@ -2187,7 +2187,7 @@ void UIDisplay::parse(char *txt,bool ram)
                 }*/
                 else if(c2=='P')                                                                        // %wP : current wobblefix phase for YX-wobble (Bauchtanz)
                 {
-                    addInt(Printer::wobblePhaseXY,4);
+                    addInt( long(float(Printer::wobblePhaseXY)*1.8f) ,4);
                     break;
                 }
 
@@ -4061,7 +4061,13 @@ void UIDisplay::nextPreviousAction(int8_t next)
         //Antibauchtanz:
         case UI_ACTION_WOBBLE_FIX_PHASEXY:
         {
-            INCREMENT_MIN_MAX(Printer::wobblePhaseXY,1,-100,100);
+            INCREMENT_MIN_MAX(Printer::wobblePhaseXY,1,-100,101);
+			if(Printer::wobblePhaseXY == 101){
+				Printer::wobblePhaseXY = -99;
+			}
+			if(Printer::wobblePhaseXY == -100){
+				Printer::wobblePhaseXY = 100;
+			}
 #if FEATURE_AUTOMATIC_EEPROM_UPDATE
             HAL::eprSetByte( EPR_RF_MOD_WOBBLE_FIX_PHASEXY, Printer::wobblePhaseXY );
             EEPROM::updateChecksum();
