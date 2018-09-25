@@ -460,7 +460,7 @@ void PrintLine::calculateQueueMove(float axisDistanceMM[],uint8_t pathOptimize, 
         axisInterval[E_AXIS] = timeForMove / delta[E_AXIS];
         speedE = axisDistanceMM[E_AXIS] * inverseTimeS;
         if(isENegativeMove()) speedE = -speedE;
-    }
+    } else speedE = 0;
     fullSpeed = distance * inverseTimeS;
     // long interval = axis_interval[primary_axis]; // time for every step in ticks with full speed
     // If acceleration is enabled, do some Bresenham calculations depending on which axis will lead it.
@@ -915,8 +915,9 @@ inline void PrintLine::computeMaxJunctionSpeed(PrintLine *previous,PrintLine *cu
     }
 
     float eJerk = fabs(current->speedE - previous->speedE);
-    if(eJerk > Extruder::current->maxStartFeedrate)
+    if(eJerk > Extruder::current->maxStartFeedrate) {
         factor = RMath::min(factor, Extruder::current->maxStartFeedrate / eJerk);
+    }
     previous->maxJunctionSpeed = maxJoinSpeed * factor; // set speed limit
 
 } // computeMaxJunctionSpeed
