@@ -1,6 +1,10 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 
+V RF.01.42.21.Mod (2018-09-25)
+- Pull of repetiers motion patch for a non smooth movement in some situations (Which was depending on retract settings).
+  https://github.com/repetier/Repetier-Firmware/issues/824 / https://github.com/repetier/Repetier-Firmware/commit/ec9f2deb79ff0886378adfaef52360a21762928b
+
 V RF.01.42.20.Mod (2018-09-23)
 - Changed phase formula for Kurts Wobblefix: We now use the z coordinate from z-min endstop instead of print coordinates. That should avoid that the wobblefix moves within z axis when we change the matrix or z-offset values.
 
