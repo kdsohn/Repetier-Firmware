@@ -821,7 +821,8 @@ This is like reducing your 1/16th microstepping to 1/8 or 1/4. It is much cheape
 additional stepper interrupts with all it's overhead. As a result you can go as high as
 40000Hz. STEP_DOUBLER_FREQUENCY should be in range 5000-12000 for RFx000 but 8000 is much for RF2000 (with ADVANCE?).
 
-STEP_DOUBLER_FREQUENCY can be changed in Menu-> Configuration->Stepper->DblFq: */
+STEP_DOUBLER_FREQUENCY can be changed in Menu-> Configuration->Stepper->DblFq: 
+*/
 #define STEP_DOUBLER_FREQUENCY              7000
 
 /** \brief If you reach STEP_DOUBLER_FREQUENCY the firmware will do 2 or 4 steps with nearly no delay. That can be too fast
@@ -837,12 +838,12 @@ many very short moves the cache may go empty. The minimum value is 5. */
 If the cache contains less then MOVE_CACHE_LOW segments, the time per segment is limited to LOW_TICKS_PER_MOVE clock cycles.
 If a move would be shorter, the feedrate will be reduced. This should prevent buffer underflows. Set this to 0 if you
 don't care about empty buffers during print. */
-#define MOVE_CACHE_LOW                      (MOVE_CACHE_SIZE - 5)
+#define MOVE_CACHE_LOW                      10
 
 /** \brief Cycles per move, if move cache is low.
 This value must be high enough, that the buffer has time to fill up. The problem only occurs at the beginning of a print or
 if you are printing many very short segments at high speed.*/
-#define LOW_TICKS_PER_MOVE                  1500000
+#define LOW_TICKS_PER_MOVE                  250000
 
 /** \brief Adds a M3993 / or like "M3993 P300000" to set another or default LOW_TICKS_PER_MOVE and gather statistics about the fill level of the MOVE_CACHE while printing */
 #define FEATURE_DEBUG_MOVE_CACHE_TIMING              0
