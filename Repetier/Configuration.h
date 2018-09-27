@@ -990,7 +990,18 @@ we use blocks of 2 kByte size for the structure of our EEPROM
 /** \brief Automatic Startline */
 #define FEATURE_STARTLINE                   1
 
-/** \brief Automatic Startline */
+/** 
+ * \brief Z-Wobble elimination tool
+ * Two offsets [dx, dy] = f(z) in x and y direction can simulate hardware z-wobble.
+ * Which much care you can adjust this software z-wobble as an opposite to the hardware introduced z-wobble.
+ * The underlying principle is the same principle used for noise suppression.
+ *
+ * This Feature activates a new configuration menu wherin you can adjust parameters to produce the sinodial offset.
+ * The simulated wobbles frequency (on z-axis) is always 5mm which fits the spindles thread of 5mm.
+ * Within the menu you can configure the amplitude for X, Y-left and Y-right and the shift (phase) within Z.
+ *
+ * Read here for more information: http://www.rf1000.de/viewtopic.php?f=7&t=2281
+ */
 #define FEATURE_Kurt67_WOBBLE_FIX           0
 
 #endif // CONFIGURATION_H
