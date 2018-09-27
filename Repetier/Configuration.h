@@ -993,7 +993,7 @@ we use blocks of 2 kByte size for the structure of our EEPROM
 /** 
  * \brief Z-Wobble elimination tool
  * Two offsets [dx, dy] = f(z) in x and y direction can simulate hardware z-wobble.
- * Which much care you can adjust this software z-wobble as an opposite to the hardware introduced z-wobble.
+ * With much care you can adjust this software z-wobble as an opposite to the hardware introduced z-wobble.
  * The underlying principle is the same principle used for noise suppression.
  *
  * This Feature activates a new configuration menu wherin you can adjust parameters to produce the sinodial offset.
