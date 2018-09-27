@@ -1,6 +1,10 @@
 TODO: Testing, testing ..
 TODO: Zaldo said that he experienced a hard reset while starting some Z-Calibration. (Awaiting further information about this bug)
 
+V RF.01.42.22.Mod (2018-09-27)
+- Fix for Z-Offset-Scan: When the nozzle gets out of range in the uncritical direction we do not have to abort.
+- Fix for Z-Offset-Scan: When we move the bed up into minus z we first check the coordinates and then move.
+
 V RF.01.42.21.Mod (2018-09-25)
 - Pull of repetiers motion patch for a non smooth movement in some situations (Which was depending on retract settings).
   https://github.com/repetier/Repetier-Firmware/issues/824 / https://github.com/repetier/Repetier-Firmware/commit/ec9f2deb79ff0886378adfaef52360a21762928b
