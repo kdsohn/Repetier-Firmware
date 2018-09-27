@@ -740,10 +740,10 @@ extern short readIdlePressure( short* pnIdlePressure );
 extern short testIdlePressure( void );
 extern short readAveragePressure( short* pnAveragePressure );
 
-extern void moveZUpFast();
-extern void moveZDownSlow( uint8_t acuteness = 1 );
-extern void moveZUpSlow( short* pnContactPressure, uint8_t acuteness = 1 );
-extern void moveZDownFast();
+extern void moveZMinusUpFast();
+extern void moveZPlusDownSlow( uint8_t acuteness = 1 );
+extern void moveZMinusUpSlow( short* pnContactPressure, uint8_t acuteness = 1 );
+extern void moveZPlusDownFast();
 extern void moveZ( int nSteps );
 extern void restoreDefaultScanParameters( void );
 extern void outputScanParameters( void );

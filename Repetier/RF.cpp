@@ -1016,7 +1016,7 @@ void scanHeatBed( void )
             case 51:
             {
                 // move fast to the surface
-                moveZUpFast();
+                moveZMinusUpFast();
                 g_nHeatBedScanStatus = 52;
 
 #if DEBUG_HEAT_BED_SCAN == 2
@@ -1031,7 +1031,7 @@ void scanHeatBed( void )
             case 52:
             {
                 // move a little bit away from the surface
-                moveZDownSlow();
+                moveZPlusDownSlow();
 
                 g_nHeatBedScanStatus = 53;
 
@@ -1047,8 +1047,8 @@ void scanHeatBed( void )
             case 53:
             {
                 // move slowly to the surface
-                moveZUpSlow( &nTempPressure );
-                moveZDownSlow(8); //and slowslowly back near idle pressure
+                moveZMinusUpSlow( &nTempPressure );
+                moveZPlusDownSlow(8); //and slowslowly back near idle pressure
 #if DEBUG_HEAT_BED_SCAN
                 nContactPressure  = nTempPressure;
 #endif // DEBUG_HEAT_BED_SCAN
@@ -1118,7 +1118,7 @@ void scanHeatBed( void )
             case 55:
             {
                 // move away from the surface
-                moveZDownFast();
+                moveZPlusDownFast();
 
                 if( nYDirection > 0 )
                 {
@@ -1455,7 +1455,7 @@ void scanHeatBed( void )
             case 120:
             {
                 // move to the surface
-                moveZUpFast();
+                moveZMinusUpFast();
 
                 g_nHeatBedScanStatus = 121;
 
@@ -1474,7 +1474,7 @@ void scanHeatBed( void )
                 g_nLastZScanZPosition = 0;
 
                 // move a little bit away from the surface
-                moveZDownSlow();
+                moveZPlusDownSlow();
 
                 g_nHeatBedScanStatus = 122;
 
@@ -1490,8 +1490,8 @@ void scanHeatBed( void )
             case 122:
             {
                 // move slowly to the surface
-                moveZUpSlow( &nTempPressure );
-                moveZDownSlow(8); //and slowslowly back near idle pressure
+                moveZMinusUpSlow( &nTempPressure );
+                moveZPlusDownSlow(8); //and slowslowly back near idle pressure
 
                 g_nHeatBedScanStatus = 123;
 
@@ -1814,7 +1814,7 @@ void scanHeatBed( void )
             case 145:
             {
                 // move to the surface
-                moveZUpFast();
+                moveZMinusUpFast();
 
                 g_nHeatBedScanStatus = 146;
 
@@ -1833,7 +1833,7 @@ void scanHeatBed( void )
                 g_nLastZScanZPosition = 0;
 
                 // move a little bit away from the surface
-                moveZDownSlow();
+                moveZPlusDownSlow();
 
                 g_nHeatBedScanStatus = 147;
 
@@ -1849,8 +1849,8 @@ void scanHeatBed( void )
             case 147:
             {
                 // move slowly to the surface
-                moveZUpSlow( &nTempPressure );
-                moveZDownSlow(8); //and slowslowly back near idle pressure
+                moveZMinusUpSlow( &nTempPressure );
+                moveZPlusDownSlow(8); //and slowslowly back near idle pressure
 
                 g_nHeatBedScanStatus = 148;
 
@@ -2103,7 +2103,7 @@ void alignExtruders( void )
             case 120:
             {
                 // move to the surface
-                moveZUpFast();
+                moveZMinusUpFast();
 
                 g_nAlignExtrudersStatus = 121;
 
@@ -2118,7 +2118,7 @@ void alignExtruders( void )
                 g_nLastZScanZPosition = 0;
 
                 // move a little bit away from the surface
-                moveZDownSlow();
+                moveZPlusDownSlow();
 
                 g_nAlignExtrudersStatus = 122;
 
@@ -2131,8 +2131,8 @@ void alignExtruders( void )
             {
                 // move slowly to the surface
                 short nTempPressure = 0;
-                moveZUpSlow( &nTempPressure );
-                moveZDownSlow(8); // entspannen
+                moveZMinusUpSlow( &nTempPressure );
+                moveZPlusDownSlow(8); // entspannen
 
                 g_nAlignExtrudersStatus = 123;
 
@@ -2301,7 +2301,7 @@ void searchZOScan( void )
                 g_nZOSScanStatus = 2;
                 g_min_nZScanZPosition = long(Printer::axisStepsPerMM[Z_AXIS] * g_scanStartZLiftMM); //nur nutzen wenn kleiner.
                 g_scanRetries = 0; // never retry   TODO allow retries?
-                g_abortZScan = 0;  // will be set in case of error inside moveZUpFast/Slow
+                g_abortZScan = 0;  // will be set in case of error inside moveZMinusUpFast/Slow
                 g_nLastZScanZPosition = 0; //sodass dass bei mehreren scans nicht die letzte position als abstands limit feststeht.
                 break;
             }
@@ -2495,7 +2495,7 @@ void searchZOScan( void )
             {
                 HAL::delayMilliseconds( HEAT_BED_SCAN_DELAY );
                 GCode::keepAlive( Processing );
-                moveZDownFast();
+                moveZPlusDownFast();
                 g_nZOSScanStatus = 9;
                 break;
             }
@@ -2515,7 +2515,7 @@ void searchZOScan( void )
                   }
                   break;
                 } //egal was readIdlePressure zurückgibt, g_abortZScan könnte 1 sein und muss genullt werden.
-                g_abortZScan = 0;  // will be set in case of error inside moveZUpFast/Slow -> != 0 AFTER RETURN would temper with normal HBS-Scan function @ABORT
+                g_abortZScan = 0;  // will be set in case of error inside moveZMinusUpFast/Slow -> != 0 AFTER RETURN would temper with normal HBS-Scan function @ABORT
 
                 g_nMinPressureContact = g_nCurrentIdlePressure - SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA;
                 g_nMaxPressureContact = g_nCurrentIdlePressure + SEARCH_HEAT_BED_OFFSET_CONTACT_PRESSURE_DELTA;
@@ -2544,7 +2544,7 @@ void searchZOScan( void )
                 // move to the surface
                 long oldZsteps = g_nZScanZPosition;
 
-                moveZUpFast(); // ------
+                moveZMinusUpFast(); // ------
                 HAL::delayMilliseconds( g_nScanSlowStepDelay );
 
                 //Wenn Filament langsam nachgibt, wandert evtl. die Kraft langsam. Hier prüfen, ob idle digits gültig.
@@ -2587,7 +2587,7 @@ void searchZOScan( void )
 
                 // check for error
                 if(g_abortZScan) {
-                  g_abortZScan = 0;  // will be set in case of error inside moveZUpFast/Slow -> != 0 AFTER RETURN would temper with normal HBS-Scan function @ABORT
+                  g_abortZScan = 0;  // will be set in case of error inside moveZMinusUpFast/Slow -> != 0 AFTER RETURN would temper with normal HBS-Scan function @ABORT
                   Com::printFLN( PSTR( "ERROR::cannot find surface in fast scan" ) );
                   abortSearchHeatBedZOffset(false);
                   break;
@@ -2606,20 +2606,20 @@ void searchZOScan( void )
                       Com::printFLN( PSTR( "10." ), i );
                       long Z = g_nZScanZPosition;
 
-                      // move from moveZUpFast() down again -> für neuen anlauf
+                      // move from moveZMinusUpFast() down again -> für neuen anlauf
                       moveZ( abs(g_nScanHeatBedUpSlowSteps) ); // +++..
                       Com::printFLN( PSTR( "DownFine:" ), (g_nZScanZPosition-Z) );
                       Z = g_nZScanZPosition;
 
                       // move slowly to the surface
                       short nTempPressure;
-                      moveZUpSlow( &nTempPressure, 2 ); // -
+                      moveZMinusUpSlow( &nTempPressure, 2 ); // -
                       Com::printFLN( PSTR( "UpFine:" ), (g_nZScanZPosition-Z) );
                       Z = g_nZScanZPosition;
 
                       // kraft zurückfahren
                       g_nLastZScanZPosition = 0; //dont remember any old z-positions -> no check if deltaZ got too high.
-                      moveZDownSlow(8); // +
+                      moveZPlusDownSlow(8); // +
                       Com::printFLN( PSTR( "DownFine:" ), (g_nZScanZPosition-Z) );
                       // messen
                       Z = g_nZScanZPosition;
@@ -2634,7 +2634,7 @@ void searchZOScan( void )
                         prebreak = true; break;
                       }
                       if(g_abortZScan) {
-                        g_abortZScan = 0;  // will be set in case of error inside moveZUpFast/Slow -> != 0 AFTER RETURN would temper with normal HBS-Scan function @ABORT
+                        g_abortZScan = 0;  // will be set in case of error inside moveZMinusUpFast/Slow -> != 0 AFTER RETURN would temper with normal HBS-Scan function @ABORT
                         Com::printFLN( PSTR( "ERROR::cannot find surface in slow scan" ) );
                         abortSearchHeatBedZOffset(false);
                         prebreak = true; break;
@@ -4151,7 +4151,7 @@ void scanWorkPart( void )
                         setZOrigin();
 
                         // move away from the surface
-                        moveZDownFast();
+                        moveZPlusDownFast();
 
                         g_nWorkPartScanStatus = 35;
 
@@ -4393,7 +4393,7 @@ void scanWorkPart( void )
             case 51:
             {
                 // move fast to the surface
-                moveZUpFast();
+                moveZMinusUpFast();
 
                 g_nWorkPartScanStatus = 52;
 
@@ -4409,7 +4409,7 @@ void scanWorkPart( void )
             case 52:
             {
                 // move a little bit away from the surface
-                moveZDownSlow();
+                moveZPlusDownSlow();
                 g_nWorkPartScanStatus = 53;
 
 #if DEBUG_WORK_PART_SCAN == 2
@@ -4424,9 +4424,9 @@ void scanWorkPart( void )
             case 53:
             {
                 // move slowly to the surface
-                moveZUpSlow( &nTempPressure );
+                moveZMinusUpSlow( &nTempPressure );
                 nContactPressure      = nTempPressure;
-                moveZDownSlow(8); //and slowslowly back near idle pressure
+                moveZPlusDownSlow(8); //and slowslowly back near idle pressure
                 g_nWorkPartScanStatus = 54;
 
 #if DEBUG_WORK_PART_SCAN == 2
@@ -4492,7 +4492,7 @@ void scanWorkPart( void )
             case 55:
             {
                 // move away from the surface
-                moveZDownFast();
+                moveZPlusDownFast();
 
                 if( nYDirection > 0 )
                 {
@@ -4943,7 +4943,7 @@ short readAveragePressure( short* pnAveragePressure )
 
 
 //Spacing Schnell:
-void moveZDownFast()
+void moveZPlusDownFast()
 {
     short   nTempPressure;
 
@@ -4963,14 +4963,14 @@ void moveZDownFast()
     }
 
 #if DEBUG_HEAT_BED_SCAN || DEBUG_WORK_PART_SCAN
-    if( Printer::debugInfo() ) Com::printFLN( PSTR( "moveZDownFast(): " ), (int)nTempPressure );
+    if( Printer::debugInfo() ) Com::printFLN( PSTR( "moveZPlusDownFast(): " ), (int)nTempPressure );
 #endif // DEBUG_HEAT_BED_SCAN || DEBUG_WORK_PART_SCAN
 
-} // moveZDownFast
+} // moveZPlusDownFast
 
 
 //Spacing Langsam:
-void moveZDownSlow(uint8_t acuteness)
+void moveZPlusDownSlow(uint8_t acuteness)
 {
     short   nTempPressure;
     long    startScanZPosition = g_nZScanZPosition;
@@ -5000,9 +5000,8 @@ void moveZDownSlow(uint8_t acuteness)
         {
                 break;
         }
-        if( g_nZScanZPosition < -g_nScanZMaxCompensationSteps || g_nZScanZPosition > long(Printer::axisStepsPerMM[Z_AXIS] * g_scanStartZLiftMM) )
+        if( g_nZScanZPosition > long(Printer::axisStepsPerMM[Z_AXIS] * g_scanStartZLiftMM) )
         {
-            if(g_nZScanZPosition < -g_nScanZMaxCompensationSteps) Com::printFLN( PSTR( "Z-Endstop Limit:" ), Z_ENDSTOP_DRIVE_OVER );
             Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition*Printer::invAxisStepsPerMM[Z_AXIS] );
             error = true;
         }
@@ -5021,24 +5020,37 @@ void moveZDownSlow(uint8_t acuteness)
             error = true;
         }
         if(error){
-            Com::printFLN( PSTR( "moveZDownSlow: out of range " ), g_scanRetries );
+            Com::printFLN( PSTR( "moveZPlusDownSlow: out of range " ), g_scanRetries );
             if( g_scanRetries ) g_retryZScan = 1;
             else                g_abortZScan = 1;
             break;
         }
     }
-} // moveZDownSlow
+} // moveZPlusDownSlow
 
 
 //gegen Düse fahren schnell:
-void moveZUpFast()
+void moveZMinusUpFast()
 {
     short   nTempPressure;
 
     // move the heat bed up until we detect the contact pressure (fast speed)
     while( 1 )
     {
+        if( g_nZScanZPosition < -g_nScanZMaxCompensationSteps )
+        {
+            Com::printFLN( PSTR( "moveZMinusUpFast(): out of range " ), (int)g_scanRetries );
+            Com::printFLN( PSTR( "Z-Endstop Limit:" ), Z_ENDSTOP_DRIVE_OVER );
+            Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition*Printer::invAxisStepsPerMM[Z_AXIS] );
+
+            if( g_scanRetries ) g_retryZScan = 1;
+            else                g_abortZScan = 1;
+            break;
+        }
+		
+        Commands::checkForPeriodicalActions( Processing );
         HAL::delayMilliseconds( g_nScanFastStepDelay );
+		
         if( readAveragePressure( &nTempPressure ) )
         {
             // some error has occurred
@@ -5051,38 +5063,39 @@ void moveZUpFast()
             break;
         }
 
-        moveZ( g_nScanHeatBedUpFastSteps );
-
         Commands::checkForPeriodicalActions( Processing );
+        moveZ( g_nScanHeatBedUpFastSteps );
 
         if( g_abortZScan )
         {
             break;
         }
-
-        if( g_nZScanZPosition < -g_nScanZMaxCompensationSteps || g_nZScanZPosition > long(Printer::axisStepsPerMM[Z_AXIS] * g_scanStartZLiftMM) )
-        {
-            Com::printFLN( PSTR( "moveZUpFast(): out of range " ), (int)g_scanRetries );
-            if(g_nZScanZPosition < -g_nScanZMaxCompensationSteps) Com::printFLN( PSTR( "Z-Endstop Limit:" ), Z_ENDSTOP_DRIVE_OVER );
-            Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition*Printer::invAxisStepsPerMM[Z_AXIS] );
-
-            if( g_scanRetries ) g_retryZScan = 1;
-            else                g_abortZScan = 1;
-            break;
-        }
     }
-} // moveZUpFast
+} // moveZMinusUpFast
 
 
 //Gegen Düse fahren langsam:
-void moveZUpSlow( short* pnContactPressure, uint8_t acuteness )
+void moveZMinusUpSlow( short* pnContactPressure, uint8_t acuteness )
 {
     short   nTempPressure;
 
     // move the heat bed up until we detect the contact pressure (slow speed)
     while( 1 )
     {
+        if( g_nZScanZPosition < -g_nScanZMaxCompensationSteps )
+        {
+            Com::printFLN( PSTR( "moveZMinusUpSlow(): the z position went out of range, retries = " ), g_scanRetries );
+            Com::printFLN( PSTR( "Z-Endstop Limit:" ), Z_ENDSTOP_DRIVE_OVER );
+            Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition*Printer::invAxisStepsPerMM[Z_AXIS] );
+
+            if( g_scanRetries ) g_retryZScan = 1;
+            else                g_abortZScan = 1;
+            break;
+        }
+		
+        Commands::checkForPeriodicalActions( Processing );
         HAL::delayMilliseconds( g_nScanSlowStepDelay );
+		
         if( readAveragePressure( &nTempPressure ) )
         {
             // some error has occurred
@@ -5094,29 +5107,17 @@ void moveZUpSlow( short* pnContactPressure, uint8_t acuteness )
             // we have found the proper pressure
             break;
         }
-
-        moveZ( (g_nScanHeatBedUpSlowSteps / acuteness ? g_nScanHeatBedUpSlowSteps / acuteness : 1 ) );
-
+		
         Commands::checkForPeriodicalActions( Processing );
+        moveZ( (g_nScanHeatBedUpSlowSteps / acuteness ? g_nScanHeatBedUpSlowSteps / acuteness : 1 ) );
 
         if( g_abortZScan )
         {
             break;
         }
-
-        if( g_nZScanZPosition < -g_nScanZMaxCompensationSteps || g_nZScanZPosition > long(Printer::axisStepsPerMM[Z_AXIS] * g_scanStartZLiftMM) )
-        {
-            Com::printFLN( PSTR( "moveZUpSlow(): the z position went out of range, retries = " ), g_scanRetries );
-            if(g_nZScanZPosition < -g_nScanZMaxCompensationSteps) Com::printFLN( PSTR( "Z-Endstop Limit:" ), Z_ENDSTOP_DRIVE_OVER );
-            Com::printFLN( PSTR( "Z = " ), g_nZScanZPosition*Printer::invAxisStepsPerMM[Z_AXIS] );
-
-            if( g_scanRetries ) g_retryZScan = 1;
-            else                g_abortZScan = 1;
-            break;
-        }
     }
     *pnContactPressure = nTempPressure;
-} // moveZUpSlow
+} // moveZMinusUpSlow
 
 
 void moveZ( int nSteps )
