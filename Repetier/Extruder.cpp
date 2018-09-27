@@ -1042,6 +1042,7 @@ void TemperatureController::updateCurrentTemperature()
 
 void TemperatureController::setTargetTemperature(float target, float offset)
 {
+	if(target <= 0.0f || target < targetTemperatureC) pwm_pos[pwmIndex] = 0;
     targetTemperatureC = target;
     stopDecouple();
 #if FEATURE_HEAT_BED_TEMP_COMPENSATION
