@@ -2815,7 +2815,6 @@ void UIDisplay::okAction()
             refreshPage();
             return;
         }
-
         uint8_t filePos = menuPos[menuLevel]-1;
         char filename[LONG_FILENAME_LENGTH+1];
 
@@ -2829,61 +2828,21 @@ void UIDisplay::okAction()
             return;
         }
 
-    /*     int16_t shortAction;
-       if (Printer::isAutomount())
-            shortAction = UI_ACTION_SD_PRINT;
-        else
-        {
-            men = (UIMenu*)menu[menuLevel-1];
-            entries = (UIMenuEntry**)pgm_read_word(&(men->entries));
-            ent =(UIMenuEntry *)pgm_read_word(&(entries[menuPos[menuLevel-1]]));
-            shortAction = pgm_read_word(&(ent->action));
-        }*/
         sd.file.close();
         sd.fat.chdir(cwd);
-    //    switch(shortAction)
-      //  {
-         //   case UI_ACTION_SD_PRINT:
-           // {
-                if (sd.selectFileByPos(filePos, false))
-                {
-                    sd.startPrint();
-                    BEEP_START_PRINTING
-                    exitmenu();
-                }
-              //  break;
-            //}
-/*            case UI_ACTION_SD_DELETE:
-            {
-                if(sd.sdactive)
-                {
-                    if(Printer::isMenuMode(MENU_MODE_SD_PRINTING))
-                    {
-                        // we do not allow to delete a file while we are printing/milling from the SD card
-                        Com::printFLN(PSTR("delete error: processing"));
 
-                        showError( (void*)ui_text_delete_file, (void*)ui_text_operation_denied );
-                        break;
-                    }
-                    sd.sdmode = 0;
-              ###      if (sd.selectFileByPos(filePos, false))###
-              ###      {###
-             ###           if(sd.file.remove()) {###
-            ##            //if(sd.fat.remove(filename)) {###
-                            Com::printFLN(Com::tFileDeleted);
-                            BEEP_LONG
-                            if(menuPos[menuLevel] > 0)
-                                menuPos[menuLevel]--;
-                            updateSDFileCount();
-                            break; //ok
-                        }
-                    }
-                    Com::printFLN(Com::tDeletionFailed);
-                    showError( (void*)ui_text_delete_file, (void*)ui_text_operation_denied );
-                }
-                break;
-            }*/
-        //}
+		/* 
+		This is not like original Repetier.
+		We open the file according to its position (filePos) in the directory.
+		That totally ignores the length limit of the filename
+		*/
+		if (sd.selectFileByPos(filePos, false))
+		{
+			sd.startPrint();
+			BEEP_START_PRINTING
+			exitmenu();
+		}
+
         return;
     }
 #endif // SDSUPPORT

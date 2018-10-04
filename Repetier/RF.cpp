@@ -3155,8 +3155,10 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
 
     Com::printFLN( PSTR( ";Testing Filament..." ) );
     Com::printFLN( PSTR( ";Temperature [°C];e [mm/s];digits [1]" ) );
-    if(sd.savetosd) sd.file.writeln_P( PSTR( ";Temperature [°C];e [mm/s];digits [1]" ) );
-
+    if(sd.savetosd){
+		sd.writePSTR( PSTR( ";Temperature [°C];e [mm/s];digits [1]" ) );
+        sd.writePSTR( Com::tNewline );
+	}
     for(float T = (float)StartTemp; T <= EndTemp; ){
         //@Init the Temp is reached by preheat!
         for(float e=0.05; e<=maxfeedrate; e+=incrementfeedrate) { //iterate all points
@@ -3178,12 +3180,14 @@ void startViscosityTest( int maxdigits = 10000, float maxfeedrate = 5.0f, float 
 
             if(sd.savetosd){
                 sd.file.write((uint8_t)';');
-                sd.file.writeFloat(Extruder::current->tempControl.currentTemperatureC, 2, true);
+				/* float -> printField(float value, char term, uint8_t prec = 2) */
+                sd.file.printField(Extruder::current->tempControl.currentTemperatureC, 0, 2);
                 sd.file.write((uint8_t)';');
-                sd.file.writeFloat(e, 3, true);
+                sd.file.printField(e, 0, 3);
                 sd.file.write((uint8_t)';');
-                sd.file.writeFloat(extrudedigits, 0, true);
-                sd.file.write_P(Com::tNewline);
+				/* long -> printField(int32_t value, char term) */
+                sd.file.printField(extrudedigits, 0);
+                sd.writePSTR(Com::tNewline);
             }
 
             if(extrudedigits < g_nCurrentIdlePressure - maxdigits || extrudedigits > g_nCurrentIdlePressure + maxdigits || extrudedigits < -maxdigits || extrudedigits > maxdigits) {
@@ -10933,13 +10937,17 @@ void processCommand( GCode* pCommand )
 
                 sd.startWrite(filename);
                 if(sd.savetosd){
-                    sd.file.writeln_P(PSTR( "[um]" ));
-                    sd.file.write_P(Com::tNewline);
-                    sd.file.write_P(Com::tNewline);
-                    sd.file.writeln_P(PSTR( "AM" ));
-                    sd.file.writeFloat(1.98765f, 3, true);
-                    sd.file.write_P(Com::tNewline);
-                    sd.file.writeFloat((float)234000, 0, true);
+                    sd.writePSTR(PSTR( "[um]" ));
+                    sd.writePSTR(Com::tNewline);
+                    sd.writePSTR(Com::tNewline);
+                    sd.writePSTR(PSTR( "AM" ));
+                    sd.file.printField(1.98765f, 0, 3);
+                    sd.writePSTR(Com::tNewline);
+                    sd.file.printField((float)234000, 0, 0);
+					sd.file.write((uint8_t)';');
+					sd.file.write((uint8_t)';');
+					sd.writePSTR( PSTR( ";Temperature [°C];e [mm/s];digits [1]" ) );
+                    sd.writePSTR(Com::tNewline);
                 }else{
                     Com::printFLN( PSTR( "Write Error" ) );
                 }
@@ -10959,9 +10967,6 @@ void processCommand( GCode* pCommand )
 #endif //FEATURE_READ_CALIPER
         }
     }
-
-    return;
-
 } // processCommand
 
 void queueTask( char task )

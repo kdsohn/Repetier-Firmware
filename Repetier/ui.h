@@ -493,7 +493,6 @@ public:
     void lock();
     void unlock();
     void exitmenu();
-
 };
 
 extern UIDisplay uid;
