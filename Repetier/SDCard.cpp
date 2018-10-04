@@ -326,6 +326,14 @@ void SDCard::writeCommand(GCode *code)
     }
 } // writeCommand
 
+/** Write a PROGMEM string to a file.	
+* \param[in] str Pointer to the PROGMEM string.	
+* Use getWriteError to check for errors.	
+*/	
+void SDCard::writePSTR(FSTRINGPARAM(str)) {
+	for (uint8_t c; (c = HAL::readFlashByte(str)); str++) file.write(c);	
+}
+  
 char *SDCard::createFilename(char *buffer, const dir_t &p) {
     char *pos = buffer, *src = (char*)p.name;
 
@@ -430,7 +438,7 @@ bool SDCard::selectFileByPos(uint16_t filePos, bool silent) {
 
     ffile.close();
     return false;
-} // getSDFilenameAt
+} // selectFileByPos
 
 
 void SDCard::printStatus() {
