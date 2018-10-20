@@ -1,5 +1,6 @@
 *.o
 *.d
+*.bak
 Private/**
 .DS_Store
 

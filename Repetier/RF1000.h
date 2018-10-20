@@ -35,7 +35,7 @@
 #endif // NUM_EXTRUDER > 2 || NUM_EXTRUDER < 0
 
 /** \brief Allows to use the device for milling */
-#define FEATURE_MILLING_MODE                  1                                                   // 1 = on, 0 = off
+#define FEATURE_MILLING_MODE                  0                                                   // 1 = on, 0 = off
 
 #if FEATURE_MILLING_MODE
 
@@ -161,7 +161,7 @@ Overridden if EEPROM activated.*/
 #define EXT0_Z_OFFSET_MM                       0.0f //to support Nozzle-Tip-Down-Hotends
 
 /** \brief for skeinforge 40 and later, steps to pull the plasic 1 mm inside the extruder, not out.  Overridden if EEPROM activated. */
-#define EXT0_STEPS_PER_MM                   (8.75 * RF_MICRO_STEPS_E)
+#define EXT0_STEPS_PER_MM                   (1.15 * 8.75 * RF_MICRO_STEPS_E)
 
 /** \brief What type of sensor is used?
 NTC-Thermistors
@@ -189,8 +189,12 @@ PTC-Thermistors
 53: E3D PT100 Board (direct AD voltage in)
 60: HEATER_USES_AD8495 (Delivers 5mV/degC)
 100: AD595 */
-#define EXT0_TEMPSENSOR_TYPE                3
 
+#ifdef E3DPTR100
+#define EXT0_TEMPSENSOR_TYPE                13
+#else
+#define EXT0_TEMPSENSOR_TYPE                3
+#endif
 /** \brief Analog input pin for reading temperatures or pin enabling SS for MAX6675 */
 #define EXT0_TEMPSENSOR_PIN                 TEMP_0_PIN
 
@@ -509,7 +513,7 @@ The codes are only executed for multiple extruder when changing the extruder. */
 #define HAVE_HEATED_BED                     true
 
 /** \brief Maximal temperature which can be set for the heating bed */
-#define HEATED_BED_MAX_TEMP                 180
+#define HEATED_BED_MAX_TEMP                 130
 
 /** \brief Select type of your heated bed. It's the same as for EXT0_TEMPSENSOR_TYPE
 set to 0 if you don't have a heated bed */
@@ -593,7 +597,11 @@ Crash with Einhausung/Plexiglas backside RFx000: ~ >5.0 .. 6.0f
 Crash with backside metal RFx000: ~ >10.0..12.0f
 Overflow in Z-Matrix: >12.7f
 */
+#ifdef NEW_ZSWITCH
+#define Z_ENDSTOP_DRIVE_OVER                 2.5f                              //mm
+#else
 #define Z_ENDSTOP_DRIVE_OVER                 0.8f                              //mm
+#endif
 #define Z_ENDSTOP_MAX_HYSTERESIS             0.3f                              //mm
 
 /** \brief By default all endstops are pulled up to HIGH. You need a pullup if you

@@ -3352,8 +3352,8 @@ void UIDisplay::nextPreviousAction(int8_t next)
 #if HAVE_HEATED_BED==true
             int tmp = (int)heatedBedController.targetTemperatureC;
             if(tmp<UI_SET_MIN_HEATED_BED_TEMP) tmp = 0;
-            tmp+=increment;
-            if(tmp==1) tmp = UI_SET_MIN_HEATED_BED_TEMP;
+			tmp+=increment*5;
+			if(tmp==5) tmp = UI_SET_MIN_HEATED_BED_TEMP;
             if(tmp<UI_SET_MIN_HEATED_BED_TEMP) tmp = 0;
             else if(tmp>UI_SET_MAX_HEATED_BED_TEMP) tmp = UI_SET_MAX_HEATED_BED_TEMP;
             Extruder::setHeatedBedTemperature(tmp);
@@ -3365,8 +3365,8 @@ void UIDisplay::nextPreviousAction(int8_t next)
         {
             int tmp = (int)extruder[0].tempControl.targetTemperatureC;
             if(tmp<UI_SET_MIN_EXTRUDER_TEMP) tmp = 0;
-            tmp+=increment;
-            if(tmp==1) tmp = UI_SET_MIN_EXTRUDER_TEMP;
+			tmp+=increment*5;
+			if(tmp==5) tmp = UI_SET_MIN_EXTRUDER_TEMP;
             if(tmp<UI_SET_MIN_EXTRUDER_TEMP) tmp = 0;
             else if(tmp>UI_SET_MAX_EXTRUDER_TEMP) tmp = UI_SET_MAX_EXTRUDER_TEMP;
             Extruder::setTemperatureForExtruder(tmp,0);
@@ -3376,8 +3376,8 @@ void UIDisplay::nextPreviousAction(int8_t next)
         {
 #if NUM_EXTRUDER>1
             int tmp = (int)extruder[1].tempControl.targetTemperatureC;
-            tmp+=increment;
-            if(tmp==1) tmp = UI_SET_MIN_EXTRUDER_TEMP;
+			tmp+=increment*5;
+			if(tmp==5) tmp = UI_SET_MIN_EXTRUDER_TEMP;
             if(tmp<UI_SET_MIN_EXTRUDER_TEMP) tmp = 0;
             else if(tmp>UI_SET_MAX_EXTRUDER_TEMP) tmp = UI_SET_MAX_EXTRUDER_TEMP;
             Extruder::setTemperatureForExtruder(tmp,1);

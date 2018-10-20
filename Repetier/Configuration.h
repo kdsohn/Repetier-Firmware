@@ -43,9 +43,12 @@
 // ##########################################################################################
 
 /** \brief Define the type of your device */
-//#define MOTHERBOARD                         DEVICE_TYPE_RF1000
+#define MOTHERBOARD                         DEVICE_TYPE_RF1000
 //#define MOTHERBOARD                         DEVICE_TYPE_RF2000
 //#define MOTHERBOARD                         DEVICE_TYPE_RF2000v2
+
+#define E3DPTR100 1
+#define NEW_ZSWITCH 1       //mit mehr Überlauf
 
 #ifndef MOTHERBOARD
     #error Device type (RF1000 / RF2000 / RF2000v2) is not defined. Edit Configuration.h or pass the corresponding option to the compiler.
@@ -169,7 +172,7 @@
 #define EXTRUDER_FAN_COOL_TEMP              50
 
 /** \brief Maximal temperature which can be set for the extruder */
-#define EXTRUDER_MAX_TEMP                   275
+#define EXTRUDER_MAX_TEMP                   370
 
 /** \brief Extruder allow cold movement which can be set for the extruder */
 #define EXTRUDER_ALLOW_COLD_MOVE            0
@@ -674,10 +677,10 @@ Honeywell 100K Thermistor (135-104LAG-J01)  : R0 = 100000  T0 = 25  Beta = 3974
 #define UI_SET_EXTRUDER_TEMP_MOUNT          210
 
 /** \brief Extreme values */
-#define UI_SET_MIN_HEATED_BED_TEMP          55
-#define UI_SET_MAX_HEATED_BED_TEMP          160
+#define UI_SET_MIN_HEATED_BED_TEMP          40
+#define UI_SET_MAX_HEATED_BED_TEMP          130
 #define UI_SET_MIN_EXTRUDER_TEMP            70
-#define UI_SET_MAX_EXTRUDER_TEMP            270
+#define UI_SET_MAX_EXTRUDER_TEMP            350
 #define UI_SET_EXTRUDER_FEEDRATE            1.5f                                                 // [mm/sec]
 #define UI_SET_EXTRUDER_RETRACT_DISTANCE    3                                                   // [mm]
 #define COOLDOWN_THRESHOLD                  40                                                  // [°C]

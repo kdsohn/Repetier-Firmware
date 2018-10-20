@@ -669,6 +669,7 @@ const short temptable_3[NUMTEMPS_3][2] PROGMEM =
     {441*4,120*8},{513*4,110*8},{588*4,100*8},{734*4,80*8},{856*4,60*8},{938*4,40*8},{986*4,20*8},{1008*4,0*8},{1018*4,-20*8}
 };
 
+
 // is 10k thermistor
 #define NUMTEMPS_4 20
 const short temptable_4[NUMTEMPS_4][2] PROGMEM =
@@ -729,7 +730,7 @@ const short temptable_12[NUMTEMPS_12][2] PROGMEM =
     {701*4, 86*8},{736*4, 81*8},{771*4, 76*8},{806*4, 70*8},{841*4, 63*8},{876*4, 56*8},{911*4, 48*8},{946*4, 38*8},{981*4, 23*8},{1005*4, 5*8},{1016*4, 0*8}
 };
 
-/*
+
 // PT100 E3D
 #define NUMTEMPS_13 19
 const short temptable_13[NUMTEMPS_13][2] PROGMEM =
@@ -737,8 +738,8 @@ const short temptable_13[NUMTEMPS_13][2] PROGMEM =
     {0,0},{908,8},{942,10*8},{982,20*8},{1015,8*30},{1048,8*40},{1080,8*50},{1113,8*60},{1146,8*70},{1178,8*80},{1211,8*90},{1276,8*110},{1318,8*120}
     ,{1670,8*230},{2455,8*500},{3445,8*900},{3666,8*1000},{3871,8*1100},{4095,8*2000}
 };
-*/
 
+/*
 //TODO: Tabelle startet erst bei 92°C ... Kleine Rundungszacken am Anfang, weil alles *4.
 #define NUMTEMPS_13 61 // NTC 3950 100k thermistor - Conrad V3
 const short temptable_13[NUMTEMPS_13][2] PROGMEM =
@@ -751,7 +752,7 @@ const short temptable_13[NUMTEMPS_13][2] PROGMEM =
   {903*4, 50*8},{922*4, 45*8},{939*4, 40*8},{954*4, 35*8},{966*4, 30*8},{977*4, 25*8},{985*4, 20*8},{993*4, 15*8},{999*4, 10*8},{1004*4, 5*8},
   {1008*4, 0*8}
 };
-
+*/
 // Thermistor NTC 3950 100k Ohm (other source)
 #define NUMTEMPS_14 103
 const short temptable_14[NUMTEMPS_14][2] PROGMEM = {
@@ -1439,4 +1440,3 @@ TemperatureController *tempController[NUM_TEMPERATURE_LOOPS] =
 #endif // NUM_EXTRUDER==0
 #endif // HAVE_HEATED_BED
 };
-
